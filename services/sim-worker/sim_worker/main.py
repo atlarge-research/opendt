@@ -10,8 +10,8 @@ from typing import Any
 from opendt_common import load_config_from_env
 from opendt_common.models import Task, Topology, TopologySnapshot
 from opendt_common.utils import get_kafka_consumer, get_kafka_producer
-from opendt_common.utils.kafka import send_message
 
+from .experiment_manager import ExperimentManager
 from .runner import OpenDCRunner, SimulationResults
 from .window_manager import TimeWindow, WindowManager
 
@@ -39,11 +39,15 @@ class SimulationWorker:
         worker_id: str,
         workload_topic: str,
         topology_topic: str,
+        power_topic: str,
         results_topic: str,
         window_size_minutes: int,
         consumer_group: str = "sim-workers",
         debug_mode: bool = False,
         debug_output_dir: str = "/app/output",
+        experiment_mode: bool = False,
+        experiment_name: str = "default",
+        experiment_output_dir: str = "/app/output",
     ):
         """Initialize the simulation worker.
 
@@ -55,21 +59,30 @@ class SimulationWorker:
             results_topic: Kafka topic name for simulation results
             window_size_minutes: Size of time windows in minutes
             consumer_group: Kafka consumer group ID
-            debug_mode: If True, write results to files instead of Kafka
+            debug_mode: If True, write debug files alongside main output
             debug_output_dir: Directory to write debug output files
+            experiment_mode: If True, write results to parquet instead of Kafka
+            experiment_name: Name of the experiment (used for output directory)
         """
         self.worker_id = worker_id
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.consumer_group = consumer_group
         self.workload_topic = workload_topic
         self.topology_topic = topology_topic
+        self.power_topic = power_topic
         self.results_topic = results_topic
         self.debug_mode = debug_mode
         self.debug_output_dir = debug_output_dir
+        self.experiment_mode = experiment_mode
+        self.experiment_name = experiment_name
 
-        # Initialize Kafka consumer (subscribe to both workload and topology)
+        # Initialize Kafka consumer (subscribe to workload, topology, and power in experiment mode)
+        topics = [workload_topic, topology_topic]
+        if self.experiment_mode:
+            topics.append(power_topic)
+
         self.consumer = get_kafka_consumer(
-            topics=[workload_topic, topology_topic],
+            topics=topics,
             group_id=consumer_group,
             bootstrap_servers=kafka_bootstrap_servers,
         )
@@ -96,19 +109,29 @@ class SimulationWorker:
         self.tasks_processed = 0
         self.windows_simulated = 0
 
-        # Create debug output directory if in debug mode
-        if self.debug_mode:
-            from pathlib import Path
+        # Initialize result cache for avoiding redundant simulations
+        from .result_cache import ResultCache
 
-            self.debug_run_dir = Path(debug_output_dir) / f"run-{worker_id}-{int(time.time())}"
-            self.debug_run_dir.mkdir(parents=True, exist_ok=True)
-            logger.info(f"🐛 DEBUG MODE ENABLED - Writing results to: {self.debug_run_dir}")
+        self.result_cache = ResultCache()
+
+        # Setup experiment mode
+        self.experiment_manager: ExperimentManager | None = None
+        if self.experiment_mode:
+            run_number = ExperimentManager.get_next_run_number(
+                experiment_name, experiment_output_dir
+            )
+            self.experiment_manager = ExperimentManager(
+                experiment_name=experiment_name,
+                experiment_output_dir=experiment_output_dir,
+                run_number=run_number,
+            )
+            logger.info("🧪 EXPERIMENT MODE ENABLED")
+            logger.info(f"   Experiment: {experiment_name}")
+            logger.info(f"   Run: {run_number}")
 
         logger.info(f"Initialized SimulationWorker '{worker_id}' in group '{consumer_group}'")
         logger.info(f"Subscribed to topics: {workload_topic}, {topology_topic}")
         logger.info(f"Window size: {window_size_minutes} minutes")
-        if debug_mode:
-            logger.info(f"Debug output: {self.debug_run_dir}")
 
     def _process_window(self, window: TimeWindow) -> None:
         """Process a closed window by running simulation.
@@ -135,35 +158,34 @@ class SimulationWorker:
         # Get all tasks from window 0 up to this window (cumulative)
         all_tasks = self.window_manager.get_all_tasks_up_to_window(window.window_id)
 
-        if len(all_tasks) == 0:
-            logger.info(f"Window {window.window_id} has no cumulative tasks, skipping simulation")
-            return
+        # Use simulated topology (initially same as real topology from first message)
+        topology_to_use = self.simulated_topology if self.simulated_topology else window.topology
 
-        logger.info(
-            f"Running simulation for window {window.window_id} "
-            f"with {len(all_tasks)} cumulative tasks ({len(window.tasks)} in this window)"
-        )
-
-        # Run simulation with real topology
-        real_results = self._run_simulation(
-            window_id=window.window_id,
-            tasks=all_tasks,
-            topology=window.topology,
-            topology_type="real",
-        )
-
-        # Run simulation with simulated topology (if different from real)
-        simulated_results = None
-        if self.simulated_topology and self.simulated_topology != window.topology:
+        # Check if we can reuse cached results (same topology + same task count)
+        cached_results = self.result_cache.get_cached_results()
+        if self.result_cache.can_reuse(topology_to_use, len(all_tasks)) and cached_results:
+            logger.info(
+                f"♻️  Reusing cached results for window {window.window_id} "
+                f"(topology unchanged, {len(all_tasks)} cumulative tasks)"
+            )
+            simulated_results = cached_results
+        else:
+            # Run new simulation
+            logger.info(
+                f"Running simulation for window {window.window_id} "
+                f"with {len(all_tasks)} cumulative tasks ({len(window.tasks)} new)"
+            )
             simulated_results = self._run_simulation(
                 window_id=window.window_id,
                 tasks=all_tasks,
-                topology=self.simulated_topology,
+                topology=topology_to_use,
                 topology_type="simulated",
             )
+            # Update cache with new results
+            self.result_cache.update(topology_to_use, len(all_tasks), simulated_results)
 
-        # Publish results
-        self._publish_results(window, real_results, simulated_results, all_tasks)
+        # Handle results (write to parquet in experiment mode, or publish to Kafka)
+        self._handle_results(window, simulated_results, all_tasks)
 
         self.windows_simulated += 1
 
@@ -220,92 +242,31 @@ class SimulationWorker:
             logger.error(f"Error running simulation ({topology_type}): {e}", exc_info=True)
             return SimulationResults(status="error", error=str(e))
 
-    def _publish_results(
+    def _handle_results(
         self,
         window: TimeWindow,
-        real_results: SimulationResults,
-        simulated_results: SimulationResults | None,
+        simulated_results: SimulationResults,
         cumulative_tasks: list[Task],
     ) -> None:
-        """Publish simulation results to Kafka.
+        """Handle simulation results (write to parquet in experiment mode, or publish to Kafka).
 
         Args:
             window: The window that was simulated
-            real_results: Results from real topology simulation
-            simulated_results: Results from simulated topology (optional)
+            simulated_results: Results from simulated topology simulation
             cumulative_tasks: All tasks from window 0 up to this window (used in simulation)
         """
-        message = {
-            "worker_id": self.worker_id,
-            "window_id": window.window_id,
-            "window_start": window.window_start.isoformat(),
-            "window_end": window.window_end.isoformat(),
-            "task_count": len(window.tasks),
-            "timestamp": datetime.utcnow().isoformat(),
-            "real_topology": real_results.model_dump(mode="json"),
-        }
-
-        if simulated_results:
-            message["simulated_topology"] = simulated_results.model_dump(mode="json")
-
-        # Debug mode: write to file
-        if self.debug_mode:
+        # Experiment mode: write results parquet, OpenDC I/O files, and update plot
+        if self.experiment_mode and self.experiment_manager:
             try:
-                import json
-
-                # Create window-specific directory
-                window_dir = self.debug_run_dir / f"window_{window.window_id:04d}"
-                window_dir.mkdir(parents=True, exist_ok=True)
-
-                # Write simulation results
-                results_file = window_dir / "results.json"
-                with open(results_file, "w") as f:
-                    json.dump(message, f, indent=2)
-
-                # Write tasks/workload (minimal data without fragments)
-                tasks_file = window_dir / "tasks.json"
-                window_tasks_minimal = [
-                    {"id": task.id, "submission_time": task.submission_time.isoformat()}
-                    for task in window.tasks
-                ]
-                cumulative_tasks_minimal = [
-                    {"id": task.id, "submission_time": task.submission_time.isoformat()}
-                    for task in cumulative_tasks
-                ]
-
-                with open(tasks_file, "w") as f:
-                    json.dump(
-                        {
-                            "window_id": window.window_id,
-                            "window_start": window.window_start.isoformat(),
-                            "window_end": window.window_end.isoformat(),
-                            "window_task_count": len(window.tasks),
-                            "cumulative_task_count": len(cumulative_tasks),
-                            "window_tasks": window_tasks_minimal,
-                            "cumulative_tasks": cumulative_tasks_minimal,
-                        },
-                        f,
-                        indent=2,
-                    )
-
-                logger.info(
-                    f"🐛 Wrote window {window.window_id} debug output to {window_dir}/ "
-                    f"({len(window.tasks)} new tasks, {len(cumulative_tasks)} cumulative)"
+                self.experiment_manager.write_simulation_results(
+                    window, simulated_results, cumulative_tasks
                 )
-            except Exception as e:
-                logger.error(f"Failed to write debug output: {e}", exc_info=True)
-        # Normal mode: publish to Kafka
-        else:
-            try:
-                send_message(
-                    self.producer,
-                    topic=self.results_topic,
-                    message=message,
-                    key=str(window.window_id),
+                self.experiment_manager.archive_opendc_files(
+                    window, simulated_results, cumulative_tasks
                 )
-                logger.info(f"📤 Published results for window {window.window_id}")
+                self.experiment_manager.generate_power_plot()
             except Exception as e:
-                logger.error(f"Failed to publish results: {e}", exc_info=True)
+                logger.error(f"Failed to write experiment results: {e}", exc_info=True)
 
     def _process_workload_message(self, message_data: dict[str, Any]) -> None:
         """Process a workload message (task or heartbeat) from Kafka.
@@ -345,6 +306,26 @@ class SimulationWorker:
 
         except Exception as e:
             logger.error(f"Error processing workload message: {e}", exc_info=True)
+
+    def _process_power_message(self, message_data: dict[str, Any]) -> None:
+        """Process a power consumption message from Kafka.
+
+        Args:
+            message_data: Raw message data from Kafka (dc.power)
+        """
+        if not self.experiment_manager:
+            return
+
+        try:
+            timestamp_str = message_data.get("timestamp")
+            power_draw = message_data.get("power_draw")
+
+            if timestamp_str and power_draw is not None:
+                timestamp = datetime.fromisoformat(timestamp_str)
+                self.experiment_manager.record_actual_power(timestamp, power_draw)
+
+        except Exception as e:
+            logger.error(f"Error processing power message: {e}", exc_info=True)
 
     def _process_topology_message(self, message_data: dict[str, Any]) -> None:
         """Process a topology message from Kafka.
@@ -389,6 +370,8 @@ class SimulationWorker:
                 self._process_workload_message(value)
             elif topic == self.topology_topic:
                 self._process_topology_message(value)
+            elif topic == self.power_topic:
+                self._process_power_message(value)
             else:
                 logger.warning(f"Unknown topic: {topic}")
 
@@ -432,6 +415,7 @@ def main():
     kafka_bootstrap_servers = config.kafka.bootstrap_servers
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
+    power_topic = config.kafka.topics["power"].name
     results_topic = config.kafka.topics["results"].name
 
     # Get simulation configuration
@@ -440,6 +424,7 @@ def main():
     logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
     logger.info(f"Workload topic: {workload_topic}")
     logger.info(f"Topology topic: {topology_topic}")
+    logger.info(f"Power topic: {power_topic}")
     logger.info(f"Results topic: {results_topic}")
     logger.info(f"Window size: {window_size_minutes} minutes")
 
@@ -451,11 +436,22 @@ def main():
     debug_mode = os.getenv("DEBUG_MODE", "false").lower() in ("true", "1", "yes")
     debug_output_dir = os.getenv("DEBUG_OUTPUT_DIR", "/app/output")
 
+    # Experiment mode configuration
+    experiment_mode = config.simulation.experiment_mode
+    experiment_name = os.getenv("EXPERIMENT_NAME", "default")
+    experiment_output_dir = os.getenv("EXPERIMENT_OUTPUT_DIR", "/app/output")
+
     if debug_mode:
         logger.info("=" * 60)
         logger.info("🐛 DEBUG MODE ENABLED")
-        logger.info(f"   Results will be written to: {debug_output_dir}")
-        logger.info("   Kafka publishing: DISABLED")
+        logger.info(f"   Debug files will be written to: {debug_output_dir}")
+        logger.info("=" * 60)
+
+    if experiment_mode:
+        logger.info("=" * 60)
+        logger.info("🧪 EXPERIMENT MODE ENABLED")
+        logger.info(f"   Experiment: {experiment_name}")
+        logger.info("   Results will be written to parquet")
         logger.info("=" * 60)
 
     # Wait for Kafka to be ready
@@ -470,9 +466,13 @@ def main():
                 worker_id=worker_id,
                 workload_topic=workload_topic,
                 topology_topic=topology_topic,
+                power_topic=power_topic,
                 results_topic=results_topic,
                 window_size_minutes=window_size_minutes,
                 consumer_group=consumer_group,
+                experiment_mode=experiment_mode,
+                experiment_name=experiment_name,
+                experiment_output_dir=experiment_output_dir,
                 debug_mode=debug_mode,
                 debug_output_dir=debug_output_dir,
             )

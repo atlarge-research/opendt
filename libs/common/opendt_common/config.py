@@ -47,6 +47,10 @@ class SimConfig(BaseModel):
     heartbeat_cadence_minutes: int = Field(
         default=1, description="Cadence in simulation minutes for workload heartbeat messages", gt=0
     )
+    experiment_mode: bool = Field(
+        default=False,
+        description="Enable experiment mode (write results to parquet instead of Kafka)",
+    )
 
     @field_validator("speed_factor")
     @classmethod

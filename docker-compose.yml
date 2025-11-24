@@ -132,9 +132,12 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
-      # Debug mode: set to "true" to write results to files instead of Kafka
+      # Debug mode: set to "true" to write debug files alongside main output
       DEBUG_MODE: ${DEBUG_MODE:-false}
       DEBUG_OUTPUT_DIR: /app/output
+      # Experiment mode: experiment name (used for output directory)
+      EXPERIMENT_NAME: ${EXPERIMENT_NAME:-default}
+      EXPERIMENT_OUTPUT_DIR: /app/output
     volumes:
       # Mount source code for hot reload
       - ./services/sim-worker:/app/services/sim-worker

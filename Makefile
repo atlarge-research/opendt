@@ -1,4 +1,4 @@
-.PHONY: up down clean-volumes restart build logs help run test setup install-dev clean-env verify
+.PHONY: up down clean-volumes restart build logs help run test setup install-dev clean-env verify experiment experiment-down
 
 # Default target
 .DEFAULT_GOAL := help
@@ -76,6 +76,60 @@ up-debug: clean-volumes
 
 ## run: Alias for 'up' (accepts config parameter)
 run: up
+
+## experiment: Run an experiment (make experiment name=<experiment_name>)
+experiment: clean-volumes
+	@if [ -z "$(name)" ]; then \
+		echo "❌ Error: Please provide experiment name: make experiment name=my_experiment"; \
+		exit 1; \
+	fi
+	@if [ ! -f "config/experiments/$(name).yaml" ]; then \
+		echo "❌ Error: Experiment config not found: config/experiments/$(name).yaml"; \
+		echo ""; \
+		echo "Available experiments:"; \
+		ls -1 config/experiments/*.yaml 2>/dev/null | xargs -n 1 basename | sed 's/.yaml//' | sed 's/^/  - /' || echo "  (none)"; \
+		exit 1; \
+	fi
+	@echo "🧪 Starting experiment: $(name)"
+	@echo "📋 Using config: config/experiments/$(name).yaml"
+	@mkdir -p output/$(name)
+	EXPERIMENT_NAME=$(name) CONFIG_PATH=./config/experiments/$(name).yaml docker compose up -d
+	@echo "✅ Experiment started!"
+	@echo ""
+	@echo "Experiment: $(name)"
+	@echo "Output: output/$(name)/"
+	@echo ""
+	@echo "View logs: make logs-sim-worker"
+
+## experiment-debug: Run an experiment with debug mode enabled (make experiment-debug name=<experiment_name>)
+experiment-debug: clean-volumes
+	@if [ -z "$(name)" ]; then \
+		echo "❌ Error: Please provide experiment name: make experiment-debug name=my_experiment"; \
+		exit 1; \
+	fi
+	@if [ ! -f "config/experiments/$(name).yaml" ]; then \
+		echo "❌ Error: Experiment config not found: config/experiments/$(name).yaml"; \
+		echo ""; \
+		echo "Available experiments:"; \
+		ls -1 config/experiments/*.yaml 2>/dev/null | xargs -n 1 basename | sed 's/.yaml//' | sed 's/^/  - /' || echo "  (none)"; \
+		exit 1; \
+	fi
+	@echo "🧪🐛 Starting experiment with DEBUG mode: $(name)"
+	@echo "📋 Using config: config/experiments/$(name).yaml"
+	@mkdir -p output/$(name)
+	EXPERIMENT_NAME=$(name) DEBUG_MODE=true CONFIG_PATH=./config/experiments/$(name).yaml docker compose up -d
+	@echo "✅ Experiment started in debug mode!"
+	@echo ""
+	@echo "Experiment: $(name)"
+	@echo "Output: output/$(name)/"
+	@echo "Debug files: output/$(name)/run_*/"
+	@echo ""
+	@echo "View logs: make logs-sim-worker"
+
+## experiment-down: Stop experiment services
+experiment-down:
+	docker compose down
+	@echo "✅ Experiment stopped"
 
 ## down: Stop all containers
 down:

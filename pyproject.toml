@@ -8,18 +8,19 @@ dependencies = [
     "pandas>=2.0.0",
     "pyarrow>=13.0.0",
     "pyyaml>=6.0.0",
-    
+    "matplotlib>=3.7.0",
+
     # Kafka (used by most services)
     "kafka-python>=2.0.2",
-    
+
     # Validation
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
-    
+
     # Web framework (for API service)
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    
+
     # Database (for services that need it)
     "psycopg2-binary>=2.9.0",
     "sqlalchemy>=2.0.0",

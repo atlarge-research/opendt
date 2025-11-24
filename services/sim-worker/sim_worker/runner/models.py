@@ -41,6 +41,14 @@ class SimulationResults(BaseModel):
         default_factory=list,
         description="Timeseries of CPU utilization measurements (0-1) over simulation time",
     )
+    
+    # File paths (for experiment mode)
+    temp_dir: str | None = Field(
+        default=None, description="Temporary directory containing OpenDC input files"
+    )
+    opendc_output_dir: str | None = Field(
+        default=None, description="Directory where OpenDC wrote its output files"
+    )
 
     class Config:
         """Pydantic config."""

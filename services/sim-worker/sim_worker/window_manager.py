@@ -218,6 +218,9 @@ class WindowManager:
     def close_windows_before(self, timestamp: datetime) -> list[TimeWindow]:
         """Close all open windows that end before the given timestamp.
 
+        Creates intermediate empty windows if needed (e.g., if a heartbeat arrives
+        much later than the last task, all intermediate windows are created and closed).
+
         Returns closed windows in chronological order (window_id 0, 1, 2, ...).
 
         Args:
@@ -226,20 +229,36 @@ class WindowManager:
         Returns:
             List of closed windows in chronological order
         """
-        closed_windows = []
+        # If no windows exist yet, nothing to close
+        if not self.windows or self.first_task_time is None:
+            return []
 
-        # Find all open windows that should be closed
+        # Calculate the latest window ID that should exist before this timestamp
+        time_since_first = timestamp - self.first_task_time
+        latest_window_id = int(time_since_first.total_seconds() // (self.window_size_minutes * 60))
+
+        # Create any missing intermediate windows
+        # (e.g., if last window is 1 but heartbeat is at window 6, create windows 2-6)
+        existing_window_ids = set(self.windows.keys())
+        max_existing_id = max(existing_window_ids) if existing_window_ids else -1
+
+        for window_id in range(max_existing_id + 1, latest_window_id + 1):
+            window_start = self.first_task_time + timedelta(
+                minutes=window_id * self.window_size_minutes
+            )
+            # Only create if the window ends before or at the timestamp
+            window_end = window_start + self.window_size
+            if window_end <= timestamp:
+                self._create_window(window_id=window_id, start_time=window_start)
+
+        # Now close all windows that end before the timestamp
+        closed_windows = []
         for window_id in sorted(self.windows.keys()):
             window = self.windows[window_id]
 
             if not window.is_closed and window.window_end <= timestamp:
                 window.close()
                 closed_windows.append(window)
-                logger.info(
-                    f"Closed window {window_id} "
-                    f"[{window.window_start} - {window.window_end}] "
-                    f"with {len(window.tasks)} tasks"
-                )
 
         return closed_windows
 

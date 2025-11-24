@@ -161,12 +161,14 @@ class OpenDCRunner:
         workload_path: Path,
         topology_path: Path,
         output_path: Path,
+        opendc_output_folder: str = "/app/output",
     ) -> None:
         """Create experiment.json file for OpenDC."""
         experiment = {
             "name": experiment_name,
             "topologies": [{"pathToFile": str(topology_path)}],
             "workloads": [{"pathToFile": str(workload_path), "type": "ComputeWorkload"}],
+            "outputFolder": opendc_output_folder,
             "exportModels": [
                 {
                     "exportInterval": 150,
@@ -181,7 +183,7 @@ class OpenDCRunner:
         with open(output_path, "w") as f:
             json.dump(experiment, f, indent=2)
 
-        logger.debug(f"Created experiment.json at {output_path}")
+        logger.debug(f"Created experiment.json at {output_path} (output: {opendc_output_folder})")
 
     def run_simulation(
         self,
@@ -219,8 +221,11 @@ class OpenDCRunner:
             self._create_tasks_parquet(tasks, workload_dir / "tasks.parquet")
             self._create_fragments_parquet(tasks, workload_dir / "fragments.parquet")
             self._create_topology_json(topology, topology_file)
+            
+            # Configure OpenDC to write to mounted output directory
+            opendc_output_folder = "/app/output"
             self._create_experiment_json(
-                experiment_name, workload_dir, topology_file, experiment_file
+                experiment_name, workload_dir, topology_file, experiment_file, opendc_output_folder
             )
 
             # Run OpenDC
@@ -238,7 +243,13 @@ class OpenDCRunner:
                 return SimulationResults(status="error", error=error_msg)
 
             # Parse results
-            results = self._parse_results(experiment_name)
+            results = self._parse_results(experiment_name, opendc_output_folder)
+            results.temp_dir = str(tmp_dir)
+            
+            # Store the actual OpenDC output directory path (in mounted volume)
+            opendc_output_dir = Path(opendc_output_folder) / experiment_name / "raw-output" / "0" / "seed=0"
+            results.opendc_output_dir = str(opendc_output_dir)
+            
             logger.info(f"Simulation complete: {experiment_name}")
             return results
 
@@ -282,9 +293,9 @@ class OpenDCRunner:
 
         return result
 
-    def _parse_results(self, experiment_name: str) -> SimulationResults:
+    def _parse_results(self, experiment_name: str, opendc_output_folder: str = "/app/output") -> SimulationResults:
         """Parse OpenDC output files to extract metrics and timeseries data."""
-        output_dir = Path("output") / experiment_name / "raw-output" / "0" / "seed=0"
+        output_dir = Path(opendc_output_folder) / experiment_name / "raw-output" / "0" / "seed=0"
 
         logger.debug(f"Looking for output in: {output_dir}")
 

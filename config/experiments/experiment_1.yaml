@@ -1,0 +1,42 @@
+workload: "SURF"
+
+simulation:
+  # 1.0 = Realtime, -1 = Max Speed
+  speed_factor: 300
+  window_size_minutes: 15
+  heartbeat_cadence_minutes: 1
+  # Experiment mode: write results to parquet instead of Kafka
+  experiment_mode: true
+
+features:
+  calibration_enabled: false
+
+kafka:
+  bootstrap_servers: "kafka:29092"
+  topics:
+    workload:
+      name: "dc.workload"
+      config:
+        # 24 hours
+        retention.ms: "86400000"
+    power:
+      name: "dc.power"
+      config:
+        # 1 hour
+        retention.ms: "3600000"
+    topology:
+      name: "dc.topology"
+      config:
+        # Compacted topic - keeps latest topology
+        cleanup.policy: "compact"
+        # Keep at least 1 hour
+        min.compaction.lag.ms: "3600000"
+    system:
+      name: "sys.config"
+      config:
+        cleanup.policy: "compact"
+    results:
+      name: "sim.results"
+      config:
+        # 7 days retention for simulation results
+        retention.ms: "604800000"
