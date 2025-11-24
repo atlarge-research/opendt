@@ -216,34 +216,23 @@ class ExperimentManager:
             if input_file.exists():
                 shutil.copy2(input_file, input_dir / input_file.name)
 
-        # Copy OpenDC output parquet files from the actual output directory
+        # Copy entire OpenDC output directory from temp to archive
         output_dir_src = (
             Path(simulated_results.opendc_output_dir)
             if simulated_results.opendc_output_dir
             else None
         )
 
-        copied_count = 0
         if output_dir_src and output_dir_src.exists():
-            output_files = [
-                "powerSource.parquet",
-                "host.parquet",
-                "service.parquet",
-            ]
+            # Copy all files from OpenDC output directory
+            for item in output_dir_src.iterdir():
+                if item.is_file():
+                    shutil.copy2(item, output_dir_dest / item.name)
+                    logger.debug(f"Copied {item.name} to {output_dir_dest}")
 
-            for filename in output_files:
-                output_file = output_dir_src / filename
-                if output_file.exists():
-                    dest_file = output_dir_dest / filename
-                    shutil.copy2(output_file, dest_file)
-                    copied_count += 1
-                    logger.debug(f"Copied {filename} from {output_file} to {dest_file}")
-                else:
-                    logger.warning(f"OpenDC output file not found: {output_file}")
+            logger.debug(f"Copied OpenDC output directory: {output_dir_src} -> {output_dir_dest}")
         else:
             logger.warning(f"OpenDC output directory not found or not set: {output_dir_src}")
-
-        logger.debug(f"Copied {copied_count}/3 OpenDC output parquet files")
 
         # Create output/summary.json with power draw results and summary stats
         output_summary = {

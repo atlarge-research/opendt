@@ -161,7 +161,7 @@ class OpenDCRunner:
         workload_path: Path,
         topology_path: Path,
         output_path: Path,
-        opendc_output_folder: str = "/app/output",
+        opendc_output_folder: str,
     ) -> None:
         """Create experiment.json file for OpenDC."""
         experiment = {
@@ -221,9 +221,9 @@ class OpenDCRunner:
             self._create_tasks_parquet(tasks, workload_dir / "tasks.parquet")
             self._create_fragments_parquet(tasks, workload_dir / "fragments.parquet")
             self._create_topology_json(topology, topology_file)
-            
-            # Configure OpenDC to write to mounted output directory
-            opendc_output_folder = "/app/output"
+
+            # Configure OpenDC to write to temp directory
+            opendc_output_folder = str(tmp_dir / "output")
             self._create_experiment_json(
                 experiment_name, workload_dir, topology_file, experiment_file, opendc_output_folder
             )
@@ -245,11 +245,13 @@ class OpenDCRunner:
             # Parse results
             results = self._parse_results(experiment_name, opendc_output_folder)
             results.temp_dir = str(tmp_dir)
-            
-            # Store the actual OpenDC output directory path (in mounted volume)
-            opendc_output_dir = Path(opendc_output_folder) / experiment_name / "raw-output" / "0" / "seed=0"
+
+            # Store the actual OpenDC output directory path (in temp directory)
+            opendc_output_dir = (
+                Path(opendc_output_folder) / experiment_name / "raw-output" / "0" / "seed=0"
+            )
             results.opendc_output_dir = str(opendc_output_dir)
-            
+
             logger.info(f"Simulation complete: {experiment_name}")
             return results
 
@@ -293,7 +295,9 @@ class OpenDCRunner:
 
         return result
 
-    def _parse_results(self, experiment_name: str, opendc_output_folder: str = "/app/output") -> SimulationResults:
+    def _parse_results(
+        self, experiment_name: str, opendc_output_folder: str = "/app/output"
+    ) -> SimulationResults:
         """Parse OpenDC output files to extract metrics and timeseries data."""
         output_dir = Path(opendc_output_folder) / experiment_name / "raw-output" / "0" / "seed=0"
 

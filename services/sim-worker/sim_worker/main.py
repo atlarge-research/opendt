@@ -39,6 +39,7 @@ class SimulationWorker:
         worker_id: str,
         workload_topic: str,
         topology_topic: str,
+        sim_topology_topic: str,
         power_topic: str,
         results_topic: str,
         window_size_minutes: int,
@@ -56,6 +57,8 @@ class SimulationWorker:
             worker_id: Unique identifier for this worker
             workload_topic: Kafka topic name for workload events (dc.workload)
             topology_topic: Kafka topic name for topology updates (dc.topology)
+            sim_topology_topic: Kafka topic name for simulated topology updates (sim.topology)
+            power_topic: Kafka topic name for power telemetry (dc.power)
             results_topic: Kafka topic name for simulation results
             window_size_minutes: Size of time windows in minutes
             consumer_group: Kafka consumer group ID
@@ -69,6 +72,7 @@ class SimulationWorker:
         self.consumer_group = consumer_group
         self.workload_topic = workload_topic
         self.topology_topic = topology_topic
+        self.sim_topology_topic = sim_topology_topic
         self.power_topic = power_topic
         self.results_topic = results_topic
         self.debug_mode = debug_mode
@@ -76,8 +80,9 @@ class SimulationWorker:
         self.experiment_mode = experiment_mode
         self.experiment_name = experiment_name
 
-        # Initialize Kafka consumer (subscribe to workload, topology, and power in experiment mode)
-        topics = [workload_topic, topology_topic]
+        # Initialize Kafka consumer
+        # Subscribe to: workload, real topology, simulated topology, and power (experiment mode)
+        topics = [workload_topic, topology_topic, sim_topology_topic]
         if self.experiment_mode:
             topics.append(power_topic)
 
@@ -129,8 +134,9 @@ class SimulationWorker:
             logger.info(f"   Experiment: {experiment_name}")
             logger.info(f"   Run: {run_number}")
 
-        logger.info(f"Initialized SimulationWorker '{worker_id}' in group '{consumer_group}'")
-        logger.info(f"Subscribed to topics: {workload_topic}, {topology_topic}")
+        logger.info(f"Initialized SimulationWorker '{worker_id}'")
+        logger.info(f"Consumer group: {consumer_group}")
+        logger.info(f"Subscribed: {workload_topic}, {topology_topic}, {sim_topology_topic}")
         logger.info(f"Window size: {window_size_minutes} minutes")
 
     def _process_window(self, window: TimeWindow) -> None:
@@ -356,6 +362,37 @@ class SimulationWorker:
         except Exception as e:
             logger.error(f"Error processing topology message: {e}", exc_info=True)
 
+    def _process_topology_update_message(self, message_data: dict[str, Any]) -> None:
+        """Process a simulated topology update message from Kafka.
+
+        This is called when an operator updates the simulated topology via the API.
+        The cache is cleared to force new simulations with the updated topology.
+
+        Args:
+            message_data: Raw message data from Kafka (raw Topology, not TopologySnapshot)
+        """
+        try:
+            # Parse into Topology model (not TopologySnapshot)
+            topology = Topology(**message_data)
+
+            logger.info(
+                f"🔄 Received simulated topology update: {len(topology.clusters)} cluster(s)"
+            )
+
+            # Update simulated topology
+            self.simulated_topology = topology
+
+            # Clear result cache since topology changed
+            self.result_cache.clear()
+            logger.info("🗑️  Cleared result cache due to topology update")
+
+            # Log update details
+            total_hosts = sum(host.count for cluster in topology.clusters for host in cluster.hosts)
+            logger.info(f"   Total hosts: {total_hosts}")
+
+        except Exception as e:
+            logger.error(f"Error processing topology update message: {e}", exc_info=True)
+
     def process_message(self, message):
         """Process a single Kafka message.
 
@@ -370,6 +407,8 @@ class SimulationWorker:
                 self._process_workload_message(value)
             elif topic == self.topology_topic:
                 self._process_topology_message(value)
+            elif topic == self.sim_topology_topic:
+                self._process_topology_update_message(value)
             elif topic == self.power_topic:
                 self._process_power_message(value)
             else:
@@ -415,6 +454,7 @@ def main():
     kafka_bootstrap_servers = config.kafka.bootstrap_servers
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
+    sim_topology_topic = config.kafka.topics["sim_topology"].name
     power_topic = config.kafka.topics["power"].name
     results_topic = config.kafka.topics["results"].name
 
@@ -424,6 +464,7 @@ def main():
     logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
     logger.info(f"Workload topic: {workload_topic}")
     logger.info(f"Topology topic: {topology_topic}")
+    logger.info(f"Simulated topology topic: {sim_topology_topic}")
     logger.info(f"Power topic: {power_topic}")
     logger.info(f"Results topic: {results_topic}")
     logger.info(f"Window size: {window_size_minutes} minutes")
@@ -451,7 +492,7 @@ def main():
         logger.info("=" * 60)
         logger.info("🧪 EXPERIMENT MODE ENABLED")
         logger.info(f"   Experiment: {experiment_name}")
-        logger.info("   Results will be written to parquet")
+        logger.info(f"   Results will be written to: {debug_output_dir}")
         logger.info("=" * 60)
 
     # Wait for Kafka to be ready
@@ -466,6 +507,7 @@ def main():
                 worker_id=worker_id,
                 workload_topic=workload_topic,
                 topology_topic=topology_topic,
+                sim_topology_topic=sim_topology_topic,
                 power_topic=power_topic,
                 results_topic=results_topic,
                 window_size_minutes=window_size_minutes,

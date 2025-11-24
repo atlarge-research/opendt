@@ -5,6 +5,7 @@ simulation:
   speed_factor: 300
   window_size_minutes: 5
   heartbeat_cadence_minutes: 1
+  experiment_mode: false
 
 features:
   calibration_enabled: false
@@ -33,6 +34,12 @@ kafka:
       name: "sys.config"
       config:
         cleanup.policy: "compact"
+    sim_topology:
+      name: "sim.topology"
+      config:
+        # Compacted topic - keeps latest simulated topology
+        cleanup.policy: "compact"
+        min.compaction.lag.ms: "0"
     results:
       name: "sim.results"
       config:

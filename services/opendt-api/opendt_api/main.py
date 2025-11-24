@@ -2,16 +2,17 @@
 
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from typing import Annotated
 
-# Import shared models from common library
-from opendt_common import Task, Fragment, Consumption
+from fastapi import Body, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from opendt_common import load_config_from_env
+from opendt_common.models.topology import CPU, Cluster, CPUPowerModel, Host, Memory, Topology
 from opendt_common.utils import get_kafka_producer
+from opendt_common.utils.kafka import send_message
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,15 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
     # Startup
     logger.info("Starting OpenDT API service...")
-    
+
+    # Load configuration
+    try:
+        app.state.config = load_config_from_env()
+        logger.info(f"Configuration loaded for workload: {app.state.config.workload}")
+    except Exception as e:
+        logger.error(f"Failed to load configuration: {e}")
+        app.state.config = None
+
     # Initialize Kafka producer (stored in app state for reuse)
     try:
         app.state.kafka_producer = get_kafka_producer()
@@ -29,12 +38,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize Kafka producer: {e}")
         app.state.kafka_producer = None
-    
-    # TODO: Initialize database connection
-    # TODO: Run database migrations
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down OpenDT API service...")
     if app.state.kafka_producer:
@@ -62,83 +68,129 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-async def root():
-    """Root endpoint."""
-    return {
-        "service": "OpenDT API",
-        "version": "0.1.0",
-        "status": "running",
-        "docs": "/docs",
-    }
-
-
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
     kafka_status = "connected" if app.state.kafka_producer else "disconnected"
-    
+    config_status = "loaded" if app.state.config else "not loaded"
+
     return {
         "status": "healthy",
         "kafka": kafka_status,
-        # TODO: Add database health check
-        # "database": db_status,
+        "config": config_status,
     }
 
 
 # ============================================================================
-# EXAMPLE ENDPOINTS (Using Shared Models)
+# TOPOLOGY MANAGEMENT
 # ============================================================================
 
-@app.get("/api/tasks", response_model=list[Task])
-async def list_tasks():
-    """List all tasks (example endpoint)."""
-    # TODO: Fetch from database
-    return []
 
-
-@app.post("/api/tasks", response_model=Task)
-async def create_task(task: Task):
-    """Create a new task (example endpoint)."""
-    logger.info(f"Creating task: {task.id}")
-    
-    # TODO: Save to database
-    
-    # Send to Kafka (example)
-    if app.state.kafka_producer:
-        from opendt_common.utils.kafka import send_message
-        send_message(
-            app.state.kafka_producer,
-            topic="tasks",
-            message=task.model_dump(mode="json"),
-            key=task.id
+# Default topology for Swagger UI (matches SURF data)
+DEFAULT_TOPOLOGY = Topology(
+    clusters=[
+        Cluster(
+            name="A01",
+            hosts=[
+                Host(
+                    name="A01",
+                    count=277,
+                    cpu=CPU(coreCount=16, coreSpeed=2100.0),
+                    memory=Memory(memorySize=128000000),  # ~128 MB
+                    cpuPowerModel=CPUPowerModel(
+                        modelType="asymptotic",
+                        power=400.0,
+                        idlePower=32.0,
+                        maxPower=180.0,
+                        asymUtil=0.3,
+                        dvfs=False,
+                    ),
+                )
+            ],
         )
-    
-    return task
+    ]
+)
+
+# Example for OpenAPI docs
+DEFAULT_TOPOLOGY_EXAMPLE = DEFAULT_TOPOLOGY.model_dump(mode="json")
 
 
-@app.get("/api/fragments", response_model=list[Fragment])
-async def list_fragments():
-    """List all fragments (example endpoint)."""
-    # TODO: Fetch from database
-    return []
+@app.put("/api/topology")
+async def update_topology(
+    topology: Annotated[
+        Topology,
+        Body(
+            description="Datacenter topology configuration",
+            openapi_examples={
+                "default": {
+                    "summary": "SURF datacenter topology",
+                    "description": "Default SURF topology: 277 hosts, 16 cores each @ 2.1 GHz",
+                    "value": DEFAULT_TOPOLOGY_EXAMPLE,
+                }
+            },
+        ),
+    ] = DEFAULT_TOPOLOGY,
+):
+    """Update the simulated datacenter topology.
 
+    This endpoint validates the topology structure and publishes it to Kafka.
+    The sim-worker will pick it up and use it for future simulations.
 
-@app.get("/api/consumption", response_model=list[Consumption])
-async def list_consumption():
-    """List consumption data (example endpoint)."""
-    # TODO: Fetch from database
-    return []
+    Args:
+        topology: Datacenter topology configuration with cluster details
 
+    Returns:
+        Success confirmation with topology details
 
-# ============================================================================
-# TODO: Add more endpoints for:
-# - Simulations management
-# - Workload submission
-# - Results querying
-# - Monitoring & metrics
-# ============================================================================
+    Raises:
+        HTTPException: 500 if Kafka producer is not available
+        HTTPException: 500 if publishing to Kafka fails
+    """
+    # Check if Kafka producer is available
+    if not app.state.kafka_producer:
+        logger.error("Kafka producer not initialized")
+        raise HTTPException(status_code=500, detail="Kafka producer not available")
+
+    # Check if config is loaded (to get topic name)
+    if not app.state.config:
+        logger.error("Configuration not loaded")
+        raise HTTPException(status_code=500, detail="Configuration not loaded")
+
+    # Topology already validated by Pydantic
+    logger.info(f"Topology validated: {len(topology.clusters)} cluster(s)")
+
+    # Get sim.topology topic name from config
+    sim_topology_topic = app.state.config.kafka.topics.get("sim_topology")
+    if not sim_topology_topic:
+        logger.error("sim.topology topic not configured")
+        raise HTTPException(status_code=500, detail="sim.topology topic not configured")
+
+    topic_name = sim_topology_topic.name
+
+    # Publish to sim.topology Kafka topic with compacted key
+    try:
+        send_message(
+            producer=app.state.kafka_producer,
+            topic=topic_name,
+            message=topology.model_dump(mode="json"),
+            key="datacenter",
+        )
+        logger.info(f"Topology published to {topic_name}")
+    except Exception as e:
+        logger.error(f"Failed to publish topology to Kafka: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to publish topology: {e}") from e
+
+    return {
+        "status": "updated",
+        "message": f"Topology published to {topic_name}",
+        "clusters": len(topology.clusters),
+        "total_hosts": topology.total_host_count(),
+        "total_cores": topology.total_core_count(),
+        "topic": topic_name,
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

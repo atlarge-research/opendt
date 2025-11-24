@@ -92,3 +92,8 @@ class ResultCache:
         topology_hash = self._compute_topology_hash(topology)
         self.last_state = SimulationState(topology_hash=topology_hash, task_count=task_count)
         self.last_results = results
+
+    def clear(self) -> None:
+        """Clear the cache (e.g., when topology changes)."""
+        self.last_state = None
+        self.last_results = None
