@@ -21,6 +21,13 @@ kafka:
       config:
         # 1 hour
         retention.ms: "3600000"
+    topology:
+      name: "dc.topology"
+      config:
+        # Compacted topic - keeps latest topology
+        cleanup.policy: "compact"
+        # Keep at least 1 hour
+        min.compaction.lag.ms: "3600000"
     system:
       name: "sys.config"
       config:

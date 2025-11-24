@@ -117,6 +117,11 @@ class WorkloadContext(BaseModel):
         return self.base_path / self.name / "consumption.parquet"
 
     @property
+    def topology_file(self) -> Path:
+        """Path to topology.json file."""
+        return self.base_path / self.name / "topology.json"
+
+    @property
     def workload_dir(self) -> Path:
         """Path to workload directory."""
         return self.base_path / self.name
@@ -143,6 +148,7 @@ class WorkloadContext(BaseModel):
             "tasks": self.tasks_file.exists(),
             "fragments": self.fragments_file.exists(),
             "consumption": self.consumption_file.exists(),
+            "topology": self.topology_file.exists(),
         }
 
     class Config:

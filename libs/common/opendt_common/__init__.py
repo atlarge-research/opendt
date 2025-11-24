@@ -10,12 +10,14 @@ from opendt_common.config import (
     WorkloadContext,
     load_config_from_env,
 )
-from opendt_common.models import Consumption, Fragment, Task
+from opendt_common.models import Consumption, Fragment, Task, Topology, TopologySnapshot
 
 __all__ = [
     "Task",
     "Fragment",
     "Consumption",
+    "Topology",
+    "TopologySnapshot",
     "AppConfig",
     "SimConfig",
     "FeatureFlags",
