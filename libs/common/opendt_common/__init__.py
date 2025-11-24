@@ -2,15 +2,15 @@
 
 __version__ = "0.1.0"
 
-from opendt_common.models import Task, Fragment, Consumption
 from opendt_common.config import (
     AppConfig,
-    SimConfig,
-    FeatureFlags,
-    WorkloadContext,
     DynamicConfigEvent,
+    FeatureFlags,
+    SimConfig,
+    WorkloadContext,
     load_config_from_env,
 )
+from opendt_common.models import Consumption, Fragment, Task
 
 __all__ = [
     "Task",

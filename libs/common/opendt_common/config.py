@@ -13,6 +13,28 @@ import yaml
 from pydantic import BaseModel, Field, field_validator
 
 
+class KafkaTopicConfig(BaseModel):
+    """Configuration for a single Kafka topic."""
+
+    name: str = Field(..., description="The actual topic name")
+    partitions: int = Field(default=1, description="Number of partitions", gt=0)
+    replication_factor: int = Field(default=1, description="Replication factor", gt=0)
+    config: dict[str, str] = Field(
+        default_factory=dict, description="Key-value pairs for topic properties"
+    )
+
+
+class KafkaConfig(BaseModel):
+    """Kafka infrastructure configuration."""
+
+    bootstrap_servers: str = Field(
+        default="localhost:9092", description="Kafka bootstrap server addresses"
+    )
+    topics: dict[str, KafkaTopicConfig] = Field(
+        default_factory=dict, description="Topic configurations keyed by logical name"
+    )
+
+
 class SimConfig(BaseModel):
     """Simulation configuration parameters."""
 
@@ -133,6 +155,7 @@ class AppConfig(BaseModel):
     workload: str = Field(..., description="Workload name (e.g., 'SURF')")
     simulation: SimConfig = Field(default_factory=lambda: SimConfig())
     features: FeatureFlags = Field(default_factory=lambda: FeatureFlags())
+    kafka: KafkaConfig = Field(default_factory=lambda: KafkaConfig())
 
     def get_workload_context(self, base_path: Path | None = None) -> WorkloadContext:
         """Get workload context with resolved paths.

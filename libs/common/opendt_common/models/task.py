@@ -1,6 +1,7 @@
 """Task model from tasks.parquet."""
 
 from datetime import datetime
+
 # Import Fragment for type hints (avoiding circular import)
 from typing import TYPE_CHECKING
 

@@ -3,8 +3,16 @@
 # Default target
 .DEFAULT_GOAL := help
 
+# =============================================================================
+# Configuration Variables
+# =============================================================================
+
 # Configuration file path (can be overridden: make up config=config/custom.yaml)
 config ?= ./config/default.yaml
+
+# Build flag - set to 'true' to rebuild images without cache
+# Usage: make up build=true
+build ?= false
 
 # Virtual environment detection
 VENV := .venv
@@ -12,13 +20,18 @@ PYTHON := $(VENV)/bin/python
 PYTEST := $(VENV)/bin/pytest
 UV := $(shell command -v uv 2> /dev/null)
 
-## up: Stop containers, delete volumes (clean slate), and start fresh
+## up: Stop containers, delete volumes (clean slate), and start fresh (use build=true to rebuild images)
 up: clean-volumes
 	@echo "🚀 Starting OpenDT services with clean slate..."
 	@echo "📋 Using config: $(config)"
 	@if [ ! -f "$(config)" ]; then \
 		echo "❌ Error: Config file not found: $(config)"; \
 		exit 1; \
+	fi
+	@if [ "$(build)" = "true" ]; then \
+		echo "🔨 Rebuilding Docker images (no cache)..."; \
+		CONFIG_PATH=$(config) docker compose build --no-cache; \
+		echo "✅ Images rebuilt!"; \
 	fi
 	CONFIG_PATH=$(config) docker compose up -d
 	@echo "✅ Services started!"
@@ -62,8 +75,9 @@ build:
 	CONFIG_PATH=$(config) docker compose build --no-cache
 	@echo "✅ Images built!"
 
-## rebuild: Clean, rebuild, and start
-rebuild: clean-volumes build up
+## rebuild: Clean, rebuild (no cache), and start (alias for make up build=true)
+rebuild:
+	@$(MAKE) up build=true
 
 ## setup: Create virtual environment and install all dependencies
 setup:
@@ -167,22 +181,6 @@ shell-postgres:
 ## kafka-topics: List Kafka topics
 kafka-topics:
 	CONFIG_PATH=$(config) docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
-
-## kafka-create-topic: Create a Kafka topic (usage: make kafka-create-topic TOPIC=my-topic)
-kafka-create-topic:
-	@if [ -z "$(TOPIC)" ]; then \
-		echo "❌ Error: TOPIC variable is required. Usage: make kafka-create-topic TOPIC=my-topic"; \
-		exit 1; \
-	fi
-	CONFIG_PATH=$(config) docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --create --topic $(TOPIC) --partitions 3 --replication-factor 1
-
-## kafka-consume: Consume messages from a topic (usage: make kafka-consume TOPIC=my-topic)
-kafka-consume:
-	@if [ -z "$(TOPIC)" ]; then \
-		echo "❌ Error: TOPIC variable is required. Usage: make kafka-consume TOPIC=my-topic"; \
-		exit 1; \
-	fi
-	CONFIG_PATH=$(config) docker compose exec kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic $(TOPIC) --from-beginning
 
 ## help: Show this help message
 help:

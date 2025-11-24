@@ -5,6 +5,7 @@ import os
 import time
 from typing import Any
 
+from opendt_common import load_config_from_env
 from opendt_common.utils import get_kafka_consumer, get_kafka_producer
 from opendt_common.utils.kafka import send_message
 
@@ -18,22 +19,28 @@ class SimulationWorker:
     """Consumes workload events from Kafka and runs simulations."""
 
     def __init__(
-        self, kafka_bootstrap_servers: str, worker_id: str, consumer_group: str = "sim-workers"
+        self,
+        kafka_bootstrap_servers: str,
+        worker_id: str,
+        workload_topic: str,
+        consumer_group: str = "sim-workers",
     ):
         """Initialize the simulation worker.
 
         Args:
             kafka_bootstrap_servers: Kafka broker addresses
             worker_id: Unique identifier for this worker
+            workload_topic: Kafka topic name for workload events
             consumer_group: Kafka consumer group ID
         """
         self.worker_id = worker_id
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.consumer_group = consumer_group
+        self.workload_topic = workload_topic
 
         # Initialize Kafka consumer
         self.consumer = get_kafka_consumer(
-            topics=["tasks", "fragments", "consumption"],
+            topics=[workload_topic],
             group_id=consumer_group,
             bootstrap_servers=kafka_bootstrap_servers,
         )
@@ -42,6 +49,7 @@ class SimulationWorker:
         self.producer = get_kafka_producer(kafka_bootstrap_servers)
 
         logger.info(f"Initialized SimulationWorker '{worker_id}' in group '{consumer_group}'")
+        logger.info(f"Subscribed to topic: {workload_topic}")
 
     def simulate_task(self, task_data: dict[str, Any]) -> dict[str, Any]:
         """Simulate a task.
@@ -126,7 +134,8 @@ class SimulationWorker:
         logger.debug(f"Received message from topic '{topic}'")
 
         try:
-            if topic == "tasks":
+            if topic == self.workload_topic:
+                # Process task aggregate (includes fragments)
                 result = self.simulate_task(value)
                 send_message(
                     self.producer,
@@ -134,19 +143,6 @@ class SimulationWorker:
                     message=result,
                     key=result.get("task_id"),
                 )
-
-            elif topic == "fragments":
-                result = self.simulate_fragment(value)
-                send_message(
-                    self.producer,
-                    topic="simulation-results",
-                    message=result,
-                    key=result.get("fragment_id"),
-                )
-
-            elif topic == "consumption":
-                # Process consumption data for calibration/validation
-                logger.debug(f"Processing consumption data: {value.get('id', 'unknown')}")
 
             else:
                 logger.warning(f"Unknown topic: {topic}")
@@ -179,8 +175,21 @@ class SimulationWorker:
 
 def main():
     """Main entry point."""
-    # Get configuration from environment
-    kafka_bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    # Load configuration from environment
+    try:
+        config = load_config_from_env()
+        logger.info(f"Loaded configuration for workload: {config.workload}")
+    except Exception as e:
+        logger.error(f"Failed to load configuration: {e}")
+        raise
+
+    # Get Kafka configuration from config file
+    kafka_bootstrap_servers = config.kafka.bootstrap_servers
+    workload_topic = config.kafka.topics["workload"].name
+    logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
+    logger.info(f"Workload topic: {workload_topic}")
+
+    # Get worker configuration from environment
     worker_id = os.getenv("WORKER_ID", "worker-1")
     consumer_group = os.getenv("CONSUMER_GROUP", "sim-workers")
 
@@ -191,7 +200,12 @@ def main():
     for attempt in range(max_retries):
         try:
             logger.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})")
-            worker = SimulationWorker(kafka_bootstrap_servers, worker_id, consumer_group)
+            worker = SimulationWorker(
+                kafka_bootstrap_servers=kafka_bootstrap_servers,
+                worker_id=worker_id,
+                workload_topic=workload_topic,
+                consumer_group=consumer_group,
+            )
             worker.run()
             break
         except Exception as e:

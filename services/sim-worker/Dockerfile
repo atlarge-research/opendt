@@ -7,24 +7,24 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy root pyproject.toml and install all dependencies
-COPY pyproject.toml .
-RUN pip install --no-cache-dir -e .
+# Copy and install dependencies from root pyproject.toml
+COPY pyproject.toml /app/pyproject.toml
+RUN pip install --no-cache-dir -e /app
 
-# Install shared library
-COPY libs/common ./libs/common
-RUN pip install --no-cache-dir -e ./libs/common
+# Copy and install shared library
+COPY libs/common /app/libs/common
+RUN pip install --no-cache-dir -e /app/libs/common
 
-# Copy service code (overridden by volume mounts in development)
-COPY services/sim-worker ./services/sim-worker
+# Copy service code
+COPY services/sim-worker /app/services/sim-worker
 
-# Set Python path
-ENV PYTHONPATH=/app/services/sim-worker:/app/libs/common:$PYTHONPATH
-
-# Create non-root user
+# Create non-root user for security
 RUN useradd -m -u 1000 opendt && \
     chown -R opendt:opendt /app
 
 USER opendt
+
+# Set working directory to service for proper module resolution
+WORKDIR /app/services/sim-worker
 
 CMD ["python", "-m", "sim_worker.main"]

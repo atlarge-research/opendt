@@ -53,7 +53,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       
       # Performance & Development Settings
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
       KAFKA_DELETE_TOPIC_ENABLE: 'true'
       KAFKA_LOG_RETENTION_HOURS: 168
       KAFKA_LOG_SEGMENT_BYTES: 1073741824
@@ -70,6 +70,29 @@ services:
       start_period: 30s
     networks:
       - opendt-network
+
+  # ============================================================================
+  # INFRASTRUCTURE INITIALIZATION
+  # ============================================================================
+
+  kafka-init:
+    build:
+      context: .
+      dockerfile: services/kafka-init/Dockerfile
+    container_name: opendt-kafka-init
+    environment:
+      CONFIG_FILE: /app/config/simulation.yaml
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./services/kafka-init:/app/services/kafka-init
+      - ./libs/common:/app/libs/common
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - opendt-network
+    restart: "no"
 
   # ============================================================================
   # PYTHON MICROSERVICES
@@ -94,8 +117,8 @@ services:
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
     depends_on:
-      kafka:
-        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     networks:
       - opendt-network
     command: python -m dc_mock.main
@@ -116,8 +139,8 @@ services:
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
     depends_on:
-      kafka:
-        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     networks:
       - opendt-network
     command: python -m sim_worker.main

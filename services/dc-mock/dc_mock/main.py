@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 from opendt_common import Consumption, Fragment, Task, WorkloadContext, load_config_from_env
-from opendt_common.utils import ensure_topics_exist, get_kafka_producer
+from opendt_common.utils import get_kafka_producer
 from opendt_common.utils.kafka import send_message
 
 logging.basicConfig(
@@ -28,7 +28,12 @@ class WorkloadProducer:
     """Pre-aggregates and streams workload events to Kafka in time order."""
 
     def __init__(
-        self, workload_context: WorkloadContext, kafka_bootstrap_servers: str, speed_factor: float
+        self,
+        workload_context: WorkloadContext,
+        kafka_bootstrap_servers: str,
+        speed_factor: float,
+        workload_topic: str,
+        power_topic: str,
     ):
         """Initialize the workload producer.
 
@@ -36,14 +41,20 @@ class WorkloadProducer:
             workload_context: Workload context with resolved file paths
             kafka_bootstrap_servers: Kafka broker addresses
             speed_factor: Simulation speed multiplier (1.0 = realtime, -1 = max speed)
+            workload_topic: Kafka topic name for workload events
+            power_topic: Kafka topic name for power consumption events
         """
         self.workload_context = workload_context
         self.producer = get_kafka_producer(kafka_bootstrap_servers)
         self.speed_factor = speed_factor
+        self.workload_topic = workload_topic
+        self.power_topic = power_topic
 
         logger.info(f"Initialized WorkloadProducer for workload: {workload_context.name}")
         logger.info(f"Workload directory: {workload_context.workload_dir}")
         logger.info(f"Simulation speed: {speed_factor}x")
+        logger.info(f"Workload topic: {workload_topic}")
+        logger.info(f"Power topic: {power_topic}")
 
         # Check file status
         file_status = workload_context.get_file_status()
@@ -225,7 +236,7 @@ class WorkloadProducer:
         try:
             send_message(
                 self.producer,
-                topic="dc.workload",
+                topic=self.workload_topic,
                 message=task.model_dump(mode="json"),
                 key=str(task.id),
             )
@@ -238,7 +249,7 @@ class WorkloadProducer:
         try:
             send_message(
                 self.producer,
-                topic="dc.power",
+                topic=self.power_topic,
                 message=consumption.model_dump(mode="json"),
                 key=None,  # No key for consumption
             )
@@ -296,31 +307,25 @@ def main():
                 logger.info(f"  - {item.name}")
         raise FileNotFoundError(f"Workload not found: {config.workload}")
 
-    # Get Kafka configuration
-    kafka_bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    # Get Kafka configuration from config file
+    kafka_bootstrap_servers = config.kafka.bootstrap_servers
+    logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
 
-    # Ensure required topics exist
-    required_topics = ["dc.workload", "dc.power"]
-    logger.info(f"Ensuring Kafka topics exist: {required_topics}")
-    try:
-        ensure_topics_exist(
-            bootstrap_servers=kafka_bootstrap_servers,
-            topics=required_topics,
-            num_partitions=1,
-            replication_factor=1,
-            max_retries=30,
-            retry_delay=2.0,
-        )
-        logger.info("✓ All required topics are ready")
-    except Exception as e:
-        logger.error(f"Failed to ensure topics exist: {e}")
-        raise
+    # Get topic names from configuration
+    workload_topic = config.kafka.topics["workload"].name
+    power_topic = config.kafka.topics["power"].name
+    logger.info(f"Workload topic: {workload_topic}")
+    logger.info(f"Power topic: {power_topic}")
 
     # Start the producer
     logger.info("Initializing WorkloadProducer...")
     try:
         producer = WorkloadProducer(
-            workload_context, kafka_bootstrap_servers, config.simulation.speed_factor
+            workload_context=workload_context,
+            kafka_bootstrap_servers=kafka_bootstrap_servers,
+            speed_factor=config.simulation.speed_factor,
+            workload_topic=workload_topic,
+            power_topic=power_topic,
         )
         producer.run()
     except KeyboardInterrupt:
