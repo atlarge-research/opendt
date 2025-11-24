@@ -6,6 +6,8 @@ experiment.json
 kafka/opendt_sim_inputs/
 opendt_sim_inputs/
 output/
+!output/README.md
+!output/.gitkeep
 
 ### VS Code ###
 .vscode/

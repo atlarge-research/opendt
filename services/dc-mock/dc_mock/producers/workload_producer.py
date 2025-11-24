@@ -5,7 +5,7 @@ Streams task/workload events to Kafka with proper timing.
 
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pandas as pd
 from opendt_common import Fragment, Task, WorkloadContext
@@ -27,6 +27,7 @@ class WorkloadProducer(BaseProducer):
         kafka_bootstrap_servers: str,
         speed_factor: float,
         topic: str,
+        heartbeat_cadence_minutes: int = 1,
     ):
         """Initialize the workload producer.
 
@@ -35,6 +36,7 @@ class WorkloadProducer(BaseProducer):
             kafka_bootstrap_servers: Kafka broker addresses
             speed_factor: Simulation speed multiplier
             topic: Kafka topic name for workload events
+            heartbeat_cadence_minutes: Cadence in simulation minutes for heartbeat messages
         """
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
@@ -44,9 +46,11 @@ class WorkloadProducer(BaseProducer):
         )
         self.workload_context = workload_context
         self.tasks: list[Task] = []
+        self.heartbeat_cadence_minutes = heartbeat_cadence_minutes
 
         logger.info(f"  Tasks file: {workload_context.tasks_file}")
         logger.info(f"  Fragments file: {workload_context.fragments_file}")
+        logger.info(f"  Heartbeat cadence: {heartbeat_cadence_minutes} simulated minutes")
 
     def load_and_aggregate_tasks(self) -> tuple[list[Task], datetime]:
         """Load tasks and fragments, aggregating fragments into tasks.
@@ -120,18 +124,51 @@ class WorkloadProducer(BaseProducer):
                 logger.warning("No tasks to stream")
                 return
 
-            logger.info(f"Streaming {len(self.tasks)} task events...")
+            logger.info(f"Streaming {len(self.tasks)} task events with heartbeats...")
 
             # Track simulation time
             sim_start_time = self.tasks[0].submission_time
             real_start_time = time.time()
+
+            # Initialize heartbeat tracking
+            heartbeat_cadence = timedelta(minutes=self.heartbeat_cadence_minutes)
+            # Round down to the nearest minute for first heartbeat
+            next_heartbeat_time = sim_start_time.replace(second=0, microsecond=0)
+            heartbeats_sent = 0
 
             for i, task in enumerate(self.tasks):
                 if self.should_stop():
                     logger.info("WorkloadProducer interrupted")
                     break
 
-                # Calculate elapsed simulation time
+                # Emit any pending heartbeats before this task
+                while next_heartbeat_time <= task.submission_time:
+                    # Calculate elapsed time for heartbeat
+                    heartbeat_elapsed = (next_heartbeat_time - sim_start_time).total_seconds()
+
+                    # Sleep until heartbeat time if needed
+                    if self.speed_factor > 0:
+                        required_real_elapsed = heartbeat_elapsed / self.speed_factor
+                        real_elapsed = time.time() - real_start_time
+                        sleep_time = required_real_elapsed - real_elapsed
+
+                        if sleep_time > 0:
+                            if self.wait_interruptible(sleep_time):
+                                logger.info("WorkloadProducer interrupted during heartbeat sleep")
+                                break
+
+                    # Emit heartbeat message
+                    heartbeat_msg = {
+                        "message_type": "heartbeat",
+                        "timestamp": next_heartbeat_time.isoformat(),
+                    }
+                    self.emit_message(message=heartbeat_msg, key="heartbeat")
+                    heartbeats_sent += 1
+
+                    # Move to next heartbeat time
+                    next_heartbeat_time += heartbeat_cadence
+
+                # Calculate elapsed simulation time for this task
                 sim_elapsed = (task.submission_time - sim_start_time).total_seconds()
 
                 # Calculate required sleep based on speed_factor
@@ -147,24 +184,30 @@ class WorkloadProducer(BaseProducer):
                             break
                 # If speed_factor == -1, don't sleep (max speed)
 
-                # Emit task event
-                self.emit_message(
-                    message=task.model_dump(mode="json"),
-                    key=str(task.id),
-                )
+                # Emit task event wrapped with message_type
+                task_msg = {
+                    "message_type": "task",
+                    "timestamp": task.submission_time.isoformat(),
+                    "task": task.model_dump(mode="json"),
+                }
+                self.emit_message(message=task_msg, key=str(task.id))
 
                 # Periodic flush and logging
                 if (i + 1) % 100 == 0:
                     progress = (i + 1) / len(self.tasks) * 100
                     logger.info(
-                        f"WorkloadProducer progress: {i + 1}/{len(self.tasks)} ({progress:.1f}%)"
+                        f"WorkloadProducer progress: {i + 1}/{len(self.tasks)} tasks, "
+                        f"{heartbeats_sent} heartbeats ({progress:.1f}%)"
                     )
                     self.flush()
 
             # Final flush
             logger.info("WorkloadProducer flushing remaining messages...")
             self.flush()
-            logger.info("WorkloadProducer finished streaming")
+            logger.info(
+                f"WorkloadProducer finished streaming: "
+                f"{len(self.tasks)} tasks, {heartbeats_sent} heartbeats"
+            )
 
         except Exception as e:
             logger.error(f"Fatal error in WorkloadProducer: {e}", exc_info=True)

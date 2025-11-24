@@ -12,6 +12,7 @@ from opendt_common.models.topology import (
     Topology,
     TopologySnapshot,
 )
+from opendt_common.models.workload_message import WorkloadMessage
 
 # Update forward references for Task.fragments
 Task.model_rebuild()
@@ -27,4 +28,5 @@ __all__ = [
     "CPU",
     "Memory",
     "CPUPowerModel",
+    "WorkloadMessage",
 ]

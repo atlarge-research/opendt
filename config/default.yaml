@@ -4,6 +4,7 @@ simulation:
   # 1.0 = Realtime, -1 = Max Speed
   speed_factor: 300
   window_size_minutes: 5
+  heartbeat_cadence_minutes: 1
 
 features:
   calibration_enabled: false
@@ -32,3 +33,8 @@ kafka:
       name: "sys.config"
       config:
         cleanup.policy: "compact"
+    results:
+      name: "sim.results"
+      config:
+        # 7 days retention for simulation results
+        retention.ms: "604800000"

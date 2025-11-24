@@ -55,6 +55,7 @@ class DCMockOrchestrator:
         topology_topic: str,
         workload_topic: str,
         power_topic: str,
+        heartbeat_cadence_minutes: int = 1,
     ) -> None:
         """Start all producers.
 
@@ -65,6 +66,7 @@ class DCMockOrchestrator:
             topology_topic: Kafka topic for topology events
             workload_topic: Kafka topic for workload events
             power_topic: Kafka topic for power consumption events
+            heartbeat_cadence_minutes: Cadence in simulation minutes for heartbeat messages
         """
         logger.info("=" * 70)
         logger.info("Starting DC-Mock Producers")
@@ -77,6 +79,7 @@ class DCMockOrchestrator:
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed_factor=speed_factor,
             topic=workload_topic,
+            heartbeat_cadence_minutes=heartbeat_cadence_minutes,
         )
 
         # Pre-load tasks to get earliest time (needed for power producer)
@@ -232,6 +235,7 @@ class DCMockOrchestrator:
                 topology_topic=topology_topic,
                 workload_topic=workload_topic,
                 power_topic=power_topic,
+                heartbeat_cadence_minutes=config.simulation.heartbeat_cadence_minutes,
             )
 
             # Wait for completion

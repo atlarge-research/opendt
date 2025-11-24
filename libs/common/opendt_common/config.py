@@ -44,6 +44,9 @@ class SimConfig(BaseModel):
     window_size_minutes: int = Field(
         default=5, description="Time window size in minutes for aggregation", gt=0
     )
+    heartbeat_cadence_minutes: int = Field(
+        default=1, description="Cadence in simulation minutes for workload heartbeat messages", gt=0
+    )
 
     @field_validator("speed_factor")
     @classmethod

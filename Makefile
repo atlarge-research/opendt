@@ -45,6 +45,35 @@ up: clean-volumes
 	@echo ""
 	@echo "View logs: make logs"
 
+## up-debug: Start services in DEBUG mode (sim-worker writes results to ./output/ instead of Kafka)
+up-debug: clean-volumes
+	@echo "🐛 Starting OpenDT services in DEBUG MODE..."
+	@echo "📋 Using config: $(config)"
+	@mkdir -p output
+	@if [ ! -f "$(config)" ]; then \
+		echo "❌ Error: Config file not found: $(config)"; \
+		exit 1; \
+	fi
+	@if [ "$(build)" = "true" ]; then \
+		echo "🔨 Rebuilding Docker images (no cache)..."; \
+		CONFIG_PATH=$(config) DEBUG_MODE=true docker compose build --no-cache; \
+		echo "✅ Images rebuilt!"; \
+	fi
+	CONFIG_PATH=$(config) DEBUG_MODE=true docker compose up -d
+	@echo "✅ Services started in DEBUG mode!"
+	@echo ""
+	@echo "🐛 DEBUG MODE: sim-worker will write results to ./output/"
+	@echo "   Kafka publishing is DISABLED for sim-worker"
+	@echo ""
+	@echo "Available services:"
+	@echo "  - Frontend:    http://localhost:3000"
+	@echo "  - API:         http://localhost:8000"
+	@echo "  - Postgres:    localhost:5432"
+	@echo "  - Kafka:       localhost:9092"
+	@echo ""
+	@echo "View logs: make logs-sim-worker"
+	@echo "View results: ls -la output/"
+
 ## run: Alias for 'up' (accepts config parameter)
 run: up
 
