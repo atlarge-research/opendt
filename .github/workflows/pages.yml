@@ -1,8 +1,8 @@
-name: Deploy opendc.org
+name: Deploy atlarge-research.github.io/opendt
 
 on:
   push:
-    branches: ["add-static-documentation-site"]
+    branches: ["master", "refactor-services"]
   workflow_dispatch:
 
 concurrency:

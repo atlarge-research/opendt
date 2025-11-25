@@ -1,0 +1,89 @@
+[project]
+name = "opendt"
+version = "0.1.0"
+description = "OpenDT - Open Digital Twin for Datacenters"
+requires-python = ">=3.11"
+dependencies = [
+    # Core data processing (shared across all services)
+    "pandas>=2.0.0",
+    "pyarrow>=13.0.0",
+    "pyyaml>=6.0.0",
+    "matplotlib>=3.7.0",
+
+    # Kafka (used by most services)
+    "kafka-python>=2.0.2",
+
+    # Validation
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+
+    # Web framework (for dashboard service)
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "jinja2>=3.1.0",
+
+    # Database (for services that need it)
+    "psycopg2-binary>=2.9.0",
+    "sqlalchemy>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "ipython>=8.0.0",
+]
+
+# Service-specific dependencies (optional, if some services have unique needs)
+dc-mock = []  # Currently uses only shared dependencies
+sim-worker = []  # Currently uses only shared dependencies
+api = [
+    "httpx>=0.25.0",  # For API client usage
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = []
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = "scratch/"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["scratch/"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["libs/common/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.pyright]
+include = ["libs", "services"]
+extraPaths = ["libs/common"]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "basic"

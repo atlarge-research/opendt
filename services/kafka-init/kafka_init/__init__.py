@@ -1,0 +1,1 @@
+"""Kafka Infrastructure Initialization Service."""

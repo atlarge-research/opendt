@@ -1,35 +1,225 @@
 services:
-  kafka:
-    image: confluentinc/cp-kafka:latest
+  # ============================================================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================================================
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: opendt-postgres
     environment:
-      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: "broker,controller"
-      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092"
-      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
-      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
-      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      POSTGRES_DB: opendt
+      POSTGRES_USER: opendt
+      POSTGRES_PASSWORD: opendt_dev_password
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "9092:29092"
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:29092", "--list"]
+      test: ["CMD-SHELL", "pg_isready -U opendt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - opendt-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: opendt-kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      # KRaft Configuration (No Zookeeper)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      
+      # Listener Configuration
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      
+      # Cluster Configuration
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      
+      # Log Configuration
+      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      
+      # Performance & Development Settings
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      # Message size limits (for large task aggregates with fragments)
+      KAFKA_MESSAGE_MAX_BYTES: 10485760  # 10MB max message size
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 10485760  # 10MB for replication
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
       interval: 5s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    networks:
+      - opendt-network
 
-  opendt:
-    build: .
+  # ============================================================================
+  # INFRASTRUCTURE INITIALIZATION
+  # ============================================================================
+
+  kafka-init:
+    build:
+      context: .
+      dockerfile: services/kafka-init/Dockerfile
+    container_name: opendt-kafka-init
+    environment:
+      CONFIG_FILE: /app/config/simulation.yaml
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./services/kafka-init:/app/services/kafka-init
+      - ./libs/common:/app/libs/common
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
     depends_on:
       kafka:
         condition: service_healthy
+    networks:
+      - opendt-network
+    restart: "no"
+
+  # ============================================================================
+  # PYTHON MICROSERVICES
+  # ============================================================================
+
+  dc-mock:
+    build:
+      context: .
+      dockerfile: services/dc-mock/Dockerfile
+    container_name: opendt-dc-mock
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-    stop_grace_period: 3s
-    ports:
-      - "8080:8080"
-    working_dir: /app
+      DATA_PATH: /app/data
+      CONFIG_FILE: /app/config/simulation.yaml
+      PYTHONUNBUFFERED: 1
     volumes:
-      - ./:/app
+      # Mount source code for hot reload
+      - ./services/dc-mock:/app/services/dc-mock
+      - ./libs/common:/app/libs/common
+      # Mount data files
+      - ./data:/app/data:ro
+      # Mount configuration file
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - opendt-network
+    command: python -m dc_mock.main
+
+  sim-worker:
+    build:
+      context: .
+      dockerfile: services/sim-worker/Dockerfile
+    container_name: opendt-sim-worker
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CONFIG_FILE: /app/config/simulation.yaml
+      PYTHONUNBUFFERED: 1
+      # Debug mode: set to "true" to write debug files alongside main output
+      DEBUG_MODE: ${DEBUG_MODE:-false}
+      DEBUG_OUTPUT_DIR: /app/output
+      # Experiment mode: experiment name (used for output directory)
+      EXPERIMENT_NAME: ${EXPERIMENT_NAME:-default}
+      EXPERIMENT_OUTPUT_DIR: /app/output
+    volumes:
+      # Mount source code for hot reload
+      - ./services/sim-worker:/app/services/sim-worker
+      - ./libs/common:/app/libs/common
+      # Mount configuration file
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+      # Mount output directory for debug results
+      - ./output:/app/output
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - opendt-network
+    command: python -m sim_worker.main
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: services/dashboard/Dockerfile
+    container_name: opendt-dashboard
+    environment:
+      DATABASE_URL: postgresql://opendt:opendt_dev_password@postgres:5432/opendt
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CONFIG_FILE: /app/config/simulation.yaml
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source code for hot reload
+      - ./services/dashboard:/app/services/dashboard
+      - ./libs/common:/app/libs/common
+      # Mount configuration file
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - opendt-network
+    command: uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ============================================================================
+  # FRONTEND
+  # ============================================================================
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #     target: development
+  #   container_name: opendt-frontend
+  #   environment:
+  #     NODE_ENV: development
+  #     NEXT_PUBLIC_API_URL: http://localhost:8000
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     # Mount source code for HMR (Hot Module Replacement)
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #     - /app/.next
+  #   depends_on:
+  #     - dashboard
+  #   networks:
+  #     - opendt-network
+  #   command: npm run dev
+
+# ==============================================================================
+# NETWORKS
+# ==============================================================================
+
+networks:
+  opendt-network:
+    driver: bridge
+
+# ==============================================================================
+# VOLUMES (Persistent Data)
+# ==============================================================================
+
+volumes:
+  postgres_data:
+    name: opendt-postgres-data
+  kafka_data:
+    name: opendt-kafka-data

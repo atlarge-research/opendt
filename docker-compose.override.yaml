@@ -1,9 +1,0 @@
-services:
-  opendt:
-    entrypoint: ["python", "-u", "-m", "opendt.cli"]
-    environment:
-      - OPENDT_DATA_DIR=/app/data
-      - OPENDT_SIM_DIR=/app/output/opendt-simulation/raw-output
-    volumes:
-      - ./:/app
-      - ./output/opendt-simulation/raw-output:/app/output/opendt-simulation/raw-output

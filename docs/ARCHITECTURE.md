@@ -1,145 +1,244 @@
-# High-level architecture
+# OpenDT Architecture
 
-OpenDT runs two concurrent threads that communicate via Kafka:
+Welcome to the OpenDT documentation! This document provides a comprehensive overview of the system's architecture, design principles, and core concepts.
 
-## 1. Producer Loop (Workload Replay)
+## Table of Contents
 
-The producer streams workload traces to Kafka, simulating real-time datacenter activity.
+- [System Overview](#system-overview)
+- [Architecture Diagram](#architecture-diagram)
+- [Services](#services)
+- [Data Flow](#data-flow)
+- [Kafka Topics](#kafka-topics)
+- [Related Documentation](#related-documentation)
 
-### Data Sources
-- **tasks.parquet**
-  - Columns: `id`, `submission_time`, `duration`, `cpu_count`, `cpu_capacity`, `mem_capacity`
-  - Tasks have timestamps indicating when they were submitted
-  
-- **fragments.parquet**
-  - Columns: `id` (task_id), `duration`, `cpu_count`, `cpu_usage`
-  - Fragments have NO submission times in raw data
-  - Each task is composed of ≥1 fragments for fine-grained resource modeling
+## System Overview
 
-More info about these fields can be found in the [OpenDC documentation](https://atlarge-research.github.io/opendc/docs/documentation/Input/Workload/#tasks).
+**OpenDT** (Open Digital Twin) is a distributed system for datacenter simulation and What-If analysis. It operates in "Shadow Mode" by replaying historical workload data through the OpenDC simulator to compare predicted vs. actual power consumption.
 
-### Key Transformations
+### Key Objectives
 
-**Fragment Timestamp Synthesis:**
-Fragments inherit their parent task's submission time, offset by cumulative fragment durations. The synthesized timestamp is stored in the `submission_time` key of each fragment message:
+1. **Power Consumption Prediction**: Simulate datacenter power usage based on workload patterns
+2. **What-If Analysis**: Answer questions like "What happens if we upgrade CPU architecture?" without touching live hardware
+3. **Infrastructure Optimization**: Identify opportunities for energy efficiency improvements
+4. **Real-time Comparison**: Continuously compare simulation predictions against actual telemetry
+
+### Core Capabilities
+
+- Event-time windowing with configurable window sizes (default: 5 minutes)
+- Cumulative simulation for accurate long-running predictions
+- Topology management (real vs. simulated configurations)
+- Result caching to avoid redundant simulations
+- Multiple operating modes (normal, debug, experiment)
+- Dynamic plot generation for power consumption analysis
+
+## Architecture Diagram
 
 ```
-Task starts at T=0
-Fragment 1.submission_time = T=0 + duration[0]
-Fragment 2.submission_time = T=0 + duration[0] + duration[1]
-Fragment 3.submission_time = T=0 + duration[0] + duration[1] + duration[2]
-...
+┌─────────────────────────────────────────────────────────────────────┐
+│                          OpenDT System                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐     ┌────────────────────────────────────┐
+│   dc-mock    │────>│            Kafka Bus               │
+│  (Producer)  │     │  ┌──────────────────────────────┐  │
+│              │     │  │ Topics:                      │  │
+│ Reads:       │     │  │  • dc.workload (tasks)       │  │
+│  - tasks     │     │  │  • dc.power (telemetry)      │  │
+│  - fragments │     │  │  • dc.topology (real)        │  │
+│  - power     │     │  │  • sim.topology (simulated)  │  │
+│  - topology  │     │  │  • sim.results (predictions) │  │
+└──────────────┘     │  │  • sys.config (runtime cfg)  │  │
+                     │  └──────────────────────────────┘  │
+                     └───────┬────────────────────────────┘
+                             │
+                   ┌─────────┴─────────────┐
+                   │                       │
+          ┌────────▼──────┐     ┌─────────▼────────┐
+          │  sim-worker   │     │   dashboard      │
+          │  (Consumer)   │     │   (FastAPI)      │
+          │               │     │                  │
+          │ • Windows     │     │ • Web UI         │
+          │ • OpenDC      │     │ • REST API       │
+          │ • Caching     │◀────│ • Topology Mgmt  │
+          │ • Experiments │     │                  │
+          └───────┬───────┘     └─────────┬────────┘
+                  │                       │
+                  │              ┌────────▼────────┐
+                  │              │   PostgreSQL    │
+                  │              │   (TimescaleDB) │
+                  │              └─────────────────┘
+                  │
+          ┌───────▼───────┐
+          │ Experiment    │
+          │ Output:       │
+          │  • Parquet    │
+          │  • Plots      │
+          │  • Archives   │
+          └───────────────┘
 ```
 
-This creates a sequential execution timeline where fragments "chain" together.
+## Services
 
-**Time-Scaled Replay:**
-- Original trace: ~7 days of SURF workload data
-- Replay speed: 10x accelerated (TIME_SCALE = 0.1)
-- Real-time gaps between events are preserved but compressed
-- Example: 1-hour workload gap → 6-minute real wait
+OpenDT consists of 5 microservices orchestrated via Docker Compose:
 
-### Workload Semantics
+### 1. dc-mock (Datacenter Mock)
 
-**Task-Fragment Relationship:**
-In the AtLarge traces, tasks are _always_ equally split into fragments. For example, we can have a task with `duration=10000ms` split into 5 fragments of `duration=2000ms`.
+**Purpose**: Simulates a real datacenter by replaying historical data
 
-**Computing Clock Cycles:**
-Fragments specify the total number of clock cycles needed, calculated as:
-```
-total_cycles = duration (ms) × cpu_usage (MHz) × 1,000
-```
-Since MHz = million cycles/second and duration is in milliseconds.
+**Location**: [`../services/dc-mock/`](../services/dc-mock/README.md)
 
-**Simulation Behavior:**
-The `duration` field represents the actual measured runtime of the original workload. However, when simulating on different topologies, the execution time varies based on CPU specifications.
+**Key Features**:
+- Reads Parquet files (`tasks`, `fragments`, `consumption`) from `data/<WORKLOAD>/`
+- Publishes to Kafka with configurable speed factor (e.g., 300x real-time)
+- Three independent producers: Workload, Power, Topology
+- Heartbeat mechanism for window synchronization
 
-**Example:**
-A fragment with `cpu_count=1`, `cpu_usage=1000 MHz`, `duration=5000 ms`:
-- Total cycles needed: `5000 × 1000 × 1,000 = 5,000,000,000 cycles` (5 billion)
-
-When simulated on different hardware:
-- **2 CPUs @ 1000 MHz each:** Total throughput = 2,000 MHz → `duration = 5,000,000,000 / (2000 × 1,000,000) = 2500 ms`
-- **1 CPU @ 5000 MHz:** Total throughput = 5,000 MHz → `duration = 5,000,000,000 / (5000 × 1,000,000) = 1000 ms`
-
-This is a simplification of reality but makes reasoning about the simulation behavior clearer.
-
-### Output to Kafka
-
-**Topic: "tasks"**
-```json
-{
-  "key": {"id": "task_id"},
-  "value": {
-    "submission_time": "2022-10-06T22:00:00Z",
-    "duration": 27935000,
-    "cpu_count": 16,
-    "cpu_capacity": 33600.0,
-    "mem_capacity": 100000
-  }
-}
-```
-
-**Topic: "fragments"**
-```json
-{
-  "key": {"id": "task_id"},
-  "value": {
-    "submission_time": "2022-10-06T22:00:30Z",
-    "duration": 30000,
-    "cpu_usage": 1953.0
-  }
-}
-```
-
-### Implementation
-- Two parallel threads: one for tasks, one for fragments
-- Both synchronized via barrier to start simultaneously
-- Pacing via `sleep()` between messages to maintain temporal structure
+**Produces To**:
+- `dc.workload` - Task submissions + periodic heartbeats
+- `dc.power` - Power consumption telemetry
+- `dc.topology` - Real datacenter topology snapshots
 
 ---
 
-## 2. Consumer Loop (Digital Twin)
+### 2. sim-worker (Simulation Engine)
 
-The consumer organizes incoming Kafka messages into time-based windows and feeds them to the OpenDC simulator.
+**Purpose**: Core simulation worker that bridges Kafka and OpenDC simulator
 
-### Windowing Strategy
+**Location**: [`../services/sim-worker/`](../services/sim-worker/README.md)
 
-**Window Size:** 5 minutes of virtual trace time (`REAL_WINDOW_SIZE_SEC = 300s`)
+**Key Features**:
+- Event-time windowing with heartbeat-driven closing
+- Cumulative simulation (re-simulates all tasks from beginning)
+- Result caching based on topology hash + task count
+- Multiple operating modes (normal, debug, experiment)
+- Integration with OpenDC binary (Java-based simulator)
 
-**Processing:** Windows are created based on `submission_time` timestamps:
-- As tasks/fragments arrive, they're assigned to windows based on their timestamp
-- A window becomes "ready" when data from the next time window starts arriving
-- Windows are processed sequentially (FIFO)
+**Consumes From**:
+- `dc.workload` - Tasks and heartbeats
+- `dc.topology` - Real topology snapshots
+- `sim.topology` - Simulated topology updates
+- `dc.power` - Actual power (experiment mode)
 
-**Example:**
+**Produces To**:
+- `sim.results` - Simulation predictions (normal mode)
+- Local files - Results and archives (debug/experiment mode)
+
+---
+
+### 3. dashboard (Web Dashboard)
+
+**Purpose**: Web dashboard and REST API for system control and visualization
+
+**Location**: [`../services/dashboard/`](../services/dashboard/README.md)
+
+**Key Features**:
+- Web UI for real-time visualization
+- FastAPI with automatic OpenAPI documentation
+- Topology management endpoint (`PUT /api/topology`)
+- Health check and status endpoints
+- Kafka producer for configuration updates
+- Static file serving for dashboard assets
+
+**Routes**:
+- `GET /` - Web dashboard UI
+- `GET /health` - Health check (Kafka + config status)
+- `GET /docs` - Interactive Swagger UI
+- `PUT /api/topology` - Update simulated datacenter topology
+
+---
+
+### 4. kafka-init (Infrastructure Initialization)
+
+**Purpose**: Creates Kafka topics with proper retention and compaction policies
+
+**Location**: [`../services/kafka-init/`](../services/kafka-init/README.md)
+
+**Key Features**:
+- Reads topic configuration from YAML
+- Creates topics on Kafka startup
+- Applies retention policies and compaction settings
+- Fail-fast on errors
+
+---
+
+## Data Flow
+
+### 1. Data Ingestion
+
 ```
-Window 5: 2022-10-06 22:22:00 → 22:27:00
-  ├─ 113 tasks
-  └─ 1,243 fragments (~11 per task)
+data/SURF/
+├── tasks.parquet      ─┐
+├── fragments.parquet  ─┤──> dc-mock ──> dc.workload (Kafka)
+├── consumption.parquet─┤──> dc-mock ──> dc.power (Kafka)
+└── topology.json      ─┘──> dc-mock ──> dc.topology (Kafka)
 ```
 
-### Output to Orchestrator
+### 2. Simulation Pipeline
 
-Each completed window yields a `batch_data` dictionary containing:
-- `tasks_sample`: List of task objects for this window
-- `fragments_sample`: List of fragment objects for this window  
-- `task_count`, `fragment_count`: Counts
-- `avg_cpu_usage`: Average CPU usage across fragments
-- `window_start`, `window_end`: Time boundaries
+```
+dc.workload ──┐
+              ├──> sim-worker ──> OpenDC ──> results
+dc.topology ──┤                    (binary)
+sim.topology ─┘
+```
 
-### Simulation Flow
+### 3. Window Processing
 
-1. Orchestrator receives `batch_data`
-2. OpenDC simulates workload on current topology
-3. Returns: `energy_kwh`, `runtime_hours`, `cpu_utilization`, `max_power_draw`
+1. **Task Arrival**: Tasks published to `dc.workload` with submission timestamps
+2. **Window Assignment**: Task assigned to window based on rounded submission time
+3. **Heartbeat Signal**: Periodic heartbeat messages indicate time progression
+4. **Window Closing**: When heartbeat timestamp ≥ window end, close window
+5. **Simulation**: Invoke OpenDC with cumulative tasks + simulated topology
+6. **Caching**: Check if topology + task count match previous simulation
+7. **Output**: Publish results or write to files based on operating mode
 
-**Real example from logs:**
-- Input: 113 tasks, 1,243 fragments
-- Output: `energy_kwh=0.84`, `runtime_hours=2.62`, `cpu_utilization=57.3%`
+### 4. Topology Management
 
-### Implementation
-- Three threads: tasks consumer, fragments consumer, window processor
-- Threads share window state via locks/conditions
-- Task-fragment matching: Fragments are joined with their parent tasks by `id`
-- Windows wait `VIRTUAL_WINDOW_SIZE = 30s` between processing (real time)
+```
+User/Dashboard ──> PUT /api/topology ──> sim.topology (Kafka) ──> sim-worker
+                                                                │
+                                                                ├──> Update simulated topology
+                                                                ├──> Clear result cache
+                                                                └──> Use for future simulations
+```
+
+## Kafka Topics
+
+### Topic Overview
+
+| Topic | Type | Purpose | Retention | Key |
+|-------|------|---------|-----------|-----|
+| `dc.workload` | Stream | Task submissions + heartbeats | 24 hours | null |
+| `dc.power` | Stream | Actual power telemetry | 1 hour | null |
+| `dc.topology` | Compacted | Real datacenter topology | 1h lag | `datacenter` |
+| `sim.topology` | Compacted | Simulated topology (What-If) | 0ms lag | `datacenter` |
+| `sys.config` | Compacted | Runtime configuration | infinite | setting key |
+| `sim.results` | Stream | Simulation predictions | 7 days | null |
+
+### Compaction Strategy
+
+**Compacted topics** (`dc.topology`, `sim.topology`, `sys.config`) keep only the latest value per key:
+- Ensures consumers always get current state
+- Enables efficient state recovery
+- Reduces storage for infrequently changing data
+
+**Stream topics** (`dc.workload`, `dc.power`, `sim.results`) retain all messages up to retention period:
+- Preserves full event history
+- Enables time-travel and replay
+- Supports multiple consumers at different offsets
+
+## Related Documentation
+
+### Service Documentation
+- [dc-mock README](../services/dc-mock/README.md) - Datacenter mock producer
+- [sim-worker README](../services/sim-worker/README.md) - Simulation engine
+- [dashboard README](../services/dashboard/README.md) - Web dashboard and API
+- [kafka-init README](../services/kafka-init/README.md) - Kafka initialization
+
+### Concept Documentation
+- [Data Models](./DATA_MODELS.md) - Pydantic models and data structures
+
+### Development Resources
+- [Root README](../README.md) - Quick start and setup
+- [Makefile Commands](../Makefile) - Available `make` commands
+- [Common Library](../libs/common/opendt_common/) - Shared Pydantic models and utilities
