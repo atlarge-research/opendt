@@ -174,8 +174,6 @@ simulation:
   experiment_mode: true    # Enable experiment mode
 ```
 
-See [Configuration Guide](docs/CONFIGURATION.md) for advanced options.
-
 ## System Components
 
 ### Services
