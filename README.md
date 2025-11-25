@@ -1,186 +1,217 @@
 # OpenDT - Open Digital Twin for Datacenters
 
-Real-time datacenter simulation with Kafka streaming and distributed system optimization.
+**OpenDT** is a distributed system for real-time datacenter simulation and What-If analysis. It operates in "Shadow Mode" by replaying historical workload data through the OpenDC simulator to compare predicted vs. actual power consumption.
 
-## 🚀 Quick Start
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+## What is OpenDT?
+
+OpenDT enables datacenter operators to answer questions like:
+- *"What happens to power consumption if we upgrade CPU architecture?"*
+- *"How does adding 50 more hosts affect energy efficiency?"*
+- *"Can we handle 2x workload with current infrastructure?"*
+
+**All without touching live hardware.**
+
+### Key Features
+
+- ✅ **Real-time Simulation**: Event-time windowing with configurable window sizes
+- ✅ **What-If Analysis**: Compare real vs. simulated topologies
+- ✅ **Result Caching**: Avoid redundant simulations (95%+ time savings)
+- ✅ **Multiple Modes**: Normal (Kafka streaming), Debug (local files), Experiment (research)
+- ✅ **Automatic Plots**: Power consumption comparison graphs
+- ✅ **API-Driven**: Update topologies via REST endpoint
+- ✅ **Scalable**: Kafka-based event streaming architecture
+
+## Quick Start
 
 ### Prerequisites
 
-- **Docker & Docker Compose** - For running services
-- **Make** - For convenience commands
+- **Docker & Docker Compose** - Container orchestration
+- **Make** - Convenience commands
 - **Python 3.11+** - For local development
-- **uv** - Python package manager (install: `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- **uv** - Python package manager ([install](https://astral.sh/uv/install))
 
-### Development Setup
+### Setup
 
 ```bash
-# 1. Setup virtual environment (isolates from global Python)
+# 1. Clone repository
+git clone https://github.com/your-org/opendt.git
+cd opendt
+
+# 2. Setup environment
 make setup
 
-# 2. Activate virtual environment
-source .venv/bin/activate
-
-# 3. Verify setup
-make verify
-
-# 4. Run tests
-make test
-```
-
-See [DEV_SETUP.md](DEV_SETUP.md) for detailed development instructions.
-
-### Start the System
-
-```bash
-# Default configuration
+# 3. Start services
 make up
 
-# Or with custom configuration
-make up config=config/stress_test.yaml
-
-# View logs
-make logs
-
-# Access services
-# - API: http://localhost:8000
-# - API Docs: http://localhost:8000/docs
-# - Frontend: http://localhost:3000
+# 4. Access services
+open http://localhost:8000/docs  # API documentation
 ```
 
-## 📋 Configuration
+That's it! The system is now running with the SURF workload dataset.
 
-OpenDT uses a **hybrid configuration strategy**:
+### Running an Experiment
 
-- **Static YAML** for startup configuration
-- **Kafka (`sys.config` topic)** for runtime updates
+```bash
+# Run experiment with custom config
+make experiment name=baseline
 
-### Default Configuration
+# View results
+ls output/baseline/run_1/
+# - results.parquet    (power predictions)
+# - power_plot.png     (actual vs simulated)
+# - opendc/            (simulation archives)
+```
 
-The default configuration is located at `config/default.yaml`:
+## Documentation
+
+### Getting Started
+
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - System design, services, and data flow
+- **[Data Models](docs/DATA_MODELS.md)** - Pydantic models and data schemas
+
+### Service Documentation
+
+- **[dc-mock](services/dc-mock/README.md)** - Data producer (workload replay)
+- **[sim-worker](services/sim-worker/README.md)** - Simulation engine (OpenDC integration)
+- **[opendt-api](services/opendt-api/README.md)** - REST API gateway
+- **[kafka-init](services/kafka-init/README.md)** - Kafka infrastructure setup
+
+## Architecture
+
+```
+┌──────────────┐     ┌────────────────────────────────────┐
+│   dc-mock    │────>│            Kafka Bus               │
+│  (Producer)  │     │  ┌──────────────────────────────┐  │
+│              │     │  │ Topics:                      │  │
+│ Reads:       │     │  │  • dc.workload (tasks)       │  │
+│  - tasks     │     │  │  • dc.power (telemetry)      │  │
+│  - fragments │     │  │  • dc.topology (real)        │  │
+│  - power     │     │  │  • sim.topology (simulated)  │  │
+│  - topology  │     │  │  • sim.results (predictions) │  │
+└──────────────┘     │  └──────────────────────────────┘  │
+                     └───────┬────────────────────────────┘
+                             │
+                   ┌─────────┴─────────────┐
+                   │                       │
+          ┌────────▼──────┐     ┌──────────▼───────┐
+          │  sim-worker   │     │   opendt-api     │
+          │  (Consumer)   │     │   (FastAPI)      │
+          │               │     │                  │
+          │ • Windows     │     │ • REST API       │
+          │ • OpenDC      │     │ • WebSockets     │
+          │ • Caching     │◀────│ • Topology Mgmt  │
+          │ • Experiments │     │                  │
+          └───────┬───────┘     └─────────┬────────┘
+                  │                       │
+                  │              ┌────────▼────────┐
+                  │              │   PostgreSQL    │
+                  │              │   (TimescaleDB) │
+                  │              └─────────────────┘
+                  │
+          ┌───────▼───────┐
+          │ Experiment    │
+          │ Output:       │
+          │  • Parquet    │
+          │  • Plots      │
+          │  • Archives   │
+          └───────────────┘
+```
+
+See [Architecture Overview](docs/ARCHITECTURE.md) for detailed explanation.
+
+## Available Commands
+
+### Core Commands
+
+| Command | Description |
+|---------|-------------|
+| `make up` | Start with clean slate (deletes volumes) |
+| `make up-debug` | Start in debug mode (local file output) |
+| `make down` | Stop all services |
+| `make logs` | View all logs |
+| `make ps` | Show running containers |
+
+### Experiment Commands
+
+| Command | Description |
+|---------|-------------|
+| `make experiment name=X` | Run experiment X |
+| `make experiment-debug name=X` | Run experiment X with debug output |
+| `make experiment-down` | Stop experiment |
+
+### Development Commands
+
+| Command | Description |
+|---------|-------------|
+| `make setup` | Setup virtual environment |
+| `make test` | Run all tests |
+| `make verify` | Verify installation |
+| `make shell-api` | Open shell in API container |
+| `make kafka-topics` | List Kafka topics |
+
+### Monitoring Commands
+
+| Command | Description |
+|---------|-------------|
+| `make logs-dc-mock` | View dc-mock logs |
+| `make logs-sim-worker` | View sim-worker logs |
+| `make logs-api` | View API logs |
+
+Run `make help` to see all available commands.
+
+## Configuration
+
+### Basic Configuration
+
+**File**: `config/default.yaml`
+
+```yaml
+workload: "SURF"  # Data directory name
+
+simulation:
+  speed_factor: 300           # 300x real-time
+  window_size_minutes: 5      # 5-minute windows
+  heartbeat_cadence_minutes: 1
+  experiment_mode: false
+
+kafka:
+  bootstrap_servers: "kafka:29092"
+```
+
+### Experiment Configuration
+
+**File**: `config/experiments/my_experiment.yaml`
 
 ```yaml
 workload: "SURF"
 
 simulation:
-  speed_factor: 10.0  # 1.0 = Realtime, -1 = Max Speed
-  window_size_minutes: 5
-
-features:
-  calibration_enabled: false
+  speed_factor: 300
+  window_size_minutes: 15  # Longer windows for experiments
+  experiment_mode: true    # Enable experiment mode
 ```
 
-### Workload Convention
+See [Configuration Guide](docs/CONFIGURATION.md) for advanced options.
 
-The `workload` field is a name (e.g., "SURF") that maps to a directory structure:
-
-```
-data/
-└── SURF/
-    ├── tasks.parquet
-    ├── fragments.parquet
-    └── consumption.parquet
-```
-
-### Custom Configurations
-
-Create additional configuration files for different scenarios:
-
-```bash
-# Create a stress test configuration
-cat > config/stress_test.yaml <<EOF
-workload: "STRESS"
-simulation:
-  speed_factor: -1  # Max speed
-  window_size_minutes: 1
-features:
-  calibration_enabled: true
-EOF
-
-# Run with custom config
-make run config=config/stress_test.yaml
-```
-
-### Runtime Configuration Updates
-
-Services listen to the `sys.config` Kafka topic for dynamic updates:
-
-```python
-# Example: Update simulation speed at runtime
-from opendt_common import DynamicConfigEvent
-
-event = DynamicConfigEvent(
-    setting_key="simulation.speed_factor",
-    new_value=20.0,
-    source="api"
-)
-# Publish to Kafka topic 'sys.config'
-```
-
-## 🛠️ Available Commands
-
-| Command | Description |
-|---------|-------------|
-| `make up` | Start with clean slate (deletes volumes) |
-| `make run config=...` | Start with custom configuration |
-| `make down` | Stop all services |
-| `make logs` | View all logs |
-| `make logs-api` | View API logs only |
-| `make ps` | Show running containers |
-| `make shell-api` | Open shell in API container |
-| `make kafka-topics` | List Kafka topics |
-| `make help` | Show all commands |
-
-## 📚 Documentation
-
-- **[START_HERE.md](START_HERE.md)** - Complete setup guide
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed configuration and troubleshooting
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Command reference card
-- **[MONOREPO_STRUCTURE.md](MONOREPO_STRUCTURE.md)** - Project structure
-
-## 🏗️ Architecture
-
-```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│  dc-mock    │─────>│    Kafka     │<─────│ sim-worker  │
-│ (Producer)  │      │   (Broker)   │      │ (Consumer)  │
-└─────────────┘      └──────┬───────┘      └──────┬──────┘
-                            │                     │
-                            v                     v
-                     ┌──────────────┐      ┌─────────────┐
-                     │  opendt-api  │      │ PostgreSQL  │
-                     │  (FastAPI)   │─────>│  Database   │
-                     └──────┬───────┘      └─────────────┘
-                            │
-                            v
-                     ┌──────────────┐
-                     │  Frontend    │
-                     │  (Next.js)   │
-                     └──────────────┘
-```
+## System Components
 
 ### Services
 
-- **dc-mock** - Workload producer (reads Parquet → Kafka)
-- **sim-worker** - Simulation engine (Kafka → simulations)
-- **opendt-api** - FastAPI backend (REST API + DB)
-- **frontend** - Next.js UI
+- **dc-mock**: Replays historical workload/power data to Kafka
+- **sim-worker**: Consumes streams, invokes OpenDC simulator
+- **opendt-api**: REST API for system control and topology updates
+- **frontend**: Dashboard for visualization (planned)
 
 ### Infrastructure
 
-- **Kafka** - KRaft mode (no Zookeeper)
-- **PostgreSQL** - Persistent storage
-- All services support hot reload in development
+- **Kafka**: Message broker (KRaft mode, no Zookeeper)
+- **PostgreSQL**: Database for persistent storage
+- **OpenDC**: Java-based datacenter simulator (bundled)
 
-## 🎯 Next Steps
+### Shared Libraries
 
-1. **Read** [START_HERE.md](START_HERE.md) for detailed setup
-2. **Prepare** your workload data in `data/WORKLOAD_NAME/`
-3. **Customize** configuration in `config/`
-4. **Run** `make up` to start the system
-5. **Develop** your simulation logic and API endpoints
-
-## 📖 Learn More
-
-- Configuration system: See `libs/common/opendt_common/config.py`
-- Service documentation: Check each service's `README.md`
-- API documentation: http://localhost:8000/docs (when running)
+- **opendt-common**: Pydantic models, configuration, Kafka utilities
