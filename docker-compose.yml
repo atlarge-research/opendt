@@ -153,11 +153,11 @@ services:
       - opendt-network
     command: python -m sim_worker.main
 
-  opendt-api:
+  dashboard:
     build:
       context: .
-      dockerfile: services/opendt-api/Dockerfile
-    container_name: opendt-api
+      dockerfile: services/dashboard/Dockerfile
+    container_name: opendt-dashboard
     environment:
       DATABASE_URL: postgresql://opendt:opendt_dev_password@postgres:5432/opendt
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -167,7 +167,7 @@ services:
       - "8000:8000"
     volumes:
       # Mount source code for hot reload
-      - ./services/opendt-api:/app/services/opendt-api
+      - ./services/dashboard:/app/services/dashboard
       - ./libs/common:/app/libs/common
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
@@ -178,7 +178,7 @@ services:
         condition: service_healthy
     networks:
       - opendt-network
-    command: uvicorn opendt_api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
 
   # ============================================================================
   # FRONTEND
@@ -201,7 +201,7 @@ services:
   #     - /app/node_modules
   #     - /app/.next
   #   depends_on:
-  #     - opendt-api
+  #     - dashboard
   #   networks:
   #     - opendt-network
   #   command: npm run dev

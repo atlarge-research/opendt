@@ -2,23 +2,6 @@
 
 The **sim-worker** is the core simulation engine of OpenDT. It consumes workload and topology streams from Kafka, aggregates tasks into time windows, invokes the OpenDC simulator, and outputs power consumption predictions.
 
-## Overview
-
-**Purpose**: Bridge between Kafka streams and OpenDC simulator  
-**Type**: Kafka Consumer + Simulation Orchestrator  
-**Language**: Python 3.11+  
-**External Dependencies**: OpenDC (Java-based simulator)
-
-## Key Features
-
-- ✅ Event-time windowing with heartbeat-driven closing
-- ✅ Cumulative simulation (re-simulates from beginning each window)
-- ✅ Result caching (topology hash + task count)
-- ✅ Multiple operating modes (normal, debug, experiment)
-- ✅ Topology management (real vs. simulated)
-- ✅ Automatic plot generation (experiment mode)
-- ✅ OpenDC I/O archiving for reproducibility
-
 ## Architecture
 
 ```
@@ -581,7 +564,7 @@ sim_worker/
 - [Architecture Overview](../../docs/ARCHITECTURE.md) - System design
 - [Data Models](../../docs/DATA_MODELS.md) - Input/output schemas
 - [dc-mock Service](../dc-mock/README.md) - Data producer
-- [opendt-api Service](../opendt-api/README.md) - Topology management
+- [dashboard Service](../dashboard/README.md) - Web dashboard and topology management
 
 ---
 

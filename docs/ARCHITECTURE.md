@@ -54,11 +54,11 @@ Welcome to the OpenDT documentation! This document provides a comprehensive over
                    ┌─────────┴─────────────┐
                    │                       │
           ┌────────▼──────┐     ┌─────────▼────────┐
-          │  sim-worker   │     │   opendt-api     │
+          │  sim-worker   │     │   dashboard      │
           │  (Consumer)   │     │   (FastAPI)      │
           │               │     │                  │
-          │ • Windows     │     │ • REST API       │
-          │ • OpenDC      │     │ • WebSockets     │
+          │ • Windows     │     │ • Web UI         │
+          │ • OpenDC      │     │ • REST API       │
           │ • Caching     │◀────│ • Topology Mgmt  │
           │ • Experiments │     │                  │
           └───────┬───────┘     └─────────┬────────┘
@@ -125,20 +125,22 @@ OpenDT consists of 5 microservices orchestrated via Docker Compose:
 
 ---
 
-### 3. opendt-api (API Gateway)
+### 3. dashboard (Web Dashboard)
 
-**Purpose**: REST API and WebSocket gateway for frontend and external integrations
+**Purpose**: Web dashboard and REST API for system control and visualization
 
-**Location**: [`../services/opendt-api/`](../services/opendt-api/README.md)
+**Location**: [`../services/dashboard/`](../services/dashboard/README.md)
 
 **Key Features**:
+- Web UI for real-time visualization
 - FastAPI with automatic OpenAPI documentation
 - Topology management endpoint (`PUT /api/topology`)
 - Health check and status endpoints
 - Kafka producer for configuration updates
+- Static file serving for dashboard assets
 
-**Endpoints**:
-- `GET /` - Service information
+**Routes**:
+- `GET /` - Web dashboard UI
 - `GET /health` - Health check (Kafka + config status)
 - `GET /docs` - Interactive Swagger UI
 - `PUT /api/topology` - Update simulated datacenter topology
@@ -156,20 +158,6 @@ OpenDT consists of 5 microservices orchestrated via Docker Compose:
 - Creates topics on Kafka startup
 - Applies retention policies and compaction settings
 - Fail-fast on errors
-
----
-
-### 5. frontend (Dashboard - Planned)
-
-**Purpose**: Next.js dashboard for visualization and control
-
-**Status**: Planned/In Development
-
-**Planned Features**:
-- Real-time power consumption graphs (actual vs. predicted)
-- Topology editor for What-If scenarios
-- Experiment management interface
-- Simulation control (pause/resume/speed)
 
 ---
 
@@ -207,7 +195,7 @@ sim.topology ─┘
 ### 4. Topology Management
 
 ```
-User/API ──> PUT /api/topology ──> sim.topology (Kafka) ──> sim-worker
+User/Dashboard ──> PUT /api/topology ──> sim.topology (Kafka) ──> sim-worker
                                                                 │
                                                                 ├──> Update simulated topology
                                                                 ├──> Clear result cache
@@ -244,7 +232,7 @@ User/API ──> PUT /api/topology ──> sim.topology (Kafka) ──> sim-work
 ### Service Documentation
 - [dc-mock README](../services/dc-mock/README.md) - Datacenter mock producer
 - [sim-worker README](../services/sim-worker/README.md) - Simulation engine
-- [opendt-api README](../services/opendt-api/README.md) - API gateway
+- [dashboard README](../services/dashboard/README.md) - Web dashboard and API
 - [kafka-init README](../services/kafka-init/README.md) - Kafka initialization
 
 ### Concept Documentation

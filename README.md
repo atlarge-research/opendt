@@ -28,7 +28,7 @@ make setup
 make up
 
 # 4. Access services
-open http://localhost:8000/docs  # API documentation
+open http://localhost:8000  # Dashboard
 ```
 
 That's it! The system is now running with the SURF workload dataset.
@@ -57,7 +57,7 @@ ls output/baseline/run_1/
 
 - **[dc-mock](services/dc-mock/README.md)** - Data producer (workload replay)
 - **[sim-worker](services/sim-worker/README.md)** - Simulation engine (OpenDC integration)
-- **[opendt-api](services/opendt-api/README.md)** - REST API gateway
+- **[dashboard](services/dashboard/README.md)** - Web dashboard and REST API
 - **[kafka-init](services/kafka-init/README.md)** - Kafka infrastructure setup
 
 ## Architecture
@@ -78,11 +78,11 @@ ls output/baseline/run_1/
                    ┌─────────┴─────────────┐
                    │                       │
           ┌────────▼──────┐     ┌──────────▼───────┐
-          │  sim-worker   │     │   opendt-api     │
+          │  sim-worker   │     │   dashboard      │
           │  (Consumer)   │     │   (FastAPI)      │
           │               │     │                  │
-          │ • Windows     │     │ • REST API       │
-          │ • OpenDC      │     │ • WebSockets     │
+          │ • Windows     │     │ • Web UI         │
+          │ • OpenDC      │     │ • REST API       │
           │ • Caching     │◀────│ • Topology Mgmt  │
           │ • Experiments │     │                  │
           └───────┬───────┘     └─────────┬────────┘
@@ -129,7 +129,7 @@ See [Architecture Overview](docs/ARCHITECTURE.md) for detailed explanation.
 |---------|-------------|
 | `make setup` | Setup virtual environment |
 | `make test` | Run all tests |
-| `make shell-api` | Open shell in API container |
+| `make shell-dashboard` | Open shell in dashboard container |
 | `make kafka-topics` | List Kafka topics |
 
 ### Monitoring Commands
@@ -138,7 +138,7 @@ See [Architecture Overview](docs/ARCHITECTURE.md) for detailed explanation.
 |---------|-------------|
 | `make logs-dc-mock` | View dc-mock logs |
 | `make logs-sim-worker` | View sim-worker logs |
-| `make logs-api` | View API logs |
+| `make logs-dashboard` | View dashboard logs |
 
 Run `make help` to see all available commands.
 
@@ -182,8 +182,7 @@ See [Configuration Guide](docs/CONFIGURATION.md) for advanced options.
 
 - **dc-mock**: Replays historical workload/power data to Kafka
 - **sim-worker**: Consumes streams, invokes OpenDC simulator
-- **opendt-api**: REST API for system control and topology updates
-- **frontend**: Dashboard for visualization (planned)
+- **dashboard**: Web dashboard with REST API for system control and visualization
 
 ### Infrastructure
 

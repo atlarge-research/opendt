@@ -37,8 +37,7 @@ up: clean-volumes
 	@echo "✅ Services started!"
 	@echo ""
 	@echo "Available services:"
-	@echo "  - Frontend:    http://localhost:3000"
-	@echo "  - API:         http://localhost:8000"
+	@echo "  - Dashboard:   http://localhost:8000"
 	@echo "  - API Docs:    http://localhost:8000/docs"
 	@echo "  - Postgres:    localhost:5432"
 	@echo "  - Kafka:       localhost:9092"
@@ -66,8 +65,7 @@ up-debug: clean-volumes
 	@echo "   Kafka publishing is DISABLED for sim-worker"
 	@echo ""
 	@echo "Available services:"
-	@echo "  - Frontend:    http://localhost:3000"
-	@echo "  - API:         http://localhost:8000"
+	@echo "  - Dashboard:   http://localhost:8000"
 	@echo "  - Postgres:    localhost:5432"
 	@echo "  - Kafka:       localhost:9092"
 	@echo ""
@@ -216,13 +214,9 @@ clean-env:
 logs:
 	CONFIG_PATH=$(config) docker compose logs -f
 
-## logs-api: Tail logs for API service only
-logs-api:
-	CONFIG_PATH=$(config) docker compose logs -f opendt-api
-
-## logs-frontend: Tail logs for frontend service only
-logs-frontend:
-	CONFIG_PATH=$(config) docker compose logs -f frontend
+## logs-dashboard: Tail logs for dashboard service only
+logs-dashboard:
+	CONFIG_PATH=$(config) docker compose logs -f dashboard
 
 ## logs-kafka: Tail logs for Kafka service only
 logs-kafka:
@@ -240,13 +234,9 @@ logs-sim-worker:
 ps:
 	CONFIG_PATH=$(config) docker compose ps
 
-## shell-api: Open a shell in the API container
-shell-api:
-	CONFIG_PATH=$(config) docker compose exec opendt-api /bin/bash
-
-## shell-frontend: Open a shell in the frontend container
-shell-frontend:
-	CONFIG_PATH=$(config) docker compose exec frontend /bin/sh
+## shell-dashboard: Open a shell in the dashboard container
+shell-dashboard:
+	CONFIG_PATH=$(config) docker compose exec dashboard /bin/bash
 
 ## shell-postgres: Open psql in the Postgres container
 shell-postgres:

@@ -1,11 +1,15 @@
-"""OpenDT API - Main FastAPI Application."""
+"""OpenDT Dashboard - Main FastAPI Application."""
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from opendt_common import load_config_from_env
 from opendt_common.models.topology import CPU, Cluster, CPUPowerModel, Host, Memory, Topology
 from opendt_common.utils import get_kafka_producer
@@ -16,12 +20,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Setup paths for static files and templates
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "static"
+TEMPLATES_DIR = BASE_DIR / "templates"
+
+# Initialize templates
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
     # Startup
-    logger.info("Starting OpenDT API service...")
+    logger.info("Starting OpenDT Dashboard service...")
 
     # Load configuration
     try:
@@ -42,7 +54,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    logger.info("Shutting down OpenDT API service...")
+    logger.info("Shutting down OpenDT Dashboard service...")
     if app.state.kafka_producer:
         app.state.kafka_producer.close()
         logger.info("Kafka producer closed")
@@ -50,8 +62,8 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI application
 app = FastAPI(
-    title="OpenDT API",
-    description="Open Digital Twin - Backend API for distributed system simulation",
+    title="OpenDT Dashboard",
+    description="Open Digital Twin - Web Dashboard and API for datacenter simulation",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -61,11 +73,30 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=["http://localhost:8000"],  # Dashboard URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+# ============================================================================
+# DASHBOARD
+# ============================================================================
+
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    """Serve the OpenDT dashboard UI."""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+# ============================================================================
+# API ENDPOINTS
+# ============================================================================
 
 
 @app.get("/health")

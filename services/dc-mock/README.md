@@ -2,13 +2,6 @@
 
 The **dc-mock** service simulates a real datacenter by replaying historical workload and power consumption data to Kafka topics. It acts as the data source for the entire OpenDT system.
 
-## Overview
-
-**Purpose**: Replay historical datacenter data with configurable speed factor  
-**Type**: Kafka Producer  
-**Language**: Python 3.11+  
-**Framework**: Threading + kafka-python
-
 ## Responsibilities
 
 1. **Workload Replay**: Stream task submissions from `tasks.parquet` and `fragments.parquet`

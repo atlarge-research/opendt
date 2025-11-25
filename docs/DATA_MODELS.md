@@ -493,7 +493,7 @@ send_message(
 ## Related Documentation
 
 - [Architecture Overview](./ARCHITECTURE.md) - System design and data flow
-- [API Documentation](../services/opendt-api/README.md) - REST API using these models
+- [Dashboard Documentation](../services/dashboard/README.md) - Web UI and REST API using these models
 - [Simulation Worker](../services/sim-worker/README.md) - How models are used in simulation
 
 ---

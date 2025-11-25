@@ -2,21 +2,6 @@
 
 The **kafka-init** service is an infrastructure initialization container that creates and configures Kafka topics before application services start. It ensures all required topics exist with proper retention, compaction, and partitioning settings.
 
-## Overview
-
-**Purpose**: Initialize Kafka infrastructure  
-**Type**: Initialization Container (runs once and exits)  
-**Language**: Python 3.11+  
-**Dependencies**: kafka-python, opendt-common
-
-## Responsibilities
-
-1. **Wait for Kafka**: Retry connection until Kafka broker is ready
-2. **Load Configuration**: Read topic definitions from YAML
-3. **Create Topics**: Create all configured topics with settings
-4. **Apply Policies**: Set retention, compaction, and other topic configs
-5. **Fail Fast**: Exit with error if topic creation fails
-
 ## Architecture
 
 ```
