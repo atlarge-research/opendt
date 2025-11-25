@@ -4,26 +4,6 @@
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-
-## What is OpenDT?
-
-OpenDT enables datacenter operators to answer questions like:
-- *"What happens to power consumption if we upgrade CPU architecture?"*
-- *"How does adding 50 more hosts affect energy efficiency?"*
-- *"Can we handle 2x workload with current infrastructure?"*
-
-**All without touching live hardware.**
-
-### Key Features
-
-- ✅ **Real-time Simulation**: Event-time windowing with configurable window sizes
-- ✅ **What-If Analysis**: Compare real vs. simulated topologies
-- ✅ **Result Caching**: Avoid redundant simulations (95%+ time savings)
-- ✅ **Multiple Modes**: Normal (Kafka streaming), Debug (local files), Experiment (research)
-- ✅ **Automatic Plots**: Power consumption comparison graphs
-- ✅ **API-Driven**: Update topologies via REST endpoint
-- ✅ **Scalable**: Kafka-based event streaming architecture
 
 ## Quick Start
 
@@ -149,7 +129,6 @@ See [Architecture Overview](docs/ARCHITECTURE.md) for detailed explanation.
 |---------|-------------|
 | `make setup` | Setup virtual environment |
 | `make test` | Run all tests |
-| `make verify` | Verify installation |
 | `make shell-api` | Open shell in API container |
 | `make kafka-topics` | List Kafka topics |
 

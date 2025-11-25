@@ -1,4 +1,4 @@
-.PHONY: up down clean-volumes restart build logs help run test setup install-dev clean-env verify experiment experiment-down
+.PHONY: up down clean-volumes restart build logs help run test setup install-dev clean-env experiment experiment-down
 
 # Default target
 .DEFAULT_GOAL := help
@@ -211,15 +211,6 @@ clean-env:
 	rm -rf $(VENV)
 	rm -rf .uv
 	@echo "✅ Environment cleaned!"
-
-## verify: Verify development environment setup
-verify:
-	@echo "🔍 Verifying development environment..."
-	@if [ ! -d "$(VENV)" ]; then \
-		echo "❌ Virtual environment not found. Run 'make setup' first."; \
-		exit 1; \
-	fi
-	@$(PYTHON) scripts/verify_setup.py
 
 ## logs: Tail logs for all services
 logs:
