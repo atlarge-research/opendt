@@ -154,7 +154,7 @@ workload: "SURF"  # Data directory name
 simulation:
   speed_factor: 300           # 300x real-time
   window_size_minutes: 5      # 5-minute windows
-  heartbeat_cadence_minutes: 1
+  heartbeat_frequency_minutes: 1
   experiment_mode: false
 
 kafka:

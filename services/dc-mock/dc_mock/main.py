@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 from odt_common import load_config_from_env
+from odt_common.utils import get_kafka_bootstrap_servers
 
 from dc_mock.producers import PowerProducer, TopologyProducer, WorkloadProducer
 
@@ -55,7 +56,7 @@ class DCMockOrchestrator:
         topology_topic: str,
         workload_topic: str,
         power_topic: str,
-        heartbeat_cadence_minutes: int = 1,
+        heartbeat_frequency_minutes: int = 1,
     ) -> None:
         """Start all producers.
 
@@ -66,7 +67,7 @@ class DCMockOrchestrator:
             topology_topic: Kafka topic for topology events
             workload_topic: Kafka topic for workload events
             power_topic: Kafka topic for power consumption events
-            heartbeat_cadence_minutes: Cadence in simulation minutes for heartbeat messages
+            heartbeat_frequency_minutes: Frequency in simulation minutes for heartbeat messages
         """
         logger.info("=" * 70)
         logger.info("Starting DC-Mock Producers")
@@ -79,7 +80,7 @@ class DCMockOrchestrator:
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed_factor=speed_factor,
             topic=workload_topic,
-            heartbeat_cadence_minutes=heartbeat_cadence_minutes,
+            heartbeat_frequency_minutes=heartbeat_frequency_minutes,
         )
 
         # Pre-load tasks to get earliest time (needed for power producer)
@@ -190,7 +191,7 @@ class DCMockOrchestrator:
             logger.info("Loading configuration...")
             config = load_config_from_env()
             logger.info(f"Loaded configuration for workload: {config.workload}")
-            logger.info(f"Simulation speed: {config.simulation.speed_factor}x")
+            logger.info(f"Simulation speed: {config.global_config.speed_factor}x")
 
             # Get workload context
             workload_path = Path(os.getenv("WORKLOAD_PATH", "/app/workload"))
@@ -212,8 +213,8 @@ class DCMockOrchestrator:
                 status = "✓" if exists else "✗"
                 logger.info(f"  {status} {file_type}")
 
-            # Get Kafka configuration
-            kafka_bootstrap_servers = config.kafka.bootstrap_servers
+            # Get Kafka configuration from environment variable
+            kafka_bootstrap_servers = get_kafka_bootstrap_servers()
             logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
 
             # Get topic names
@@ -231,11 +232,11 @@ class DCMockOrchestrator:
             self.start_all(
                 workload_context=workload_context,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=config.simulation.speed_factor,
+                speed_factor=config.global_config.speed_factor,
                 topology_topic=topology_topic,
                 workload_topic=workload_topic,
                 power_topic=power_topic,
-                heartbeat_cadence_minutes=config.simulation.heartbeat_cadence_minutes,
+                heartbeat_frequency_minutes=config.services.dc_mock.heartbeat_frequency_minutes,
             )
 
             # Wait for completion

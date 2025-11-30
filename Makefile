@@ -29,14 +29,18 @@ up: clean-volumes
 		exit 1; \
 	fi
 	@echo "🔧 Initializing run..."
-	@python3 scripts/opendt_cli.py init --config $(config)
-	@export RUN_ID=$$(cat .run_id) && \
+	@$(PYTHON) scripts/opendt_cli.py init --config $(config)
+	@RUN_ID=$$(cat .run_id) && \
+	if [ ! -f "data/$$RUN_ID/.env" ]; then \
+		echo "❌ Error: data/$$RUN_ID/.env not found after initialization"; \
+		exit 1; \
+	fi && \
+	set -a && . ./data/$$RUN_ID/.env && set +a && \
 	if [ "$(build)" = "true" ]; then \
 		echo "🔨 Rebuilding Docker images (no cache)..."; \
-		CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose build --no-cache; \
-		echo "✅ Images rebuilt!"; \
+		docker compose $$PROFILE_FLAG build --no-cache; \
 	fi && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose up -d
+	docker compose $$PROFILE_FLAG up -d
 	@echo "✅ Services started!"
 	@echo ""
 	@echo "Available services:"
@@ -53,14 +57,23 @@ run: up
 ## down: Stop all containers
 down:
 	@echo "⏹️  Stopping OpenDT services..."
-	CONFIG_PATH=$(config) docker compose down
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG down; \
+	else \
+		docker compose down; \
+	fi
 	@echo "✅ Services stopped!"
 
 ## clean-volumes: Stop containers and delete persistent volumes (Kafka & Postgres)
 clean-volumes:
 	@echo "🧹 Stopping containers and cleaning persistent volumes..."
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose down -v || docker compose down -v
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG down -v; \
+	else \
+		docker compose down -v; \
+	fi
 	@echo "🗑️  Removing named volumes..."
 	-docker volume rm opendt-postgres-data 2>/dev/null || true
 	-docker volume rm opendt-kafka-data 2>/dev/null || true
@@ -69,15 +82,25 @@ clean-volumes:
 ## restart: Restart all services (without cleaning volumes)
 restart:
 	@echo "♻️  Restarting OpenDT services..."
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose restart || CONFIG_PATH=$(config) docker compose restart
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG restart; \
+	else \
+		echo "⚠️  Run environment not found, restarting without profile"; \
+		docker compose restart; \
+	fi
 	@echo "✅ Services restarted!"
 
 ## build: Rebuild all Docker images
 build:
 	@echo "🔨 Building Docker images..."
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose build --no-cache || CONFIG_PATH=$(config) docker compose build --no-cache
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG build --no-cache; \
+	else \
+		echo "⚠️  Run environment not found, building without profile"; \
+		docker compose build --no-cache; \
+	fi
 	@echo "✅ Images built!"
 
 ## rebuild: Clean, rebuild (no cache), and start (alias for make up build=true)
@@ -136,32 +159,27 @@ clean-env:
 
 ## logs: Tail logs for all services
 logs:
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose logs -f
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG logs -f
 
 ## logs-dashboard: Tail logs for dashboard service only
 logs-dashboard:
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose logs -f dashboard
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f dashboard
 
 ## logs-kafka: Tail logs for Kafka service only
 logs-kafka:
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose logs -f kafka
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f kafka
 
 ## logs-dc-mock: Tail logs for dc-mock service only
 logs-dc-mock:
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose logs -f dc-mock
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f dc-mock
 
 ## logs-simulator: Tail logs for simulator service only
 logs-simulator:
-	@export RUN_ID=$$(cat .run_id 2>/dev/null || echo "") && \
-	CONFIG_PATH=$(config) RUN_ID=$$RUN_ID docker compose logs -f simulator
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f simulator
 
 ## logs-calibrator: Tail logs for calibrator service only
-# logs-calibrator:
-# 	CONFIG_PATH=$(config) docker compose logs -f calibrator
+logs-calibrator:
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose --profile calibration logs -f calibrator
 
 ## up-with-calibration: Start services including calibrator
 # up-with-calibration: clean-volumes
@@ -189,19 +207,19 @@ logs-simulator:
 
 ## ps: Show running containers
 ps:
-	CONFIG_PATH=$(config) docker compose ps
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG ps
 
 ## shell-dashboard: Open a shell in the dashboard container
 shell-dashboard:
-	CONFIG_PATH=$(config) docker compose exec dashboard /bin/bash
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec dashboard /bin/bash
 
 ## shell-postgres: Open psql in the Postgres container
 shell-postgres:
-	CONFIG_PATH=$(config) docker compose exec postgres psql -U opendt -d opendt
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec postgres psql -U opendt -d opendt
 
 ## kafka-topics: List Kafka topics
 kafka-topics:
-	CONFIG_PATH=$(config) docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
 
 ## help: Show this help message
 help:

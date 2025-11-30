@@ -27,7 +27,7 @@ class WorkloadProducer(BaseProducer):
         kafka_bootstrap_servers: str,
         speed_factor: float,
         topic: str,
-        heartbeat_cadence_minutes: int = 1,
+        heartbeat_frequency_minutes: int = 1,
     ):
         """Initialize the workload producer.
 
@@ -36,7 +36,7 @@ class WorkloadProducer(BaseProducer):
             kafka_bootstrap_servers: Kafka broker addresses
             speed_factor: Simulation speed multiplier
             topic: Kafka topic name for workload events
-            heartbeat_cadence_minutes: Cadence in simulation minutes for heartbeat messages
+            heartbeat_frequency_minutes: Frequency in simulation minutes for heartbeat messages
         """
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
@@ -46,11 +46,11 @@ class WorkloadProducer(BaseProducer):
         )
         self.workload_context = workload_context
         self.tasks: list[Task] = []
-        self.heartbeat_cadence_minutes = heartbeat_cadence_minutes
+        self.heartbeat_frequency_minutes = heartbeat_frequency_minutes
 
         logger.info(f"  Tasks file: {workload_context.tasks_file}")
         logger.info(f"  Fragments file: {workload_context.fragments_file}")
-        logger.info(f"  Heartbeat cadence: {heartbeat_cadence_minutes} simulated minutes")
+        logger.info(f"  Heartbeat frequency: {heartbeat_frequency_minutes} simulated minutes")
 
     def load_and_aggregate_tasks(self) -> tuple[list[Task], datetime]:
         """Load tasks and fragments, aggregating fragments into tasks.
@@ -131,7 +131,7 @@ class WorkloadProducer(BaseProducer):
             real_start_time = time.time()
 
             # Initialize heartbeat tracking
-            heartbeat_cadence = timedelta(minutes=self.heartbeat_cadence_minutes)
+            heartbeat_frequency = timedelta(minutes=self.heartbeat_frequency_minutes)
             # Round down to the nearest minute for first heartbeat
             next_heartbeat_time = sim_start_time.replace(second=0, microsecond=0)
             heartbeats_sent = 0
@@ -166,7 +166,7 @@ class WorkloadProducer(BaseProducer):
                     heartbeats_sent += 1
 
                     # Move to next heartbeat time
-                    next_heartbeat_time += heartbeat_cadence
+                    next_heartbeat_time += heartbeat_frequency
 
                 # Calculate elapsed simulation time for this task
                 sim_elapsed = (task.submission_time - sim_start_time).total_seconds()

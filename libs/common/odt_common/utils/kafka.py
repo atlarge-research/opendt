@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def get_kafka_bootstrap_servers() -> str:
     """Get Kafka bootstrap servers from environment or use default."""
-    return os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    return os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
 
 
 def get_kafka_producer(bootstrap_servers: str | None = None, **kwargs: Any) -> KafkaProducer:

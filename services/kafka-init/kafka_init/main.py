@@ -16,6 +16,7 @@ from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
 from kafka.errors import KafkaError, TopicAlreadyExistsError
 from odt_common import load_config_from_env
+from odt_common.utils import get_kafka_bootstrap_servers
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -118,7 +119,8 @@ def main() -> int:
 
         # Extract Kafka configuration
         kafka_config = config.kafka
-        logger.info(f"Kafka bootstrap servers: {kafka_config.bootstrap_servers}")
+        kafka_bootstrap_servers = get_kafka_bootstrap_servers()
+        logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
         logger.info(f"Topics to create: {list(kafka_config.topics.keys())}")
 
         # Convert topic configurations to NewTopic objects
@@ -142,7 +144,7 @@ def main() -> int:
         # Ensure topics exist
         logger.info("Creating Kafka topics...")
         success = ensure_topics_exist(
-            bootstrap_servers=kafka_config.bootstrap_servers,
+            bootstrap_servers=kafka_bootstrap_servers,
             topics=new_topics,
             max_retries=30,  # Kafka may take time to start
             retry_delay=2.0,

@@ -252,7 +252,7 @@ experiment_manager.generate_power_plot()
 ```yaml
 simulation:
   window_size_minutes: 5
-  heartbeat_cadence_minutes: 1
+  heartbeat_frequency_minutes: 1
   experiment_mode: false  # Set true for experiment mode
 
 kafka:
@@ -479,13 +479,13 @@ make up build=true
 
 ### Issue: Windows staying open indefinitely
 
-**Cause**: No heartbeats or heartbeat cadence too long
+**Cause**: No heartbeats or heartbeat frequency too long
 
 **Solution**:
 ```yaml
 # In config file
 simulation:
-  heartbeat_cadence_minutes: 1  # Decrease if needed
+  heartbeat_frequency_minutes: 1  # Decrease if needed
 ```
 
 ### Issue: Cache not working (redundant simulations)
@@ -522,7 +522,7 @@ docker exec -it opendt-kafka kafka-console-consumer \
 
 1. **Enable caching**: Ensure topology doesn't change unnecessarily
 2. **Longer windows**: Use 15-minute windows for fewer simulations
-3. **Increase heartbeat cadence**: Reduce Kafka message overhead
+3. **Increase heartbeat frequency**: Reduce Kafka message overhead
 4. **Parquet compression**: Reduces I/O time
 
 ## Development

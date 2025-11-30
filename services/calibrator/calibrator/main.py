@@ -1,4 +1,4 @@
-"""Simulator Service - Main Entry Point."""
+"""Calibrator Service - Main Entry Point."""
 
 import copy
 import json
@@ -20,13 +20,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class SimulationService:
-    """Core simulation service that processes workload and runs OpenDC simulations.
+class CalibrationService:
+    """Core calibration service that processes workload and runs OpenDC simulations.
 
     The service:
     1. Listens to dc.workload (tasks) and dc.topology (topology snapshots)
     2. Accumulates tasks chronologically
-    3. Triggers simulations at specified frequency (simulated time)
+    3. Triggers calibration runs at specified frequency (simulated time)
     4. Caches results based on topology hash + task count
     """
 
@@ -36,19 +36,19 @@ class SimulationService:
         workload_topic: str,
         topology_topic: str,
         sim_topology_topic: str,
-        simulation_frequency_minutes: int,
+        calibration_frequency_minutes: int,
         run_output_dir: str,
         run_id: str,
-        consumer_group: str = "simulators",
+        consumer_group: str = "calibrators",
     ):
-        """Initialize the simulation service.
+        """Initialize the calibration service.
 
         Args:
             kafka_bootstrap_servers: Kafka broker addresses
             workload_topic: Kafka topic name for workload events (dc.workload)
             topology_topic: Kafka topic name for topology updates (dc.topology)
             sim_topology_topic: Kafka topic name for simulated topology updates (sim.topology)
-            simulation_frequency_minutes: Simulation frequency in simulated time minutes
+            calibration_frequency_minutes: Calibration frequency in simulated time minutes
             run_output_dir: Base directory for run outputs
             run_id: Unique run ID for this session
             consumer_group: Kafka consumer group ID
@@ -58,14 +58,14 @@ class SimulationService:
         self.workload_topic = workload_topic
         self.topology_topic = topology_topic
         self.sim_topology_topic = sim_topology_topic
-        self.simulation_frequency = timedelta(minutes=simulation_frequency_minutes)
+        self.calibration_frequency = timedelta(minutes=calibration_frequency_minutes)
         self.run_id = run_id
 
-        # Setup output directories - simulator writes to run_dir/simulator/
-        self.output_base_dir = Path(run_output_dir) / run_id / "simulator"
+        # Setup output directories - calibrator writes to run_dir/calibrator/
+        self.output_base_dir = Path(run_output_dir) / run_id / "calibrator"
         self.output_base_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Simulator output directory: {self.output_base_dir}")
+        logger.info(f"Calibrator output directory: {self.output_base_dir}")
 
         # Initialize Kafka consumer
         topics = [workload_topic, topology_topic, sim_topology_topic]
@@ -86,7 +86,7 @@ class SimulationService:
             self.opendc_runner = OpenDCRunner()
         except FileNotFoundError as e:
             logger.error(f"Failed to initialize OpenDC runner: {e}")
-            logger.error("Simulation will not be available")
+            logger.error("Calibration will not be available")
             self.opendc_runner = None
 
         # Topology state
@@ -95,46 +95,42 @@ class SimulationService:
 
         # Statistics
         self.tasks_processed = 0
-        self.simulations_run = 0
+        self.calibrations_run = 0
         self.run_number = 0
 
         # Initialize result cache
         self.result_cache = ResultCache()
 
-        logger.info(f"Initialized SimulationService with run ID: {run_id}")
+        logger.info(f"Initialized CalibrationService with run ID: {run_id}")
         logger.info(f"Consumer group: {consumer_group}")
         logger.info(f"Subscribed: {workload_topic}, {topology_topic}, {sim_topology_topic}")
         logger.info(
-            f"Simulation frequency: {simulation_frequency_minutes} minutes (simulated time)"
+            f"Calibration frequency: {calibration_frequency_minutes} minutes (simulated time)"
         )
 
-    def _run_simulation(self) -> None:
-        """Run OpenDC simulation with accumulated tasks.
-
-        Args:
-            heartbeat_time: Timestamp that triggered this simulation
-        """
+    def _run_calibration(self) -> None:
+        """Run OpenDC calibration with accumulated tasks."""
         if not self.opendc_runner:
-            logger.warning("OpenDC runner not available, skipping simulation")
+            logger.warning("OpenDC runner not available, skipping calibration")
             return
 
         if not self.simulated_topology:
-            logger.warning("No topology available, skipping simulation")
+            logger.warning("No topology available, skipping calibration")
             return
 
         # Get all accumulated tasks
         all_tasks = self.task_accumulator.get_all_tasks()
 
         if not all_tasks:
-            logger.info("No tasks to simulate, skipping")
+            logger.info("No tasks to calibrate, skipping")
             return
 
-        # Calculate aligned simulation time
+        # Calculate aligned calibration time
         aligned_simulated_time = self.task_accumulator.get_next_simulation_time(
-            self.simulation_frequency
+            self.calibration_frequency
         )
         if aligned_simulated_time is None:
-            logger.error("Cannot calculate aligned simulation time")
+            logger.error("Cannot calculate aligned calibration time")
             return
 
         # Increment run number
@@ -148,7 +144,7 @@ class SimulationService:
 
         if self.result_cache.can_reuse(topology_to_use, len(all_tasks)):
             logger.info(
-                f"♻️  Reusing cached results for run {self.run_number} "
+                f"♻️  Reusing cached results for calibration run {self.run_number} "
                 f"(topology unchanged, {len(all_tasks)} tasks)"
             )
 
@@ -169,12 +165,12 @@ class SimulationService:
                 metadata["cached"] = True
                 metadata_file.write_text(json.dumps(metadata, indent=2))
 
-                logger.info(f"✅ Cached results copied to run_{self.run_number}")
+                logger.info(f"✅ Cached results copied to calibration run_{self.run_number}")
         else:
-            # Run new simulation
-            logger.info(f"Running simulation {self.run_number} with {len(all_tasks)} tasks")
+            # Run new calibration
+            logger.info(f"Running calibration {self.run_number} with {len(all_tasks)} tasks")
 
-            success, _ = self.opendc_runner.run_simulation(
+            success, output_dir = self.opendc_runner.run_simulation(
                 tasks=all_tasks,
                 topology=topology_to_use,
                 run_dir=run_dir,
@@ -184,20 +180,20 @@ class SimulationService:
             )
 
             if not success:
-                logger.error(f"Simulation {self.run_number} failed")
+                logger.error(f"Calibration {self.run_number} failed")
                 return
 
-            # Update cache with run directory (not output directory)
+            # Update cache with run directory
             self.result_cache.update(topology_to_use, len(all_tasks), run_dir)
-            logger.info(f"✅ Simulation {self.run_number} complete, results cached")
+            logger.info(f"✅ Calibration {self.run_number} complete, results cached")
 
         # Update statistics and simulation time
-        self.simulations_run += 1
+        self.calibrations_run += 1
         self.task_accumulator.last_simulation_time = aligned_simulated_time
 
         logger.info(
             f"📊 Stats: {self.tasks_processed} tasks processed, "
-            f"{self.simulations_run} simulations run"
+            f"{self.calibrations_run} calibrations run"
         )
 
     def _process_workload_message(self, message_data: dict[str, Any]) -> None:
@@ -226,9 +222,11 @@ class SimulationService:
                 heartbeat_time = datetime.fromisoformat(message_data["timestamp"])
                 logger.debug(f"Received heartbeat at {heartbeat_time}")
 
-                # Check if we should trigger simulation
-                if self.task_accumulator.should_simulate(heartbeat_time, self.simulation_frequency):
-                    self._run_simulation()
+                # Check if we should trigger calibration
+                if self.task_accumulator.should_simulate(
+                    heartbeat_time, self.calibration_frequency
+                ):
+                    self._run_calibration()
 
             else:
                 logger.warning(f"Unknown message_type: {message_type}")
@@ -313,8 +311,8 @@ class SimulationService:
             logger.error(f"Error processing message from {topic}: {e}", exc_info=True)
 
     def run(self):
-        """Run the simulation service (main event loop)."""
-        logger.info("Starting Simulation Service")
+        """Run the calibration service (main event loop)."""
+        logger.info("Starting Calibration Service")
         logger.info("Waiting for messages...")
 
         try:
@@ -325,14 +323,14 @@ class SimulationService:
             logger.info("Received interrupt signal, shutting down...")
 
         except Exception as e:
-            logger.error(f"Error in simulation service: {e}", exc_info=True)
+            logger.error(f"Error in calibration service: {e}", exc_info=True)
             raise
 
         finally:
             logger.info("Closing Kafka connections...")
             self.consumer.close()
             self.producer.close()
-            logger.info("Simulation service stopped")
+            logger.info("Calibration service stopped")
 
 
 def main():
@@ -345,21 +343,31 @@ def main():
         logger.error(f"Failed to load configuration: {e}")
         raise
 
+    # Check if calibration is enabled
+    if not config.global_config.calibration_enabled:
+        logger.warning("Calibration is disabled in configuration. Exiting gracefully.")
+        return
+
+    # Ensure calibrator config exists (should be caught by model validator, but check anyway)
+    if config.services.calibrator is None:
+        logger.error("Calibration is enabled but calibrator configuration is missing")
+        raise ValueError("Calibrator configuration required when calibration_enabled=true")
+
     # Get Kafka configuration from environment variable
     kafka_bootstrap_servers = get_kafka_bootstrap_servers()
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
     sim_topology_topic = config.kafka.topics["sim_topology"].name
 
-    # Get simulator configuration
-    simulation_frequency_minutes = config.services.simulator.simulation_frequency_minutes
+    # Get calibrator configuration
+    calibration_frequency_minutes = config.services.calibrator.calibration_frequency_minutes
     run_output_dir = Path(os.getenv("DATA_DIR", "/app/data"))
 
     logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
     logger.info(f"Workload topic: {workload_topic}")
     logger.info(f"Topology topic: {topology_topic}")
     logger.info(f"Simulated topology topic: {sim_topology_topic}")
-    logger.info(f"Simulation frequency: {simulation_frequency_minutes} minutes")
+    logger.info(f"Calibration frequency: {calibration_frequency_minutes} minutes")
     logger.info(f"Data directory: {run_output_dir}")
 
     # Get run ID from environment
@@ -371,7 +379,7 @@ def main():
     logger.info(f"Run ID: {run_id}")
 
     # Get consumer group from environment
-    consumer_group = os.getenv("CONSUMER_GROUP", "simulators")
+    consumer_group = os.getenv("CONSUMER_GROUP", "calibrators")
 
     # Wait for Kafka to be ready
     max_retries = 30
@@ -380,12 +388,12 @@ def main():
     for attempt in range(max_retries):
         try:
             logger.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})")
-            service = SimulationService(
+            service = CalibrationService(
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
                 workload_topic=workload_topic,
                 topology_topic=topology_topic,
                 sim_topology_topic=sim_topology_topic,
-                simulation_frequency_minutes=simulation_frequency_minutes,
+                calibration_frequency_minutes=calibration_frequency_minutes,
                 run_output_dir=str(run_output_dir),
                 run_id=run_id,
                 consumer_group=consumer_group,

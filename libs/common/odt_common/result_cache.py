@@ -1,4 +1,4 @@
-"""Result caching for simulation service.
+"""Result caching for simulation services.
 
 Caches simulation output directory paths based on inputs (topology + task count) to avoid
 redundant OpenDC invocations when inputs haven't changed.
@@ -91,8 +91,8 @@ class ResultCache:
         from the cached run to the new run directory.
 
         Args:
-            source_run_dir: Source run directory (e.g., run_3/)
-            destination_run_dir: Destination run directory (e.g., run_5/)
+            source_run_dir: Source run directory (e.g., run_3/simulator/)
+            destination_run_dir: Destination run directory (e.g., run_5/simulator/)
         """
         if source_run_dir is None or not source_run_dir.exists():
             return
@@ -113,7 +113,7 @@ class ResultCache:
         Args:
             topology: Topology used in simulation
             task_count: Number of tasks in simulation
-            run_dir: Path to run directory (e.g., run_3/)
+            run_dir: Path to run directory (e.g., run_3/simulator/)
         """
         topology_hash = self._compute_topology_hash(topology)
         self.last_state = SimulationState(topology_hash=topology_hash, task_count=task_count)

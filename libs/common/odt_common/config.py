@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class KafkaTopicConfig(BaseModel):
@@ -27,29 +27,18 @@ class KafkaTopicConfig(BaseModel):
 class KafkaConfig(BaseModel):
     """Kafka infrastructure configuration."""
 
-    bootstrap_servers: str = Field(
-        default="localhost:9092", description="Kafka bootstrap server addresses"
-    )
     topics: dict[str, KafkaTopicConfig] = Field(
         default_factory=dict, description="Topic configurations keyed by logical name"
     )
 
 
-class SimConfig(BaseModel):
-    """Simulation configuration parameters."""
+class GlobalConfig(BaseModel):
+    """Global configuration parameters."""
 
     speed_factor: float = Field(
         default=10.0, description="Simulation speed: 1.0 = realtime, -1 = max speed, >1 = faster"
     )
-    simulation_frequency_minutes: int = Field(
-        default=15, description="Simulation frequency in minutes (simulated time)", gt=0
-    )
-    heartbeat_cadence_minutes: int = Field(
-        default=1, description="Cadence in simulation minutes for workload heartbeat messages", gt=0
-    )
-    run_output_dir: str = Field(
-        default="/app/data", description="Base directory for run outputs"
-    )
+    calibration_enabled: bool = Field(default=False, description="Enable power model calibration")
 
     @field_validator("speed_factor")
     @classmethod
@@ -60,18 +49,30 @@ class SimConfig(BaseModel):
         return v
 
 
-class FeatureFlags(BaseModel):
-    """Feature flags for enabling/disabling functionality."""
+class DcMockConfig(BaseModel):
+    """DC-Mock service configuration."""
 
-    calibration_enabled: bool = Field(default=False, description="Enable power model calibration")
+    workload: str = Field(..., description="Workload name (e.g., 'SURF')")
+    heartbeat_frequency_minutes: int = Field(
+        default=1,
+        description="Frequency in simulation minutes for workload heartbeat messages",
+        gt=0,
+    )
 
 
-class CalibrationConfig(BaseModel):
-    """Calibration configuration parameters."""
+class SimulatorConfig(BaseModel):
+    """Simulator service configuration."""
 
-    cadence_minutes: int = Field(
-        default=-1,
-        description="Calibration cadence in simulation minutes (-1 = as fast as possible)",
+    simulation_frequency_minutes: int = Field(
+        default=15, description="Simulation frequency in minutes (simulated time)", gt=0
+    )
+
+
+class CalibratorConfig(BaseModel):
+    """Calibrator service configuration."""
+
+    calibration_frequency_minutes: int = Field(
+        default=30, description="Calibration frequency in simulation minutes", gt=0
     )
     asym_util_min: float = Field(
         default=0.1, description="Minimum asymUtil value to test", gt=0, le=1
@@ -79,17 +80,28 @@ class CalibrationConfig(BaseModel):
     asym_util_max: float = Field(
         default=0.9, description="Maximum asymUtil value to test", gt=0, le=1
     )
-    asym_util_points: int = Field(
-        default=10, description="Number of linspace points to test", gt=1
-    )
+    asym_util_points: int = Field(default=9, description="Number of linspace points to test", gt=1)
     max_parallel_workers: int = Field(
         default=4, description="Maximum number of parallel OpenDC simulations", gt=0
     )
-    mape_window_ms: int = Field(
-        default=86400000,  # 24 hours in milliseconds
-        description="Rolling time window in milliseconds for MAPE calculation",
+    mape_window_minutes: int = Field(
+        default=1440,  # 24 hours in minutes
+        description="Rolling time window in minutes for MAPE calculation",
         gt=0,
     )
+
+
+class ServicesConfig(BaseModel):
+    """Configuration for all services."""
+
+    dc_mock: DcMockConfig = Field(alias="dc-mock")
+    simulator: SimulatorConfig
+    calibrator: CalibratorConfig | None = Field(
+        None, description="Calibrator config (only required if calibration_enabled=true)"
+    )
+
+    class Config:
+        populate_by_name = True
 
 
 class WorkloadMetadata(BaseModel):
@@ -124,7 +136,7 @@ class WorkloadContext(BaseModel):
     """Workload context with resolved file paths."""
 
     name: str = Field(..., description="Workload name (e.g., 'SURF')")
-    base_path: Path = Field(default=Path("/app/data"), description="Base data directory")
+    base_path: Path = Field(default=Path("/app/workload"), description="Base workload directory")
     metadata: WorkloadMetadata | None = Field(None, description="Workload metadata")
 
     def __init__(self, **data):
@@ -190,13 +202,35 @@ class WorkloadContext(BaseModel):
 class AppConfig(BaseModel):
     """Main application configuration."""
 
-    workload: str = Field(..., description="Workload name (e.g., 'SURF')")
-    simulation: SimConfig = Field(default_factory=lambda: SimConfig())
-    features: FeatureFlags = Field(default_factory=lambda: FeatureFlags())
-    calibration: CalibrationConfig = Field(default_factory=lambda: CalibrationConfig())
+    global_config: GlobalConfig = Field(alias="global", default_factory=lambda: GlobalConfig())
+    services: ServicesConfig
     kafka: KafkaConfig = Field(default_factory=lambda: KafkaConfig())
 
-    def get_workload_context(self, base_path: Path | None = None) -> WorkloadContext:
+    class Config:
+        populate_by_name = True
+
+    @model_validator(mode="after")
+    def validate_calibration_config(self) -> "AppConfig":
+        """Ensure calibrator config is provided when calibration is enabled."""
+        if self.global_config.calibration_enabled and self.services.calibrator is None:
+            raise ValueError(
+                "Calibration is enabled (global.calibration_enabled=true) but "
+                "services.calibrator configuration is missing. Either disable calibration "
+                "or provide calibrator configuration."
+            )
+        return self
+
+    @property
+    def workload(self) -> str:
+        """Get workload name from dc-mock config."""
+        return self.services.dc_mock.workload
+
+    @property
+    def calibration_enabled(self) -> bool:
+        """Check if calibration is enabled."""
+        return self.global_config.calibration_enabled
+
+    def get_workload_context(self, base_path: Path) -> WorkloadContext:
         """Get workload context with resolved paths.
 
         Args:
@@ -205,9 +239,6 @@ class AppConfig(BaseModel):
         Returns:
             WorkloadContext with resolved file paths
         """
-        if base_path is None:
-            base_path = Path("/app/data")
-
         return WorkloadContext(name=self.workload, base_path=base_path)
 
     @classmethod
@@ -337,23 +368,3 @@ def load_config_from_env(env_var: str = "CONFIG_FILE") -> AppConfig:
         raise ValueError(f"Environment variable {env_var} not set")
 
     return AppConfig.load(config_path)
-
-
-# Example usage
-if __name__ == "__main__":
-    # Load config
-    config = AppConfig.load("config/default.yaml")
-    print(f"Loaded config for workload: {config.workload}")
-
-    # Get workload context
-    workload = config.get_workload_context()
-    print(f"Tasks file: {workload.tasks_file}")
-    print(f"Fragments file: {workload.fragments_file}")
-    print(f"File status: {workload.get_file_status()}")
-
-    # Dynamic update
-    event = DynamicConfigEvent(
-        setting_key="simulation.speed_factor", new_value=20.0, timestamp=None, source="api"
-    )
-    updated_config = event.apply_to_config(config)
-    print(f"Updated speed factor: {updated_config.simulation.speed_factor}")
