@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from opendt_common import Topology, TopologySnapshot
+from odt_common import Topology, TopologySnapshot
 
 from dc_mock.producers.base import BaseProducer
 

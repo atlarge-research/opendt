@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from kafka import KafkaProducer
-from opendt_common.utils import get_kafka_producer
-from opendt_common.utils.kafka import send_message
+from odt_common.utils import get_kafka_producer
+from odt_common.utils.kafka import send_message
 
 logger = logging.getLogger(__name__)
 

@@ -3,12 +3,20 @@ workload: "SURF"
 simulation:
   # 1.0 = Realtime, -1 = Max Speed
   speed_factor: 300
-  window_size_minutes: 5
+  simulation_frequency_minutes: 15
   heartbeat_cadence_minutes: 1
-  experiment_mode: false
+  run_output_dir: "/app/data"
 
 features:
   calibration_enabled: false
+
+calibration:
+  cadence_minutes: 30
+  asym_util_min: 0.1
+  asym_util_max: 0.9
+  asym_util_points: 9
+  max_parallel_workers: 4
+  mape_window_ms: 86400000  # 24 hours in milliseconds
 
 kafka:
   bootstrap_servers: "kafka:29092"

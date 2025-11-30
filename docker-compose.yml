@@ -105,15 +105,15 @@ services:
     container_name: opendt-dc-mock
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      DATA_PATH: /app/data
+      WORKLOAD_PATH: /app/workload
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
     volumes:
       # Mount source code for hot reload
       - ./services/dc-mock:/app/services/dc-mock
       - ./libs/common:/app/libs/common
-      # Mount data files
-      - ./data:/app/data:ro
+      # Mount workload files
+      - ./workload:/app/workload:ro
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
     depends_on:
@@ -123,35 +123,57 @@ services:
       - opendt-network
     command: python -m dc_mock.main
 
-  sim-worker:
+  simulator:
     build:
       context: .
-      dockerfile: services/sim-worker/Dockerfile
-    container_name: opendt-sim-worker
+      dockerfile: services/simulator/Dockerfile
+    container_name: opendt-simulator
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
-      # Debug mode: set to "true" to write debug files alongside main output
-      DEBUG_MODE: ${DEBUG_MODE:-false}
-      DEBUG_OUTPUT_DIR: /app/output
-      # Experiment mode: experiment name (used for output directory)
-      EXPERIMENT_NAME: ${EXPERIMENT_NAME:-default}
-      EXPERIMENT_OUTPUT_DIR: /app/output
+      RUN_ID: ${RUN_ID}
     volumes:
       # Mount source code for hot reload
-      - ./services/sim-worker:/app/services/sim-worker
+      - ./services/simulator:/app/services/simulator
       - ./libs/common:/app/libs/common
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
-      # Mount output directory for debug results
-      - ./output:/app/output
+      # Mount data directory for run outputs
+      - ./data:/app/data
     depends_on:
       kafka-init:
         condition: service_completed_successfully
     networks:
       - opendt-network
-    command: python -m sim_worker.main
+    command: python -m simulator.main
+
+  # calibrator:
+  #   build:
+  #     context: .
+  #     dockerfile: services/calibrator/Dockerfile
+  #   container_name: opendt-calibrator
+  #   environment:
+  #     KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+  #     CONFIG_FILE: /app/config/simulation.yaml
+  #     PYTHONUNBUFFERED: 1
+  #   volumes:
+  #     # Mount source code for hot reload
+  #     - ./services/calibrator:/app/services/calibrator
+  #     - ./libs/common:/app/libs/common
+  #     - ./libs/opendc:/app/libs/opendc
+  #     - ./opendc:/app/opendc:ro
+  #     # Mount configuration file
+  #     - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+  #   depends_on:
+  #     kafka-init:
+  #       condition: service_completed_successfully
+  #   networks:
+  #     - opendt-network
+  #   command: python -m calibrator.main
+  #   # Only start if calibration profile is enabled
+  #   profiles:
+  #     - calibration
 
   dashboard:
     build:

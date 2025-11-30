@@ -16,7 +16,7 @@ import signal
 import sys
 from pathlib import Path
 
-from opendt_common import load_config_from_env
+from odt_common import load_config_from_env
 
 from dc_mock.producers import PowerProducer, TopologyProducer, WorkloadProducer
 
@@ -193,14 +193,14 @@ class DCMockOrchestrator:
             logger.info(f"Simulation speed: {config.simulation.speed_factor}x")
 
             # Get workload context
-            data_path = Path(os.getenv("DATA_PATH", "/app/data"))
-            workload_context = config.get_workload_context(base_path=data_path)
+            workload_path = Path(os.getenv("WORKLOAD_PATH", "/app/workload"))
+            workload_context = config.get_workload_context(base_path=workload_path)
 
             # Verify workload directory exists
             if not workload_context.exists():
                 logger.error(f"Workload directory not found: {workload_context.workload_dir}")
                 logger.info("Available workloads:")
-                for item in data_path.iterdir():
+                for item in workload_path.iterdir():
                     if item.is_dir():
                         logger.info(f"  - {item.name}")
                 return 1

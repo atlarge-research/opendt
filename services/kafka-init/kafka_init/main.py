@@ -15,7 +15,7 @@ import time
 from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
 from kafka.errors import KafkaError, TopicAlreadyExistsError
-from opendt_common import load_config_from_env
+from odt_common import load_config_from_env
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

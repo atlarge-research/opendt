@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
-from opendt_common import Fragment, Task, WorkloadContext
+from odt_common import Fragment, Task, WorkloadContext
 
 from dc_mock.producers.base import BaseProducer
 

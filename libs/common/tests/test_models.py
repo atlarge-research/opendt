@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from opendt_common import Consumption, Fragment, Task
+from odt_common import Consumption, Fragment, Task
 
 # Locate test data
 DATA_DIR = Path(__file__).parent.parent.parent.parent / "data" / "SURF"

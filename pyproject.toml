@@ -25,6 +25,10 @@ dependencies = [
     # Database (for services that need it)
     "psycopg2-binary>=2.9.0",
     "sqlalchemy>=2.0.0",
+    
+    # CLI tool
+    "typer>=0.9.0",
+    "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]
@@ -39,7 +43,7 @@ dev = [
 
 # Service-specific dependencies (optional, if some services have unique needs)
 dc-mock = []  # Currently uses only shared dependencies
-sim-worker = []  # Currently uses only shared dependencies
+simulator = []  # Currently uses only shared dependencies
 api = [
     "httpx>=0.25.0",  # For API client usage
 ]
@@ -47,6 +51,9 @@ api = [
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project.scripts]
+opendt = "scripts.opendt_cli:app"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -10,10 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from opendt_common import load_config_from_env
-from opendt_common.models.topology import CPU, Cluster, CPUPowerModel, Host, Memory, Topology
-from opendt_common.utils import get_kafka_producer
-from opendt_common.utils.kafka import send_message
+from odt_common import load_config_from_env
+from odt_common.models.topology import CPU, Cluster, CPUPowerModel, Host, Memory, Topology
+from odt_common.utils import get_kafka_producer
+from odt_common.utils.kafka import send_message
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -165,7 +165,7 @@ async def update_topology(
     """Update the simulated datacenter topology.
 
     This endpoint validates the topology structure and publishes it to Kafka.
-    The sim-worker will pick it up and use it for future simulations.
+    The simulator will pick it up and use it for future simulations.
 
     Args:
         topology: Datacenter topology configuration with cluster details

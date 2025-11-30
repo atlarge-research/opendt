@@ -7,7 +7,7 @@ import logging
 import time
 
 import pandas as pd
-from opendt_common import Consumption, WorkloadContext
+from odt_common import Consumption, WorkloadContext
 
 from dc_mock.producers.base import BaseProducer
 

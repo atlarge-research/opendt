@@ -1,3 +1,7 @@
+# OpenDT runtime directories
+.run_id
+data/
+
 scratch/
 
 ### OpenDT runtime experiment files ###
@@ -65,6 +69,8 @@ env/
 # uv
 .uv/
 uv.lock
+
+.ruff_cache/
 
 # Python artifacts
 __pycache__/
