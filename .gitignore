@@ -1,17 +1,9 @@
 # OpenDT runtime directories
 .run_id
-data/
+data/*
+!data/.gitkeep
 
 scratch/
-
-### OpenDT runtime experiment files ###
-experiment.json
-.experiment.json.crc
-kafka/opendt_sim_inputs/
-opendt_sim_inputs/
-output/
-!output/README.md
-!output/.gitkeep
 
 ### VS Code ###
 .vscode/

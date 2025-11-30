@@ -14,6 +14,8 @@ from odt_common.models import Task, Topology, TopologySnapshot
 from odt_common.odc_runner import OpenDCRunner
 from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer, get_kafka_producer
 
+from simulator.result_processor import SimulationResultProcessor
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -66,6 +68,10 @@ class SimulationService:
         self.output_base_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Simulator output directory: {self.output_base_dir}")
+
+        # Initialize result processor for aggregating simulation outputs
+        self.result_processor = SimulationResultProcessor(self.output_base_dir)
+        logger.info("Initialized result processor")
 
         # Initialize Kafka consumer
         topics = [workload_topic, topology_topic, sim_topology_topic]
@@ -145,6 +151,7 @@ class SimulationService:
 
         # Create directories
         run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
+        was_cached = False
 
         if self.result_cache.can_reuse(topology_to_use, len(all_tasks)):
             logger.info(
@@ -170,6 +177,7 @@ class SimulationService:
                 metadata_file.write_text(json.dumps(metadata, indent=2))
 
                 logger.info(f"✅ Cached results copied to run_{self.run_number}")
+                was_cached = True
         else:
             # Run new simulation
             logger.info(f"Running simulation {self.run_number} with {len(all_tasks)} tasks")
@@ -190,6 +198,18 @@ class SimulationService:
             # Update cache with run directory (not output directory)
             self.result_cache.update(topology_to_use, len(all_tasks), run_dir)
             logger.info(f"✅ Simulation {self.run_number} complete, results cached")
+
+        # Process and aggregate simulation results
+        output_dir = run_dir / "output"
+        try:
+            self.result_processor.process_simulation_results(
+                run_number=self.run_number,
+                output_dir=output_dir,
+                aligned_simulated_time=aligned_simulated_time,
+                cached=was_cached,
+            )
+        except Exception as e:
+            logger.error(f"Failed to process simulation results: {e}", exc_info=True)
 
         # Update statistics and simulation time
         self.simulations_run += 1

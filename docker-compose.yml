@@ -188,6 +188,9 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
+      RUN_ID: ${RUN_ID}
+      DATA_DIR: /app/data
+      WORKLOAD_DIR: /app/workload
     ports:
       - "8000:8000"
     volumes:
@@ -196,6 +199,10 @@ services:
       - ./libs/common:/app/libs/common
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+      # Mount data directory for reading simulation results
+      - ./data:/app/data:ro
+      # Mount workload directory for reading consumption data
+      - ./workload:/app/workload:ro
     depends_on:
       postgres:
         condition: service_healthy
