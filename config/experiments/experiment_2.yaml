@@ -1,7 +1,7 @@
 # OpenDT Experiment Configuration
 
 global:
-  speed_factor: 200  # 1.0 = Realtime, -1 = Max Speed
+  speed_factor: 300  # 1.0 = Realtime, -1 = Max Speed
   calibration_enabled: true
 
 services:
@@ -10,15 +10,14 @@ services:
     heartbeat_frequency_minutes: 1
   
   simulator:
-    simulation_frequency_minutes: 15
+    simulation_frequency_minutes: 60
   
   calibrator:
-    calibration_frequency_minutes: 60
     calibrated_property: "cpuPowerModel.calibrationFactor"
-    min_value: 1
-    max_value: 20
-    linspace_points: 6
-    max_parallel_workers: 3
+    min_value: 3
+    max_value: 9
+    linspace_points: 10
+    max_parallel_workers: 4
     mape_window_minutes: 1440
 
 kafka:

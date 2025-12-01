@@ -106,7 +106,7 @@ class PowerTracker:
 
                     # Log every 100 messages
                     if len(self.power_readings) % 100 == 0:
-                        logger.info(
+                        logger.debug(
                             f"PowerTracker: {len(self.power_readings)} readings accumulated. "
                             f"Latest: {consumption.timestamp}"
                         )
