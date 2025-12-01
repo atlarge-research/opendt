@@ -54,9 +54,8 @@ class PowerDataQuery:
         # Path to tasks data (needed for earliest task time)
         self.tasks_path = workload_context.tasks_file
 
-        logger.info(
-            f"Initialized PowerDataQuery for run {run_id}, workload {workload_context.name}"
-        )
+        workload_name = workload_context.name if workload_context.name else "mounted"
+        logger.info(f"Initialized PowerDataQuery for run {run_id}, workload {workload_name}")
         logger.info(f"Simulation results: {self.sim_results_path}")
         logger.info(f"Consumption data: {self.consumption_path}")
         logger.info(f"Tasks data: {self.tasks_path}")

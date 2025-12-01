@@ -173,9 +173,6 @@ class OpenDCRunner:
                 {
                     "exportInterval": 150,
                     "filesToExport": ["powerSource", "host", "task", "service"],
-                    "computeExportConfig": {
-                        "powerSourceExportColumns": ["energy_usage", "power_draw"]
-                    },
                 }
             ],
         }

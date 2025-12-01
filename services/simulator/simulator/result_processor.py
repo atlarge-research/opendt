@@ -121,7 +121,14 @@ class SimulationResultProcessor:
             power_df["cached"] = cached
 
             # Select and reorder columns to only retain required fields
-            required_columns = ["timestamp", "run_number", "power_draw", "energy_usage", "cached"]
+            required_columns = [
+                "timestamp",
+                "run_number",
+                "power_draw",
+                "energy_usage",
+                "carbon_intensity",
+                "cached",
+            ]
 
             # Check if all required columns exist
             missing_columns = [col for col in required_columns if col not in power_df.columns]

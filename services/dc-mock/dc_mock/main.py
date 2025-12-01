@@ -213,18 +213,17 @@ class DCMockOrchestrator:
             logger.info(f"Loaded configuration for workload: {config.workload}")
             logger.info(f"Simulation speed: {config.global_config.speed_factor}x")
 
-            # Get workload context
-            workload_path = Path(os.getenv("WORKLOAD_PATH", "/app/workload"))
-            workload_context = config.get_workload_context(base_path=workload_path)
-
+            # Get workload directory from environment (mounted to specific workload)
+            workload_dir = Path(os.getenv("WORKLOAD_DIR", "/app/workload"))
+            
             # Verify workload directory exists
-            if not workload_context.exists():
-                logger.error(f"Workload directory not found: {workload_context.workload_dir}")
-                logger.info("Available workloads:")
-                for item in workload_path.iterdir():
-                    if item.is_dir():
-                        logger.info(f"  - {item.name}")
+            if not workload_dir.exists():
+                logger.error(f"Workload directory not found: {workload_dir}")
                 return 1
+            
+            # Create workload context directly from the mounted workload directory
+            from odt_common.config import WorkloadContext
+            workload_context = WorkloadContext(workload_dir=workload_dir)
 
             # Log file status
             file_status = workload_context.get_file_status()

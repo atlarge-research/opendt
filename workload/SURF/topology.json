@@ -1,10 +1,10 @@
 {
     "clusters": [
         {
-            "name": "A01",
+            "name": "C01",
             "hosts": [
                 {
-                    "name": "A01",
+                    "name": "H01",
                     "count": 277,
                     "cpu": {
                         "coreCount": 16,
@@ -21,7 +21,10 @@
                         "calibrationFactor": 10.0
                     }
                 }
-            ]
+            ],
+            "powerSource": {
+                "carbonTracePath": "/app/workload/carbon.parquet"
+            }
         }
     ]
 }

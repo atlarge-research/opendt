@@ -107,15 +107,15 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-opendt}-dc-mock
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      WORKLOAD_PATH: /app/workload
+      WORKLOAD_DIR: /app/workload
       CONFIG_FILE: /app/config.yaml
       PYTHONUNBUFFERED: 1
     volumes:
       # Mount source code for hot reload
       - ./services/dc-mock:/app/services/dc-mock
       - ./libs/common:/app/libs/common
-      # Mount workload files
-      - ./workload:/app/workload:ro
+      # Mount specific workload directory
+      - ${WORKLOAD_PATH:-./workload/SURF}:/app/workload:ro
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config.yaml:ro
     depends_on:
@@ -136,6 +136,7 @@ services:
       PYTHONUNBUFFERED: 1
       RUN_ID: ${RUN_ID}
       DATA_DIR: /app/data
+      WORKLOAD_DIR: /app/workload
     volumes:
       # Mount source code for hot reload
       - ./services/simulator:/app/services/simulator
@@ -144,6 +145,8 @@ services:
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config.yaml:ro
       # Mount data directory for run outputs
       - ./data:/app/data
+      # Mount specific workload directory
+      - ${WORKLOAD_PATH:-./workload/SURF}:/app/workload:ro
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -162,6 +165,7 @@ services:
       PYTHONUNBUFFERED: 1
       RUN_ID: ${RUN_ID}
       DATA_DIR: /app/data
+      WORKLOAD_DIR: /app/workload
     volumes:
       # Mount source code for hot reload
       - ./services/calibrator:/app/services/calibrator
@@ -170,6 +174,8 @@ services:
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config.yaml:ro
       # Mount data directory for run outputs
       - ./data:/app/data
+      # Mount specific workload directory
+      - ${WORKLOAD_PATH:-./workload/SURF}:/app/workload:ro
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -203,8 +209,8 @@ services:
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
       # Mount data directory for reading simulation results
       - ./data:/app/data:ro
-      # Mount workload directory for reading consumption data
-      - ./workload:/app/workload:ro
+      # Mount specific workload directory
+      - ${WORKLOAD_PATH:-./workload/SURF}:/app/workload:ro
     depends_on:
       postgres:
         condition: service_healthy

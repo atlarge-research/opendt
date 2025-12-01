@@ -1,4 +1,4 @@
-# OpenDT Experiment Configuration
+# OpenDT Experiment 1 Configuration
 
 global:
   speed_factor: 300  # 1.0 = Realtime, -1 = Max Speed
