@@ -14,9 +14,11 @@ import logging
 import os
 import signal
 import sys
+import threading
 from pathlib import Path
 
-from opendt_common import load_config_from_env
+from odt_common import load_config_from_env
+from odt_common.utils import get_kafka_bootstrap_servers
 
 from dc_mock.producers import PowerProducer, TopologyProducer, WorkloadProducer
 
@@ -55,7 +57,7 @@ class DCMockOrchestrator:
         topology_topic: str,
         workload_topic: str,
         power_topic: str,
-        heartbeat_cadence_minutes: int = 1,
+        heartbeat_frequency_minutes: int = 1,
     ) -> None:
         """Start all producers.
 
@@ -66,11 +68,21 @@ class DCMockOrchestrator:
             topology_topic: Kafka topic for topology events
             workload_topic: Kafka topic for workload events
             power_topic: Kafka topic for power consumption events
-            heartbeat_cadence_minutes: Cadence in simulation minutes for heartbeat messages
+            heartbeat_frequency_minutes: Frequency in simulation minutes for heartbeat messages
         """
         logger.info("=" * 70)
         logger.info("Starting DC-Mock Producers")
         logger.info("=" * 70)
+
+        # Create a synchronization barrier for all producers
+        # This ensures they all start at the same wall-clock time
+        num_producers = 2  # WorkloadProducer and PowerProducer (TopologyProducer is periodic)
+        if workload_context.consumption_file.exists():
+            start_barrier = threading.Barrier(num_producers, timeout=30)
+            logger.info(f"Created start barrier for {num_producers} producers")
+        else:
+            start_barrier = None
+            logger.info("No barrier needed (only workload producer active)")
 
         # 1. Start WorkloadProducer first (we need earliest_task_time for PowerProducer)
         logger.info("\n[1/3] Initializing WorkloadProducer...")
@@ -79,13 +91,20 @@ class DCMockOrchestrator:
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed_factor=speed_factor,
             topic=workload_topic,
-            heartbeat_cadence_minutes=heartbeat_cadence_minutes,
+            heartbeat_frequency_minutes=heartbeat_frequency_minutes,
+            start_barrier=start_barrier if start_barrier else None,
         )
 
-        # Pre-load tasks to get earliest time (needed for power producer)
-        _, earliest_task_time = self.workload_producer.load_and_aggregate_tasks()
+        # Quick-load tasks file to get earliest time (for PowerProducer initialization)
+        # The full loading will happen in the WorkloadProducer's run() method
+        logger.info("Quick-loading tasks to get earliest submission time...")
+        import pandas as pd
+
+        tasks_df = pd.read_parquet(workload_context.tasks_file)
+        earliest_task_time = tasks_df["submission_time"].min().to_pydatetime()
         earliest_task_time_ms = int(earliest_task_time.timestamp() * 1000)
         logger.info(f"Earliest task time: {earliest_task_time} ({earliest_task_time_ms}ms)")
+        del tasks_df  # Free memory
 
         # Start workload producer thread
         self.workload_producer.start()
@@ -99,6 +118,7 @@ class DCMockOrchestrator:
                 speed_factor=speed_factor,
                 topic=power_topic,
                 earliest_task_time_ms=earliest_task_time_ms,
+                start_barrier=start_barrier,
             )
             self.power_producer.start()
         else:
@@ -107,7 +127,7 @@ class DCMockOrchestrator:
                 "skipping power consumption streaming"
             )
 
-        # 3. Start TopologyProducer
+        # 3. Start TopologyProducer (no barrier needed, it's periodic)
         logger.info("\n[3/3] Initializing TopologyProducer...")
         if workload_context.topology_file.exists():
             self.topology_producer = TopologyProducer(
@@ -116,6 +136,7 @@ class DCMockOrchestrator:
                 speed_factor=speed_factor,
                 topic=topology_topic,
                 publish_interval_seconds=30.0,
+                start_barrier=None,  # TopologyProducer doesn't need synchronization
             )
             self.topology_producer.start()
         else:
@@ -125,7 +146,7 @@ class DCMockOrchestrator:
             )
 
         logger.info("\n" + "=" * 70)
-        logger.info("✅ All producers started")
+        logger.info("✅ All producers started and synchronized")
         logger.info("=" * 70)
 
     def wait_for_completion(self) -> None:
@@ -190,17 +211,17 @@ class DCMockOrchestrator:
             logger.info("Loading configuration...")
             config = load_config_from_env()
             logger.info(f"Loaded configuration for workload: {config.workload}")
-            logger.info(f"Simulation speed: {config.simulation.speed_factor}x")
+            logger.info(f"Simulation speed: {config.global_config.speed_factor}x")
 
             # Get workload context
-            data_path = Path(os.getenv("DATA_PATH", "/app/data"))
-            workload_context = config.get_workload_context(base_path=data_path)
+            workload_path = Path(os.getenv("WORKLOAD_PATH", "/app/workload"))
+            workload_context = config.get_workload_context(base_path=workload_path)
 
             # Verify workload directory exists
             if not workload_context.exists():
                 logger.error(f"Workload directory not found: {workload_context.workload_dir}")
                 logger.info("Available workloads:")
-                for item in data_path.iterdir():
+                for item in workload_path.iterdir():
                     if item.is_dir():
                         logger.info(f"  - {item.name}")
                 return 1
@@ -212,8 +233,8 @@ class DCMockOrchestrator:
                 status = "✓" if exists else "✗"
                 logger.info(f"  {status} {file_type}")
 
-            # Get Kafka configuration
-            kafka_bootstrap_servers = config.kafka.bootstrap_servers
+            # Get Kafka configuration from environment variable
+            kafka_bootstrap_servers = get_kafka_bootstrap_servers()
             logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
 
             # Get topic names
@@ -231,11 +252,11 @@ class DCMockOrchestrator:
             self.start_all(
                 workload_context=workload_context,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=config.simulation.speed_factor,
+                speed_factor=config.global_config.speed_factor,
                 topology_topic=topology_topic,
                 workload_topic=workload_topic,
                 power_topic=power_topic,
-                heartbeat_cadence_minutes=config.simulation.heartbeat_cadence_minutes,
+                heartbeat_frequency_minutes=config.services.dc_mock.heartbeat_frequency_minutes,
             )
 
             # Wait for completion

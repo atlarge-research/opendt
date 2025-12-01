@@ -1,11 +1,13 @@
+name: opendt
+
 services:
   # ============================================================================
   # INFRASTRUCTURE SERVICES
   # ============================================================================
-  
+
   postgres:
     image: postgres:15-alpine
-    container_name: opendt-postgres
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-postgres
     environment:
       POSTGRES_DB: opendt
       POSTGRES_USER: opendt
@@ -25,7 +27,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: opendt-kafka
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-kafka
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -79,7 +81,7 @@ services:
     build:
       context: .
       dockerfile: services/kafka-init/Dockerfile
-    container_name: opendt-kafka-init
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-kafka-init
     environment:
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
@@ -102,20 +104,20 @@ services:
     build:
       context: .
       dockerfile: services/dc-mock/Dockerfile
-    container_name: opendt-dc-mock
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-dc-mock
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      DATA_PATH: /app/data
-      CONFIG_FILE: /app/config/simulation.yaml
+      WORKLOAD_PATH: /app/workload
+      CONFIG_FILE: /app/config.yaml
       PYTHONUNBUFFERED: 1
     volumes:
       # Mount source code for hot reload
       - ./services/dc-mock:/app/services/dc-mock
       - ./libs/common:/app/libs/common
-      # Mount data files
-      - ./data:/app/data:ro
+      # Mount workload files
+      - ./workload:/app/workload:ro
       # Mount configuration file
-      - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config.yaml:ro
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -123,46 +125,74 @@ services:
       - opendt-network
     command: python -m dc_mock.main
 
-  sim-worker:
+  simulator:
     build:
       context: .
-      dockerfile: services/sim-worker/Dockerfile
-    container_name: opendt-sim-worker
+      dockerfile: services/simulator/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-simulator
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      CONFIG_FILE: /app/config/simulation.yaml
+      CONFIG_FILE: /app/config.yaml
       PYTHONUNBUFFERED: 1
-      # Debug mode: set to "true" to write debug files alongside main output
-      DEBUG_MODE: ${DEBUG_MODE:-false}
-      DEBUG_OUTPUT_DIR: /app/output
-      # Experiment mode: experiment name (used for output directory)
-      EXPERIMENT_NAME: ${EXPERIMENT_NAME:-default}
-      EXPERIMENT_OUTPUT_DIR: /app/output
+      RUN_ID: ${RUN_ID}
+      DATA_DIR: /app/data
     volumes:
       # Mount source code for hot reload
-      - ./services/sim-worker:/app/services/sim-worker
+      - ./services/simulator:/app/services/simulator
       - ./libs/common:/app/libs/common
       # Mount configuration file
-      - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
-      # Mount output directory for debug results
-      - ./output:/app/output
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config.yaml:ro
+      # Mount data directory for run outputs
+      - ./data:/app/data
     depends_on:
       kafka-init:
         condition: service_completed_successfully
     networks:
       - opendt-network
-    command: python -m sim_worker.main
+    command: python -m simulator.main
+
+  calibrator:
+    build:
+      context: .
+      dockerfile: services/calibrator/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-calibrator
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CONFIG_FILE: /app/config.yaml
+      PYTHONUNBUFFERED: 1
+      RUN_ID: ${RUN_ID}
+      DATA_DIR: /app/data
+    volumes:
+      # Mount source code for hot reload
+      - ./services/calibrator:/app/services/calibrator
+      - ./libs/common:/app/libs/common
+      # Mount configuration file
+      - ${CONFIG_PATH:-./config/default.yaml}:/app/config.yaml:ro
+      # Mount data directory for run outputs
+      - ./data:/app/data
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - opendt-network
+    command: python -m calibrator.main
+    # Only start if calibration profile is enabled
+    profiles:
+      - calibration
 
   dashboard:
     build:
       context: .
       dockerfile: services/dashboard/Dockerfile
-    container_name: opendt-dashboard
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-dashboard
     environment:
       DATABASE_URL: postgresql://opendt:opendt_dev_password@postgres:5432/opendt
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
+      RUN_ID: ${RUN_ID}
+      DATA_DIR: /app/data
+      WORKLOAD_DIR: /app/workload
     ports:
       - "8000:8000"
     volumes:
@@ -171,6 +201,10 @@ services:
       - ./libs/common:/app/libs/common
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
+      # Mount data directory for reading simulation results
+      - ./data:/app/data:ro
+      # Mount workload directory for reading consumption data
+      - ./workload:/app/workload:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -179,32 +213,6 @@ services:
     networks:
       - opendt-network
     command: uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
-
-  # ============================================================================
-  # FRONTEND
-  # ============================================================================
-
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #     target: development
-  #   container_name: opendt-frontend
-  #   environment:
-  #     NODE_ENV: development
-  #     NEXT_PUBLIC_API_URL: http://localhost:8000
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     # Mount source code for HMR (Hot Module Replacement)
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #     - /app/.next
-  #   depends_on:
-  #     - dashboard
-  #   networks:
-  #     - opendt-network
-  #   command: npm run dev
 
 # ==============================================================================
 # NETWORKS

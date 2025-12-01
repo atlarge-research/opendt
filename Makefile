@@ -28,12 +28,19 @@ up: clean-volumes
 		echo "❌ Error: Config file not found: $(config)"; \
 		exit 1; \
 	fi
-	@if [ "$(build)" = "true" ]; then \
+	@echo "🔧 Initializing run..."
+	@$(PYTHON) scripts/opendt_cli.py init --config $(config)
+	@RUN_ID=$$(cat .run_id) && \
+	if [ ! -f "data/$$RUN_ID/.env" ]; then \
+		echo "❌ Error: data/$$RUN_ID/.env not found after initialization"; \
+		exit 1; \
+	fi && \
+	set -a && . ./data/$$RUN_ID/.env && set +a && \
+	if [ "$(build)" = "true" ]; then \
 		echo "🔨 Rebuilding Docker images (no cache)..."; \
-		CONFIG_PATH=$(config) docker compose build --no-cache; \
-		echo "✅ Images rebuilt!"; \
-	fi
-	CONFIG_PATH=$(config) docker compose up -d
+		docker compose $$PROFILE_FLAG build --no-cache; \
+	fi && \
+	docker compose $$PROFILE_FLAG up -d
 	@echo "✅ Services started!"
 	@echo ""
 	@echo "Available services:"
@@ -44,101 +51,29 @@ up: clean-volumes
 	@echo ""
 	@echo "View logs: make logs"
 
-## up-debug: Start services in DEBUG mode (sim-worker writes results to ./output/ instead of Kafka)
-up-debug: clean-volumes
-	@echo "🐛 Starting OpenDT services in DEBUG MODE..."
-	@echo "📋 Using config: $(config)"
-	@mkdir -p output
-	@if [ ! -f "$(config)" ]; then \
-		echo "❌ Error: Config file not found: $(config)"; \
-		exit 1; \
-	fi
-	@if [ "$(build)" = "true" ]; then \
-		echo "🔨 Rebuilding Docker images (no cache)..."; \
-		CONFIG_PATH=$(config) DEBUG_MODE=true docker compose build --no-cache; \
-		echo "✅ Images rebuilt!"; \
-	fi
-	CONFIG_PATH=$(config) DEBUG_MODE=true docker compose up -d
-	@echo "✅ Services started in DEBUG mode!"
-	@echo ""
-	@echo "🐛 DEBUG MODE: sim-worker will write results to ./output/"
-	@echo "   Kafka publishing is DISABLED for sim-worker"
-	@echo ""
-	@echo "Available services:"
-	@echo "  - Dashboard:   http://localhost:8000"
-	@echo "  - Postgres:    localhost:5432"
-	@echo "  - Kafka:       localhost:9092"
-	@echo ""
-	@echo "View logs: make logs-sim-worker"
-	@echo "View results: ls -la output/"
-
 ## run: Alias for 'up' (accepts config parameter)
 run: up
-
-## experiment: Run an experiment (make experiment name=<experiment_name>)
-experiment: clean-volumes
-	@if [ -z "$(name)" ]; then \
-		echo "❌ Error: Please provide experiment name: make experiment name=my_experiment"; \
-		exit 1; \
-	fi
-	@if [ ! -f "config/experiments/$(name).yaml" ]; then \
-		echo "❌ Error: Experiment config not found: config/experiments/$(name).yaml"; \
-		echo ""; \
-		echo "Available experiments:"; \
-		ls -1 config/experiments/*.yaml 2>/dev/null | xargs -n 1 basename | sed 's/.yaml//' | sed 's/^/  - /' || echo "  (none)"; \
-		exit 1; \
-	fi
-	@echo "🧪 Starting experiment: $(name)"
-	@echo "📋 Using config: config/experiments/$(name).yaml"
-	@mkdir -p output/$(name)
-	EXPERIMENT_NAME=$(name) CONFIG_PATH=./config/experiments/$(name).yaml docker compose up -d
-	@echo "✅ Experiment started!"
-	@echo ""
-	@echo "Experiment: $(name)"
-	@echo "Output: output/$(name)/"
-	@echo ""
-	@echo "View logs: make logs-sim-worker"
-
-## experiment-debug: Run an experiment with debug mode enabled (make experiment-debug name=<experiment_name>)
-experiment-debug: clean-volumes
-	@if [ -z "$(name)" ]; then \
-		echo "❌ Error: Please provide experiment name: make experiment-debug name=my_experiment"; \
-		exit 1; \
-	fi
-	@if [ ! -f "config/experiments/$(name).yaml" ]; then \
-		echo "❌ Error: Experiment config not found: config/experiments/$(name).yaml"; \
-		echo ""; \
-		echo "Available experiments:"; \
-		ls -1 config/experiments/*.yaml 2>/dev/null | xargs -n 1 basename | sed 's/.yaml//' | sed 's/^/  - /' || echo "  (none)"; \
-		exit 1; \
-	fi
-	@echo "🧪🐛 Starting experiment with DEBUG mode: $(name)"
-	@echo "📋 Using config: config/experiments/$(name).yaml"
-	@mkdir -p output/$(name)
-	EXPERIMENT_NAME=$(name) DEBUG_MODE=true CONFIG_PATH=./config/experiments/$(name).yaml docker compose up -d
-	@echo "✅ Experiment started in debug mode!"
-	@echo ""
-	@echo "Experiment: $(name)"
-	@echo "Output: output/$(name)/"
-	@echo "Debug files: output/$(name)/run_*/"
-	@echo ""
-	@echo "View logs: make logs-sim-worker"
-
-## experiment-down: Stop experiment services
-experiment-down:
-	docker compose down
-	@echo "✅ Experiment stopped"
 
 ## down: Stop all containers
 down:
 	@echo "⏹️  Stopping OpenDT services..."
-	CONFIG_PATH=$(config) docker compose down
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG down; \
+	else \
+		docker compose down; \
+	fi
 	@echo "✅ Services stopped!"
 
 ## clean-volumes: Stop containers and delete persistent volumes (Kafka & Postgres)
 clean-volumes:
 	@echo "🧹 Stopping containers and cleaning persistent volumes..."
-	CONFIG_PATH=$(config) docker compose down -v
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG down -v; \
+	else \
+		docker compose down -v; \
+	fi
 	@echo "🗑️  Removing named volumes..."
 	-docker volume rm opendt-postgres-data 2>/dev/null || true
 	-docker volume rm opendt-kafka-data 2>/dev/null || true
@@ -147,13 +82,25 @@ clean-volumes:
 ## restart: Restart all services (without cleaning volumes)
 restart:
 	@echo "♻️  Restarting OpenDT services..."
-	CONFIG_PATH=$(config) docker compose restart
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG restart; \
+	else \
+		echo "⚠️  Run environment not found, restarting without profile"; \
+		docker compose restart; \
+	fi
 	@echo "✅ Services restarted!"
 
 ## build: Rebuild all Docker images
 build:
 	@echo "🔨 Building Docker images..."
-	CONFIG_PATH=$(config) docker compose build --no-cache
+	@RUN_ID=$$(cat .run_id 2>/dev/null || true); \
+	if [ -n "$$RUN_ID" ] && [ -f "data/$$RUN_ID/.env" ]; then \
+		set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG build --no-cache; \
+	else \
+		echo "⚠️  Run environment not found, building without profile"; \
+		docker compose build --no-cache; \
+	fi
 	@echo "✅ Images built!"
 
 ## rebuild: Clean, rebuild (no cache), and start (alias for make up build=true)
@@ -212,39 +159,67 @@ clean-env:
 
 ## logs: Tail logs for all services
 logs:
-	CONFIG_PATH=$(config) docker compose logs -f
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG logs -f
 
 ## logs-dashboard: Tail logs for dashboard service only
 logs-dashboard:
-	CONFIG_PATH=$(config) docker compose logs -f dashboard
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f dashboard
 
 ## logs-kafka: Tail logs for Kafka service only
 logs-kafka:
-	CONFIG_PATH=$(config) docker compose logs -f kafka
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f kafka
 
 ## logs-dc-mock: Tail logs for dc-mock service only
 logs-dc-mock:
-	CONFIG_PATH=$(config) docker compose logs -f dc-mock
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f dc-mock
 
-## logs-sim-worker: Tail logs for sim-worker service only
-logs-sim-worker:
-	CONFIG_PATH=$(config) docker compose logs -f sim-worker
+## logs-simulator: Tail logs for simulator service only
+logs-simulator:
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f simulator
+
+## logs-calibrator: Tail logs for calibrator service only
+logs-calibrator:
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose --profile calibration logs -f calibrator
+
+## up-with-calibration: Start services including calibrator
+# up-with-calibration: clean-volumes
+# 	@echo "🚀 Starting OpenDT services with calibration enabled..."
+# 	@echo "📋 Using config: $(config)"
+# 	@if [ ! -f "$(config)" ]; then \
+# 		echo "❌ Error: Config file not found: $(config)"; \
+# 		exit 1; \
+# 	fi
+# 	@if [ "$(build)" = "true" ]; then \
+# 		echo "🔨 Rebuilding Docker images (no cache)..."; \
+# 		CONFIG_PATH=$(config) docker compose --profile calibration build --no-cache; \
+# 		echo "✅ Images rebuilt!"; \
+# 	fi
+# 	CONFIG_PATH=$(config) docker compose --profile calibration up -d
+# 	@echo "✅ Services started with calibration!"
+# 	@echo ""
+# 	@echo "Available services:"
+# 	@echo "  - Dashboard:   http://localhost:8000"
+# 	@echo "  - Calibrator:  Automatic power model calibration"
+# 	@echo "  - Postgres:    localhost:5432"
+# 	@echo "  - Kafka:       localhost:9092"
+# 	@echo ""
+# 	@echo "View logs: make logs-calibrator"
 
 ## ps: Show running containers
 ps:
-	CONFIG_PATH=$(config) docker compose ps
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose $$PROFILE_FLAG ps
 
 ## shell-dashboard: Open a shell in the dashboard container
 shell-dashboard:
-	CONFIG_PATH=$(config) docker compose exec dashboard /bin/bash
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec dashboard /bin/bash
 
 ## shell-postgres: Open psql in the Postgres container
 shell-postgres:
-	CONFIG_PATH=$(config) docker compose exec postgres psql -U opendt -d opendt
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec postgres psql -U opendt -d opendt
 
 ## kafka-topics: List Kafka topics
 kafka-topics:
-	CONFIG_PATH=$(config) docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
 
 ## help: Show this help message
 help:

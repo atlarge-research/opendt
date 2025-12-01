@@ -1,17 +1,18 @@
-workload: "SURF"
+# OpenDT Default Configuration
 
-simulation:
-  # 1.0 = Realtime, -1 = Max Speed
-  speed_factor: 300
-  window_size_minutes: 5
-  heartbeat_cadence_minutes: 1
-  experiment_mode: false
-
-features:
+global:
+  speed_factor: 1  # 1.0 = Realtime, -1 = Max Speed
   calibration_enabled: false
 
+services:
+  dc-mock:
+    workload: "SURF"
+    heartbeat_frequency_minutes: 1
+  
+  simulator:
+    simulation_frequency_minutes: 5
+
 kafka:
-  bootstrap_servers: "kafka:29092"
   topics:
     workload:
       name: "dc.workload"

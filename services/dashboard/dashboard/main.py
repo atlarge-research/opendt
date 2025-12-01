@@ -1,19 +1,30 @@
 """OpenDT Dashboard - Main FastAPI Application."""
 
 import logging
+import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from opendt_common import load_config_from_env
-from opendt_common.models.topology import CPU, Cluster, CPUPowerModel, Host, Memory, Topology
-from opendt_common.utils import get_kafka_producer
-from opendt_common.utils.kafka import send_message
+from odt_common import load_config_from_env
+from odt_common.models.topology import (
+    AsymptoticCPUPowerModel,
+    CPU,
+    Cluster,
+    Host,
+    Memory,
+    Topology,
+)
+from odt_common.utils import get_kafka_producer
+from odt_common.utils.kafka import send_message
+
+from dashboard.power_query import PowerDataQuery, PowerDataResponse
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -128,7 +139,7 @@ DEFAULT_TOPOLOGY = Topology(
                     count=277,
                     cpu=CPU(coreCount=16, coreSpeed=2100.0),
                     memory=Memory(memorySize=128000000),  # ~128 MB
-                    cpuPowerModel=CPUPowerModel(
+                    cpuPowerModel=AsymptoticCPUPowerModel(
                         modelType="asymptotic",
                         power=400.0,
                         idlePower=32.0,
@@ -165,7 +176,7 @@ async def update_topology(
     """Update the simulated datacenter topology.
 
     This endpoint validates the topology structure and publishes it to Kafka.
-    The sim-worker will pick it up and use it for future simulations.
+    The simulator will pick it up and use it for future simulations.
 
     Args:
         topology: Datacenter topology configuration with cluster details
@@ -219,6 +230,77 @@ async def update_topology(
         "total_cores": topology.total_core_count(),
         "topic": topic_name,
     }
+
+
+# ============================================================================
+# POWER DATA QUERY
+# ============================================================================
+
+
+@app.get("/api/power", response_model=PowerDataResponse)
+async def get_power_data(
+    interval_seconds: int = Query(
+        60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
+    ),
+    start_time: datetime | None = Query(
+        None, description="Optional start time (ISO 8601 format)"
+    ),
+):
+    """Query aligned power usage data from simulation and actual consumption.
+
+    This endpoint reads from:
+    - `agg_results.parquet`: Aggregated simulation results
+    - `consumption.parquet`: Actual power consumption from workload
+
+    The data is aligned to a common interval and clipped to the shortest timeseries.
+
+    Args:
+        interval_seconds: Sampling interval in seconds (default: 60)
+        start_time: Optional start time filter (ISO 8601 format)
+
+    Returns:
+        PowerDataResponse with aligned timeseries data
+
+    Raises:
+        HTTPException: If data files are not found or cannot be processed
+    """
+    # Get run ID from environment
+    run_id = os.getenv("RUN_ID")
+    if not run_id:
+        raise HTTPException(
+            status_code=500, detail="RUN_ID environment variable not set"
+        )
+
+    # Get workload context from config
+    if not app.state.config:
+        raise HTTPException(status_code=500, detail="Configuration not loaded")
+
+    try:
+        # Get workload context with resolved paths
+        workload_dir = Path(os.getenv("WORKLOAD_DIR", "/app/workload"))
+        workload_context = app.state.config.get_workload_context(base_path=workload_dir)
+
+        # Initialize query
+        query = PowerDataQuery(run_id=run_id, workload_context=workload_context)
+
+        # Execute query
+        result = query.query(interval_seconds=interval_seconds, start_time=start_time)
+
+        logger.info(
+            f"Power data query successful: {result.metadata['count']} data points"
+        )
+
+        return result
+
+    except FileNotFoundError as e:
+        logger.error(f"Data file not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        logger.error(f"Invalid data: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error querying power data: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 if __name__ == "__main__":

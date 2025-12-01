@@ -45,9 +45,13 @@ function layoutFor(_title) {
   };
 }
 
-async function fetchTS() {
-  const r = await fetch('/api/sim/timeseries', { cache: 'no-store' });
-  if (!r.ok) throw new Error('timeseries fetch failed');
+async function fetchPowerData() {
+  const r = await fetch('/api/power?interval_seconds=60', { cache: 'no-store' });
+  if (!r.ok) {
+    // If the endpoint returns 404 or 500, return empty data
+    console.warn('Power data fetch failed:', r.status);
+    return { data: [], metadata: {} };
+  }
   return r.json();
 }
 
@@ -61,8 +65,9 @@ const PLOTS = {
   },
   power_usages: {
     autorange: true,
-    title: 'Power [kWh]',
-    legend: 'Power [kWh]',
+    title: 'Power [kW]',
+    legend: 'Power [kW]',
+    dual: true,  // This plot has two traces
   }
 };
 
@@ -129,18 +134,88 @@ function init_graphs() {
   });
 }
 
+function drawPowerPlot(powerData) {
+  const el = document.getElementById('power_usages');
+  if (!el) {
+    console.warn('drawPowerPlot: missing <div id="power_usages">');
+    return;
+  }
+
+  // Extract timestamps and power values (convert W to kW)
+  const timestamps = powerData.map(d => d.timestamp);
+  const simulated = powerData.map(d => d.simulated_power / 1000);
+  const actual = powerData.map(d => d.actual_power / 1000);
+
+  // Create two traces
+  const traceSimulated = {
+    x: timestamps,
+    y: simulated,
+    mode: 'lines',
+    name: 'Simulated',
+    line: { color: COLORS.sim, width: 2 }
+  };
+
+  const traceActual = {
+    x: timestamps,
+    y: actual,
+    mode: 'lines',
+    name: 'Actual',
+    line: { color: COLORS.real, width: 2 }
+  };
+
+  // Create layout
+  const layout = layoutFor('');
+  layout.yaxis = {
+    ...layout.yaxis,
+    rangemode: 'tozero',
+    autorange: true
+  };
+
+  const data = [traceActual, traceSimulated];
+  Plotly.react(el, data, layout, PLOTLY_CONFIG);
+}
+
 async function drawCharts() {
   try {
-    const d = await fetchTS();
-   
-    const xValues = Array.isArray(d.timestamps) ? d.timestamps : [];
-    Object.keys(PLOTS).forEach(plot_name => {
-      const cfg = PLOTS[plot_name] || {};
-      const yValues = mapValues(d[plot_name], cfg.transform);
-      drawPlot(plot_name, xValues, yValues, cfg);
-    });
+    // Fetch power data from new endpoint
+    const response = await fetchPowerData();
+    
+    if (response.data && response.data.length > 0) {
+      drawPowerPlot(response.data);
+      
+      // Update metadata display if needed
+      if (response.metadata) {
+        console.log('Power data metadata:', response.metadata);
+      }
+    } else {
+      console.log('No power data available yet');
+    }
   } catch (err) {
     console.error('drawCharts error:', err);
+  }
+}
+
+let powerPollingInterval = null;
+
+function startPowerPolling(intervalMs = 5000) {
+  // Clear any existing interval
+  if (powerPollingInterval) {
+    clearInterval(powerPollingInterval);
+  }
+  
+  // Start polling
+  powerPollingInterval = setInterval(() => {
+    drawCharts();
+  }, intervalMs);
+  
+  console.log(`Power data polling started (interval: ${intervalMs}ms)`);
+}
+
+function stopPowerPolling() {
+  if (powerPollingInterval) {
+    clearInterval(powerPollingInterval);
+    powerPollingInterval = null;
+    console.log('Power data polling stopped');
   }
 }
 
@@ -156,9 +231,18 @@ function startSse() {
 document.addEventListener('DOMContentLoaded', () => {
   init_graphs();
   drawCharts();
-  // startSse(); // enable if your SSE is live
+  
+  // Start polling for power data every 5 seconds
+  startPowerPolling(5000);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  stopPowerPolling();
 });
 
 window.init_graphs = init_graphs;
 window.drawCharts = drawCharts;
 window.startSse = startSse;
+window.startPowerPolling = startPowerPolling;
+window.stopPowerPolling = stopPowerPolling;

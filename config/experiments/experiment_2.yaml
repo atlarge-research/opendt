@@ -1,0 +1,57 @@
+# OpenDT Experiment Configuration
+
+global:
+  speed_factor: 200  # 1.0 = Realtime, -1 = Max Speed
+  calibration_enabled: true
+
+services:
+  dc-mock:
+    workload: "SURF"
+    heartbeat_frequency_minutes: 1
+  
+  simulator:
+    simulation_frequency_minutes: 15
+  
+  calibrator:
+    calibration_frequency_minutes: 60
+    calibrated_property: "cpuPowerModel.calibrationFactor"
+    min_value: 1
+    max_value: 20
+    linspace_points: 6
+    max_parallel_workers: 3
+    mape_window_minutes: 1440
+
+kafka:
+  topics:
+    workload:
+      name: "dc.workload"
+      config:
+        # 24 hours
+        retention.ms: "86400000"
+    power:
+      name: "dc.power"
+      config:
+        # 1 hour
+        retention.ms: "3600000"
+    topology:
+      name: "dc.topology"
+      config:
+        # Compacted topic - keeps latest topology
+        cleanup.policy: "compact"
+        # Keep at least 1 hour
+        min.compaction.lag.ms: "3600000"
+    system:
+      name: "sys.config"
+      config:
+        cleanup.policy: "compact"
+    sim_topology:
+      name: "sim.topology"
+      config:
+        # Compacted topic - keeps latest simulated topology
+        cleanup.policy: "compact"
+        min.compaction.lag.ms: "0"
+    results:
+      name: "sim.results"
+      config:
+        # 7 days retention for simulation results
+        retention.ms: "604800000"

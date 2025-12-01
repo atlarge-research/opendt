@@ -4,10 +4,12 @@ Streams historical power consumption data to Kafka with proper timing.
 """
 
 import logging
+import threading
 import time
+from datetime import UTC
 
 import pandas as pd
-from opendt_common import Consumption, WorkloadContext
+from odt_common import Consumption, WorkloadContext
 
 from dc_mock.producers.base import BaseProducer
 
@@ -28,6 +30,7 @@ class PowerProducer(BaseProducer):
         speed_factor: float,
         topic: str,
         earliest_task_time_ms: int,
+        start_barrier: threading.Barrier | None = None,
     ):
         """Initialize the power producer.
 
@@ -37,12 +40,14 @@ class PowerProducer(BaseProducer):
             speed_factor: Simulation speed multiplier
             topic: Kafka topic name for power consumption events
             earliest_task_time_ms: Earliest task submission time in epoch ms
+            start_barrier: Optional barrier for synchronized startup
         """
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed_factor=speed_factor,
             topic=topic,
             name="PowerProducer",
+            start_barrier=start_barrier,
         )
         self.workload_context = workload_context
         self.earliest_task_time_ms = earliest_task_time_ms
@@ -106,9 +111,13 @@ class PowerProducer(BaseProducer):
 
             logger.info(f"Streaming {len(self.consumption_records)} consumption events...")
 
-            # Track simulation time
-            sim_start_time = self.consumption_records[0].timestamp
+            # Use the earliest task time as simulation start (synchronized with WorkloadProducer)
+            from datetime import datetime
+
+            sim_start_time = datetime.fromtimestamp(self.earliest_task_time_ms / 1000.0, tz=UTC)
             real_start_time = time.time()
+
+            logger.info(f"PowerProducer synchronized to start time: {sim_start_time}")
 
             for i, consumption in enumerate(self.consumption_records):
                 if self.should_stop():
@@ -132,8 +141,18 @@ class PowerProducer(BaseProducer):
                 # If speed_factor == -1, don't sleep (max speed)
 
                 # Emit consumption event
+                consumption_msg = consumption.model_dump(mode="json")
+
+                # Debug: Log first few power emissions
+                if i < 5 or (i + 1) % 100 == 0:
+                    logger.info(
+                        f"PowerProducer sending power #{i + 1}: "
+                        f"timestamp={consumption.timestamp.isoformat()}, "
+                        f"sim_elapsed={sim_elapsed:.2f}s, real_elapsed={time.time() - real_start_time:.2f}s"
+                    )
+
                 self.emit_message(
-                    message=consumption.model_dump(mode="json"),
+                    message=consumption_msg,
                     key=None,  # No key for consumption
                 )
 

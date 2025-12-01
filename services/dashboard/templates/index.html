@@ -146,88 +146,17 @@
                 </div>
                 <pre class="json-only" id="currentTopologyJSON">null</pre>
             </div>
-
-            <!-- LLM Recommendation -->
-            <div class="card glass lift">
-                <div class="ui-only">
-                    <h3>🤖 LLM Suggested Topology</h3>
-                    <div class="kv">
-                        <div><span>Action</span><strong id="kvLLMAction">—</strong></div>
-                        <div><span>Priority</span><span id="kvLLMPriority" class="badge">—</span></div>
-                        <div><span>Type</span><span id="kvLLMType" class="badge">—</span></div>
-                    </div>
-                    <p class="llm-reason" id="kvLLMReason">—</p>
-
-                    <div class="rec-actions">
-                        <button id="btnAcceptRec"
-                                class="btn btn-success"
-                                onclick="acceptRecommendation()"
-                                disabled>
-                            <span class="icon" style="--icon-url:var(--sym-check)"></span>&nbsp;Accept Recommendation
-                        </button>
-                        <button id="btnEditRec"
-                                class="btn btn-secondary"
-                                onclick="window.recommendationEditor?.startEditing()"
-                                style="background-color: dodgerblue"
-                                disabled>
-                            <span class="icon" style="--icon-url:var(--sym-edit)"></span>&nbsp;Edit Recommendation
-                        </button>
-                        <button id="btnConfirmRec"
-                                class="btn btn-success"
-                                onclick="window.recommendationEditor?.commitEditing()"
-                                hidden
-                                title="Apply edits"
-                                aria-label="Apply edits">
-                            ✔
-                        </button>
-                        <button id="btnCancelRec"
-                                class="btn btn-danger"
-                                onclick="window.recommendationEditor?.cancelEditing()"
-                                hidden
-                                title="Discard edits"
-                                aria-label="Discard edits">
-                            ✖
-                        </button>
-                    </div>
-
-                    <table id="recTable">
-                        <thead>
-                        <tr>
-                            <th>Cluster</th>
-                            <th>Host</th>
-                            <th>Count</th>
-                            <th>Cores</th>
-                            <th>Clock (MHz)</th>
-                            <th>Memory (GiB)</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td colspan="6">No recommendation</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <pre class="json-only" id="recJSON">null</pre>
-                <pre class="json-only" id="llmJSON">null</pre>
-            </div>
-
-            <!-- OpenDC Results -->
-            <div class="card glass lift">
-                <h3>📈 LLM Suggested Topology (simulated)</h3>
-                <div class="ui-only">
-                    <div class="kv">
-                        <div><span>Energy [kWh]</span><strong id="kvEnergy">—</strong></div>
-                        <div><span>Average CPU Utilization [%]</span><strong id="kvCPU">—</strong></div>
-                        <div><span>Runtime [h]</span><strong id="kvRuntime">—</strong></div>
-                        <div><span>LLM feedback for window</span><span id="kvSimType" class="badge">—</span></div>
-                    </div>
-                </div>
-                <pre class="json-only" id="simJSON">null</pre>
-            </div>
         </section>
         <section class="section-stack" aria-label="Charts">
             <!-- Charts (moved aside) -->
+
+            <div class="card glass lift">
+                <h3>Power [kW]</h3>
+                <div class="chart-toolbar">
+                    <span class="hint">drag to zoom · double-click to reset</span>
+                </div>
+                <div id="power_usages" class="chart"></div>
+            </div>
 
             <div class="card glass lift">
                 <h3>Average CPU Utilization [%]</h3>
@@ -238,14 +167,6 @@
                 </div>
 
                 <div id="cpu_usages" class="chart"></div>
-            </div>
-
-            <div class="card glass lift">
-                <h3>Power [kWh]</h3>
-                <div class="chart-toolbar">
-                    <span class="hint">drag to zoom · double-click to reset</span>
-                </div>
-                <div id="power_usages" class="chart"></div>
             </div>
         </section>
     </section>

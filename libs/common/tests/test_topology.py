@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from opendt_common.models.topology import (
+from odt_common.models.topology import (
     CPU,
     Cluster,
     CPUPowerModel,

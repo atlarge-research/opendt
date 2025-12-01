@@ -28,7 +28,7 @@ data/SURF/
 - Reads `tasks.parquet` and `fragments.parquet`
 - Joins tasks with their fragments
 - Publishes `WorkloadMessage` objects to `dc.workload`
-- Emits **heartbeat messages** every `heartbeat_cadence_minutes` (simulation time)
+- Emits **heartbeat messages** every `heartbeat_frequency_minutes` (simulation time)
 - Respects `speed_factor` for time progression
 
 **Message Types**:
@@ -109,7 +109,7 @@ workload: "SURF"  # Maps to data/SURF/
 
 simulation:
   speed_factor: 300  # 300x real-time
-  heartbeat_cadence_minutes: 1  # Heartbeat every 1 minute (sim time)
+  heartbeat_frequency_minutes: 1  # Heartbeat every 1 minute (sim time)
 
 kafka:
   bootstrap_servers: "kafka:29092"
@@ -223,7 +223,7 @@ for task in sorted_tasks:
             task=None
         )
         publish(heartbeat)
-        next_heartbeat_time += timedelta(minutes=heartbeat_cadence)
+        next_heartbeat_time += timedelta(minutes=heartbeat_frequency)
     
     # Emit the task
     task_message = WorkloadMessage(
@@ -238,12 +238,12 @@ for task in sorted_tasks:
 
 ```yaml
 simulation:
-  heartbeat_cadence_minutes: 1  # Send heartbeat every 1 minute (sim time)
+  heartbeat_frequency_minutes: 1  # Send heartbeat every 1 minute (sim time)
 ```
 
 **Trade-offs**:
-- **Shorter cadence** (e.g., 1 minute): More accurate window closing, more Kafka messages
-- **Longer cadence** (e.g., 5 minutes): Fewer messages, less precise window boundaries
+- **Shorter frequency** (e.g., 1 minute): More accurate window closing, more Kafka messages
+- **Longer frequency** (e.g., 5 minutes): Fewer messages, less precise window boundaries
 
 ## Monitoring
 

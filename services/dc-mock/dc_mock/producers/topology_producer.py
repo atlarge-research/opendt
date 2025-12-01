@@ -5,10 +5,11 @@ Periodically publishes datacenter topology to Kafka.
 
 import json
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 
-from opendt_common import Topology, TopologySnapshot
+from odt_common import Topology, TopologySnapshot
 
 from dc_mock.producers.base import BaseProducer
 
@@ -29,6 +30,7 @@ class TopologyProducer(BaseProducer):
         speed_factor: float,
         topic: str,
         publish_interval_seconds: float = 30.0,
+        start_barrier: threading.Barrier | None = None,
     ):
         """Initialize the topology producer.
 
@@ -38,12 +40,14 @@ class TopologyProducer(BaseProducer):
             speed_factor: Simulation speed multiplier
             topic: Kafka topic name for topology events
             publish_interval_seconds: Publish interval in realtime seconds (default: 30s)
+            start_barrier: Optional barrier for synchronized startup
         """
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed_factor=speed_factor,
             topic=topic,
             name="TopologyProducer",
+            start_barrier=start_barrier,
         )
         self.topology_file = topology_file
         self.publish_interval_seconds = publish_interval_seconds

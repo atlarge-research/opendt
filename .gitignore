@@ -1,13 +1,9 @@
-scratch/
+# OpenDT runtime directories
+.run_id
+data/*
+!data/.gitkeep
 
-### OpenDT runtime experiment files ###
-experiment.json
-.experiment.json.crc
-kafka/opendt_sim_inputs/
-opendt_sim_inputs/
-output/
-!output/README.md
-!output/.gitkeep
+scratch/
 
 ### VS Code ###
 .vscode/
@@ -65,6 +61,8 @@ env/
 # uv
 .uv/
 uv.lock
+
+.ruff_cache/
 
 # Python artifacts
 __pycache__/

@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from kafka import KafkaProducer
-from opendt_common.utils import get_kafka_producer
-from opendt_common.utils.kafka import send_message
+from odt_common.utils import get_kafka_producer
+from odt_common.utils.kafka import send_message
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ class BaseProducer(ABC):
         speed_factor: float,
         topic: str,
         name: str | None = None,
+        start_barrier: threading.Barrier | None = None,
     ):
         """Initialize the base producer.
 
@@ -36,6 +37,7 @@ class BaseProducer(ABC):
             speed_factor: Simulation speed multiplier (1.0 = realtime, -1 = max speed)
             topic: Kafka topic name for this producer
             name: Optional producer name for logging
+            start_barrier: Optional barrier for synchronized startup across producers
         """
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.speed_factor = speed_factor
@@ -44,6 +46,7 @@ class BaseProducer(ABC):
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
         self._producer: KafkaProducer | None = None
+        self._start_barrier = start_barrier
 
         logger.info(f"Initialized {self.name}")
         logger.info(f"  Topic: {self.topic}")
@@ -119,6 +122,12 @@ class BaseProducer(ABC):
     def _run_wrapper(self) -> None:
         """Wrapper around run() for exception handling and cleanup."""
         try:
+            # Wait at barrier if one is configured (synchronize startup)
+            if self._start_barrier:
+                logger.info(f"{self.name} waiting at start barrier...")
+                self._start_barrier.wait()
+                logger.info(f"{self.name} released from barrier, starting...")
+
             self.run()
         except Exception as e:
             if not self._stop_event.is_set():
