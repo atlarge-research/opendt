@@ -71,9 +71,6 @@ class SimulatorConfig(BaseModel):
 class CalibratorConfig(BaseModel):
     """Calibrator service configuration."""
 
-    calibration_frequency_minutes: int = Field(
-        default=30, description="Calibration frequency in simulation minutes", gt=0
-    )
     calibrated_property: str = Field(
         default="cpuPowerModel.asymUtil",
         description="Dot-notation path to topology property to calibrate",

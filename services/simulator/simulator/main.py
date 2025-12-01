@@ -143,6 +143,11 @@ class SimulationService:
             logger.info("No tasks to simulate, skipping")
             return
 
+        # Get task time range
+        first_task_time = min(task.submission_time for task in all_tasks)
+        latest_task_time = max(task.submission_time for task in all_tasks)
+        task_span_minutes = (latest_task_time - first_task_time).total_seconds() / 60
+
         # Calculate aligned simulation time
         aligned_simulated_time = self.task_accumulator.get_next_simulation_time(
             self.simulation_frequency
@@ -150,6 +155,82 @@ class SimulationService:
         if aligned_simulated_time is None:
             logger.error("Cannot calculate aligned simulation time")
             return
+
+        # Log detailed simulation overview
+        logger.info("=" * 80)
+        logger.info(f"🔬 Simulation Run {self.run_number + 1}")
+        logger.info("=" * 80)
+        logger.info(
+            f"📋 OpenDC Input Data:\n"
+            f"   Total tasks:      {len(all_tasks)}\n"
+            f"   First task:       {first_task_time.isoformat()}\n"
+            f"   Latest task:      {latest_task_time.isoformat()}\n"
+            f"   Time span:        {task_span_minutes:.1f} minutes\n"
+            f"   Simulation end:   {aligned_simulated_time.isoformat()}"
+        )
+
+        # Track speed and drift
+        if self.first_simulation_wall_time is None:
+            # First simulation - establish baseline
+            self.first_simulation_wall_time = datetime.now(UTC)
+            self.first_simulation_sim_time = aligned_simulated_time
+            logger.info(
+                f"⏱️  First simulation baseline established:\n"
+                f"   Wall time: {self.first_simulation_wall_time.strftime('%H:%M:%S')}\n"
+                f"   Sim time:  {aligned_simulated_time.strftime('%H:%M:%S')}"
+            )
+        else:
+            # Calculate speed tracking
+            current_wall_time = datetime.now(UTC)
+            total_sim_elapsed_sec = (
+                aligned_simulated_time - self.first_simulation_sim_time
+            ).total_seconds()
+            total_wall_elapsed_sec = (
+                current_wall_time - self.first_simulation_wall_time
+            ).total_seconds()
+
+            if total_wall_elapsed_sec > 0:
+                actual_speedup = total_sim_elapsed_sec / total_wall_elapsed_sec
+                
+                if self.speed_factor > 0:
+                    drift_percent = ((actual_speedup - self.speed_factor) / self.speed_factor) * 100
+                    drift_status = "ON TRACK ✓" if abs(drift_percent) < 5 else "DRIFTING ⚠️"
+                else:
+                    # Max speed mode
+                    drift_percent = 0
+                    drift_status = "MAX SPEED"
+
+                # Calculate expected vs actual position
+                if self.speed_factor > 0:
+                    expected_sim_elapsed = total_wall_elapsed_sec * self.speed_factor
+                    sim_lag_sec = expected_sim_elapsed - total_sim_elapsed_sec
+                    sim_lag_min = sim_lag_sec / 60
+                else:
+                    sim_lag_sec = 0
+                    sim_lag_min = 0
+
+                logger.info(
+                    f"⏱️  Speed Tracking:\n"
+                    f"   Configured speed:  {self.speed_factor}x\n"
+                    f"   Actual speed:      {actual_speedup:.2f}x\n"
+                    f"   Status:            {drift_status}\n"
+                    f"   Drift:             {drift_percent:+.1f}%\n"
+                    f"   \n"
+                    f"   Total simulated:   {total_sim_elapsed_sec / 60:.1f} minutes "
+                    f"({total_sim_elapsed_sec / 3600:.2f} hours)\n"
+                    f"   Total wall time:   {total_wall_elapsed_sec / 60:.1f} minutes "
+                    f"({total_wall_elapsed_sec / 3600:.2f} hours)\n"
+                    f"   Simulation lag:    {abs(sim_lag_min):.1f} minutes "
+                    f"({'behind' if sim_lag_sec < 0 else 'ahead'} of target)"
+                )
+
+                if abs(drift_percent) > 10 and self.speed_factor > 0:
+                    logger.warning(
+                        f"⚠️  WARNING: Simulator is {'lagging behind' if actual_speedup < self.speed_factor else 'running ahead of'} "
+                        f"target speed by {abs(drift_percent):.1f}%!"
+                    )
+
+        logger.info("=" * 80)
 
         # Increment run number
         self.run_number += 1
@@ -223,15 +304,9 @@ class SimulationService:
         self.simulations_run += 1
         self.task_accumulator.last_simulation_time = aligned_simulated_time
 
-        # Monitor speed and drift
-        self._monitor_speed(aligned_simulated_time)
-        
-        # Sleep if we're running faster than the configured speed factor
-        self._sleep_if_ahead(aligned_simulated_time)
-
         logger.info(
-            f"📊 Stats: {self.tasks_processed} tasks processed, "
-            f"{self.simulations_run} simulations run"
+            f"📊 Total Stats: {self.tasks_processed} tasks processed, "
+            f"{self.run_number} simulations completed\n"
         )
 
     def _process_workload_message(self, message_data: dict[str, Any]) -> None:
@@ -345,100 +420,6 @@ class SimulationService:
 
         except Exception as e:
             logger.error(f"Error processing message from {topic}: {e}", exc_info=True)
-
-    def _monitor_speed(self, aligned_simulated_time: datetime) -> None:
-        """Monitor actual speedup vs configured speed factor and report any drift.
-
-        Args:
-            aligned_simulated_time: Current simulation time
-        """
-        current_wall_time = time.time()
-
-        # Initialize tracking on first simulation
-        if self.first_simulation_wall_time is None:
-            self.first_simulation_wall_time = current_wall_time
-            self.first_simulation_sim_time = aligned_simulated_time
-            logger.info(
-                f"⏱️  Speed tracking initialized at sim_time={aligned_simulated_time.isoformat()}"
-            )
-            return
-
-        # Calculate elapsed times
-        wall_elapsed_seconds = current_wall_time - self.first_simulation_wall_time
-        sim_elapsed_seconds = (
-            aligned_simulated_time - self.first_simulation_sim_time
-        ).total_seconds()
-
-        if wall_elapsed_seconds < 1:
-            return  # Too early to measure
-
-        # Calculate actual speedup
-        actual_speedup = sim_elapsed_seconds / wall_elapsed_seconds
-
-        # Calculate drift percentage
-        if self.speed_factor > 0:
-            expected_speedup = self.speed_factor
-            drift_percent = ((actual_speedup - expected_speedup) / expected_speedup) * 100
-
-            logger.info(
-                f"⏱️  Simulator Speed Tracking:\n"
-                f"   Configured speed: {expected_speedup}x\n"
-                f"   Actual speed:     {actual_speedup:.2f}x\n"
-                f"   Drift:            {drift_percent:+.1f}%\n"
-                f"   Wall elapsed:     {wall_elapsed_seconds:.1f}s\n"
-                f"   Sim elapsed:      {sim_elapsed_seconds:.0f}s"
-            )
-
-            # Warn if drift is significant
-            if abs(drift_percent) > 10:
-                logger.warning(
-                    f"⚠️  Simulator is drifting! Running at {actual_speedup:.2f}x "
-                    f"instead of {expected_speedup}x ({drift_percent:+.1f}% drift)"
-                )
-        else:
-            # Max speed mode (-1)
-            logger.info(
-                f"⏱️  Simulator Speed (Max Speed Mode):\n"
-                f"   Actual speed: {actual_speedup:.2f}x\n"
-                f"   Wall elapsed: {wall_elapsed_seconds:.1f}s\n"
-                f"   Sim elapsed:  {sim_elapsed_seconds:.0f}s"
-            )
-
-    def _sleep_if_ahead(self, aligned_simulated_time: datetime) -> None:
-        """Sleep if simulator is running ahead of the configured speed factor.
-        
-        This prevents the simulator from processing faster than the speed factor allows,
-        which would cause it to wait idle for more data.
-        
-        Args:
-            aligned_simulated_time: Current simulation time
-        """
-        if self.speed_factor <= 0:
-            return  # Max speed mode, no throttling
-        
-        if self.first_simulation_wall_time is None or self.first_simulation_sim_time is None:
-            return  # Not enough data yet
-        
-        current_wall_time = time.time()
-        
-        # Calculate how much wall time should have elapsed for this simulated time
-        sim_elapsed_seconds = (
-            aligned_simulated_time - self.first_simulation_sim_time
-        ).total_seconds()
-        expected_wall_elapsed = sim_elapsed_seconds / self.speed_factor
-        
-        # Calculate actual wall time elapsed
-        actual_wall_elapsed = current_wall_time - self.first_simulation_wall_time
-        
-        # If we're ahead, sleep to stay synchronized
-        sleep_time = expected_wall_elapsed - actual_wall_elapsed
-        
-        if sleep_time > 0:
-            logger.info(
-                f"💤 Simulator is ahead of schedule, sleeping for {sleep_time:.2f}s "
-                f"to maintain {self.speed_factor}x speed"
-            )
-            time.sleep(sleep_time)
 
     def run(self):
         """Run the simulation service (main event loop)."""

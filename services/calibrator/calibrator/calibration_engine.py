@@ -176,8 +176,9 @@ class CalibrationEngine:
         Returns:
             List of CalibrationResult objects
         """
-        # Generate parameter values to test
+        # Generate parameter values to test (rounded to 2 decimal places)
         param_values = np.linspace(min_value, max_value, num_points)
+        param_values = np.round(param_values, 2)
 
         logger.info(
             f"Starting calibration sweep for {property_path}: "
@@ -187,11 +188,12 @@ class CalibrationEngine:
         # Create topology variants
         topologies = []
         for i, value in enumerate(param_values):
-            topology_variant = topology_modifier_func(property_path, float(value))
+            rounded_value = round(float(value), 2)
+            topology_variant = topology_modifier_func(property_path, rounded_value)
             if topology_variant is None:
-                logger.error(f"Failed to create topology variant for value {value}")
+                logger.error(f"Failed to create topology variant for value {rounded_value}")
                 continue
-            topologies.append((i, float(value), topology_variant))
+            topologies.append((i, rounded_value, topology_variant))
 
         if not topologies:
             logger.error("No topology variants created, aborting calibration")
