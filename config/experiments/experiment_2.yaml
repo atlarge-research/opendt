@@ -1,4 +1,4 @@
-# OpenDT Experiment Configuration
+# OpenDT Experiment 2 Configuration
 
 global:
   speed_factor: 300  # 1.0 = Realtime, -1 = Max Speed
@@ -18,7 +18,7 @@ services:
     max_value: 9
     linspace_points: 10
     max_parallel_workers: 4
-    mape_window_minutes: 1440
+    mape_window_minutes: 60
 
 kafka:
   topics:

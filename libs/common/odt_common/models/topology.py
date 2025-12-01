@@ -91,11 +91,18 @@ class Host(BaseModel):
     )
 
 
+class PowerSource(BaseModel):
+    """Power source configuration for a cluster."""
+
+    carbonTracePath: str = Field(..., description="Path to carbon trace parquet file")
+
+
 class Cluster(BaseModel):
     """Cluster of hosts in a datacenter."""
 
     name: str = Field(..., description="Cluster identifier/name")
     hosts: list[Host] = Field(..., description="List of host types in this cluster", min_length=1)
+    powerSource: PowerSource | None = Field(None, description="Power source configuration (optional)")
 
 
 class Topology(BaseModel):

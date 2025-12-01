@@ -276,9 +276,12 @@ async def get_power_data(
         raise HTTPException(status_code=500, detail="Configuration not loaded")
 
     try:
-        # Get workload context with resolved paths
+        # Get workload directory (mounted directly to specific workload)
         workload_dir = Path(os.getenv("WORKLOAD_DIR", "/app/workload"))
-        workload_context = app.state.config.get_workload_context(base_path=workload_dir)
+        
+        # Create workload context directly with mounted workload directory
+        from odt_common.config import WorkloadContext
+        workload_context = WorkloadContext(workload_dir=workload_dir)
 
         # Initialize query
         query = PowerDataQuery(run_id=run_id, workload_context=workload_context)

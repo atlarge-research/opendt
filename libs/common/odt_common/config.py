@@ -152,8 +152,9 @@ class WorkloadMetadata(BaseModel):
 class WorkloadContext(BaseModel):
     """Workload context with resolved file paths."""
 
-    name: str = Field(..., description="Workload name (e.g., 'SURF')")
+    name: str = Field(default="", description="Workload name (e.g., 'SURF')")
     base_path: Path = Field(default=Path("/app/workload"), description="Base workload directory")
+    workload_dir: Path | None = Field(None, description="Direct path to workload directory (overrides base_path/name)")
     metadata: WorkloadMetadata | None = Field(None, description="Workload metadata")
 
     def __init__(self, **data):
@@ -163,34 +164,36 @@ class WorkloadContext(BaseModel):
             self.metadata = WorkloadMetadata.load(self.workload_config_file)
 
     @property
+    def _resolved_workload_dir(self) -> Path:
+        """Get resolved workload directory path."""
+        if self.workload_dir is not None:
+            return self.workload_dir
+        return self.base_path / self.name
+
+    @property
     def tasks_file(self) -> Path:
         """Path to tasks.parquet file."""
-        return self.base_path / self.name / "tasks.parquet"
+        return self._resolved_workload_dir / "tasks.parquet"
 
     @property
     def fragments_file(self) -> Path:
         """Path to fragments.parquet file."""
-        return self.base_path / self.name / "fragments.parquet"
+        return self._resolved_workload_dir / "fragments.parquet"
 
     @property
     def consumption_file(self) -> Path:
         """Path to consumption.parquet file."""
-        return self.base_path / self.name / "consumption.parquet"
+        return self._resolved_workload_dir / "consumption.parquet"
 
     @property
     def topology_file(self) -> Path:
         """Path to topology.json file."""
-        return self.base_path / self.name / "topology.json"
-
-    @property
-    def workload_dir(self) -> Path:
-        """Path to workload directory."""
-        return self.base_path / self.name
+        return self._resolved_workload_dir / "topology.json"
 
     @property
     def workload_config_file(self) -> Path:
         """Path to workload configuration file."""
-        return self.base_path / self.name / "workload.yaml"
+        return self._resolved_workload_dir / "workload.yaml"
 
     @property
     def consumption_offset_ms(self) -> int:
@@ -201,7 +204,7 @@ class WorkloadContext(BaseModel):
 
     def exists(self) -> bool:
         """Check if workload directory exists."""
-        return self.workload_dir.exists()
+        return self._resolved_workload_dir.exists()
 
     def get_file_status(self) -> dict[str, bool]:
         """Check which workload files exist."""
