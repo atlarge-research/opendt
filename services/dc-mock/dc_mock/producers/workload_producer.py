@@ -4,6 +4,7 @@ Streams task/workload events to Kafka with proper timing.
 """
 
 import logging
+import threading
 import time
 from datetime import datetime, timedelta
 
@@ -28,6 +29,7 @@ class WorkloadProducer(BaseProducer):
         speed_factor: float,
         topic: str,
         heartbeat_frequency_minutes: int = 1,
+        start_barrier: threading.Barrier | None = None,
     ):
         """Initialize the workload producer.
 
@@ -37,12 +39,14 @@ class WorkloadProducer(BaseProducer):
             speed_factor: Simulation speed multiplier
             topic: Kafka topic name for workload events
             heartbeat_frequency_minutes: Frequency in simulation minutes for heartbeat messages
+            start_barrier: Optional barrier for synchronized startup
         """
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed_factor=speed_factor,
             topic=topic,
             name="WorkloadProducer",
+            start_barrier=start_barrier,
         )
         self.workload_context = workload_context
         self.tasks: list[Task] = []
@@ -117,7 +121,8 @@ class WorkloadProducer(BaseProducer):
         logger.info("WorkloadProducer running")
 
         try:
-            # Load and aggregate tasks
+            # Load and aggregate tasks (do this AFTER barrier, not before)
+            logger.info("WorkloadProducer loading tasks...")
             self.tasks, earliest_task_time = self.load_and_aggregate_tasks()
 
             if not self.tasks:
@@ -126,9 +131,11 @@ class WorkloadProducer(BaseProducer):
 
             logger.info(f"Streaming {len(self.tasks)} task events with heartbeats...")
 
-            # Track simulation time
+            # Track simulation time (synchronized reference point for all producers)
             sim_start_time = self.tasks[0].submission_time
             real_start_time = time.time()
+            logger.info(f"WorkloadProducer synchronized to start time: {sim_start_time}")
+            logger.info(f"WorkloadProducer real start time: {time.time()}")
 
             # Initialize heartbeat tracking
             heartbeat_frequency = timedelta(minutes=self.heartbeat_frequency_minutes)
@@ -136,12 +143,33 @@ class WorkloadProducer(BaseProducer):
             next_heartbeat_time = sim_start_time.replace(second=0, microsecond=0)
             heartbeats_sent = 0
 
+            logger.info(
+                f"First heartbeat scheduled at: {next_heartbeat_time}, "
+                f"first task at: {self.tasks[0].submission_time}"
+            )
+
             for i, task in enumerate(self.tasks):
                 if self.should_stop():
                     logger.info("WorkloadProducer interrupted")
                     break
 
+                # Debug: Log when we're about to process a task
+                if i < 5:
+                    logger.info(
+                        f"Processing task #{i + 1}: submission_time={task.submission_time.isoformat()}, "
+                        f"next_heartbeat_time={next_heartbeat_time.isoformat()}"
+                    )
+
                 # Emit any pending heartbeats before this task
+                heartbeats_to_send = 0
+                temp_heartbeat_time = next_heartbeat_time
+                while temp_heartbeat_time <= task.submission_time:
+                    heartbeats_to_send += 1
+                    temp_heartbeat_time += heartbeat_frequency
+
+                if i < 5 and heartbeats_to_send > 0:
+                    logger.info(f"Will send {heartbeats_to_send} heartbeat(s) before this task")
+
                 while next_heartbeat_time <= task.submission_time:
                     # Calculate elapsed time for heartbeat
                     heartbeat_elapsed = (next_heartbeat_time - sim_start_time).total_seconds()
@@ -153,15 +181,34 @@ class WorkloadProducer(BaseProducer):
                         sleep_time = required_real_elapsed - real_elapsed
 
                         if sleep_time > 0:
+                            if heartbeats_sent < 5:
+                                logger.info(
+                                    f"Sleeping {sleep_time:.2f}s before heartbeat "
+                                    f"(required_real_elapsed={required_real_elapsed:.2f}s, "
+                                    f"real_elapsed={real_elapsed:.2f}s)"
+                                )
                             if self.wait_interruptible(sleep_time):
                                 logger.info("WorkloadProducer interrupted during heartbeat sleep")
                                 break
+                        elif heartbeats_sent < 5:
+                            logger.info(
+                                f"No sleep needed, already past heartbeat time by {-sleep_time:.2f}s"
+                            )
 
                     # Emit heartbeat message
                     heartbeat_msg = {
                         "message_type": "heartbeat",
                         "timestamp": next_heartbeat_time.isoformat(),
                     }
+
+                    # Debug: Log first few heartbeat emissions
+                    if heartbeats_sent < 5:
+                        logger.info(
+                            f"WorkloadProducer sending heartbeat #{heartbeats_sent + 1}: "
+                            f"timestamp={next_heartbeat_time.isoformat()}, "
+                            f"sim_elapsed={heartbeat_elapsed:.2f}s, real_elapsed={time.time() - real_start_time:.2f}s"
+                        )
+
                     self.emit_message(message=heartbeat_msg, key="heartbeat")
                     heartbeats_sent += 1
 
@@ -178,10 +225,20 @@ class WorkloadProducer(BaseProducer):
                     sleep_time = required_real_elapsed - real_elapsed
 
                     if sleep_time > 0:
+                        if i < 5:
+                            logger.info(
+                                f"Sleeping {sleep_time:.2f}s before task "
+                                f"(required_real_elapsed={required_real_elapsed:.2f}s, "
+                                f"real_elapsed={real_elapsed:.2f}s)"
+                            )
                         # Use interruptible wait
                         if self.wait_interruptible(sleep_time):
                             logger.info("WorkloadProducer interrupted during sleep")
                             break
+                    elif i < 5:
+                        logger.info(
+                            f"No sleep needed for task, already past time by {-sleep_time:.2f}s"
+                        )
                 # If speed_factor == -1, don't sleep (max speed)
 
                 # Emit task event wrapped with message_type
@@ -190,6 +247,16 @@ class WorkloadProducer(BaseProducer):
                     "timestamp": task.submission_time.isoformat(),
                     "task": task.model_dump(mode="json"),
                 }
+
+                # Debug: Log first few task emissions
+                if i < 5 or (i + 1) % 100 == 0:
+                    logger.info(
+                        f"WorkloadProducer sending task #{i + 1}: id={task.id}, "
+                        f"timestamp={task.submission_time.isoformat()}, "
+                        f"sim_elapsed={sim_elapsed:.2f}s, "
+                        f"real_elapsed={time.time() - real_start_time:.2f}s"
+                    )
+
                 self.emit_message(message=task_msg, key=str(task.id))
 
                 # Periodic flush and logging

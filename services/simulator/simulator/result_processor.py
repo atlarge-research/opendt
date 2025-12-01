@@ -60,7 +60,7 @@ class SimulationResultProcessor:
             aligned_simulated_time: The end time of this simulation run
             cached: Whether this was a cached result
         """
-        logger.info(
+        logger.debug(
             f"Processing results for run {run_number} (cached: {cached}, "
             f"simulated_time: {aligned_simulated_time.isoformat()}, output_dir: {output_dir})"
         )
@@ -89,15 +89,17 @@ class SimulationResultProcessor:
                 logger.error("No timestamp_absolute column found in power data")
                 return
 
-            # Convert from milliseconds to datetime
-            power_df["timestamp"] = pd.to_datetime(power_df["timestamp_absolute"], unit="ms")
+            # Convert from milliseconds to datetime (UTC-aware)
+            power_df["timestamp"] = pd.to_datetime(
+                power_df["timestamp_absolute"], unit="ms", utc=True
+            )
             logger.debug(f"Converted timestamp_absolute to datetime for {len(power_df)} rows")
 
             # Clip to only new data since last processed time (start boundary)
             if self.last_processed_time is not None:
                 original_count = len(power_df)
                 power_df = power_df.loc[power_df["timestamp"] > self.last_processed_time].copy()
-                logger.info(
+                logger.debug(
                     f"Clipped data at start: {original_count} -> {len(power_df)} rows "
                     f"(keeping data after {self.last_processed_time.isoformat()})"
                 )
@@ -105,7 +107,7 @@ class SimulationResultProcessor:
             # Clip data at end boundary (aligned_simulated_time)
             original_count = len(power_df)
             power_df = power_df.loc[power_df["timestamp"] <= aligned_simulated_time].copy()
-            logger.info(
+            logger.debug(
                 f"Clipped data at end: {original_count} -> {len(power_df)} rows "
                 f"(keeping data up to {aligned_simulated_time.isoformat()})"
             )
@@ -118,10 +120,30 @@ class SimulationResultProcessor:
             power_df["run_number"] = run_number
             power_df["cached"] = cached
 
+            # Select and reorder columns to only retain required fields
+            required_columns = ["timestamp", "run_number", "power_draw", "energy_usage", "cached"]
+
+            # Check if all required columns exist
+            missing_columns = [col for col in required_columns if col not in power_df.columns]
+            if missing_columns:
+                logger.warning(f"Missing columns in power data: {missing_columns}")
+                # Only select columns that exist
+                available_columns = [col for col in required_columns if col in power_df.columns]
+                power_df = power_df[available_columns].copy()
+            else:
+                power_df = power_df[required_columns].copy()
+
             # Append to aggregated results
             if self.agg_results_file.exists():
                 # Append to existing file
                 existing_df = pd.read_parquet(self.agg_results_file)
+
+                # Ensure existing data also only has required columns (for backwards compatibility)
+                existing_columns = [col for col in required_columns if col in existing_df.columns]
+                if existing_columns != list(existing_df.columns):
+                    logger.info(f"Filtering existing data to required columns: {required_columns}")
+                    existing_df = existing_df[existing_columns].copy()
+
                 combined_df = pd.concat([existing_df, power_df], ignore_index=True)
                 combined_df.to_parquet(self.agg_results_file, index=False)
                 logger.info(
@@ -137,7 +159,7 @@ class SimulationResultProcessor:
             max_timestamp = pd.to_datetime(power_df["timestamp"].max())
             self.last_processed_time = max_timestamp.to_pydatetime()
             if self.last_processed_time:
-                logger.info(
+                logger.debug(
                     f"Updated last processed time to {self.last_processed_time.isoformat()}"
                 )
 

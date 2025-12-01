@@ -13,7 +13,14 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from odt_common import load_config_from_env
-from odt_common.models.topology import CPU, Cluster, CPUPowerModel, Host, Memory, Topology
+from odt_common.models.topology import (
+    AsymptoticCPUPowerModel,
+    CPU,
+    Cluster,
+    Host,
+    Memory,
+    Topology,
+)
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
 
@@ -132,7 +139,7 @@ DEFAULT_TOPOLOGY = Topology(
                     count=277,
                     cpu=CPU(coreCount=16, coreSpeed=2100.0),
                     memory=Memory(memorySize=128000000),  # ~128 MB
-                    cpuPowerModel=CPUPowerModel(
+                    cpuPowerModel=AsymptoticCPUPowerModel(
                         modelType="asymptotic",
                         power=400.0,
                         idlePower=32.0,

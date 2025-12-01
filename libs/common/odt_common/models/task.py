@@ -1,6 +1,6 @@
 """Task model from tasks.parquet."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Import Fragment for type hints (avoiding circular import)
 from typing import TYPE_CHECKING
@@ -49,11 +49,30 @@ class Task(BaseModel):
 
     @field_validator("submission_time", mode="before")
     @classmethod
-    def parse_submission_time(cls, v: datetime | int | float) -> datetime:
-        """Parse submission time from epoch milliseconds to datetime."""
+    def parse_submission_time(cls, v: datetime | int | float | str) -> datetime:
+        """Parse submission time from epoch milliseconds to datetime (UTC-aware).
+        
+        Args:
+            v: Timestamp as milliseconds (int/float), datetime object, or ISO string
+            
+        Returns:
+            UTC-aware datetime object
+        """
         if isinstance(v, (int, float)):
-            # Convert milliseconds to seconds for datetime
-            return datetime.fromtimestamp(v / 1000.0)
+            # Convert milliseconds to seconds for datetime, make it UTC-aware
+            return datetime.fromtimestamp(v / 1000.0, tz=UTC)
+        elif isinstance(v, str):
+            # Parse ISO format string
+            dt = datetime.fromisoformat(v.replace('Z', '+00:00'))
+            # Ensure UTC if not already timezone-aware
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=UTC)
+            return dt
+        elif isinstance(v, datetime):
+            # If already datetime but naive, make it UTC
+            if v.tzinfo is None:
+                return v.replace(tzinfo=UTC)
+            return v
         return v
 
     @property

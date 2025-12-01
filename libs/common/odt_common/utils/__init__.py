@@ -4,10 +4,12 @@ from odt_common.utils.kafka import (
     get_kafka_bootstrap_servers,
     get_kafka_consumer,
     get_kafka_producer,
+    send_message,
 )
 
 __all__ = [
     "get_kafka_bootstrap_servers",
     "get_kafka_producer",
     "get_kafka_consumer",
+    "send_message",
 ]

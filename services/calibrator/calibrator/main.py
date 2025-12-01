@@ -1,6 +1,5 @@
 """Calibrator Service - Main Entry Point."""
 
-import copy
 import json
 import logging
 import os
@@ -9,10 +8,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from odt_common import ResultCache, TaskAccumulator, load_config_from_env
-from odt_common.models import Task, Topology, TopologySnapshot
-from odt_common.odc_runner import OpenDCRunner
-from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer, get_kafka_producer
+from odt_common import TaskAccumulator, load_config_from_env
+from odt_common.models import Task
+from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer
+
+from calibrator.calibration_engine import CalibrationEngine
+from calibrator.mape_comparator import MapeComparator
+from calibrator.power_tracker import PowerTracker
+from calibrator.topology_manager import TopologyManager
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -36,9 +39,17 @@ class CalibrationService:
         workload_topic: str,
         topology_topic: str,
         sim_topology_topic: str,
+        power_topic: str,
         calibration_frequency_minutes: int,
+        calibrated_property: str,
+        min_value: float,
+        max_value: float,
+        linspace_points: int,
+        max_parallel_workers: int,
+        mape_window_minutes: int,
         run_output_dir: str,
         run_id: str,
+        speed_factor: float,
         consumer_group: str = "calibrators",
     ):
         """Initialize the calibration service.
@@ -48,18 +59,31 @@ class CalibrationService:
             workload_topic: Kafka topic name for workload events (dc.workload)
             topology_topic: Kafka topic name for topology updates (dc.topology)
             sim_topology_topic: Kafka topic name for simulated topology updates (sim.topology)
+            power_topic: Kafka topic name for actual power consumption (dc.power)
             calibration_frequency_minutes: Calibration frequency in simulated time minutes
+            calibrated_property: Dot-notation path to property to calibrate
+            min_value: Minimum value for calibrated property
+            max_value: Maximum value for calibrated property
+            linspace_points: Number of linspace points to test
+            max_parallel_workers: Maximum parallel OpenDC simulations
+            mape_window_minutes: Rolling window for MAPE calculation
             run_output_dir: Base directory for run outputs
             run_id: Unique run ID for this session
+            speed_factor: Simulation speed multiplier
             consumer_group: Kafka consumer group ID
         """
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.consumer_group = consumer_group
         self.workload_topic = workload_topic
-        self.topology_topic = topology_topic
-        self.sim_topology_topic = sim_topology_topic
         self.calibration_frequency = timedelta(minutes=calibration_frequency_minutes)
+        self.speed_factor = speed_factor
         self.run_id = run_id
+
+        # Calibration parameters
+        self.calibrated_property = calibrated_property
+        self.min_value = min_value
+        self.max_value = max_value
+        self.linspace_points = linspace_points
 
         # Setup output directories - calibrator writes to run_dir/calibrator/
         self.output_base_dir = Path(run_output_dir) / run_id / "calibrator"
@@ -67,60 +91,73 @@ class CalibrationService:
 
         logger.info(f"Calibrator output directory: {self.output_base_dir}")
 
-        # Initialize Kafka consumer
-        topics = [workload_topic, topology_topic, sim_topology_topic]
+        # Initialize Kafka consumer for workload only
         self.consumer = get_kafka_consumer(
-            topics=topics,
+            topics=[workload_topic],
             group_id=consumer_group,
             bootstrap_servers=kafka_bootstrap_servers,
         )
 
-        # Initialize Kafka producer (for future use)
-        self.producer = get_kafka_producer(kafka_bootstrap_servers)
-
         # Initialize task accumulator
         self.task_accumulator = TaskAccumulator()
 
-        # Initialize OpenDC runner
-        try:
-            self.opendc_runner = OpenDCRunner()
-        except FileNotFoundError as e:
-            logger.error(f"Failed to initialize OpenDC runner: {e}")
-            logger.error("Calibration will not be available")
-            self.opendc_runner = None
+        # Initialize calibration modules
+        self.power_tracker = PowerTracker(
+            kafka_bootstrap_servers=kafka_bootstrap_servers,
+            power_topic=power_topic,
+            consumer_group=f"{consumer_group}-power",
+            debug=True,  # Temporary debug flag
+        )
 
-        # Topology state
-        self.real_topology: Topology | None = None
-        self.simulated_topology: Topology | None = None
+        self.topology_manager = TopologyManager(
+            kafka_bootstrap_servers=kafka_bootstrap_servers,
+            dc_topology_topic=topology_topic,
+            sim_topology_topic=sim_topology_topic,
+            consumer_group=f"{consumer_group}-topology",
+        )
+
+        self.calibration_engine = CalibrationEngine(max_workers=max_parallel_workers)
+
+        self.mape_comparator = MapeComparator(mape_window_minutes=mape_window_minutes)
+
+        # Start background trackers
+        self.power_tracker.start()
+        self.topology_manager.start()
 
         # Statistics
         self.tasks_processed = 0
         self.calibrations_run = 0
         self.run_number = 0
 
-        # Initialize result cache
-        self.result_cache = ResultCache()
+        # Timing tracking (for drift calculation)
+        self.first_calibration_wall_time: datetime | None = None
+        self.first_calibration_sim_time: datetime | None = None
 
         logger.info(f"Initialized CalibrationService with run ID: {run_id}")
         logger.info(f"Consumer group: {consumer_group}")
-        logger.info(f"Subscribed: {workload_topic}, {topology_topic}, {sim_topology_topic}")
+        logger.info(f"Subscribed to workload: {workload_topic}")
         logger.info(
             f"Calibration frequency: {calibration_frequency_minutes} minutes (simulated time)"
         )
+        logger.info(f"Speed factor: {speed_factor}x")
+        logger.info(f"Calibrated property: {calibrated_property}")
+        logger.info(f"Parameter range: [{min_value}, {max_value}] with {linspace_points} points")
+        logger.info(f"Max parallel workers: {max_parallel_workers}")
+        logger.info(f"MAPE window: {mape_window_minutes} minutes")
 
     def _run_calibration(self) -> None:
-        """Run OpenDC calibration with accumulated tasks."""
-        if not self.opendc_runner:
-            logger.warning("OpenDC runner not available, skipping calibration")
-            return
+        """Run calibration sweep with accumulated tasks."""
+        # Track timing for performance monitoring
+        calibration_start_time = datetime.now(UTC)
 
-        if not self.simulated_topology:
+        # Get current topology
+        base_topology = self.topology_manager.get_current_topology()
+        if base_topology is None:
             logger.warning("No topology available, skipping calibration")
             return
 
         # Get all accumulated tasks
         all_tasks = self.task_accumulator.get_all_tasks()
-
         if not all_tasks:
             logger.info("No tasks to calibrate, skipping")
             return
@@ -133,68 +170,249 @@ class CalibrationService:
             logger.error("Cannot calculate aligned calibration time")
             return
 
+        # Track timing for first calibration
+        if self.first_calibration_wall_time is None:
+            self.first_calibration_wall_time = calibration_start_time
+            self.first_calibration_sim_time = aligned_simulated_time
+            logger.info(
+                f"⏱️  First calibration baseline: "
+                f"wall_time={calibration_start_time.strftime('%H:%M:%S')}, "
+                f"sim_time={aligned_simulated_time.strftime('%H:%M:%S')}"
+            )
+
+        # Calculate time drift relative to workload start
+        last_sim_time = self.task_accumulator.last_simulation_time
+        if last_sim_time and self.first_calibration_sim_time and self.first_calibration_wall_time:
+            # Overall elapsed times (from first calibration to now)
+            total_sim_elapsed_seconds = (
+                aligned_simulated_time - self.first_calibration_sim_time
+            ).total_seconds()
+            total_wall_elapsed_seconds = (
+                calibration_start_time - self.first_calibration_wall_time
+            ).total_seconds()
+
+            # Calculate overall actual speedup
+            if total_wall_elapsed_seconds > 0:
+                overall_actual_speedup = total_sim_elapsed_seconds / total_wall_elapsed_seconds
+                overall_drift_percent = (
+                    ((overall_actual_speedup - self.speed_factor) / self.speed_factor) * 100
+                    if self.speed_factor > 0
+                    else 0
+                )
+            else:
+                overall_actual_speedup = 0
+                overall_drift_percent = 0
+
+            # Log in clear format similar to simulator
+            logger.info(
+                f"⏱️  Calibrator Speed Tracking:\n"
+                f"   Configured speed: {self.speed_factor}x\n"
+                f"   Actual speed:     {overall_actual_speedup:.2f}x\n"
+                f"   Drift:            {overall_drift_percent:+.1f}%\n"
+                f"   Wall elapsed:     {total_wall_elapsed_seconds:.1f}s\n"
+                f"   Sim elapsed:      {total_sim_elapsed_seconds:.0f}s "
+                f"({total_sim_elapsed_seconds / 60:.1f}min)"
+            )
+
+            # Warn if drift is significant
+            if abs(overall_drift_percent) > 10:
+                logger.warning(
+                    f"⚠️  Calibrator is drifting! Running at {overall_actual_speedup:.2f}x "
+                    f"instead of {self.speed_factor}x ({overall_drift_percent:+.1f}% drift)"
+                )
+
         # Increment run number
         self.run_number += 1
 
-        # Check if we can reuse cached results
-        topology_to_use = self.simulated_topology
+        # Create calibration run directory
+        calibrator_run_dir = self.output_base_dir / f"run_{self.run_number}"
+        calibrator_run_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create directories
-        run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
+        logger.info(f"🔬 Starting calibration run {self.run_number} with {len(all_tasks)} tasks")
+        logger.info(f"   Calibrating: {self.calibrated_property}")
+        logger.info(f"   Range: [{self.min_value}, {self.max_value}]")
+        logger.info(f"   Points: {self.linspace_points}")
+        logger.info(f"   Wall clock: {calibration_start_time.strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
-        if self.result_cache.can_reuse(topology_to_use, len(all_tasks)):
-            logger.info(
-                f"♻️  Reusing cached results for calibration run {self.run_number} "
-                f"(topology unchanged, {len(all_tasks)} tasks)"
-            )
+        # Run calibration sweep
+        results = self.calibration_engine.run_calibration_sweep(
+            base_topology=base_topology,
+            tasks=all_tasks,
+            property_path=self.calibrated_property,
+            min_value=self.min_value,
+            max_value=self.max_value,
+            num_points=self.linspace_points,
+            run_number=self.run_number,
+            calibrator_run_dir=calibrator_run_dir,
+            simulated_time=aligned_simulated_time,
+            topology_modifier_func=self.topology_manager.create_variant,
+            timeout_seconds=120,
+        )
 
-            # Copy entire cached run directory to new run location
-            cached_run_dir = self.result_cache.get_cached_run_dir()
-            if cached_run_dir:
-                self.result_cache.copy_to_new_run(cached_run_dir, run_dir)
+        if not results:
+            logger.error("Calibration sweep produced no results")
+            return
 
-                # Update metadata with new timestamp and cached flag
-                metadata_file = run_dir / "metadata.json"
-                metadata = json.loads(metadata_file.read_text())
-                metadata["simulated_time"] = aligned_simulated_time.replace(
-                    microsecond=0
-                ).isoformat()
-                metadata["wall_clock_time"] = (
-                    datetime.now(UTC).replace(microsecond=0, tzinfo=None).isoformat()
-                )
-                metadata["cached"] = True
-                metadata_file.write_text(json.dumps(metadata, indent=2))
+        # Get actual power data for comparison
+        # Use window from earliest task to aligned_simulated_time
+        first_task_time = all_tasks[0].submission_time
+        actual_power = self.power_tracker.get_power_in_window(
+            first_task_time, aligned_simulated_time
+        )
 
-                logger.info(f"✅ Cached results copied to calibration run_{self.run_number}")
+        if actual_power.empty:
+            logger.warning("No actual power data available for comparison")
+            # Still record calibration metadata, but without MAPE scores
+            best_result = results[len(results) // 2]  # Use middle value
+            best_mape = float("inf")
         else:
-            # Run new calibration
-            logger.info(f"Running calibration {self.run_number} with {len(all_tasks)} tasks")
+            # Compare each simulation result with actual power
+            comparison_results = []
+            for result in results:
+                if not result.success or result.power_df is None:
+                    comparison_results.append(
+                        {
+                            "sim_number": result.sim_number,
+                            "value": result.param_value,
+                            "mape": float("inf"),
+                        }
+                    )
+                    continue
 
-            success, output_dir = self.opendc_runner.run_simulation(
-                tasks=all_tasks,
-                topology=topology_to_use,
-                run_dir=run_dir,
-                run_number=self.run_number,
-                simulated_time=aligned_simulated_time,
-                timeout_seconds=120,
+                mape_result = self.mape_comparator.compare(
+                    simulated_power=result.power_df,
+                    actual_power=actual_power,
+                    simulation_end_time=aligned_simulated_time,
+                )
+
+                comparison_results.append(
+                    {
+                        "sim_number": result.sim_number,
+                        "value": result.param_value,
+                        "mape": mape_result["mape"],
+                        "window_start": mape_result["window_start"],
+                        "window_end": mape_result["window_end"],
+                        "num_points": mape_result["num_points"],
+                    }
+                )
+
+                logger.info(
+                    f"   sim_{result.sim_number}: "
+                    f"{self.calibrated_property}={result.param_value:.3f} "
+                    f"→ MAPE={mape_result['mape']:.2f}%"
+                )
+
+            # Find best result (lowest MAPE)
+            best_comparison = min(comparison_results, key=lambda x: x["mape"])
+            best_result = results[best_comparison["sim_number"]]
+            best_mape = best_comparison["mape"]
+
+            logger.info(
+                f"🏆 Best: {self.calibrated_property}={best_result.param_value:.3f} "
+                f"(MAPE={best_mape:.2f}%)"
             )
 
-            if not success:
-                logger.error(f"Calibration {self.run_number} failed")
-                return
+            # Write calibration metadata
+            metadata = {
+                "run_number": self.run_number,
+                "wall_clock_time": datetime.now(UTC)
+                .replace(microsecond=0, tzinfo=None)
+                .isoformat(),
+                "simulated_time": aligned_simulated_time.replace(microsecond=0).isoformat(),
+                "task_count": len(all_tasks),
+                "calibrated_property": self.calibrated_property,
+                "variants_tested": len(results),
+                "best_value": best_result.param_value,
+                "best_mape": best_mape,
+                "all_results": comparison_results,
+                "mape_window_minutes": self.mape_comparator.mape_window_minutes,
+            }
 
-            # Update cache with run directory
-            self.result_cache.update(topology_to_use, len(all_tasks), run_dir)
-            logger.info(f"✅ Calibration {self.run_number} complete, results cached")
+            metadata_file = calibrator_run_dir / "metadata.json"
+            metadata_file.write_text(json.dumps(metadata, indent=2))
+            logger.info(f"   Metadata written to {metadata_file}")
+
+            # Publish winning topology to sim.topology
+            winning_topology = self.topology_manager.create_variant(
+                self.calibrated_property, best_result.param_value
+            )
+            if winning_topology:
+                success = self.topology_manager.publish_topology(winning_topology)
+                if success:
+                    logger.info(
+                        f"📡 Published winning topology with "
+                        f"{self.calibrated_property}={best_result.param_value:.3f} to sim.topology"
+                    )
+                else:
+                    logger.error("Failed to publish winning topology")
+            else:
+                logger.error("Failed to create winning topology variant")
 
         # Update statistics and simulation time
         self.calibrations_run += 1
         self.task_accumulator.last_simulation_time = aligned_simulated_time
 
+        # Calculate and log calibration duration
+        calibration_end_time = datetime.now(UTC)
+        calibration_duration = (calibration_end_time - calibration_start_time).total_seconds()
+
         logger.info(
             f"📊 Stats: {self.tasks_processed} tasks processed, "
             f"{self.calibrations_run} calibrations run"
         )
+        logger.info(
+            f"⏱️  Calibration duration: {calibration_duration:.1f}s "
+            f"({calibration_duration / 60:.2f} minutes)"
+        )
+
+        # Warn if calibration took longer than the frequency interval
+        frequency_seconds = self.calibration_frequency.total_seconds()
+        if calibration_duration > frequency_seconds:
+            logger.warning(
+                f"⚠️  Calibration took {calibration_duration:.1f}s, which exceeds "
+                f"the configured frequency of {frequency_seconds:.1f}s! "
+                f"The calibrator may fall behind. Consider increasing "
+                f"the frequency or reducing parallel workers/points."
+            )
+
+        # Sleep if we're running faster than the configured speed factor
+        self._sleep_if_ahead(aligned_simulated_time)
+
+    def _sleep_if_ahead(self, aligned_simulated_time: datetime) -> None:
+        """Sleep if calibrator is running ahead of the configured speed factor.
+
+        This prevents the calibrator from processing faster than the speed factor allows,
+        which would cause it to wait idle for more data.
+
+        Args:
+            aligned_simulated_time: Current simulation time
+        """
+        if self.speed_factor <= 0:
+            return  # Max speed mode, no throttling
+
+        if self.first_calibration_wall_time is None or self.first_calibration_sim_time is None:
+            return  # Not enough data yet
+
+        current_wall_time = datetime.now(UTC)
+
+        # Calculate how much wall time should have elapsed for this simulated time
+        sim_elapsed_seconds = (
+            aligned_simulated_time - self.first_calibration_sim_time
+        ).total_seconds()
+        expected_wall_elapsed = sim_elapsed_seconds / self.speed_factor
+
+        # Calculate actual wall time elapsed
+        actual_wall_elapsed = (current_wall_time - self.first_calibration_wall_time).total_seconds()
+
+        # If we're ahead, sleep to stay synchronized
+        sleep_time = expected_wall_elapsed - actual_wall_elapsed
+
+        if sleep_time > 0:
+            logger.info(
+                f"💤 Calibrator is ahead of schedule, sleeping for {sleep_time:.2f}s "
+                f"to maintain {self.speed_factor}x speed"
+            )
+            time.sleep(sleep_time)
 
     def _process_workload_message(self, message_data: dict[str, Any]) -> None:
         """Process a workload message (task or heartbeat) from Kafka.
@@ -234,60 +452,6 @@ class CalibrationService:
         except Exception as e:
             logger.error(f"Error processing workload message: {e}", exc_info=True)
 
-    def _process_topology_message(self, message_data: dict[str, Any]) -> None:
-        """Process a topology message from Kafka.
-
-        Args:
-            message_data: Raw message data from Kafka
-        """
-        try:
-            # Parse into TopologySnapshot model
-            topology_snapshot = TopologySnapshot(**message_data)
-
-            logger.debug(
-                f"📡 Received topology snapshot (timestamp: {topology_snapshot.timestamp})"
-            )
-
-            # Update real topology
-            self.real_topology = topology_snapshot.topology
-
-            # Initialize simulated topology if not set
-            if self.simulated_topology is None:
-                # Deep copy so we can modify it independently
-                self.simulated_topology = copy.deepcopy(self.real_topology)
-                logger.info("Initialized simulated topology from real topology")
-
-        except Exception as e:
-            logger.error(f"Error processing topology message: {e}", exc_info=True)
-
-    def _process_topology_update_message(self, message_data: dict[str, Any]) -> None:
-        """Process a simulated topology update message from Kafka.
-
-        Args:
-            message_data: Raw message data from Kafka (raw Topology, not TopologySnapshot)
-        """
-        try:
-            # Parse into Topology model (not TopologySnapshot)
-            topology = Topology(**message_data)
-
-            logger.info(
-                f"🔄 Received simulated topology update: {len(topology.clusters)} cluster(s)"
-            )
-
-            # Update simulated topology
-            self.simulated_topology = topology
-
-            # Clear result cache since topology changed
-            self.result_cache.clear()
-            logger.info("🗑️  Cleared result cache due to topology update")
-
-            # Log update details
-            total_hosts = sum(host.count for cluster in topology.clusters for host in cluster.hosts)
-            logger.info(f"   Total hosts: {total_hosts}")
-
-        except Exception as e:
-            logger.error(f"Error processing topology update message: {e}", exc_info=True)
-
     def process_message(self, message):
         """Process a single Kafka message.
 
@@ -300,10 +464,6 @@ class CalibrationService:
         try:
             if topic == self.workload_topic:
                 self._process_workload_message(value)
-            elif topic == self.topology_topic:
-                self._process_topology_message(value)
-            elif topic == self.sim_topology_topic:
-                self._process_topology_update_message(value)
             else:
                 logger.warning(f"Unknown topic: {topic}")
 
@@ -327,9 +487,10 @@ class CalibrationService:
             raise
 
         finally:
-            logger.info("Closing Kafka connections...")
+            logger.info("Shutting down calibration service...")
             self.consumer.close()
-            self.producer.close()
+            self.power_tracker.stop()
+            self.topology_manager.stop()
             logger.info("Calibration service stopped")
 
 
@@ -358,16 +519,31 @@ def main():
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
     sim_topology_topic = config.kafka.topics["sim_topology"].name
+    power_topic = config.kafka.topics["power"].name
 
     # Get calibrator configuration
-    calibration_frequency_minutes = config.services.calibrator.calibration_frequency_minutes
+    calibrator_config = config.services.calibrator
+    calibration_frequency_minutes = calibrator_config.calibration_frequency_minutes
+    calibrated_property = calibrator_config.calibrated_property
+    min_value = calibrator_config.min_value
+    max_value = calibrator_config.max_value
+    linspace_points = calibrator_config.linspace_points
+    max_parallel_workers = calibrator_config.max_parallel_workers
+    mape_window_minutes = calibrator_config.mape_window_minutes
+    speed_factor = config.global_config.speed_factor
     run_output_dir = Path(os.getenv("DATA_DIR", "/app/data"))
 
     logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
     logger.info(f"Workload topic: {workload_topic}")
     logger.info(f"Topology topic: {topology_topic}")
     logger.info(f"Simulated topology topic: {sim_topology_topic}")
+    logger.info(f"Power topic: {power_topic}")
     logger.info(f"Calibration frequency: {calibration_frequency_minutes} minutes")
+    logger.info(f"Calibrated property: {calibrated_property}")
+    logger.info(f"Parameter range: [{min_value}, {max_value}]")
+    logger.info(f"Linspace points: {linspace_points}")
+    logger.info(f"Max parallel workers: {max_parallel_workers}")
+    logger.info(f"MAPE window: {mape_window_minutes} minutes")
     logger.info(f"Data directory: {run_output_dir}")
 
     # Get run ID from environment
@@ -393,9 +569,17 @@ def main():
                 workload_topic=workload_topic,
                 topology_topic=topology_topic,
                 sim_topology_topic=sim_topology_topic,
+                power_topic=power_topic,
                 calibration_frequency_minutes=calibration_frequency_minutes,
+                calibrated_property=calibrated_property,
+                min_value=min_value,
+                max_value=max_value,
+                linspace_points=linspace_points,
+                max_parallel_workers=max_parallel_workers,
+                mape_window_minutes=mape_window_minutes,
                 run_output_dir=str(run_output_dir),
                 run_id=run_id,
+                speed_factor=speed_factor,
                 consumer_group=consumer_group,
             )
             service.run()

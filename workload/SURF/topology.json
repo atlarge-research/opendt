@@ -14,12 +14,11 @@
                         "memorySize": 128000000
                     },
                     "cpuPowerModel": {
-                        "modelType": "asymptotic",
-                        "power": 400,
-                        "idlePower": 32,
-                        "maxPower": 180,
-                        "asymUtil": 0.3,
-                        "dvfs": false
+                        "modelType": "mse",
+                        "power": 300.0,
+                        "idlePower": 25.0,
+                        "maxPower": 174.0,
+                        "calibrationFactor": 10.0
                     }
                 }
             ]

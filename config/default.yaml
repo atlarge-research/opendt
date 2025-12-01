@@ -1,8 +1,8 @@
-# OpenDT Experiment Configuration
+# OpenDT Default Configuration
 
 global:
-  speed_factor: 300  # 1.0 = Realtime, -1 = Max Speed
-  calibration_enabled: true
+  speed_factor: 1  # 1.0 = Realtime, -1 = Max Speed
+  calibration_enabled: false
 
 services:
   dc-mock:
@@ -10,15 +10,7 @@ services:
     heartbeat_frequency_minutes: 1
   
   simulator:
-    simulation_frequency_minutes: 15
-  
-  calibrator:
-    calibration_frequency_minutes: 30
-    asym_util_min: 0.1
-    asym_util_max: 0.9
-    asym_util_points: 9
-    max_parallel_workers: 4
-    mape_window_minutes: 1440
+    simulation_frequency_minutes: 5
 
 kafka:
   topics:

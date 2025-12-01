@@ -74,13 +74,17 @@ class CalibratorConfig(BaseModel):
     calibration_frequency_minutes: int = Field(
         default=30, description="Calibration frequency in simulation minutes", gt=0
     )
-    asym_util_min: float = Field(
-        default=0.1, description="Minimum asymUtil value to test", gt=0, le=1
+    calibrated_property: str = Field(
+        default="cpuPowerModel.asymUtil",
+        description="Dot-notation path to topology property to calibrate",
     )
-    asym_util_max: float = Field(
-        default=0.9, description="Maximum asymUtil value to test", gt=0, le=1
+    min_value: float = Field(
+        default=0.1, description="Minimum value to test for calibrated property", gt=0
     )
-    asym_util_points: int = Field(default=9, description="Number of linspace points to test", gt=1)
+    max_value: float = Field(
+        default=0.9, description="Maximum value to test for calibrated property", gt=0
+    )
+    linspace_points: int = Field(default=9, description="Number of linspace points to test", gt=1)
     max_parallel_workers: int = Field(
         default=4, description="Maximum number of parallel OpenDC simulations", gt=0
     )
@@ -89,6 +93,22 @@ class CalibratorConfig(BaseModel):
         description="Rolling time window in minutes for MAPE calculation",
         gt=0,
     )
+    
+    # Legacy fields for backwards compatibility (mapped to new fields)
+    asym_util_min: float | None = Field(None, exclude=True)
+    asym_util_max: float | None = Field(None, exclude=True)
+    asym_util_points: int | None = Field(None, exclude=True)
+    
+    @model_validator(mode='after')
+    def handle_legacy_fields(self):
+        """Map legacy field names to new ones if present."""
+        if self.asym_util_min is not None:
+            self.min_value = self.asym_util_min
+        if self.asym_util_max is not None:
+            self.max_value = self.asym_util_max
+        if self.asym_util_points is not None:
+            self.linspace_points = self.asym_util_points
+        return self
 
 
 class ServicesConfig(BaseModel):

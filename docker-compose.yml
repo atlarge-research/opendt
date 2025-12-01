@@ -1,3 +1,5 @@
+name: opendt
+
 services:
   # ============================================================================
   # INFRASTRUCTURE SERVICES
@@ -5,7 +7,7 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: opendt-postgres
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-postgres
     environment:
       POSTGRES_DB: opendt
       POSTGRES_USER: opendt
@@ -25,7 +27,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: opendt-kafka
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-kafka
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -79,7 +81,7 @@ services:
     build:
       context: .
       dockerfile: services/kafka-init/Dockerfile
-    container_name: opendt-kafka-init
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-kafka-init
     environment:
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
@@ -102,7 +104,7 @@ services:
     build:
       context: .
       dockerfile: services/dc-mock/Dockerfile
-    container_name: opendt-dc-mock
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-dc-mock
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       WORKLOAD_PATH: /app/workload
@@ -127,7 +129,7 @@ services:
     build:
       context: .
       dockerfile: services/simulator/Dockerfile
-    container_name: opendt-simulator
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-simulator
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config.yaml
@@ -153,7 +155,7 @@ services:
     build:
       context: .
       dockerfile: services/calibrator/Dockerfile
-    container_name: opendt-calibrator
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-calibrator
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config.yaml
@@ -182,7 +184,7 @@ services:
     build:
       context: .
       dockerfile: services/dashboard/Dockerfile
-    container_name: opendt-dashboard
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-dashboard
     environment:
       DATABASE_URL: postgresql://opendt:opendt_dev_password@postgres:5432/opendt
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092

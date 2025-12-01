@@ -106,14 +106,21 @@ class PowerDataQuery:
         aligned_df = self._align_timeseries(sim_df, actual_df, interval_seconds)
 
         # Convert to response model
-        data_points = [
-            PowerDataPoint(
-                timestamp=pd.to_datetime(row["timestamp"]).to_pydatetime(),
-                simulated_power=float(row["simulated_power"]),
-                actual_power=float(row["actual_power"]),
+        data_points = []
+        for _, row in aligned_df.iterrows():
+            timestamp = row["timestamp"]
+            if isinstance(timestamp, pd.Timestamp):
+                timestamp_dt = timestamp.to_pydatetime()
+            else:
+                timestamp_dt = pd.to_datetime(timestamp).to_pydatetime()  # type: ignore[union-attr]
+
+            data_points.append(
+                PowerDataPoint(
+                    timestamp=timestamp_dt,
+                    simulated_power=float(row["simulated_power"]),
+                    actual_power=float(row["actual_power"]),
+                )
             )
-            for _, row in aligned_df.iterrows()
-        ]
 
         metadata = {
             "run_id": self.run_id,
@@ -141,7 +148,7 @@ class PowerDataQuery:
         if "timestamp" not in df.columns:
             raise ValueError("Simulation data missing 'timestamp' column")
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
         # Use power_draw column
         if "power_draw" not in df.columns:
@@ -149,10 +156,11 @@ class PowerDataQuery:
 
         # Select and rename relevant columns
         result = df[["timestamp", "power_draw"]].copy()
-        result.rename(columns={"power_draw": "simulated_power"}, inplace=True)
+        # Use type: ignore for pandas rename signature mismatch
+        result = result.rename(columns={"power_draw": "simulated_power"})  # type: ignore[call-overload]
 
         # Sort by timestamp
-        result = result.sort_values("timestamp").reset_index(drop=True)
+        result = result.sort_values("timestamp", ignore_index=True)
 
         return result
 
@@ -191,8 +199,8 @@ class PowerDataQuery:
 
         df["timestamp"] = earliest_task_time_ms + df["timestamp"] + offset_ms
 
-        # Convert from milliseconds to datetime
-        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+        # Convert from milliseconds to datetime (UTC-aware)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
         logger.info(f"Converted {len(df)} consumption timestamps to absolute datetime")
 
         # Use power_draw column
@@ -201,10 +209,11 @@ class PowerDataQuery:
 
         # Select and rename relevant columns
         result = df[["timestamp", "power_draw"]].copy()
-        result.rename(columns={"power_draw": "actual_power"}, inplace=True)
+        # Use type: ignore for pandas rename signature mismatch
+        result = result.rename(columns={"power_draw": "actual_power"})  # type: ignore[call-overload]
 
         # Sort by timestamp
-        result = result.sort_values("timestamp").reset_index(drop=True)
+        result = result.sort_values("timestamp", ignore_index=True)
 
         return result
 

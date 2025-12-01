@@ -39,6 +39,7 @@ class SimulationService:
         topology_topic: str,
         sim_topology_topic: str,
         simulation_frequency_minutes: int,
+        speed_factor: float,
         run_output_dir: str,
         run_id: str,
         consumer_group: str = "simulators",
@@ -51,6 +52,7 @@ class SimulationService:
             topology_topic: Kafka topic name for topology updates (dc.topology)
             sim_topology_topic: Kafka topic name for simulated topology updates (sim.topology)
             simulation_frequency_minutes: Simulation frequency in simulated time minutes
+            speed_factor: Configured simulation speed multiplier
             run_output_dir: Base directory for run outputs
             run_id: Unique run ID for this session
             consumer_group: Kafka consumer group ID
@@ -61,6 +63,7 @@ class SimulationService:
         self.topology_topic = topology_topic
         self.sim_topology_topic = sim_topology_topic
         self.simulation_frequency = timedelta(minutes=simulation_frequency_minutes)
+        self.speed_factor = speed_factor
         self.run_id = run_id
 
         # Setup output directories - simulator writes to run_dir/simulator/
@@ -68,6 +71,7 @@ class SimulationService:
         self.output_base_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Simulator output directory: {self.output_base_dir}")
+        logger.info(f"Configured speed factor: {self.speed_factor}x")
 
         # Initialize result processor for aggregating simulation outputs
         self.result_processor = SimulationResultProcessor(self.output_base_dir)
@@ -106,6 +110,10 @@ class SimulationService:
 
         # Initialize result cache
         self.result_cache = ResultCache()
+
+        # Speed tracking - to monitor if we're keeping up with configured speed
+        self.first_simulation_wall_time: float | None = None
+        self.first_simulation_sim_time: datetime | None = None
 
         logger.info(f"Initialized SimulationService with run ID: {run_id}")
         logger.info(f"Consumer group: {consumer_group}")
@@ -214,6 +222,12 @@ class SimulationService:
         # Update statistics and simulation time
         self.simulations_run += 1
         self.task_accumulator.last_simulation_time = aligned_simulated_time
+
+        # Monitor speed and drift
+        self._monitor_speed(aligned_simulated_time)
+        
+        # Sleep if we're running faster than the configured speed factor
+        self._sleep_if_ahead(aligned_simulated_time)
 
         logger.info(
             f"📊 Stats: {self.tasks_processed} tasks processed, "
@@ -332,6 +346,100 @@ class SimulationService:
         except Exception as e:
             logger.error(f"Error processing message from {topic}: {e}", exc_info=True)
 
+    def _monitor_speed(self, aligned_simulated_time: datetime) -> None:
+        """Monitor actual speedup vs configured speed factor and report any drift.
+
+        Args:
+            aligned_simulated_time: Current simulation time
+        """
+        current_wall_time = time.time()
+
+        # Initialize tracking on first simulation
+        if self.first_simulation_wall_time is None:
+            self.first_simulation_wall_time = current_wall_time
+            self.first_simulation_sim_time = aligned_simulated_time
+            logger.info(
+                f"⏱️  Speed tracking initialized at sim_time={aligned_simulated_time.isoformat()}"
+            )
+            return
+
+        # Calculate elapsed times
+        wall_elapsed_seconds = current_wall_time - self.first_simulation_wall_time
+        sim_elapsed_seconds = (
+            aligned_simulated_time - self.first_simulation_sim_time
+        ).total_seconds()
+
+        if wall_elapsed_seconds < 1:
+            return  # Too early to measure
+
+        # Calculate actual speedup
+        actual_speedup = sim_elapsed_seconds / wall_elapsed_seconds
+
+        # Calculate drift percentage
+        if self.speed_factor > 0:
+            expected_speedup = self.speed_factor
+            drift_percent = ((actual_speedup - expected_speedup) / expected_speedup) * 100
+
+            logger.info(
+                f"⏱️  Simulator Speed Tracking:\n"
+                f"   Configured speed: {expected_speedup}x\n"
+                f"   Actual speed:     {actual_speedup:.2f}x\n"
+                f"   Drift:            {drift_percent:+.1f}%\n"
+                f"   Wall elapsed:     {wall_elapsed_seconds:.1f}s\n"
+                f"   Sim elapsed:      {sim_elapsed_seconds:.0f}s"
+            )
+
+            # Warn if drift is significant
+            if abs(drift_percent) > 10:
+                logger.warning(
+                    f"⚠️  Simulator is drifting! Running at {actual_speedup:.2f}x "
+                    f"instead of {expected_speedup}x ({drift_percent:+.1f}% drift)"
+                )
+        else:
+            # Max speed mode (-1)
+            logger.info(
+                f"⏱️  Simulator Speed (Max Speed Mode):\n"
+                f"   Actual speed: {actual_speedup:.2f}x\n"
+                f"   Wall elapsed: {wall_elapsed_seconds:.1f}s\n"
+                f"   Sim elapsed:  {sim_elapsed_seconds:.0f}s"
+            )
+
+    def _sleep_if_ahead(self, aligned_simulated_time: datetime) -> None:
+        """Sleep if simulator is running ahead of the configured speed factor.
+        
+        This prevents the simulator from processing faster than the speed factor allows,
+        which would cause it to wait idle for more data.
+        
+        Args:
+            aligned_simulated_time: Current simulation time
+        """
+        if self.speed_factor <= 0:
+            return  # Max speed mode, no throttling
+        
+        if self.first_simulation_wall_time is None or self.first_simulation_sim_time is None:
+            return  # Not enough data yet
+        
+        current_wall_time = time.time()
+        
+        # Calculate how much wall time should have elapsed for this simulated time
+        sim_elapsed_seconds = (
+            aligned_simulated_time - self.first_simulation_sim_time
+        ).total_seconds()
+        expected_wall_elapsed = sim_elapsed_seconds / self.speed_factor
+        
+        # Calculate actual wall time elapsed
+        actual_wall_elapsed = current_wall_time - self.first_simulation_wall_time
+        
+        # If we're ahead, sleep to stay synchronized
+        sleep_time = expected_wall_elapsed - actual_wall_elapsed
+        
+        if sleep_time > 0:
+            logger.info(
+                f"💤 Simulator is ahead of schedule, sleeping for {sleep_time:.2f}s "
+                f"to maintain {self.speed_factor}x speed"
+            )
+            time.sleep(sleep_time)
+
     def run(self):
         """Run the simulation service (main event loop)."""
         logger.info("Starting Simulation Service")
@@ -373,6 +481,7 @@ def main():
 
     # Get simulator configuration
     simulation_frequency_minutes = config.services.simulator.simulation_frequency_minutes
+    speed_factor = config.global_config.speed_factor
     run_output_dir = Path(os.getenv("DATA_DIR", "/app/data"))
 
     logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
@@ -380,6 +489,7 @@ def main():
     logger.info(f"Topology topic: {topology_topic}")
     logger.info(f"Simulated topology topic: {sim_topology_topic}")
     logger.info(f"Simulation frequency: {simulation_frequency_minutes} minutes")
+    logger.info(f"Speed factor: {speed_factor}x")
     logger.info(f"Data directory: {run_output_dir}")
 
     # Get run ID from environment
@@ -406,6 +516,7 @@ def main():
                 topology_topic=topology_topic,
                 sim_topology_topic=sim_topology_topic,
                 simulation_frequency_minutes=simulation_frequency_minutes,
+                speed_factor=speed_factor,
                 run_output_dir=str(run_output_dir),
                 run_id=run_id,
                 consumer_group=consumer_group,

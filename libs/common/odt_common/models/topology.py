@@ -10,9 +10,9 @@ This module defines the hierarchical structure of a datacenter:
 """
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Discriminator, Field, Tag
 
 
 class CPU(BaseModel):
@@ -28,21 +28,22 @@ class Memory(BaseModel):
     memorySize: int = Field(..., description="Memory size in bytes", gt=0)
 
 
-class CPUPowerModel(BaseModel):
-    """CPU power consumption model.
+class AsymptoticCPUPowerModel(BaseModel):
+    """Asymptotic CPU power consumption model.
 
-    Defines how CPU utilization translates to power consumption (Watts).
+    Defines how CPU utilization translates to power consumption using
+    an asymptotic curve.
     """
 
-    modelType: Literal["asymptotic", "linear", "square", "cubic", "sqrt"] = Field(
-        ..., description="Power model type"
+    modelType: Literal["asymptotic"] = Field(
+        "asymptotic", description="Power model type (asymptotic)"
     )
     power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
     idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
     maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
     asymUtil: float = Field(
         default=0.5,
-        description="Asymptotic utilization coefficient (for asymptotic model)",
+        description="Asymptotic utilization coefficient",
         ge=0,
         le=1,
     )
@@ -52,6 +53,32 @@ class CPUPowerModel(BaseModel):
     )
 
 
+class MseCPUPowerModel(BaseModel):
+    """MSE-based CPU power consumption model.
+
+    Defines how CPU utilization translates to power consumption using
+    a calibration factor optimized via Mean Squared Error.
+    """
+
+    modelType: Literal["mse"] = Field("mse", description="Power model type (MSE)")
+    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
+    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
+    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
+    calibrationFactor: float = Field(
+        default=0.5,
+        description="Calibration factor for MSE model",
+        ge=0,
+        le=50,
+    )
+
+
+# Union of all CPU power model types
+CPUPowerModel = Annotated[
+    Annotated[AsymptoticCPUPowerModel, Tag("asymptotic")] | Annotated[MseCPUPowerModel, Tag("mse")],
+    Discriminator("modelType"),
+]
+
+
 class Host(BaseModel):
     """Host (physical server) in a datacenter cluster."""
 
@@ -59,7 +86,9 @@ class Host(BaseModel):
     count: int = Field(..., description="Number of identical hosts", gt=0)
     cpu: CPU = Field(..., description="CPU specification")
     memory: Memory = Field(..., description="Memory specification")
-    cpuPowerModel: CPUPowerModel = Field(..., description="CPU power consumption model")
+    cpuPowerModel: AsymptoticCPUPowerModel | MseCPUPowerModel = Field(
+        ..., description="CPU power consumption model"
+    )
 
 
 class Cluster(BaseModel):
