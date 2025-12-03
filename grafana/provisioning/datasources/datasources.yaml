@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: OpenDT API
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    uid: df5tfgbpfeakgc
+    editable: true
+    isDefault: false
+    jsonData:
+      auth_method: none
