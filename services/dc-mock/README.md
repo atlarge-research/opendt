@@ -23,16 +23,16 @@ Reads from `workload/<WORKLOAD_NAME>/`:
 Published to `dc.workload`. Two types:
 
 **Task message:**
-```json
+```
 {
   "message_type": "task",
   "timestamp": "2022-10-07T00:39:21",
-  "task": { ... }
+  "task": { <task object> }
 }
 ```
 
 **Heartbeat message:**
-```json
+```
 {
   "message_type": "heartbeat",
   "timestamp": "2022-10-07T00:45:00",
@@ -45,7 +45,7 @@ Heartbeats signal time progression to downstream consumers, enabling determinist
 ### Power Messages
 
 Published to `dc.power`:
-```json
+```
 {
   "power_draw": 19180.0,
   "energy_usage": 575400.0,
@@ -56,42 +56,43 @@ Published to `dc.power`:
 ### Topology Messages
 
 Published to `dc.topology` (compacted topic):
-```json
+```
 {
   "timestamp": "2022-10-07T09:14:30",
-  "topology": { ... }
+  "topology": { <topology object> }
 }
 ```
 
 ## Configuration
 
-From the main config file:
+Settings under `services.dc-mock` in the config file:
 
-```yaml
-global:
-  speed_factor: 300  # Simulation speed multiplier
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| workload | string | "SURF" | Workload directory name under `workload/` |
+| heartbeat_frequency_minutes | int | 1 | Heartbeat interval in simulation time |
 
-services:
-  dc-mock:
-    workload: "SURF"  # Directory under workload/
-    heartbeat_frequency_minutes: 1
+### heartbeat_frequency_minutes
+
+Controls how often dc-mock publishes heartbeat messages. Lower values provide more granular window closing but increase Kafka message volume.
+
+## Workload Data Format
+
+Each workload directory must contain:
+
+```
+workload/SURF/
+├── tasks.parquet       # Task definitions
+├── fragments.parquet   # Task execution profiles
+├── consumption.parquet # Actual power measurements
+├── carbon.parquet      # Grid carbon intensity
+└── topology.json       # Datacenter topology
 ```
 
-### Speed Factor
-
-| Value | Behavior |
-|-------|----------|
-| 1 | Real-time replay |
-| 300 | 300x faster (1 hour = 12 seconds) |
-| -1 | Maximum speed (no delays) |
+To use a custom workload, create a directory with these files and set `services.dc-mock.workload` to the directory name.
 
 ## Logs
 
 ```
 make logs-dc-mock
 ```
-
-## Related
-
-- [Concepts](../../docs/CONCEPTS.md) - Data model details
-- [Configuration](../../docs/CONFIGURATION.md) - Full configuration reference

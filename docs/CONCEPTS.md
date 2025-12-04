@@ -17,13 +17,13 @@ OpenDT operates in **Shadow Mode**: it connects to a datacenter (real or mocked)
 ```
 Workload Data → dc-mock → Kafka → simulator → OpenDC → Results
      ↓                       ↓
-Power Data → dc-mock → Kafka → dashboard → Grafana
+Power Data → dc-mock → Kafka → api → Grafana
 ```
 
 1. **dc-mock** reads historical workload and power data from Parquet files
 2. Messages are published to Kafka topics
 3. **simulator** consumes workload messages, aggregates them into time windows, and invokes OpenDC
-4. **dashboard** queries results and serves them to Grafana
+4. **api** queries results and serves them to Grafana
 
 ## Workload Data
 
@@ -77,7 +77,7 @@ The **Topology** defines the datacenter hardware that the simulator uses to calc
 
 ```
 Topology
-└── Cluster (e.g., "A01")
+└── Cluster (e.g., "C01")
     └── Host
         ├── count: 277 (number of identical hosts)
         ├── CPU
@@ -86,10 +86,10 @@ Topology
         ├── Memory
         │   └── memorySize: 128 GB
         └── CPUPowerModel
-            ├── modelType: "asymptotic"
-            ├── idlePower: 32 W
-            ├── maxPower: 180 W
-            └── asymUtil: 0.3
+            ├── modelType: "mse"
+            ├── idlePower: 25 W
+            ├── maxPower: 174 W
+            └── calibrationFactor: 10.0
 ```
 
 ### Power Models
@@ -98,14 +98,14 @@ The **CPUPowerModel** defines how CPU utilization translates to power consumptio
 
 | Model Type | Description |
 |------------|-------------|
-| asymptotic | Non-linear curve with asymptotic behavior (recommended) |
+| mse | Mean Squared Error based model (default) |
+| asymptotic | Non-linear curve with asymptotic behavior |
 | linear | Linear interpolation between idle and max power |
-| mse | Mean Squared Error based model |
 
 Key parameters:
-- **idlePower**: Power draw at 0% utilization
-- **maxPower**: Power draw at 100% utilization
-- **asymUtil**: Curve shape coefficient (asymptotic model only)
+- **idlePower**: Power draw at 0% utilization (Watts)
+- **maxPower**: Power draw at 100% utilization (Watts)
+- **calibrationFactor**: Scaling factor for the mse model
 
 ## Time Windows
 
@@ -125,10 +125,6 @@ OpenDT uses cumulative simulation: each window simulates all tasks from the begi
 
 **Heartbeat messages** are synthetic timestamps published by dc-mock to signal time progression. They enable deterministic window closing even when no tasks arrive.
 
-Configuration:
-- `heartbeat_frequency_minutes`: How often heartbeats are sent (simulation time)
-- `simulation_frequency_minutes`: Window size
-
 ## Calibration
 
 When enabled, the **calibrator** service optimizes topology parameters by comparing simulation output against actual power measurements.
@@ -140,15 +136,6 @@ When enabled, the **calibrator** service optimizes topology parameters by compar
 3. The parameter value with lowest error is selected
 4. Updated topology is published to Kafka
 5. Simulator uses the calibrated topology for future windows
-
-### Configuration
-
-Enable calibration in the config file:
-
-```yaml
-global:
-  calibration_enabled: true
-```
 
 ## Kafka Topics
 
@@ -208,8 +195,3 @@ Models provide:
 - Runtime type validation
 - JSON serialization/deserialization
 - Automatic API documentation
-
-## Next Steps
-
-- [Configuration](CONFIGURATION.md) - Configuration file reference
-- [Getting Started](GETTING_STARTED.md) - Run your first simulation

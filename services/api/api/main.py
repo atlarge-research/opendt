@@ -7,8 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
-from dashboard.carbon_query import CarbonDataQuery, CarbonDataResponse
-from dashboard.power_query import PowerDataQuery, PowerDataResponse
+from api.carbon_query import CarbonDataQuery, CarbonDataResponse
+from api.power_query import PowerDataQuery, PowerDataResponse
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse

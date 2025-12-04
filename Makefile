@@ -131,9 +131,9 @@ clean-env:
 # Logging Commands
 # =============================================================================
 
-## logs-dashboard: Tail logs for dashboard service
-logs-dashboard:
-	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f dashboard
+## logs-api: Tail logs for api service
+logs-api:
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose logs -f api
 
 ## logs-dc-mock: Tail logs for dc-mock service
 logs-dc-mock:
@@ -151,9 +151,9 @@ logs-calibrator:
 # Shell Commands
 # =============================================================================
 
-## shell-dashboard: Open a shell in the dashboard container
-shell-dashboard:
-	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec dashboard /bin/bash
+## shell-api: Open a shell in the api container
+shell-api:
+	@RUN_ID=$$(cat .run_id) && set -a && . ./data/$$RUN_ID/.env && set +a && docker compose exec api /bin/bash
 
 ## shell-dc-mock: Open a shell in the dc-mock container
 shell-dc-mock:

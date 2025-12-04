@@ -186,7 +186,7 @@
                     "root_selector": "data",
                     "source": "url",
                     "type": "json",
-                    "url": "http://dashboard:8000/api/power?interval_seconds=60",
+                    "url": "http://api:8000/api/power?interval_seconds=60",
                     "url_options": {
                         "data": "",
                         "method": "GET"
@@ -403,7 +403,7 @@
                     "root_selector": "data",
                     "source": "url",
                     "type": "json",
-                    "url": "http://dashboard:8000/api/carbon_emission?interval_seconds=60",
+                    "url": "http://api:8000/api/carbon_emission?interval_seconds=60",
                     "url_options": {
                         "data": "",
                         "method": "GET"

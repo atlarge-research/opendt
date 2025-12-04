@@ -74,22 +74,18 @@ simulator/
 
 ## Configuration
 
-From the main config file:
+Settings under `services.simulator` in the config file:
 
-```yaml
-services:
-  simulator:
-    simulation_frequency_minutes: 5  # Window size
-```
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| simulation_frequency_minutes | int | 5 | Window size for task aggregation |
+
+### simulation_frequency_minutes
+
+Determines the time window size for batching tasks. Larger windows mean fewer OpenDC invocations but less granular results.
 
 ## Logs
 
 ```
 make logs-simulator
 ```
-
-## Related
-
-- [Concepts](../../docs/CONCEPTS.md) - Time windows, cumulative simulation
-- [Configuration](../../docs/CONFIGURATION.md) - Full configuration reference
-- [dc-mock](../dc-mock/README.md) - Data source

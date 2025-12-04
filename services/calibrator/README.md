@@ -63,9 +63,3 @@ make logs-calibrator
 ```
 
 Note: The calibrator runs with the `calibration` Docker Compose profile. It will not start unless `calibration_enabled: true` is set.
-
-## Related
-
-- [Concepts](../../docs/CONCEPTS.md) - Calibration process details
-- [Configuration](../../docs/CONFIGURATION.md) - Full configuration reference
-- [simulator](../simulator/README.md) - Consumes calibrated topologies

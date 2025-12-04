@@ -74,7 +74,3 @@ Caching layer to avoid redundant simulations.
 cd libs/common
 pytest tests/
 ```
-
-## Related
-
-- [Concepts](../../docs/CONCEPTS.md) - Data model documentation

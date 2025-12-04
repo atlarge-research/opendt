@@ -2,11 +2,6 @@
 
 This folder contains everything needed to reproduce the experiments from the OpenDT paper.
 
-## Prerequisites
-
-- Docker and Docker Compose installed
-- Python 3.11+ with dependencies installed (`pip install -e .` from repo root)
-
 ## Running Experiments
 
 OpenDT experiments are started using Docker Compose with a specific configuration file:
@@ -21,14 +16,9 @@ make up config=config/experiments/experiment_2.yaml
 
 ### Experiment Duration
 
-The time required to complete an experiment depends on:
+The time required depends on the workload duration and the configured speed factor. With the SURF workload (~7 days of data) and `speed_factor: 300`, experiments complete in approximately **1 hour**.
 
-1. **Workload duration** - The length of the historical workload being simulated
-2. **Speed factor** - The simulation speedup configured in the experiment YAML
-
-For example, with the SURF workload (~7 days of data) and a `speed_factor` of 300, the experiment takes approximately **1 hour** to complete.
-
-You can monitor progress via the Grafana dashboard at http://localhost:3000 or by checking the Docker logs:
+Monitor progress via Grafana at http://localhost:3000 or check logs:
 
 ```bash
 make logs-simulator
@@ -44,18 +34,12 @@ python reproducibility-capsule/generate_plot.py
 
 The script will:
 
-1. Ask which experiment you want to generate a plot for
+1. Ask which experiment to generate a plot for
 2. Show available data sources (completed or in-progress runs)
-3. Generate a PDF plot comparing Ground Truth, FootPrinter, and OpenDT
+3. Generate a PDF comparing Ground Truth, FootPrinter, and OpenDT
 4. Display MAPE (Mean Absolute Percentage Error) for both FootPrinter and OpenDT
 
-### Intermediate Results
-
-You can run the plot generator **during** an experiment to visualize intermediate results. The script will use whatever simulation data is available at that point.
-
-### Final Results
-
-After the experiment completes, run the script again to generate the final plots with the full dataset.
+You can run the plot generator **during** an experiment to visualize intermediate results.
 
 ### Output
 

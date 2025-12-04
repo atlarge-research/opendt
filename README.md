@@ -1,3 +1,7 @@
+<p align="right">
+  <img src="logo/logo-128.png" alt="OpenDT Logo" width="100">
+</p>
+
 # OpenDT
 
 **Open Digital Twin for Datacenters**
@@ -28,23 +32,23 @@ make up       # Start services
 
 ```
 opendt/
-├── config/                 # Configuration files
-│   ├── default.yaml        # Default configuration
-│   └── experiments/        # Experiment-specific configs
-├── data/                   # Run outputs (timestamped directories)
-├── docs/                   # Documentation
-├── libs/common/            # Shared library (Pydantic models, utilities)
-├── opendc/                 # OpenDC simulator binary
-├── reproducibility-capsule/# Experiment reproduction scripts
-├── services/               # Microservices
-│   ├── calibrator/         # Topology calibration service
-│   ├── dashboard/          # REST API (FastAPI)
-│   ├── dc-mock/            # Datacenter mock (data replay)
-│   ├── grafana/            # Dashboard configuration
-│   ├── kafka-init/         # Kafka topic initialization
-│   └── simulator/          # OpenDC simulation engine
-└── workload/               # Workload datasets
-    └── SURF/               # SURF datacenter workload
+├── config/                    # Configuration files
+│   ├── default.yaml           # Default configuration
+│   └── experiments/           # Experiment-specific configs
+├── data/                      # Run outputs (timestamped directories)
+├── docs/                      # Documentation
+├── libs/common/               # Shared library (Pydantic models, utilities)
+├── opendc/                    # OpenDC simulator binary
+├── reproducibility-capsule/   # Experiment reproduction scripts
+├── services/                  # Microservices
+│   ├── api/                   # REST API (FastAPI)
+│   ├── calibrator/            # Topology calibration service
+│   ├── dc-mock/               # Datacenter mock (data replay)
+│   ├── grafana/               # Dashboard configuration
+│   ├── kafka-init/            # Kafka topic initialization
+│   └── simulator/             # OpenDC simulation engine
+└── workload/                  # Workload datasets
+    └── SURF/                  # SURF datacenter workload
 ```
 
 ---
@@ -80,16 +84,10 @@ Run `make help` for the complete list.
 | [dc-mock](services/dc-mock/README.md) | Replays historical workload and power data |
 | [simulator](services/simulator/README.md) | Runs OpenDC simulations |
 | [calibrator](services/calibrator/README.md) | Calibrates topology parameters |
-| [dashboard](services/dashboard/README.md) | REST API for data queries |
+| [api](services/api/README.md) | REST API for data queries |
 
 ### Research
 
 | Document | Description |
 |----------|-------------|
 | [Reproducibility Capsule](reproducibility-capsule/README.md) | Reproduce paper experiments |
-
----
-
-## License
-
-MIT

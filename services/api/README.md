@@ -1,4 +1,4 @@
-# dashboard
+# api
 
 REST API for querying simulation data and controlling the datacenter topology.
 
@@ -49,10 +49,5 @@ The API reads from:
 ## Logs
 
 ```
-make logs-dashboard
+make logs-api
 ```
-
-## Related
-
-- [Grafana](../grafana/README.md) - Visualization of API data
-- [Concepts](../../docs/CONCEPTS.md) - Data model details

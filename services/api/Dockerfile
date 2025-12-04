@@ -16,7 +16,7 @@ COPY libs/common /app/libs/common
 RUN pip install --no-cache-dir -e /app/libs/common
 
 # Copy service code
-COPY services/dashboard /app/services/dashboard
+COPY services/api /app/services/api
 
 # Create non-root user for security
 RUN useradd -m -u 1000 opendt && \
@@ -25,9 +25,9 @@ RUN useradd -m -u 1000 opendt && \
 USER opendt
 
 # Set working directory to service for proper module resolution
-WORKDIR /app/services/dashboard
+WORKDIR /app/services/api
 
 # Expose the API port
 EXPOSE 8000
 
-CMD ["uvicorn", "dashboard.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

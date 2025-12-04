@@ -17,7 +17,7 @@ Displays:
 - **Power Consumption** - Actual vs simulated power draw over time
 - **Carbon Emissions** - Estimated carbon emissions based on power and grid intensity
 
-Data is queried from the OpenDT API at `http://dashboard:8000`.
+Data is queried from the OpenDT API at `http://api:8000`.
 
 ## Provisioning
 
@@ -41,7 +41,3 @@ Dashboard data is stored in the `opendt-grafana-storage` Docker volume. To reset
 ```
 make clean-volumes
 ```
-
-## Related
-
-- [dashboard](../dashboard/README.md) - API that provides data

@@ -168,11 +168,11 @@ services:
     profiles:
       - calibration
 
-  dashboard:
+  api:
     build:
       context: .
-      dockerfile: services/dashboard/Dockerfile
-    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-dashboard
+      dockerfile: services/api/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-api
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config/simulation.yaml
@@ -184,7 +184,7 @@ services:
       - "3001:8000"
     volumes:
       # Mount source code for hot reload
-      - ./services/dashboard:/app/services/dashboard
+      - ./services/api:/app/services/api
       - ./libs/common:/app/libs/common
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
@@ -197,7 +197,7 @@ services:
         condition: service_healthy
     networks:
       - opendt-network
-    command: uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
   grafana:
     image: grafana/grafana:latest

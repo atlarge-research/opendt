@@ -25,7 +25,7 @@ kafka-init is an initialization container that ensures all required Kafka topics
 
 ## Configuration
 
-Topics are configured in the main config file under `kafka.topics`:
+Topics are configured under `kafka.topics` in the config file:
 
 ```yaml
 kafka:
@@ -34,7 +34,19 @@ kafka:
       name: "dc.workload"
       config:
         retention.ms: "86400000"
+    topology:
+      name: "dc.topology"
+      config:
+        cleanup.policy: "compact"
 ```
+
+### Topic Configuration Options
+
+| Option | Description |
+|--------|-------------|
+| retention.ms | How long messages are retained (milliseconds) |
+| cleanup.policy | "delete" (time-based) or "compact" (key-based) |
+| min.compaction.lag.ms | Minimum time before compaction |
 
 ## Startup Flow
 
@@ -50,7 +62,3 @@ Other services wait for kafka-init to complete before starting.
 ```
 docker compose logs kafka-init
 ```
-
-## Related
-
-- [Configuration](../../docs/CONFIGURATION.md) - Topic configuration reference
