@@ -1,27 +1,65 @@
 ---
 sidebar_position: 1
+slug: /
 ---
 
 # Introduction
 
-OpenDC is a free and open-source platform for cloud datacenter simulation aimed at both research and education.
+OpenDT is a **Shadow Mode** Digital Twin for datacenters. It connects to a real datacenter (or a mock of one) and replays workload data through the [OpenDC](https://opendc.org) simulator, comparing predicted power consumption against actual measurements in real time.
 
-<div className="container">
-    <div className="row">
-        <div className="col col-3 text--center">
-            <img src={require("@site/src/components/HomepageFeatures/screenshot-construction.png").default} alt="Constructing a cloud datacenter with OpenDC" />
-        </div>
-        <div className="col col-3 text--center">
-            <img src={require("@site/src/components/HomepageFeatures/screenshot-results.png").default} alt="Analysis of results reported by OpenDC" />
-        </div>
-    </div>
-</div>
+## Key Capabilities
 
-Users can construct new datacenter designs and define portfolios of scenarios (experiments) to explore how their designs
-perform under different workloads, schedulers, and phenomena (e.g., failures or performance interference).
+- **Power Prediction**: Estimate power consumption based on workload patterns
+- **What-If Analysis**: Test infrastructure changes without touching live hardware
+- **Active Calibration**: Automatically tune simulation parameters to minimize prediction error
+- **Carbon Estimation**: Calculate carbon emissions from power draw and grid intensity
 
-OpenDC is accessible both as a ready-to-use platform hosted by us online at [app.opendc.org](https://app.opendc.org), and as
-source code that users can run locally on their own machine or via Docker.
+## Architecture Overview
 
-To learn more about OpenDC, have a look through our paper on [OpenDC 2.0](https://atlarge-research.com/pdfs/ccgrid21-opendc-paper.pdf)
-or on our [vision](https://atlarge-research.com/pdfs/opendc-vision17ispdc_cr.pdf).
+OpenDT bridges physical and digital infrastructure through a modular design:
+
+![OpenDT High-Level Architecture](/img/design_opendt_hl.png)
+
+| Component | Purpose | OpenDT Implementation |
+|-----------|---------|----------------------|
+| Physical Infrastructure (P) | Data source | dc-mock service |
+| Front-end (B) | User interfaces | Grafana + REST API |
+| Orchestration (C) | Message routing | Kafka |
+| Data Platform (D, E) | Telemetry & storage | Parquet files |
+| Simulator (F-I) | Power prediction | OpenDC + calibrator |
+| Virtual Infrastructure (V) | Digital twin state | Topology configuration |
+
+See the [Architecture](/docs/concepts/architecture) page for detailed component mapping.
+
+## Data Flow
+
+1. **dc-mock** reads historical workload and power data from Parquet files
+2. Messages are published to **Kafka** topics with configurable speed factor
+3. **simulator** consumes workload messages, aggregates them into time windows, and invokes OpenDC
+4. **api** queries results and serves them to the **Grafana** dashboard
+
+## Use Cases
+
+### Reproduce Experiments
+
+Run predefined experiments with the Reproducibility Capsule:
+
+```bash
+make up config=config/experiments/experiment_1.yaml
+```
+
+### Explore What-If Scenarios
+
+Modify the datacenter topology and observe how power consumption changes:
+
+- Upgrade CPU architecture
+- Change power model parameters
+- Add or remove hosts
+
+### Validate Power Models
+
+Compare different power model types (MSE, Asymptotic, Linear) against real measurements to find the best fit for your hardware.
+
+## Quick Start
+
+See the [Getting Started](/docs/category/getting-started) guide to run your first simulation.

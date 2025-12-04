@@ -1,145 +1,114 @@
 // @ts-check
 
-const organizationName = "atlarge-research";
-const projectName = "opendt";
+const organizationName = 'atlarge-research'
+const projectName = 'opendt'
 
-const lightCodeTheme = require("prism-react-renderer/themes/github");
-const darkCodeTheme = require("prism-react-renderer/themes/dracula");
+const lightCodeTheme = require('prism-react-renderer/themes/github')
+const darkCodeTheme = require('prism-react-renderer/themes/dracula')
 
 /** @type {import("@docusaurus/types").Config} */
 const config = {
-    title: "OpenDT",
-    tagline: "Digital Twin for Datacenters",
+    title: 'OpenDT',
+    tagline: 'Digital Twin for Datacenters',
     url: process.env.DOCUSAURUS_URL || `https://${organizationName}.github.io`,
     baseUrl: process.env.DOCUSAURUS_BASE_PATH || `/${projectName}/`,
-    onBrokenLinks: "throw",
-    onBrokenMarkdownLinks: "warn",
-    favicon: "img/favicon.ico",
+    onBrokenLinks: 'throw',
+    onBrokenMarkdownLinks: 'warn',
+    favicon: 'img/favicon.ico',
     organizationName,
     projectName,
 
     i18n: {
-        defaultLocale: "en",
-        locales: ["en"]
+        defaultLocale: 'en',
+        locales: ['en'],
     },
 
     presets: [
         [
-            "classic",
+            'classic',
             /** @type {import("@docusaurus/preset-classic").Options} */
             ({
                 docs: {
-                    sidebarPath: require.resolve("./sidebars.js"),
-                    editUrl: `https://github.com/${organizationName}/${projectName}/tree/master/site/`
+                    sidebarPath: require.resolve('./sidebars.js'),
+                    editUrl: `https://github.com/${organizationName}/${projectName}/tree/master/site/`,
                 },
                 theme: {
-                    customCss: require.resolve("./src/css/custom.css")
-                }
-            })
-        ]
-    ],
-
-    plugins: [
-        [
-            "content-docs",
-            // /** @type {import("@docusaurus/plugin-content-docs").Options} */
-            ({
-                id: "community",
-                path: "community",
-                routeBasePath: "community",
-                editUrl: `https://github.com/${organizationName}/${projectName}/tree/master/site/`,
-                sidebarPath: require.resolve("./sidebars.js")
-            })
-        ]
+                    customCss: require.resolve('./src/css/custom.css'),
+                },
+            }),
+        ],
     ],
 
     themeConfig:
-    /** @type {import("@docusaurus/preset-classic").ThemeConfig} */
+        /** @type {import("@docusaurus/preset-classic").ThemeConfig} */
         ({
             navbar: {
-                title: "OpenDT",
+                title: 'OpenDT',
                 logo: {
-                    alt: "OpenDT logo",
-                    src: "/img/logo.svg"
+                    alt: 'OpenDT logo',
+                    src: '/img/logo.svg',
                 },
                 items: [
                     {
-                        type: "doc",
-                        docId: "intro",
-                        position: "left",
-                        label: "Learn"
+                        type: 'doc',
+                        docId: 'intro',
+                        position: 'left',
+                        label: 'Docs',
                     },
-                    {
-                        to: "/community/support",
-                        label: "Community",
-                        position: "left",
-                        activeBaseRegex: `/community/`
-                    },
-                    // {
-                    //     href: "https://app.opendc.org",
-                    //     html: "Log In",
-                    //     position: "right",
-                    //     className: "header-app-link button button--outline button--primary",
-                    //     "aria-label": "OpenDC web application",
-                    // },
                     {
                         href: `https://github.com/${organizationName}/${projectName}`,
-                        position: "right",
-                        className: "header-github-link",
-                        "aria-label": "GitHub repository",
+                        position: 'right',
+                        className: 'header-github-link',
+                        'aria-label': 'GitHub repository',
                     },
-                ]
+                ],
             },
             footer: {
-                style: "dark",
+                style: 'dark',
                 links: [
                     {
-                        title: "Learn",
+                        title: 'Docs',
                         items: [
                             {
-                                label: "Getting Started",
-                                to: "/docs/category/getting-started"
+                                label: 'Getting Started',
+                                to: '/docs/category/getting-started',
                             },
                             {
-                                label: "Tutorials",
-                                to: "/docs/category/tutorials"
-                            }
-                        ]
+                                label: 'Concepts',
+                                to: '/docs/category/concepts',
+                            },
+                            {
+                                label: 'Configuration',
+                                to: '/docs/category/configuration',
+                            },
+                            {
+                                label: 'Services',
+                                to: '/docs/category/services',
+                            },
+                        ],
                     },
                     {
-                        title: "Community",
+                        title: 'More',
                         items: [
                             {
-                                label: "Support",
-                                to: "/community/support"
+                                label: 'GitHub',
+                                href: `https://github.com/${organizationName}/${projectName}`,
                             },
                             {
-                                label: "Team",
-                                to: "/community/team"
+                                label: 'OpenDC',
+                                href: 'https://opendc.org',
                             },
-                            // {
-                            //     label: "GitHub Discussions",
-                            //     href: `https://github.com/${organizationName}/${projectName}/discussions`
-                            // }
-                        ]
+                        ],
                     },
-                    {
-                        title: "More",
-                        items: [
-                            {
-                                label: "GitHub",
-                                href: `https://github.com/${organizationName}/${projectName}`
-                            }
-                        ]
-                    }
                 ],
-                copyright: `Copyright © ${new Date().getFullYear()} AtLarge Research. Built with Docusaurus.`
+                copyright: `Copyright © ${new Date().getFullYear()} AtLarge Research. Built with Docusaurus.`,
             },
             prism: {
                 theme: lightCodeTheme,
-                darkTheme: darkCodeTheme
-            }
-        })
-};
+                darkTheme: darkCodeTheme,
+                additionalLanguages: ['bash', 'json', 'yaml'],
+            },
+        }),
+}
 
-module.exports = config;
+module.exports = config

@@ -1,193 +1,96 @@
-# OpenDT - Open Digital Twin for Datacenters
+<a href="atlarge-research.github.io/opendt/">
+    <img src="logo/logo-128.png" alt="OpenDT logo" title="OpenDT" align="right" height="100" />
+</a>
 
-**OpenDT** is a distributed system for real-time datacenter simulation and What-If analysis. It operates in "Shadow Mode" by replaying historical workload data through the OpenDC simulator to compare predicted vs. actual power consumption.
+# OpenDT
+
+**Open Digital Twin for Datacenters**
+
+OpenDT is a distributed system that creates a real-time digital twin of datacenter infrastructure. It replays historical workload data through the [OpenDC](https://opendc.org/) simulator to predict power consumption, enabling What-If analysis without touching live hardware.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
 
+---
+
 ## Quick Start
 
-### Prerequisites
+**Prerequisites:** Docker, Docker Compose, Make, Python 3.11+, [uv](https://astral.sh/uv)
 
-- **Docker & Docker Compose** - Container orchestration
-- **Make** - Convenience commands
-- **Python 3.11+** - For local development
-- **uv** - Python package manager ([install](https://astral.sh/uv/install))
-
-### Setup
-
-```bash
-# 1. Clone repository
-git clone https://github.com/your-org/opendt.git
-cd opendt
-
-# 2. Setup environment
-make setup
-
-# 3. Start services
-make up
-
-# 4. Access services
-open http://localhost:8000  # Dashboard
+```
+make setup    # Install dependencies
+make up       # Start services
 ```
 
-That's it! The system is now running with the SURF workload dataset.
+**Access:**
+- **Dashboard:** http://localhost:3000 (Grafana)
+- **API:** http://localhost:3001 (OpenAPI docs)
 
-### Running an Experiment
+![OpenDT Grafana Dashboard](site/src/components/HomepageFeatures/grafana-dashboard.png)
+*Real-time dashboard comparing actual vs. simulated power consumption*
 
-```bash
-# Run experiment with custom config
-make experiment name=baseline
+---
 
-# View results
-ls output/baseline/run_1/
-# - results.parquet    (power predictions)
-# - power_plot.png     (actual vs simulated)
-# - opendc/            (simulation archives)
+## Repository Structure
+
 ```
+opendt/
+├── config/                    # Configuration files
+│   ├── default.yaml           # Default configuration
+│   └── experiments/           # Experiment-specific configs
+├── data/                      # Run outputs (timestamped directories)
+├── docs/                      # Documentation
+├── libs/common/               # Shared library (Pydantic models, utilities)
+├── opendc/                    # OpenDC simulator binary
+├── reproducibility-capsule/   # Experiment reproduction scripts
+├── services/                  # Microservices
+│   ├── api/                   # REST API (FastAPI)
+│   ├── calibrator/            # Topology calibration service
+│   ├── dc-mock/               # Datacenter mock (data replay)
+│   ├── grafana/               # Dashboard configuration
+│   ├── kafka-init/            # Kafka topic initialization
+│   └── simulator/             # OpenDC simulation engine
+└── workload/                  # Workload datasets
+    └── SURF/                  # SURF datacenter workload
+```
+
+---
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `make up` | Start all services |
+| `make up config=path/to/config.yaml` | Start with custom configuration |
+| `make down` | Stop all services |
+| `make setup` | Install development dependencies |
+| `make test` | Run tests |
+| `make logs-<service>` | View logs for a service |
+| `make shell-<service>` | Open shell in a container |
+
+Run `make help` for the complete list.
+
+---
 
 ## Documentation
 
-### Getting Started
-
-- **[Architecture Overview](docs/ARCHITECTURE.md)** - System design, services, and data flow
-- **[Data Models](docs/DATA_MODELS.md)** - Pydantic models and data schemas
+| Document | Description |
+|----------|-------------|
+| [Getting Started](docs/GETTING_STARTED.md) | Installation, configuration, and running experiments |
+| [Concepts](docs/CONCEPTS.md) | Core concepts, data models, and system behavior |
+| [Configuration](docs/CONFIGURATION.md) | Configuration file reference |
 
 ### Service Documentation
 
-- **[dc-mock](services/dc-mock/README.md)** - Data producer (workload replay)
-- **[sim-worker](services/sim-worker/README.md)** - Simulation engine (OpenDC integration)
-- **[dashboard](services/dashboard/README.md)** - Web dashboard and REST API
-- **[kafka-init](services/kafka-init/README.md)** - Kafka infrastructure setup
-
-## Architecture
-
-```
-┌──────────────┐     ┌────────────────────────────────────┐
-│   dc-mock    │────>│            Kafka Bus               │
-│  (Producer)  │     │  ┌──────────────────────────────┐  │
-│              │     │  │ Topics:                      │  │
-│ Reads:       │     │  │  • dc.workload (tasks)       │  │
-│  - tasks     │     │  │  • dc.power (telemetry)      │  │
-│  - fragments │     │  │  • dc.topology (real)        │  │
-│  - power     │     │  │  • sim.topology (simulated)  │  │
-│  - topology  │     │  │  • sim.results (predictions) │  │
-└──────────────┘     │  └──────────────────────────────┘  │
-                     └───────┬────────────────────────────┘
-                             │
-                   ┌─────────┴─────────────┐
-                   │                       │
-          ┌────────▼──────┐     ┌──────────▼───────┐
-          │  sim-worker   │     │   dashboard      │
-          │  (Consumer)   │     │   (FastAPI)      │
-          │               │     │                  │
-          │ • Windows     │     │ • Web UI         │
-          │ • OpenDC      │     │ • REST API       │
-          │ • Caching     │◀────│ • Topology Mgmt  │
-          │ • Experiments │     │                  │
-          └───────┬───────┘     └─────────┬────────┘
-                  │                       │
-                  │              ┌────────▼────────┐
-                  │              │   PostgreSQL    │
-                  │              │   (TimescaleDB) │
-                  │              └─────────────────┘
-                  │
-          ┌───────▼───────┐
-          │ Experiment    │
-          │ Output:       │
-          │  • Parquet    │
-          │  • Plots      │
-          │  • Archives   │
-          └───────────────┘
-```
-
-See [Architecture Overview](docs/ARCHITECTURE.md) for detailed explanation.
-
-## Available Commands
-
-### Core Commands
-
-| Command | Description |
+| Service | Description |
 |---------|-------------|
-| `make up` | Start with clean slate (deletes volumes) |
-| `make up-debug` | Start in debug mode (local file output) |
-| `make down` | Stop all services |
-| `make logs` | View all logs |
-| `make ps` | Show running containers |
+| [dc-mock](services/dc-mock/README.md) | Replays historical workload and power data |
+| [simulator](services/simulator/README.md) | Runs OpenDC simulations |
+| [calibrator](services/calibrator/README.md) | Calibrates topology parameters |
+| [api](services/api/README.md) | REST API for data queries |
 
-### Experiment Commands
+### Research
 
-| Command | Description |
-|---------|-------------|
-| `make experiment name=X` | Run experiment X |
-| `make experiment-debug name=X` | Run experiment X with debug output |
-| `make experiment-down` | Stop experiment |
-
-### Development Commands
-
-| Command | Description |
-|---------|-------------|
-| `make setup` | Setup virtual environment |
-| `make test` | Run all tests |
-| `make shell-dashboard` | Open shell in dashboard container |
-| `make kafka-topics` | List Kafka topics |
-
-### Monitoring Commands
-
-| Command | Description |
-|---------|-------------|
-| `make logs-dc-mock` | View dc-mock logs |
-| `make logs-sim-worker` | View sim-worker logs |
-| `make logs-dashboard` | View dashboard logs |
-
-Run `make help` to see all available commands.
-
-## Configuration
-
-### Basic Configuration
-
-**File**: `config/default.yaml`
-
-```yaml
-workload: "SURF"  # Data directory name
-
-simulation:
-  speed_factor: 300           # 300x real-time
-  window_size_minutes: 5      # 5-minute windows
-  heartbeat_frequency_minutes: 1
-  experiment_mode: false
-
-kafka:
-  bootstrap_servers: "kafka:29092"
-```
-
-### Experiment Configuration
-
-**File**: `config/experiments/my_experiment.yaml`
-
-```yaml
-workload: "SURF"
-
-simulation:
-  speed_factor: 300
-  window_size_minutes: 15  # Longer windows for experiments
-  experiment_mode: true    # Enable experiment mode
-```
-
-## System Components
-
-### Services
-
-- **dc-mock**: Replays historical workload/power data to Kafka
-- **sim-worker**: Consumes streams, invokes OpenDC simulator
-- **dashboard**: Web dashboard with REST API for system control and visualization
-
-### Infrastructure
-
-- **Kafka**: Message broker (KRaft mode, no Zookeeper)
-- **PostgreSQL**: Database for persistent storage
-- **OpenDC**: Java-based datacenter simulator (bundled)
-
-### Shared Libraries
-
-- **opendt-common**: Pydantic models, configuration, Kafka utilities
+| Document | Description |
+|----------|-------------|
+| [Reproducibility Capsule](reproducibility-capsule/README.md) | Reproduce paper experiments |

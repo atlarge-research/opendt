@@ -26,9 +26,20 @@
 
 .intro > :global(.container) > :global(.row) {
     justify-content: center;
+    align-items: center;
 }
 
 .textCol {
     align-self: center;
-    max-width: 350px;
+}
+
+.imageCol {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.overviewImage {
+    max-width: 100%;
+    max-height: 280px;
 }
