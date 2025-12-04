@@ -29,7 +29,7 @@ Calibration automatically finds parameter values that minimize prediction error,
                   │  └───────────┬─────────────┘        │
                   │              │                      │
                   │              ▼                      │
-                  │     Select Lowest Error            │
+                  │      Select Lowest Error            │
                   └──────────────┬──────────────────────┘
                                  │
                                  ▼
