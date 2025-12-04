@@ -42,7 +42,6 @@ const config = {
     plugins: [
         [
             "content-docs",
-            // /** @type {import("@docusaurus/plugin-content-docs").Options} */
             ({
                 id: "community",
                 path: "community",
@@ -67,7 +66,7 @@ const config = {
                         type: "doc",
                         docId: "intro",
                         position: "left",
-                        label: "Learn"
+                        label: "Docs"
                     },
                     {
                         to: "/community/support",
@@ -75,13 +74,6 @@ const config = {
                         position: "left",
                         activeBaseRegex: `/community/`
                     },
-                    // {
-                    //     href: "https://app.opendc.org",
-                    //     html: "Log In",
-                    //     position: "right",
-                    //     className: "header-app-link button button--outline button--primary",
-                    //     "aria-label": "OpenDC web application",
-                    // },
                     {
                         href: `https://github.com/${organizationName}/${projectName}`,
                         position: "right",
@@ -94,15 +86,23 @@ const config = {
                 style: "dark",
                 links: [
                     {
-                        title: "Learn",
+                        title: "Docs",
                         items: [
                             {
                                 label: "Getting Started",
                                 to: "/docs/category/getting-started"
                             },
                             {
-                                label: "Tutorials",
-                                to: "/docs/category/tutorials"
+                                label: "Concepts",
+                                to: "/docs/category/concepts"
+                            },
+                            {
+                                label: "Configuration",
+                                to: "/docs/category/configuration"
+                            },
+                            {
+                                label: "Services",
+                                to: "/docs/category/services"
                             }
                         ]
                     },
@@ -117,10 +117,10 @@ const config = {
                                 label: "Team",
                                 to: "/community/team"
                             },
-                            // {
-                            //     label: "GitHub Discussions",
-                            //     href: `https://github.com/${organizationName}/${projectName}/discussions`
-                            // }
+                            {
+                                label: "Contributing",
+                                to: "/community/contributing"
+                            }
                         ]
                     },
                     {
@@ -129,6 +129,10 @@ const config = {
                             {
                                 label: "GitHub",
                                 href: `https://github.com/${organizationName}/${projectName}`
+                            },
+                            {
+                                label: "OpenDC",
+                                href: "https://opendc.org"
                             }
                         ]
                     }
@@ -137,7 +141,8 @@ const config = {
             },
             prism: {
                 theme: lightCodeTheme,
-                darkTheme: darkCodeTheme
+                darkTheme: darkCodeTheme,
+                additionalLanguages: ['bash', 'json', 'yaml']
             }
         })
 };

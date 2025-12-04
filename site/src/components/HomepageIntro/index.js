@@ -32,11 +32,11 @@ export default function HomepageInto() {
             <div className="container padding-vert--lg">
                 <div className="row">
                     <div className={clsx('col col--4', styles.textCol)}>
-                        <h3>The datacenter (DC) industry...</h3>
+                        <h3>Shadow Mode Simulation</h3>
                         <ul>
-                            <li>Is worth over $200 bn, and growing</li>
-                            <li>Has many hard-to-grasp concepts</li>
-                            <li>Needs to become accessible to many</li>
+                            <li>Connect to real or mocked datacenters</li>
+                            <li>Replay historical workloads</li>
+                            <li>Compare predicted vs actual power</li>
                         </ul>
                     </div>
                     <div className="col col--3 text--center">
@@ -45,9 +45,9 @@ export default function HomepageInto() {
                     <div className={clsx('col col--4', styles.textCol)}>
                         <h3>OpenDT provides...</h3>
                         <ul>
-                            <li>Datacenter digital twin monitoring as a service</li>
-                            <li>Human-in-the-loop feedback</li>
-                            <li>LLM-powered optimization</li>
+                            <li>Real-time power prediction</li>
+                            <li>Automatic calibration</li>
+                            <li>Carbon emission estimation</li>
                         </ul>
                     </div>
                 </div>

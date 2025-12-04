@@ -16,10 +16,10 @@ function HomepageHeader() {
             <div className="container">
                 <h1 className="hero__title">{siteConfig.title}</h1>
                 <p className="hero__subtitle">{siteConfig.tagline}</p>
-                <Logo role="img" width="100" height="100" alt="OpenDC logo" className={styles.logo} />
+                <Logo role="img" width="100" height="100" alt="OpenDT logo" className={styles.logo} />
                 <div className={styles.buttons}>
-                    <Link className="button button--secondary button--lg" to="/docs/intro">
-                        Getting Started with OpenDT - 10min ⏱️
+                    <Link className="button button--secondary button--lg" to="/docs">
+                        Get Started
                     </Link>
                 </div>
             </div>
@@ -31,8 +31,8 @@ export default function Home() {
     const { siteConfig } = useDocusaurusContext()
     return (
         <Layout
-            title={`${siteConfig.title} cloud datacenter digital twin`}
-            description="Digital Twin for Datacenters"
+            title={`${siteConfig.title} - Digital Twin for Datacenters`}
+            description="Shadow Mode Digital Twin for datacenter power prediction and what-if analysis"
         >
             <HomepageHeader />
             <main>

@@ -45,6 +45,29 @@ global:
 
 The calibrator only runs when this flag is set.
 
+Settings under `services.calibrator` in the config file:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| calibrated_property | string | - | Topology property path to calibrate (e.g., `cpuPowerModel.calibrationFactor`) |
+| min_value | float | - | Minimum value in the search space |
+| max_value | float | - | Maximum value in the search space |
+| linspace_points | int | 10 | Number of candidate values to evaluate |
+| max_parallel_workers | int | 4 | Maximum parallel calibration simulations |
+| mape_window_minutes | int | 60 | Time window for MAPE calculation |
+
+### calibrated_property
+
+Uses dot notation to specify nested properties in the topology JSON.
+
+### linspace_points
+
+Creates evenly-spaced values between `min_value` and `max_value`. Higher values improve accuracy but increase calibration time.
+
+### max_parallel_workers
+
+Controls parallelism during calibration. Set based on available CPU cores.
+
 ## Output
 
 Results are written to `data/<RUN_ID>/calibrator/`:

@@ -41,6 +41,7 @@ except ImportError:
 # --- Constants ---
 REPO_ROOT = Path(__file__).parent.parent
 DATA_DIR = REPO_ROOT / "data"
+WORKLOAD_DIR = REPO_ROOT / "workload"
 CAPSULE_DIR = Path(__file__).parent
 CAPSULE_DATA_DIR = CAPSULE_DIR / "data"
 OUTPUT_DIR = CAPSULE_DIR / "output"
@@ -310,32 +311,28 @@ def select_data_source(runs: list[dict], experiment: int) -> dict | None:
 def load_baseline_data(
     workload: str,
 ) -> tuple[pd.Series, pd.Series]:  # type: ignore[type-arg]
-    """Load FootPrinter and real_world data from reproducibility-capsule/data/<workload>/.
+    """Load FootPrinter and real world consumption data.
+
+    FootPrinter data is loaded from reproducibility-capsule/data/<workload>/.
+    Real world data is loaded from workload/<workload>/consumption.parquet.
 
     Returns:
         Tuple of (footprinter_series, real_world_series)
     """
-    data_dir = CAPSULE_DATA_DIR / workload
-
-    if not data_dir.exists():
-        console.print()
-        console.print(f"[red]Error: Baseline data not found for workload '{workload}'[/red]")
-        console.print(f"[dim]Expected directory: {data_dir}[/dim]")
-        console.print()
-        console.print("[yellow]Please ensure the following files exist:[/yellow]")
-        console.print(f"  - {data_dir / 'footprinter.parquet'}")
-        console.print(f"  - {data_dir / 'real_world.parquet'}")
-        sys.exit(1)
-
-    fp_path = data_dir / "footprinter.parquet"
-    rw_path = data_dir / "real_world.parquet"
+    fp_data_dir = CAPSULE_DATA_DIR / workload
+    fp_path = fp_data_dir / "footprinter.parquet"
+    rw_path = WORKLOAD_DIR / workload / "consumption.parquet"
 
     if not fp_path.exists():
+        console.print()
         console.print(f"[red]Error: FootPrinter data not found: {fp_path}[/red]")
+        console.print(f"[dim]Expected file: {fp_path}[/dim]")
         sys.exit(1)
 
     if not rw_path.exists():
-        console.print(f"[red]Error: Real world data not found: {rw_path}[/red]")
+        console.print()
+        console.print(f"[red]Error: Real world consumption data not found: {rw_path}[/red]")
+        console.print(f"[dim]Expected file: {rw_path}[/dim]")
         sys.exit(1)
 
     # Load FootPrinter data
@@ -350,7 +347,7 @@ def load_baseline_data(
 
     fp_series: pd.Series = fp_df.groupby("timestamp")[METRIC].sum()  # type: ignore[type-arg, assignment]
 
-    # Load real world data
+    # Load real world consumption data
     rw_df = pd.read_parquet(rw_path)
 
     # Handle timestamp conversion for real world

@@ -4,7 +4,7 @@ This document explains the core concepts, data models, and system behavior of Op
 
 ## Overview
 
-OpenDT operates in **Shadow Mode**: it connects to a datacenter (real or mocked) and replays historical workload data through the OpenDC simulator. The system continuously compares predicted power consumption against actual measurements.
+OpenDT in its current state operates in **Shadow Mode**: it connects to a datacenter (real or mocked) and replays historical workload data through the OpenDC simulator. The system continuously compares predicted power consumption against actual measurements.
 
 **Key capabilities:**
 - Power consumption prediction based on workload patterns
@@ -16,8 +16,8 @@ OpenDT operates in **Shadow Mode**: it connects to a datacenter (real or mocked)
 
 ```
 Workload Data → dc-mock → Kafka → simulator → OpenDC → Results
-     ↓                       ↓
-Power Data → dc-mock → Kafka → api → Grafana
+----
+Results → api → Grafana
 ```
 
 1. **dc-mock** reads historical workload and power data from Parquet files

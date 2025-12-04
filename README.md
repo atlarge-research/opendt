@@ -1,6 +1,6 @@
-<p align="right">
-  <img src="logo/logo-128.png" alt="OpenDT Logo" width="100">
-</p>
+<a href="atlarge-research.github.io/opendt/">
+    <img src="logo/logo-128.png" alt="OpenDT logo" title="OpenDT" align="right" height="100" />
+</a>
 
 # OpenDT
 

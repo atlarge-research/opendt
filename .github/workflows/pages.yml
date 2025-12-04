@@ -2,7 +2,7 @@ name: Deploy atlarge-research.github.io/opendt
 
 on:
   push:
-    branches: ["master", "refactor-services"]
+    branches: ["master", "add-documentation"]
   workflow_dispatch:
 
 concurrency:

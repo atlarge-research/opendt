@@ -56,6 +56,14 @@ With the SURF workload (~7 days of data) and `speed_factor: 300`, the simulation
 
 When `true`, the calibrator service starts and actively tunes topology parameters during the simulation run. Requires the `calibration` Docker Compose profile.
 
+## Service Settings
+
+The `services:` section contains configuration for individual services. See each service's README for detailed configuration options:
+
+- [dc-mock](../services/dc-mock/README.md#configuration) — Workload replay settings
+- [simulator](../services/simulator/README.md#configuration) — Simulation frequency
+- [calibrator](../services/calibrator/README.md#configuration) — Calibration search space and parallelism
+
 ## Experiment Configurations
 
 Pre-configured experiments are in `config/experiments/`:
