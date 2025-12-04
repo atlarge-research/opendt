@@ -141,6 +141,8 @@ services:
       # Mount source code for hot reload
       - ./services/simulator:/app/services/simulator
       - ./libs/common:/app/libs/common
+      # Mount OpenDC binaries
+      - ./opendc:/app/opendc:ro
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config.yaml:ro
       # Mount data directory for run outputs
@@ -220,6 +222,28 @@ services:
       - opendt-network
     command: uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
 
+
+
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    environment:
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - opendt-network
+
+
+  
+
+
 # ==============================================================================
 # NETWORKS
 # ==============================================================================
@@ -237,3 +261,5 @@ volumes:
     name: opendt-postgres-data
   kafka_data:
     name: opendt-kafka-data
+  grafana-storage:
+    name: opendt-grafana-storage
