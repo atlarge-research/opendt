@@ -24,31 +24,32 @@ import clsx from 'clsx'
 import React from 'react'
 
 import styles from './styles.module.css'
-import DatacenterImage from '@site/static/img/datacenter-drawing.png'
+import OverviewImage from '@site/static/img/high-level-overview-dt-pt.png'
 
 export default function HomepageInto() {
     return (
         <section id="intro" className={styles.intro}>
             <div className="container padding-vert--lg">
                 <div className="row">
-                    <div className={clsx('col col--4', styles.textCol)}>
-                        <h3>Shadow Mode Simulation</h3>
+                    <div className={clsx('col col--5', styles.textCol)}>
+                        <h3>Shadow Mode Digital Twin</h3>
+                        <p>
+                            OpenDT bridges physical and digital infrastructure through continuous monitoring and
+                            simulation. A human-in-the-loop approach enables SLO-oriented steering of datacenter
+                            operations.
+                        </p>
                         <ul>
                             <li>Connect to real or mocked datacenters</li>
-                            <li>Replay historical workloads</li>
-                            <li>Compare predicted vs actual power</li>
+                            <li>Replay historical workloads at configurable speed</li>
+                            <li>Compare predicted vs actual power in real-time</li>
                         </ul>
                     </div>
-                    <div className="col col--3 text--center">
-                        <img src={DatacenterImage} alt="Schematic top-down view of a datacenter" />
-                    </div>
-                    <div className={clsx('col col--4', styles.textCol)}>
-                        <h3>OpenDT provides...</h3>
-                        <ul>
-                            <li>Real-time power prediction</li>
-                            <li>Automatic calibration</li>
-                            <li>Carbon emission estimation</li>
-                        </ul>
+                    <div className={clsx('col col--5', styles.imageCol)}>
+                        <img
+                            src={OverviewImage}
+                            alt="High-level overview: Physical ICT Infrastructure connected to Digital ICT Infrastructure through monitoring, datagen, and SLO-oriented steering with human in the loop"
+                            className={styles.overviewImage}
+                        />
                     </div>
                 </div>
             </div>

@@ -26,6 +26,9 @@ make up       # Start services
 - **Dashboard:** http://localhost:3000 (Grafana)
 - **API:** http://localhost:3001 (OpenAPI docs)
 
+![OpenDT Grafana Dashboard](site/src/components/HomepageFeatures/grafana-dashboard.png)
+*Real-time dashboard comparing actual vs. simulated power consumption*
+
 ---
 
 ## Repository Structure

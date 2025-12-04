@@ -14,26 +14,24 @@ OpenDT is a **Shadow Mode** Digital Twin for datacenters. It connects to a real 
 - **Active Calibration**: Automatically tune simulation parameters to minimize prediction error
 - **Carbon Estimation**: Calculate carbon emissions from power draw and grid intensity
 
-## How It Works
+## Architecture Overview
 
-```
-┌─────────────┐      ┌─────────┐      ┌────────────┐      ┌─────────┐
-│  Workload   │──────│ dc-mock │──────│   Kafka    │──────│simulator│
-│   Data      │      │         │      │            │      │         │
-└─────────────┘      └─────────┘      └────────────┘      └────┬────┘
-                          │                                    │
-                          │                                    ▼
-┌─────────────┐           │           ┌────────────┐      ┌─────────┐
-│   Power     │───────────┘           │   api      │◄─────│ Results │
-│   Data      │                       │            │      │         │
-└─────────────┘                       └─────┬──────┘      └─────────┘
-                                            │
-                                            ▼
-                                      ┌───────────┐
-                                      │  Grafana  │
-                                      │ Dashboard │
-                                      └───────────┘
-```
+OpenDT bridges physical and digital infrastructure through a modular design:
+
+![OpenDT High-Level Architecture](/img/design_opendt_hl.png)
+
+| Component | Purpose | OpenDT Implementation |
+|-----------|---------|----------------------|
+| Physical Infrastructure (P) | Data source | dc-mock service |
+| Front-end (B) | User interfaces | Grafana + REST API |
+| Orchestration (C) | Message routing | Kafka |
+| Data Platform (D, E) | Telemetry & storage | Parquet files |
+| Simulator (F-I) | Power prediction | OpenDC + calibrator |
+| Virtual Infrastructure (V) | Digital twin state | Topology configuration |
+
+See the [Architecture](/docs/concepts/architecture) page for detailed component mapping.
+
+## Data Flow
 
 1. **dc-mock** reads historical workload and power data from Parquet files
 2. Messages are published to **Kafka** topics with configurable speed factor

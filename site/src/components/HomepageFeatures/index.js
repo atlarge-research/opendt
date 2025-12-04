@@ -4,57 +4,34 @@ import styles from './styles.module.css'
 
 const FeatureList = [
     {
-        title: 'Power Prediction',
-        Svg: () => (
-            <img
-                src={require('./screenshot-opendt.png').default}
-                alt="Real-time power prediction dashboard"
-            />
-        ),
+        title: 'Real-Time Dashboard',
+        image: require('./grafana-dashboard.png').default,
+        alt: 'Grafana dashboard showing power consumption',
         description: (
             <>
-                Compare simulated power consumption against actual measurements in real-time 
-                using the Grafana dashboard.
+                Monitor simulated vs actual power consumption in real-time through the Grafana dashboard. Track carbon
+                emissions and identify prediction accuracy.
             </>
         ),
     },
     {
-        title: 'Active Calibration',
-        Svg: () => (
-            <img
-                src={require('./screenshot-results.png').default}
-                alt="Calibration results"
-            />
-        ),
+        title: 'REST API',
+        image: require('./api-page.png').default,
+        alt: 'OpenAPI documentation page',
         description: (
             <>
-                Automatically tune simulation parameters to minimize prediction error 
-                through grid search optimization.
-            </>
-        ),
-    },
-    {
-        title: 'What-If Analysis',
-        Svg: () => (
-            <img
-                src={require('./screenshot-explore.png').default}
-                alt="Explore infrastructure changes"
-            />
-        ),
-        description: (
-            <>
-                Test infrastructure changes without touching live hardware. 
-                Modify topology and observe predicted impact.
+                Query simulation data and control topology through a documented REST API. Integrate OpenDT with your
+                existing infrastructure and automation workflows.
             </>
         ),
     },
 ]
 
-function Feature({ Svg, title, description }) {
+function Feature({ image, alt, title, description }) {
     return (
-        <div className={clsx('col col--4')}>
-            <div className="text--center">
-                <Svg className={styles.featureSvg} role="img" />
+        <div className={clsx('col col--6')}>
+            <div className={styles.featureImageWrapper}>
+                <img src={image} alt={alt} className={styles.featureImage} />
             </div>
             <div className="text--center padding-horiz--md">
                 <h3>{title}</h3>
@@ -68,7 +45,7 @@ export default function HomepageFeatures() {
     return (
         <section className={styles.features}>
             <div className="container">
-                <div className="row">
+                <div className={clsx('row', styles.featureRow)}>
                     {FeatureList.map((props, idx) => (
                         <Feature key={idx} {...props} />
                     ))}

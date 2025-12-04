@@ -42,6 +42,7 @@ class SimulationService:
         speed_factor: float,
         run_output_dir: str,
         run_id: str,
+        background_load_nodes: int = 0,
         consumer_group: str = "simulators",
     ):
         """Initialize the simulation service.
@@ -55,6 +56,7 @@ class SimulationService:
             speed_factor: Configured simulation speed multiplier
             run_output_dir: Base directory for run outputs
             run_id: Unique run ID for this session
+            background_load_nodes: Number of nodes reserved for background load
             consumer_group: Kafka consumer group ID
         """
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
@@ -65,6 +67,7 @@ class SimulationService:
         self.simulation_frequency = timedelta(minutes=simulation_frequency_minutes)
         self.speed_factor = speed_factor
         self.run_id = run_id
+        self.background_load_nodes = background_load_nodes
 
         # Setup output directories - simulator writes to run_dir/simulator/
         self.output_base_dir = Path(run_output_dir) / run_id / "simulator"
@@ -121,6 +124,50 @@ class SimulationService:
         logger.info(
             f"Simulation frequency: {simulation_frequency_minutes} minutes (simulated time)"
         )
+        logger.info(f"Background load nodes: {background_load_nodes}")
+
+    def _reduce_topology_for_background_load(self, topology: Topology) -> Topology:
+        """Create a topology with reduced host count to simulate background load.
+
+        Subtracts background_load_nodes from the first host type in the first cluster.
+        This simulates nodes being occupied by background workload and unavailable
+        for the simulation.
+
+        Args:
+            topology: Original topology
+
+        Returns:
+            New topology with reduced host count in first cluster
+        """
+        if self.background_load_nodes == 0:
+            return topology
+
+        # Deep copy to avoid modifying the original
+        reduced = copy.deepcopy(topology)
+
+        if not reduced.clusters or not reduced.clusters[0].hosts:
+            logger.warning("Topology has no clusters or hosts, cannot reduce")
+            return topology
+
+        first_host = reduced.clusters[0].hosts[0]
+        original_count = first_host.count
+
+        if self.background_load_nodes >= original_count:
+            logger.warning(
+                f"background_load_nodes ({self.background_load_nodes}) >= "
+                f"available hosts ({original_count}) in first cluster, "
+                f"setting to {original_count - 1}"
+            )
+            first_host.count = max(1, original_count - self.background_load_nodes)
+        else:
+            first_host.count = original_count - self.background_load_nodes
+
+        logger.info(
+            f"Reduced topology: {original_count} -> {first_host.count} hosts "
+            f"in cluster '{reduced.clusters[0].name}' ({self.background_load_nodes} for background load)"
+        )
+
+        return reduced
 
     def _run_simulation(self) -> None:
         """Run OpenDC simulation with accumulated tasks.
@@ -235,8 +282,8 @@ class SimulationService:
         # Increment run number
         self.run_number += 1
 
-        # Check if we can reuse cached results
-        topology_to_use = self.simulated_topology
+        # Apply background load reduction to topology
+        topology_to_use = self._reduce_topology_for_background_load(self.simulated_topology)
 
         # Create directories
         run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
@@ -462,6 +509,7 @@ def main():
 
     # Get simulator configuration
     simulation_frequency_minutes = config.services.simulator.simulation_frequency_minutes
+    background_load_nodes = config.services.simulator.background_load_nodes
     speed_factor = config.global_config.speed_factor
     run_output_dir = Path(os.getenv("DATA_DIR", "/app/data"))
 
@@ -470,6 +518,7 @@ def main():
     logger.info(f"Topology topic: {topology_topic}")
     logger.info(f"Simulated topology topic: {sim_topology_topic}")
     logger.info(f"Simulation frequency: {simulation_frequency_minutes} minutes")
+    logger.info(f"Background load nodes: {background_load_nodes}")
     logger.info(f"Speed factor: {speed_factor}x")
     logger.info(f"Data directory: {run_output_dir}")
 
@@ -500,6 +549,7 @@ def main():
                 speed_factor=speed_factor,
                 run_output_dir=str(run_output_dir),
                 run_id=run_id,
+                background_load_nodes=background_load_nodes,
                 consumer_group=consumer_group,
             )
             service.run()

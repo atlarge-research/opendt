@@ -11,6 +11,7 @@ services:
   
   simulator:
     simulation_frequency_minutes: 60
+    background_load_nodes: 0
 
 kafka:
   topics:

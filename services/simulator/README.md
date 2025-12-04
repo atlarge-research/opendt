@@ -79,10 +79,17 @@ Settings under `services.simulator` in the config file:
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | simulation_frequency_minutes | int | 5 | Window size for task aggregation |
+| background_load_nodes | int | (required) | Number of nodes reserved for background load |
 
 ### simulation_frequency_minutes
 
 Determines the time window size for batching tasks. Larger windows mean fewer OpenDC invocations but less granular results.
+
+### background_load_nodes
+
+Simulates a certain number of nodes being used for background load. These nodes are subtracted from the first host type in the first cluster of the topology and are not available for assigning workload in the simulation.
+
+This is useful when the real datacenter has nodes running workloads that are not part of the simulated task trace (e.g., system services, other tenants). Set to `0` to use the full topology.
 
 ## Logs
 
