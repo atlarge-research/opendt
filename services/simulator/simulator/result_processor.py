@@ -127,6 +127,7 @@ class SimulationResultProcessor:
                 "power_draw",
                 "energy_usage",
                 "carbon_intensity",
+                "carbon_emission",
                 "cached",
             ]
 

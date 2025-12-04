@@ -1,4 +1,4 @@
-"""OpenDT Dashboard - Main FastAPI Application."""
+"""OpenDT API - FastAPI Application for datacenter simulation data."""
 
 import logging
 import os
@@ -7,44 +7,27 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Body, FastAPI, HTTPException, Query, Request
+from dashboard.carbon_query import CarbonDataQuery, CarbonDataResponse
+from dashboard.power_query import PowerDataQuery, PowerDataResponse
+from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from odt_common import load_config_from_env
-from odt_common.models.topology import (
-    AsymptoticCPUPowerModel,
-    CPU,
-    Cluster,
-    Host,
-    Memory,
-    Topology,
-)
+from odt_common.models.topology import CPU, AsymptoticCPUPowerModel, Cluster, Host, Memory, Topology
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
-
-from dashboard.power_query import PowerDataQuery, PowerDataResponse
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Setup paths for static files and templates
-BASE_DIR = Path(__file__).resolve().parent.parent
-STATIC_DIR = BASE_DIR / "static"
-TEMPLATES_DIR = BASE_DIR / "templates"
-
-# Initialize templates
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
     # Startup
-    logger.info("Starting OpenDT Dashboard service...")
+    logger.info("Starting OpenDT API service...")
 
     # Load configuration
     try:
@@ -65,7 +48,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    logger.info("Shutting down OpenDT Dashboard service...")
+    logger.info("Shutting down OpenDT API service...")
     if app.state.kafka_producer:
         app.state.kafka_producer.close()
         logger.info("Kafka producer closed")
@@ -73,8 +56,8 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI application
 app = FastAPI(
-    title="OpenDT Dashboard",
-    description="Open Digital Twin - Web Dashboard and API for datacenter simulation",
+    title="OpenDT API",
+    description="Open Digital Twin - REST API for datacenter simulation",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -84,25 +67,22 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000"],  # Dashboard URL
+    allow_origins=["*"],  # Allow all origins for API access
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount static files
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
 
 # ============================================================================
-# DASHBOARD
+# ROOT REDIRECT
 # ============================================================================
 
 
-@app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    """Serve the OpenDT dashboard UI."""
-    return templates.TemplateResponse("index.html", {"request": request})
+@app.get("/", include_in_schema=False)
+async def root():
+    """Redirect root to API documentation."""
+    return RedirectResponse(url="/docs")
 
 
 # ============================================================================
@@ -242,9 +222,7 @@ async def get_power_data(
     interval_seconds: int = Query(
         60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
     ),
-    start_time: datetime | None = Query(
-        None, description="Optional start time (ISO 8601 format)"
-    ),
+    start_time: datetime | None = Query(None, description="Optional start time (ISO 8601 format)"),
 ):
     """Query aligned power usage data from simulation and actual consumption.
 
@@ -267,9 +245,7 @@ async def get_power_data(
     # Get run ID from environment
     run_id = os.getenv("RUN_ID")
     if not run_id:
-        raise HTTPException(
-            status_code=500, detail="RUN_ID environment variable not set"
-        )
+        raise HTTPException(status_code=500, detail="RUN_ID environment variable not set")
 
     # Get workload context from config
     if not app.state.config:
@@ -278,9 +254,10 @@ async def get_power_data(
     try:
         # Get workload directory (mounted directly to specific workload)
         workload_dir = Path(os.getenv("WORKLOAD_DIR", "/app/workload"))
-        
+
         # Create workload context directly with mounted workload directory
         from odt_common.config import WorkloadContext
+
         workload_context = WorkloadContext(workload_dir=workload_dir)
 
         # Initialize query
@@ -289,21 +266,75 @@ async def get_power_data(
         # Execute query
         result = query.query(interval_seconds=interval_seconds, start_time=start_time)
 
-        logger.info(
-            f"Power data query successful: {result.metadata['count']} data points"
-        )
+        logger.info(f"Power data query successful: {result.metadata['count']} data points")
 
         return result
 
     except FileNotFoundError as e:
         logger.error(f"Data file not found: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ValueError as e:
         logger.error(f"Invalid data: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error querying power data: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
+
+
+# ============================================================================
+# CARBON EMISSION DATA QUERY
+# ============================================================================
+
+
+@app.get("/api/carbon_emission", response_model=CarbonDataResponse)
+async def get_carbon_emission_data(
+    interval_seconds: int = Query(
+        60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
+    ),
+    start_time: datetime | None = Query(None, description="Optional start time (ISO 8601 format)"),
+):
+    """Query carbon emission data from simulation results.
+
+    This endpoint reads from `agg_results.parquet` and calculates carbon emission
+    based on power draw and carbon intensity.
+
+    Carbon emission formula: power_draw (W) * carbon_intensity (gCO2/kWh) / 1000 = gCO2/h
+
+    Args:
+        interval_seconds: Sampling interval in seconds (default: 60)
+        start_time: Optional start time filter (ISO 8601 format)
+
+    Returns:
+        CarbonDataResponse with carbon emission timeseries data
+
+    Raises:
+        HTTPException: If data files are not found or cannot be processed
+    """
+    # Get run ID from environment
+    run_id = os.getenv("RUN_ID")
+    if not run_id:
+        raise HTTPException(status_code=500, detail="RUN_ID environment variable not set")
+
+    try:
+        # Initialize query
+        query = CarbonDataQuery(run_id=run_id)
+
+        # Execute query
+        result = query.query(interval_seconds=interval_seconds, start_time=start_time)
+
+        logger.info(f"Carbon emission query successful: {result.metadata['count']} data points")
+
+        return result
+
+    except FileNotFoundError as e:
+        logger.error(f"Data file not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except ValueError as e:
+        logger.error(f"Invalid data: {e}")
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        logger.error(f"Error querying carbon emission data: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
 
 
 if __name__ == "__main__":

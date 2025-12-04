@@ -5,13 +5,13 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-
 from odt_common.models.topology import (
     CPU,
+    AsymptoticCPUPowerModel,
     Cluster,
-    CPUPowerModel,
     Host,
     Memory,
+    MseCPUPowerModel,
     Topology,
     TopologySnapshot,
 )
@@ -68,7 +68,7 @@ def test_memory_model():
 
 def test_cpu_power_model():
     """Test CPUPowerModel validation."""
-    power_model = CPUPowerModel(
+    power_model = AsymptoticCPUPowerModel(
         modelType="asymptotic",
         power=400.0,
         idlePower=32.0,
@@ -91,7 +91,7 @@ def test_host_model():
         count=277,
         cpu=CPU(coreCount=16, coreSpeed=2100.0),
         memory=Memory(memorySize=128000000),
-        cpuPowerModel=CPUPowerModel(
+        cpuPowerModel=AsymptoticCPUPowerModel(
             modelType="asymptotic",
             power=400.0,
             idlePower=32.0,
@@ -116,7 +116,7 @@ def test_cluster_model():
                 count=277,
                 cpu=CPU(coreCount=16, coreSpeed=2100.0),
                 memory=Memory(memorySize=128000000),
-                cpuPowerModel=CPUPowerModel(
+                cpuPowerModel=AsymptoticCPUPowerModel(
                     modelType="asymptotic",
                     power=400.0,
                     idlePower=32.0,
@@ -182,7 +182,7 @@ def test_topology_model_dump(sample_topology_data):
 
 def test_topology_from_surf_file():
     """Test loading actual SURF topology file if it exists."""
-    surf_topology_path = Path(__file__).parent.parent.parent.parent / "data/SURF/topology.json"
+    surf_topology_path = Path(__file__).parent.parent.parent.parent / "workload/SURF/topology.json"
 
     if not surf_topology_path.exists():
         pytest.skip("SURF topology file not found")
@@ -243,11 +243,12 @@ def test_topology_snapshot_with_microseconds():
                         count=1,
                         cpu=CPU(coreCount=8, coreSpeed=2000),
                         memory=Memory(memorySize=64000000),
-                        cpuPowerModel=CPUPowerModel(
-                            modelType="linear",
+                        cpuPowerModel=MseCPUPowerModel(
+                            modelType="mse",
                             power=200,
                             idlePower=20,
                             maxPower=100,
+                            calibrationFactor=0.5,
                         ),
                     )
                 ],

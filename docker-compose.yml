@@ -5,26 +5,6 @@ services:
   # INFRASTRUCTURE SERVICES
   # ============================================================================
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-opendt}-postgres
-    environment:
-      POSTGRES_DB: opendt
-      POSTGRES_USER: opendt
-      POSTGRES_PASSWORD: opendt_dev_password
-      PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U opendt"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - opendt-network
-
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: ${COMPOSE_PROJECT_NAME:-opendt}-kafka
@@ -194,7 +174,6 @@ services:
       dockerfile: services/dashboard/Dockerfile
     container_name: ${COMPOSE_PROJECT_NAME:-opendt}-dashboard
     environment:
-      DATABASE_URL: postgresql://opendt:opendt_dev_password@postgres:5432/opendt
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CONFIG_FILE: /app/config/simulation.yaml
       PYTHONUNBUFFERED: 1
@@ -202,7 +181,7 @@ services:
       DATA_DIR: /app/data
       WORKLOAD_DIR: /app/workload
     ports:
-      - "8000:8000"
+      - "3001:8000"
     volumes:
       # Mount source code for hot reload
       - ./services/dashboard:/app/services/dashboard
@@ -214,16 +193,11 @@ services:
       # Mount specific workload directory
       - ${WORKLOAD_PATH:-./workload/SURF}:/app/workload:ro
     depends_on:
-      postgres:
-        condition: service_healthy
       kafka:
         condition: service_healthy
     networks:
       - opendt-network
     command: uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
-
-
-
 
   grafana:
     image: grafana/grafana:latest
@@ -231,18 +205,19 @@ services:
     restart: always
     environment:
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      # Disable authentication - anonymous access with Admin role
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      # Set OpenDT dashboard as home page
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/power_dashboard.json
     ports:
       - "3000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./services/grafana/provisioning:/etc/grafana/provisioning
     networks:
       - opendt-network
-
-
-  
-
 
 # ==============================================================================
 # NETWORKS
@@ -257,8 +232,6 @@ networks:
 # ==============================================================================
 
 volumes:
-  postgres_data:
-    name: opendt-postgres-data
   kafka_data:
     name: opendt-kafka-data
   grafana-storage:
