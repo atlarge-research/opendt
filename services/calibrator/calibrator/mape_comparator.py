@@ -95,7 +95,7 @@ class MapeComparator:
 
         # Start from the END and go back mape_window_minutes
         ideal_window_start = window_end - self.mape_window
-        
+
         # But ensure we have data available (don't go before earliest data)
         earliest_available = max(earliest_sim, earliest_actual)
         window_start = max(ideal_window_start, earliest_available)
@@ -129,7 +129,7 @@ class MapeComparator:
             sim_windowed_end = pd.to_datetime(sim_windowed["timestamp"].max())
             actual_windowed_start = pd.to_datetime(actual_windowed["timestamp"].min())
             actual_windowed_end = pd.to_datetime(actual_windowed["timestamp"].max())
-            
+
             logger.info(
                 f"Data After Windowing:\n"
                 f"  Simulated: {len(sim_windowed)} points from {sim_windowed_start.isoformat()} "

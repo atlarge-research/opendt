@@ -249,7 +249,9 @@ class OpenDCRunner:
                     tasks[-1].submission_time.replace(microsecond=0).isoformat() if tasks else None
                 ),
                 "task_count": len(tasks),
-                "wall_clock_time": datetime.now(UTC).replace(microsecond=0, tzinfo=None).isoformat(),
+                "wall_clock_time": datetime.now(UTC)
+                .replace(microsecond=0, tzinfo=None)
+                .isoformat(),
                 "cached": False,
             }
             with open(metadata_file, "w") as f:

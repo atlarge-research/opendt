@@ -1,4 +1,4 @@
-.PHONY: up down clean-volumes help test setup clean-env
+.PHONY: up down clean-volumes help test setup clean-env lint
 
 # Default target
 .DEFAULT_GOAL := help
@@ -116,6 +116,22 @@ test:
 	@$(PYTEST) libs/common/tests/ -v --tb=short
 	@echo ""
 	@echo "All tests passed."
+	@echo ""
+
+# Lint fix flag - set to 'true' to auto-fix issues
+# Usage: make lint fix=true
+fix ?= false
+
+## lint: Run Ruff linter (use fix=true to auto-fix)
+lint:
+	@echo ""
+	@echo "Running Ruff linter..."
+	@if [ "$(fix)" = "true" ]; then \
+		uv run ruff check . --fix; \
+		uv run ruff format .; \
+	else \
+		uv run ruff check .; \
+	fi
 	@echo ""
 
 ## clean-env: Remove virtual environment

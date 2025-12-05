@@ -7,15 +7,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
-from api.carbon_query import CarbonDataQuery, CarbonDataResponse
-from api.power_query import PowerDataQuery, PowerDataResponse
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from odt_common import load_config_from_env
-from odt_common.models.topology import CPU, AsymptoticCPUPowerModel, Cluster, Host, Memory, Topology
+from odt_common.models.topology import (
+    CPU,
+    Cluster,
+    Host,
+    Memory,
+    MseCPUPowerModel,
+    PowerSource,
+    Topology,
+)
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
+
+from api.carbon_query import CarbonDataQuery, CarbonDataResponse
+from api.power_query import PowerDataQuery, PowerDataResponse
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -112,23 +121,23 @@ async def health_check():
 DEFAULT_TOPOLOGY = Topology(
     clusters=[
         Cluster(
-            name="A01",
+            name="C01",
             hosts=[
                 Host(
-                    name="A01",
+                    name="H01",
                     count=277,
                     cpu=CPU(coreCount=16, coreSpeed=2100.0),
-                    memory=Memory(memorySize=128000000),  # ~128 MB
-                    cpuPowerModel=AsymptoticCPUPowerModel(
-                        modelType="asymptotic",
-                        power=400.0,
-                        idlePower=32.0,
-                        maxPower=180.0,
-                        asymUtil=0.3,
-                        dvfs=False,
+                    memory=Memory(memorySize=128000000),
+                    cpuPowerModel=MseCPUPowerModel(
+                        modelType="mse",
+                        power=300.0,
+                        idlePower=25.0,
+                        maxPower=174.0,
+                        calibrationFactor=10.0,
                     ),
                 )
             ],
+            powerSource=PowerSource(carbonTracePath="/app/workload/carbon.parquet"),
         )
     ]
 )

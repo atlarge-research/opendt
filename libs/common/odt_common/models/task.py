@@ -51,10 +51,10 @@ class Task(BaseModel):
     @classmethod
     def parse_submission_time(cls, v: datetime | int | float | str) -> datetime:
         """Parse submission time from epoch milliseconds to datetime (UTC-aware).
-        
+
         Args:
             v: Timestamp as milliseconds (int/float), datetime object, or ISO string
-            
+
         Returns:
             UTC-aware datetime object
         """
@@ -63,7 +63,7 @@ class Task(BaseModel):
             return datetime.fromtimestamp(v / 1000.0, tz=UTC)
         elif isinstance(v, str):
             # Parse ISO format string
-            dt = datetime.fromisoformat(v.replace('Z', '+00:00'))
+            dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
             # Ensure UTC if not already timezone-aware
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=UTC)

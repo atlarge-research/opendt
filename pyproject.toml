@@ -73,6 +73,8 @@ select = [
     "UP",  # pyupgrade
 ]
 ignore = [
+    "E501",  # Line too long (handled by formatter)
+    "C901",  # Function too complex
     "B008",  # Allow function calls in argument defaults (FastAPI pattern for Query, Body, etc.)
 ]
 
