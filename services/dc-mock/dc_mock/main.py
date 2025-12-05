@@ -215,14 +215,15 @@ class DCMockOrchestrator:
 
             # Get workload directory from environment (mounted to specific workload)
             workload_dir = Path(os.getenv("WORKLOAD_DIR", "/app/workload"))
-            
+
             # Verify workload directory exists
             if not workload_dir.exists():
                 logger.error(f"Workload directory not found: {workload_dir}")
                 return 1
-            
+
             # Create workload context directly from the mounted workload directory
             from odt_common.config import WorkloadContext
+
             workload_context = WorkloadContext(workload_dir=workload_dir)
 
             # Log file status

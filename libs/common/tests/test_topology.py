@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+
 from odt_common.models.topology import (
     CPU,
     AsymptoticCPUPowerModel,
@@ -52,7 +53,7 @@ def test_cpu_model():
     assert cpu.coreSpeed == 2100.0
 
     # Test validation
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         CPU(coreCount=0, coreSpeed=2100.0)  # Invalid: coreCount must be > 0
 
 
@@ -62,7 +63,7 @@ def test_memory_model():
     assert memory.memorySize == 128000000
 
     # Test validation
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         Memory(memorySize=0)  # Invalid: memorySize must be > 0
 
 

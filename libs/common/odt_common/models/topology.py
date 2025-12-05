@@ -102,7 +102,9 @@ class Cluster(BaseModel):
 
     name: str = Field(..., description="Cluster identifier/name")
     hosts: list[Host] = Field(..., description="List of host types in this cluster", min_length=1)
-    powerSource: PowerSource | None = Field(None, description="Power source configuration (optional)")
+    powerSource: PowerSource | None = Field(
+        None, description="Power source configuration (optional)"
+    )
 
 
 class Topology(BaseModel):

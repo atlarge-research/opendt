@@ -27,9 +27,7 @@ class WorkloadMessage(BaseModel):
         ..., description="Type of message: 'task' for workload or 'heartbeat' for keepalive"
     )
     timestamp: datetime = Field(..., description="Simulation timestamp of this message")
-    task: Task | None = Field(
-        None, description="Task data (only present when message_type='task')"
-    )
+    task: Task | None = Field(None, description="Task data (only present when message_type='task')")
 
     class Config:
         json_schema_extra = {

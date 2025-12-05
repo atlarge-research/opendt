@@ -25,9 +25,7 @@ class CarbonDataResponse(BaseModel):
     """Response model for carbon emission query."""
 
     data: list[CarbonDataPoint]
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Metadata about the query"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata about the query")
 
 
 class CarbonDataQuery:
@@ -69,9 +67,7 @@ class CarbonDataQuery:
         """
         # Load simulated data
         if not self.sim_results_path.exists():
-            raise FileNotFoundError(
-                f"Simulation results not found: {self.sim_results_path}"
-            )
+            raise FileNotFoundError(f"Simulation results not found: {self.sim_results_path}")
 
         df = pd.read_parquet(self.sim_results_path)
         logger.info(f"Loaded {len(df)} simulation records")
@@ -141,9 +137,11 @@ class CarbonDataQuery:
         df = df.set_index("timestamp")
 
         # Resample and take mean of numeric columns
-        resampled = df[["power_draw", "carbon_intensity", "carbon_emission"]].resample(
-            f"{interval_seconds}s"
-        ).mean()
+        resampled = (
+            df[["power_draw", "carbon_intensity", "carbon_emission"]]
+            .resample(f"{interval_seconds}s")
+            .mean()
+        )
 
         # Remove NaN rows and reset index
         resampled = resampled.dropna().reset_index()
@@ -151,4 +149,3 @@ class CarbonDataQuery:
         logger.info(f"Resampled to {len(resampled)} data points at {interval_seconds}s interval")
 
         return resampled
-

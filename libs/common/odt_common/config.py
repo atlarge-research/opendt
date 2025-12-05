@@ -95,13 +95,13 @@ class CalibratorConfig(BaseModel):
         description="Rolling time window in minutes for MAPE calculation",
         gt=0,
     )
-    
+
     # Legacy fields for backwards compatibility (mapped to new fields)
     asym_util_min: float | None = Field(None, exclude=True)
     asym_util_max: float | None = Field(None, exclude=True)
     asym_util_points: int | None = Field(None, exclude=True)
-    
-    @model_validator(mode='after')
+
+    @model_validator(mode="after")
     def handle_legacy_fields(self):
         """Map legacy field names to new ones if present."""
         if self.asym_util_min is not None:
@@ -159,7 +159,9 @@ class WorkloadContext(BaseModel):
 
     name: str = Field(default="", description="Workload name (e.g., 'SURF')")
     base_path: Path = Field(default=Path("/app/workload"), description="Base workload directory")
-    workload_dir: Path | None = Field(None, description="Direct path to workload directory (overrides base_path/name)")
+    workload_dir: Path | None = Field(
+        None, description="Direct path to workload directory (overrides base_path/name)"
+    )
     metadata: WorkloadMetadata | None = Field(None, description="Workload metadata")
 
     def __init__(self, **data):

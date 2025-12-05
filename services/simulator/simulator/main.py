@@ -238,7 +238,7 @@ class SimulationService:
 
             if total_wall_elapsed_sec > 0:
                 actual_speedup = total_sim_elapsed_sec / total_wall_elapsed_sec
-                
+
                 if self.speed_factor > 0:
                     drift_percent = ((actual_speedup - self.speed_factor) / self.speed_factor) * 100
                     drift_status = "ON TRACK ✓" if abs(drift_percent) < 5 else "DRIFTING ⚠️"
