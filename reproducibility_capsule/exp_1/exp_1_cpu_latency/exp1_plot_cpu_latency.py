@@ -5,42 +5,60 @@ import matplotlib.dates as mdates
 import os
 
 # --- CONFIGURATION ---
-FILE_PATH = "../data/footprinter.parquet"
-METRIC_1 = "cpu_utilization"
-METRIC_2 = "carbon_intensity" # Using 'carbon_intensity' as source for the second axis per snippet
+FILE_PATH = "../data/opendt_cpu_latency_bytime.csv"
+OUTPUT_PLOT_NAME = "exp_1_plot_cpu_latency.pdf"
+
+# Reference Start Time & Duration logic
+REFERENCE_START_TIME = pd.Timestamp("2022-10-06 22:00:00")
+TOTAL_DAYS = 7
+TOTAL_RUNS = 167
+
+# Re-adding smoothing to keep the graph clean (as requested previously)
+ROLLING_WINDOW = 10
 
 COLOR_PALETTE = [
-    "#0072B2", # Blue (for CPU)
-    "#E69F00", # Orange (for Latency)
+    "#0072B2",  # Blue (for CPU)
+    "#E69F00",  # Orange (for Latency)
 ]
 
+
 def load_and_process_data():
-    """Loads data and computes aggregated metrics."""
     if not os.path.exists(FILE_PATH):
         print(f"Error: File not found at {FILE_PATH}")
-        return None, None, None
+        return None
 
     print(f"Loading data from {FILE_PATH}...")
-    opendt = pd.read_parquet(FILE_PATH)
+    df = pd.read_csv(FILE_PATH)
 
-    # Calculate Mean CPU and Sum of Metric 2 (Latency/Carbon) per timestamp
-    print("Processing metrics...")
-    df_cpu = opendt.groupby("timestamp")[METRIC_1].mean()
-    df_metric2 = opendt.groupby("timestamp")[METRIC_2].sum()
+    # 1. Extract Run ID as Integer
+    if df['run_id'].dtype == object:
+        df['run_id'] = df['run_id'].astype(str).str.extract(r'(\d+)').astype(int)
 
-    return df_cpu, df_metric2
+    # 2. FIX TIMESTAMPS: Ensure runs are spread over the 7 days based on ID
+    time_delta = pd.Timedelta(days=TOTAL_DAYS) / TOTAL_RUNS
+    df['calculated_start_time'] = REFERENCE_START_TIME + (df['run_id'] - 1) * time_delta
 
-def generate_plot(df_cpu, df_metric2):
-    """Generates the dual-axis plot."""
+    # 3. Process Metrics
+    df['duration_td'] = pd.to_timedelta(df['estimated_completion_duration'])
+    df['latency_hours'] = df['duration_td'].dt.total_seconds() / 3600.0
+
+    df = df.sort_values(by='calculated_start_time')
+
+    # 4. Apply Smoothing
+    df['cpu_smoothed'] = df['average_cpu'].rolling(window=ROLLING_WINDOW, center=True, min_periods=1).mean()
+    df['latency_smoothed'] = df['latency_hours'].rolling(window=ROLLING_WINDOW, center=True, min_periods=1).mean()
+
+    return df
+
+
+def generate_plot(df):
     print("Generating plot...")
 
-    # --- Time Alignment ---
-    # Footprinter data is every 30 seconds.
-    # Creating a date range starting from 2022-10-06 22:00:00
-    start_time = pd.Timestamp("2022-10-06 22:00:00")
-    timestamps = pd.date_range(start=start_time, periods=len(df_cpu), freq="30S")
+    timestamps = df['calculated_start_time']
+    # Using smoothed values
+    cpu_values = df['cpu_smoothed'] * 100
+    latency_values = df['latency_smoothed']
 
-    # --- Plotting ---
     fig, ax1 = plt.subplots(figsize=(12, 6))
 
     # --- LEFT AXIS (CPU) ---
@@ -48,56 +66,64 @@ def generate_plot(df_cpu, df_metric2):
     ax1.set_xlabel("Time [day/month]", fontsize=26, labelpad=10)
     ax1.set_ylabel("Average CPU Utilization [%]", color=color_cpu, fontsize=26, labelpad=10)
 
-    # Plot CPU: Solid Blue Line with circle markers
-    line1 = ax1.plot(timestamps, df_cpu.values * 100,
+    # Plot CPU
+    mark_step = max(1, len(timestamps) // 15)
+    line1 = ax1.plot(timestamps, cpu_values,
                      color=color_cpu, linewidth=3, linestyle="-",
-                     marker="o", markersize=8, markevery=len(timestamps)//15,
+                     marker="o", markersize=8, markevery=mark_step,
                      label="Avg CPU Utilization")
 
     ax1.tick_params(axis='y', labelcolor=color_cpu, labelsize=28)
     ax1.tick_params(axis='x', labelsize=28)
-    ax1.set_ylim(0, 110) # CPU % usually 0-100
+    ax1.set_ylim(0, 110)
 
     # --- RIGHT AXIS (LATENCY) ---
-    ax2 = ax1.twinx() # Create a second y-axis sharing the same x-axis
+    ax2 = ax1.twinx()
     color_latency = COLOR_PALETTE[1]
     ax2.set_ylabel("Latency [h]", color=color_latency, fontsize=26, labelpad=10)
 
-    # Plot Latency: Dashed Orange Line with square markers
-    line2 = ax2.plot(timestamps, df_metric2.values,
+    # Plot Latency
+    line2 = ax2.plot(timestamps, latency_values,
                      color=color_latency, linewidth=3, linestyle="--",
-                     marker="s", markersize=8, markevery=len(timestamps)//15,
+                     marker="s", markersize=8, markevery=mark_step,
                      label="Latency [h]")
 
     ax2.tick_params(axis='y', labelcolor=color_latency, labelsize=28)
-    ax2.set_ylim(bottom=0) # Ensure Latency axis starts at 0
+
+    # Dynamic limit for Latency
+    max_lat = latency_values.max()
+    ax2.set_ylim(0, max_lat * 1.2 if max_lat > 0 else 1)
 
     # --- FORMATTING ---
-    # X-Axis Date Format (Day/Month)
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
-    ax1.xaxis.set_major_locator(mdates.DayLocator(interval=2)) # Tick every 2 days
+    ax1.xaxis.set_major_locator(mdates.DayLocator(interval=2))
 
-    # Legend (Combine lines from both axes)
+    # --- LEGEND FIX ---
+    # Removed bbox_to_anchor to keep it inside the plot
+    # Added framealpha to make it slightly readable if lines cross it
     lines = line1 + line2
     labels = [l.get_label() for l in lines]
-    ax1.legend(lines, labels, loc="upper center", fontsize=22, ncol=2, bbox_to_anchor=(0.5, 1.20))
+    ax1.legend(lines, labels, loc="upper center", fontsize=22, ncol=2, frameon=True, framealpha=0.8)
 
-    # Grid (Horizontal dashed lines)
+    # move the legend 2% up
+    box = ax1.get_position()
+    ax1.set_position([box.x0, box.y0 + 0.02,                    box.width, box.height * 0.98])
+
+
     ax1.grid(True, axis='y', linestyle='--', alpha=0.7)
-
     plt.tight_layout()
 
-    # Save as PDF
-    output_filename = "exp_1_plot_cpu_latency.pdf"
-    plt.savefig(output_filename, format="pdf", bbox_inches="tight")
-    print(f"Plot saved as '{output_filename}'")
+    plt.savefig(OUTPUT_PLOT_NAME, format="pdf", bbox_inches="tight")
+    print(f"Plot saved as '{OUTPUT_PLOT_NAME}'")
     plt.close()
 
+
 def main():
-    df_cpu, df_metric2 = load_and_process_data()
-    if df_cpu is not None:
-        generate_plot(df_cpu, df_metric2)
+    df = load_and_process_data()
+    if df is not None:
+        generate_plot(df)
         print("Done!")
+
 
 if __name__ == "__main__":
     main()

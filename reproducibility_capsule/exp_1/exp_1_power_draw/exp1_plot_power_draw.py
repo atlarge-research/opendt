@@ -90,7 +90,7 @@ def generate_experiment_pdf(x, fp, odt, rw, timestamps, min_len):
     print("Generating final experiment PDF...")
 
     # Setup Figure
-    plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(9, 4))
     plt.grid(True)
 
     # Plot Lines with lw=1 (Finer resolution)
