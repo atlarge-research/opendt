@@ -23,7 +23,7 @@ def load_and_process_data():
 
     # Load Data
     fp = pd.read_parquet("../data/footprinter.parquet").groupby("timestamp")[METRIC].sum()
-    odt = pd.read_parquet("../data/opendt.parquet").groupby("timestamp")[METRIC].sum()
+    odt = pd.read_parquet("../data/opendt_non_calibrated.parquet").groupby("timestamp")[METRIC].sum()
     rw = pd.read_parquet("../data/real_world.parquet").groupby("timestamp")[METRIC].sum()
 
     # --- Processing ---
