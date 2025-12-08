@@ -121,36 +121,34 @@ The digital twin mirrors this state, with the ability to modify parameters for w
 | Topology (V6) | Adjustable topology with calibrated parameters |
 
 ## Data Flow
-
 ```
-Physical Infrastructure          Digital Infrastructure
-        │                                │
-        ▼                                │
-   ┌─────────┐                           │
-   │ dc-mock │ ──── dc.workload ────────►│
-   │         │ ──── dc.power ───────────►│
-   │         │ ──── dc.topology ────────►│
-   └─────────┘                           │
-                                         ▼
-                                   ┌───────────┐
-                                   │ simulator │
-                                   └─────┬─────┘
-                                         │
-                    ┌────────────────────┼────────────────────┐
-                    │                    │                    │
-                    ▼                    ▼                    ▼
-              sim.results          agg_results.parquet   sim.topology
-                    │                    │                    ▲
-                    │                    │                    │
-                    │                    ▼                    │
-                    │              ┌───────────┐              │
-                    │              │    api    │              │
-                    │              └─────┬─────┘              │
-                    │                    │                    │
-                    │                    ▼                    │
-                    │              ┌───────────┐        ┌─────────────┐
-                    └─────────────►│  Grafana  │        │ calibrator  │
-                                   └───────────┘        └─────────────┘
+                      Physical Infrastructure
+                               │
+                               ▼
+                          ┌─────────┐
+                          │ dc-mock │ (placeholder for real datacenter)
+                          └────┬────┘
+                               │
+              ┌────────────────┼────────────────┐
+              ▼                ▼                ▼
+         dc.workload      dc.power        dc.topology
+              │                │                │
+              └────────────────┼────────────────┘
+                               │
+              ┌────────────────┴────────────────┐
+              │                                 │
+              ▼                                 ▼
+      ┌─────────────┐                   ┌─────────────┐
+      │  simulator  │◄── sim.topology ──│ calibrator  │
+      └──────┬──────┘         ▲         └─────────────┘
+             │                │
+             │          ┌─────┴─────┐≈
+             │          │    api    │ (can also write topology)
+             │          └───────────┘
+             │
+             ▼              ┌───────────┐     ┌───────────┐
+    agg_results.parquet ──► │    api    │ ──► │  Grafana  │
+                            └───────────┘     └───────────┘
 ```
 
 ## Service Mapping
