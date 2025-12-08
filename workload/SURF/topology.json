@@ -18,7 +18,7 @@
                         "power": 300.0,
                         "idlePower": 25.0,
                         "maxPower": 174.0,
-                        "calibrationFactor": 10.0
+                        "calibrationFactor": 4
                     }
                 }
             ],
