@@ -23,8 +23,5 @@ COLOR_PALETTE = [
     "#CC79A7",  # Pink (MAPE cumulative)
 ]
 
-# --- Reference Time ---
-REFERENCE_START_TIME_STR = "2022-10-06 22:00:00"
-
 # --- Metrics ---
 METRIC_POWER = "power_draw"

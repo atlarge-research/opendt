@@ -247,3 +247,40 @@ def get_opendc_run_ids(run_path: Path) -> list[int]:
                 continue
     
     return sorted(run_ids)
+
+
+def get_workload_start_time(run_path: Path) -> pd.Timestamp:
+    """Get the workload start time from the first run's metadata.
+    
+    The start time is derived from run_1's 'last_task_time' field in metadata.json,
+    which represents the earliest task timestamp in the workload.
+    
+    Args:
+        run_path: Path to the experiment run directory
+    
+    Returns:
+        Timestamp representing the workload start time.
+    
+    Raises:
+        ValueError: If metadata cannot be read or parsed.
+    """
+    metadata = load_run_metadata(run_path, run_id=1)
+    
+    if metadata is None:
+        raise ValueError(f"Could not load metadata for run_1 in {run_path}")
+    
+    # The 'last_task_time' in run_1 is actually the earliest task time
+    # (it's the last task submitted before this run's window closed)
+    last_task_time = metadata.get("last_task_time")
+    
+    if last_task_time is None:
+        raise ValueError("No 'last_task_time' found in run_1 metadata")
+    
+    try:
+        start_time = pd.to_datetime(last_task_time)
+        # Remove timezone info for consistency
+        if start_time.tz is not None:
+            start_time = start_time.tz_localize(None)
+        return start_time
+    except Exception as e:
+        raise ValueError(f"Could not parse last_task_time '{last_task_time}': {e}")

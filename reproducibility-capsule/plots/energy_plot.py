@@ -16,6 +16,7 @@ import pandas as pd
 from matplotlib.ticker import FuncFormatter
 
 from .config import CAPSULE_DATA_DIR, COLOR_PALETTE, METRIC_POWER, WORKLOAD_DIR
+from .data_loader import get_workload_start_time
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
 def load_baseline_data(
     workload: str,
+    base_dt: pd.Timestamp,
 ) -> tuple[pd.Series, pd.Series]:  # type: ignore[type-arg]
     """Load FootPrinter and real world consumption data.
 
@@ -31,6 +33,7 @@ def load_baseline_data(
 
     Args:
         workload: Name of the workload (e.g., "SURF")
+        base_dt: Base datetime for converting relative timestamps to absolute
 
     Returns:
         Tuple of (footprinter_series, real_world_series)
@@ -50,7 +53,6 @@ def load_baseline_data(
 
     # Load FootPrinter data
     fp_df = pd.read_parquet(fp_path)
-    base_dt = pd.Timestamp("2022-10-06 22:00:00")
 
     # Handle timestamp conversion for footprinter
     if "timestamp_absolute" in fp_df.columns:
@@ -159,8 +161,11 @@ def generate_energy_plot(
     Returns:
         Tuple of (footprinter_mape, opendt_mape, sample_count)
     """
+    # Get base datetime from run metadata (not hardcoded)
+    base_dt = get_workload_start_time(run_path)
+    
     # Load baseline data (FootPrinter and Real World)
-    fp, rw = load_baseline_data(workload)
+    fp, rw = load_baseline_data(workload, base_dt)
     odt = load_opendt_results(run_path)
 
     # Interpolate to 1-minute
