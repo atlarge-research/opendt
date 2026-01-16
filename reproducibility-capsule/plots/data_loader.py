@@ -223,6 +223,105 @@ def load_host_parquet(run_path: Path, run_id: int) -> pd.DataFrame | None:
         return None
 
 
+def find_power_source_parquet(run_path: Path, run_id: int) -> Path | None:
+    """Find the powerSource.parquet file for a specific run.
+    
+    The file is located at a nested path like:
+    simulator/opendc/run_<N>/output/run_1/raw-output/0/seed=0/powerSource.parquet
+    
+    Args:
+        run_path: Path to the experiment run directory
+        run_id: The run number
+    
+    Returns:
+        Path to powerSource.parquet or None if not found.
+    """
+    base = run_path / "simulator" / "opendc" / f"run_{run_id}" / "output"
+    
+    # The nested structure has run_1 inside output, then raw-output/0/seed=0
+    candidate = base / "run_1" / "raw-output" / "0" / "seed=0" / "powerSource.parquet"
+    
+    if candidate.exists():
+        return candidate
+    
+    # Fallback: try to find it with glob
+    matches = list(base.glob("**/powerSource.parquet"))
+    if matches:
+        return matches[0]
+    
+    return None
+
+
+def load_power_source_parquet(run_path: Path, run_id: int) -> pd.DataFrame | None:
+    """Load powerSource.parquet for a specific OpenDC run.
+    
+    Args:
+        run_path: Path to the experiment run directory
+        run_id: The run number
+    
+    Returns:
+        DataFrame with power source metrics or None if not found.
+    """
+    parquet_path = find_power_source_parquet(run_path, run_id)
+    
+    if parquet_path is None:
+        return None
+    
+    try:
+        return pd.read_parquet(parquet_path)
+    except Exception:
+        return None
+
+
+def find_task_parquet(run_path: Path, run_id: int) -> Path | None:
+    """Find the task.parquet file for a specific run.
+    
+    The file is located at a nested path like:
+    simulator/opendc/run_<N>/output/run_1/raw-output/0/seed=0/task.parquet
+    
+    Args:
+        run_path: Path to the experiment run directory
+        run_id: The run number
+    
+    Returns:
+        Path to task.parquet or None if not found.
+    """
+    base = run_path / "simulator" / "opendc" / f"run_{run_id}" / "output"
+    
+    candidate = base / "run_1" / "raw-output" / "0" / "seed=0" / "task.parquet"
+    
+    if candidate.exists():
+        return candidate
+    
+    # Fallback: try to find it with glob
+    matches = list(base.glob("**/task.parquet"))
+    if matches:
+        return matches[0]
+    
+    return None
+
+
+def load_task_parquet(run_path: Path, run_id: int) -> pd.DataFrame | None:
+    """Load task.parquet for a specific OpenDC run.
+    
+    Args:
+        run_path: Path to the experiment run directory
+        run_id: The run number
+    
+    Returns:
+        DataFrame with task metrics or None if not found.
+    """
+    parquet_path = find_task_parquet(run_path, run_id)
+    
+    if parquet_path is None:
+        return None
+    
+    try:
+        return pd.read_parquet(parquet_path)
+    except Exception:
+        return None
+
+
 def get_opendc_run_ids(run_path: Path) -> list[int]:
     """Get list of all OpenDC run IDs in an experiment.
     

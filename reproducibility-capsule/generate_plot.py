@@ -3,12 +3,13 @@
 Interactive plot generator for OpenDT reproducibility capsule.
 
 This script provides an interactive CLI to generate publication-ready plots
-from OpenDT experiment runs. Users can select which experiment and data source
-to use for generating the plots.
+from OpenDT experiment runs. Users can select which experiment, data source,
+and which plots to generate.
 
-Generates:
-1. Energy consumption plot (Ground Truth vs FootPrinter vs OpenDT)
-2. CPU utilization and latency plot (dual-axis)
+Available plots:
+1. Power Prediction Accuracy (Ground Truth vs FootPrinter vs OpenDT)
+2. Sustainability/Performance/Efficiency Overview
+3. Job Completion Efficiency
 
 Usage:
     python generate_plot.py
@@ -26,11 +27,19 @@ from rich.text import Text
 
 # Import from new modular structure
 from plots.config import OUTPUT_DIR
-from plots.cpu_latency_plot import generate_cpu_latency_plot
 from plots.data_loader import discover_runs
-from plots.energy_plot import generate_energy_plot
+from plots.job_completion_plot import generate_jobs_per_kwh_plot
+from plots.power_prediction_plot import generate_energy_plot
+from plots.sustainability_overview_plot import generate_efficiency_plot
 
 console = Console()
+
+# Default plot settings (True = enabled by default)
+DEFAULT_PLOTS = {
+    "power_prediction": False,
+    "sustainability_overview": True,
+    "job_completion": False,
+}
 
 
 # --- Interactive Selection ---
@@ -65,6 +74,46 @@ def select_experiment() -> int:
         if choice in ("1", "2"):
             return int(choice)
         console.print("[red]Invalid choice. Please enter 1 or 2.[/red]")
+
+
+def select_plots() -> dict[str, bool]:
+    """Interactively select which plots to generate using arrow keys and space."""
+    from InquirerPy import inquirer
+    from InquirerPy.separator import Separator
+    
+    console.print()
+    console.print("[bold]Select plots to generate:[/bold]")
+    console.print("[dim]Use ↑↓ to navigate, Space to toggle, Enter to confirm[/dim]")
+    
+    # Define plot choices with defaults
+    choices = [
+        {"name": "Power Prediction Accuracy", "value": "power_prediction", "enabled": DEFAULT_PLOTS["power_prediction"]},
+        {"name": "Sustainability/Performance/Efficiency Overview", "value": "sustainability_overview", "enabled": DEFAULT_PLOTS["sustainability_overview"]},
+        {"name": "Job Completion Efficiency", "value": "job_completion", "enabled": DEFAULT_PLOTS["job_completion"]},
+    ]
+    
+    selected = inquirer.checkbox(
+        message="",
+        choices=choices,
+        instruction="",
+        qmark="",
+        amark="",
+        show_cursor=False,
+        validate=lambda result: len(result) > 0,
+        invalid_message="Select at least one plot",
+    ).execute()
+    
+    # Convert to dict
+    enabled = {key: key in selected for key in DEFAULT_PLOTS.keys()}
+    
+    # Show final selection
+    console.print()
+    console.print("[dim]Selected plots:[/dim]")
+    for choice in choices:
+        if choice["value"] in selected:
+            console.print(f"  [green]✓[/green] {choice['name']}")
+    
+    return enabled
 
 
 def select_data_source(runs: list[dict], experiment: int) -> dict | None:
@@ -176,6 +225,9 @@ def main() -> None:
     console.print()
     console.print(f"[bold green]✓[/bold green] Selected: [cyan]{run['name']}[/cyan]")
 
+    # Select which plots to generate
+    enabled_plots = select_plots()
+
     # Get workload name for output path
     workload = run.get("workload", "unknown")
     run_path = run["path"]
@@ -184,71 +236,109 @@ def main() -> None:
     experiment_output_dir = OUTPUT_DIR / f"experiment_{experiment}"
     experiment_output_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- Generate Energy Plot ---
-    console.print()
-    console.print("[bold]Generating energy consumption plot...[/bold]")
-    
-    energy_output_path = experiment_output_dir / f"{workload}_energy.pdf"
-    
-    try:
-        mape_fp, mape_odt, samples = generate_energy_plot(
-            run_path=run_path,
-            workload=workload,
-            output_path=energy_output_path,
-        )
+    # --- Generate Power Prediction Accuracy Plot ---
+    if enabled_plots.get("power_prediction"):
+        console.print()
+        console.print("[bold]Generating Power Prediction Accuracy plot...[/bold]")
         
-        console.print(
-            Panel.fit(
-                Text.assemble(
-                    ("Energy Plot Results\n\n", "bold"),
-                    ("FootPrinter MAPE: ", ""),
-                    (f"{mape_fp:.2f}%", "bold yellow"),
-                    ("\nOpenDT MAPE:      ", ""),
-                    (f"{mape_odt:.2f}%", "bold green"),
-                    ("\n\nSamples: ", ""),
-                    (f"{samples:,}", "cyan"),
-                    (" (1-minute resolution)", "dim"),
-                ),
-                border_style="green",
+        power_prediction_output_path = experiment_output_dir / f"{workload}_power_prediction.pdf"
+        
+        try:
+            mape_fp, mape_odt, samples = generate_energy_plot(
+                run_path=run_path,
+                workload=workload,
+                output_path=power_prediction_output_path,
             )
-        )
-        console.print(f"[bold green]✓[/bold green] Saved: [cyan]{energy_output_path}[/cyan]")
-    except FileNotFoundError as e:
-        console.print(f"[red]Error generating energy plot: {e}[/red]")
-    except Exception as e:
-        console.print(f"[red]Error generating energy plot: {e}[/red]")
+            
+            console.print(
+                Panel.fit(
+                    Text.assemble(
+                        ("Power Prediction Accuracy Results\n\n", "bold"),
+                        ("FootPrinter MAPE: ", ""),
+                        (f"{mape_fp:.2f}%", "bold yellow"),
+                        ("\nOpenDT MAPE:      ", ""),
+                        (f"{mape_odt:.2f}%", "bold green"),
+                        ("\n\nSamples: ", ""),
+                        (f"{samples:,}", "cyan"),
+                        (" (1-minute resolution)", "dim"),
+                    ),
+                    border_style="green",
+                )
+            )
+            console.print(f"[bold green]✓[/bold green] Saved: [cyan]{power_prediction_output_path}[/cyan]")
+        except FileNotFoundError as e:
+            console.print(f"[red]Error generating Power Prediction Accuracy plot: {e}[/red]")
+        except Exception as e:
+            console.print(f"[red]Error generating Power Prediction Accuracy plot: {e}[/red]")
 
-    # --- Generate CPU/Latency Plot ---
-    console.print()
-    console.print("[bold]Generating CPU utilization & latency plot...[/bold]")
-    
-    cpu_latency_output_path = experiment_output_dir / f"{workload}_cpu_latency.pdf"
-    
-    try:
-        avg_cpu, avg_latency, run_count = generate_cpu_latency_plot(
-            run_path=run_path,
-            output_path=cpu_latency_output_path,
-        )
+    # --- Generate Sustainability/Performance/Efficiency Overview Plot ---
+    if enabled_plots.get("sustainability_overview"):
+        console.print()
+        console.print("[bold]Generating Sustainability/Performance/Efficiency Overview plot...[/bold]")
         
-        console.print(
-            Panel.fit(
-                Text.assemble(
-                    ("CPU/Latency Plot Results\n\n", "bold"),
-                    ("Avg CPU Utilization: ", ""),
-                    (f"{avg_cpu:.2f}%", "bold cyan"),
-                    ("\nAvg Latency:         ", ""),
-                    (f"{avg_latency:.2f}h", "bold yellow"),
-                    ("\n\nRuns processed: ", ""),
-                    (f"{run_count}", "cyan"),
-                ),
-                border_style="blue",
+        sustainability_output_path = experiment_output_dir / f"{workload}_sustainability_overview.pdf"
+        
+        try:
+            avg_eff, max_eff, sample_count = generate_efficiency_plot(
+                run_path=run_path,
+                output_path=sustainability_output_path,
+                workload=workload,
             )
-        )
-        console.print(f"[bold green]✓[/bold green] Saved: [cyan]{cpu_latency_output_path}[/cyan]")
-    except ValueError as e:
-        console.print(f"[red]Error generating CPU/latency plot: {e}[/red]")
-    except Exception as e:
-        console.print(f"[red]Error generating CPU/latency plot: {e}[/red]")
+            
+            console.print(
+                Panel.fit(
+                    Text.assemble(
+                        ("Sustainability Overview Results\n\n", "bold"),
+                        ("Avg Efficiency: ", ""),
+                        (f"{avg_eff:.2f} TFLOPs/kWh", "bold magenta"),
+                        ("\nMax Efficiency: ", ""),
+                        (f"{max_eff:.2f} TFLOPs/kWh", "bold cyan"),
+                        ("\n\nHourly periods: ", ""),
+                        (f"{sample_count:,}", "cyan"),
+                    ),
+                    border_style="magenta",
+                )
+            )
+            console.print(f"[bold green]✓[/bold green] Saved: [cyan]{sustainability_output_path}[/cyan]")
+        except ValueError as e:
+            console.print(f"[red]Error generating Sustainability Overview plot: {e}[/red]")
+        except Exception as e:
+            console.print(f"[red]Error generating Sustainability Overview plot: {e}[/red]")
+
+    # --- Generate Job Completion Efficiency Plot ---
+    if enabled_plots.get("job_completion"):
+        console.print()
+        console.print("[bold]Generating Job Completion Efficiency plot...[/bold]")
+        
+        job_completion_output_path = experiment_output_dir / f"{workload}_job_completion.pdf"
+        
+        try:
+            avg_jpk, max_jpk, num_periods = generate_jobs_per_kwh_plot(
+                run_path=run_path,
+                output_path=job_completion_output_path,
+                aggregation_hours=3.0,
+            )
+            
+            console.print(
+                Panel.fit(
+                    Text.assemble(
+                        ("Job Completion Efficiency Results\n\n", "bold"),
+                        ("Avg Jobs/kWh: ", ""),
+                        (f"{avg_jpk:.2f}", "bold green"),
+                        ("\nMax Jobs/kWh: ", ""),
+                        (f"{max_jpk:.2f}", "bold cyan"),
+                        ("\n\nTime periods: ", ""),
+                        (f"{num_periods}", "cyan"),
+                        (" (3-hour aggregation)", "dim"),
+                    ),
+                    border_style="green",
+                )
+            )
+            console.print(f"[bold green]✓[/bold green] Saved: [cyan]{job_completion_output_path}[/cyan]")
+        except ValueError as e:
+            console.print(f"[red]Error generating Job Completion Efficiency plot: {e}[/red]")
+        except Exception as e:
+            console.print(f"[red]Error generating Job Completion Efficiency plot: {e}[/red]")
 
     console.print()
     console.print("[bold green]Done![/bold green]")
