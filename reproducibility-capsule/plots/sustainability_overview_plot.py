@@ -33,6 +33,18 @@ from .processors import process_flops_data
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
+# Font size constants
+FONT_SIZE_AXIS_LABELS = 20      # Tick labels on axes (numbers)
+FONT_SIZE_AXIS_DESCRIPTIONS = 20  # Axis titles ("Power", "Performance", etc.)
+FONT_SIZE_LEGEND = 18           # Legend text
+
+# Line styling constants
+LINE_THICKNESS = 1.8            # Thickness of lines in subplot A
+
+# Signal smoothing constant (running average window size in samples)
+# Set to 1 to disable smoothing, higher values = more smoothing
+SMOOTHING_WINDOW = 15
+
 
 def generate_efficiency_plot(
     run_path: Path,
@@ -86,23 +98,35 @@ def generate_efficiency_plot(
     merged["efficiency"] = merged["flops"] / merged["energy_kwh"]
     
     # Create dense 3-panel figure (NOT shared x-axis since different resolutions)
+    # Height ratios: A=2, B=1, C=1 (B and C are 50% of A's height)
     fig, axes = plt.subplots(
         3, 1,
-        figsize=(10, 10),
-        gridspec_kw={"hspace": 0.1},  # Small padding to avoid label overlap
+        figsize=(10, 8),
+        gridspec_kw={"hspace": 0.2, "height_ratios": [2, 1, 1]},
     )
     
     # Panel 1: Power comparison at RAW resolution
     ax1 = axes[0]
     ax1.grid(True, alpha=0.3, zorder=0)
     x_power = np.arange(len(raw_power_data))
-    ax1.plot(x_power, raw_power_data["rw_power"] / 1000, label="Ground Truth", color="#666666", lw=0.8)  # Gray
-    ax1.plot(x_power, raw_power_data["fp_power"] / 1000, label="FootPrinter", color=COLOR_PALETTE[1], lw=0.8)
-    ax1.plot(x_power, raw_power_data["odt_power"] / 1000, label="OpenDT", color=COLOR_PALETTE[2], lw=0.8)
-    ax1.set_ylabel("Power\n[kW]", fontsize=20, labelpad=10)
-    ax1.tick_params(axis="y", labelsize=18)
+    
+    # Apply running average smoothing if enabled
+    def smooth(series):
+        if SMOOTHING_WINDOW > 1:
+            return series.rolling(window=SMOOTHING_WINDOW, center=True, min_periods=1).mean()
+        return series
+    
+    rw_smoothed = smooth(raw_power_data["rw_power"] / 1000)
+    fp_smoothed = smooth(raw_power_data["fp_power"] / 1000)
+    odt_smoothed = smooth(raw_power_data["odt_power"] / 1000)
+    
+    ax1.plot(x_power, rw_smoothed, label="Ground Truth", color="#666666", lw=LINE_THICKNESS)  # Gray
+    ax1.plot(x_power, fp_smoothed, label="FootPrinter", color=COLOR_PALETTE[1], lw=LINE_THICKNESS)
+    ax1.plot(x_power, odt_smoothed, label="OpenDT", color=COLOR_PALETTE[2], lw=LINE_THICKNESS)
+    ax1.set_ylabel("Power\ndraw\n[kW]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
+    ax1.tick_params(axis="y", labelsize=FONT_SIZE_AXIS_LABELS)
     ax1.tick_params(axis="x", labelbottom=False)
-    ax1.legend(loc="lower right", fontsize=16, framealpha=0.9, ncol=3)
+    ax1.legend(loc="lower right", fontsize=FONT_SIZE_LEGEND, framealpha=0.9, ncol=3)
     ax1.set_xlim(0, len(raw_power_data) - 1)
     ax1.set_ylim(0, 30)
     ax1.set_yticks([0, 16, 32])  # 3 ticks: min, mid, max
@@ -113,8 +137,8 @@ def generate_efficiency_plot(
     x_hourly = np.arange(len(merged))
     flops_tera = merged["flops"] / 1e12
     ax2.bar(x_hourly, flops_tera, color="#7B2D8E", alpha=0.8, width=0.8)  # Purple
-    ax2.set_ylabel("Performance\n[TFLOPs]", fontsize=20, labelpad=10)
-    ax2.tick_params(axis="y", labelsize=18)
+    ax2.set_ylabel("Perfor-\nmance\n[TFLOPs]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
+    ax2.tick_params(axis="y", labelsize=FONT_SIZE_AXIS_LABELS)
     ax2.tick_params(axis="x", labelbottom=False)
     ax2.set_xlim(-0.5, len(merged) - 0.5)
     ax2.set_ylim(0, 15000)
@@ -125,20 +149,21 @@ def generate_efficiency_plot(
     ax3.grid(True, alpha=0.3, zorder=0)
     efficiency_tera = merged["efficiency"] / 1e12
     ax3.bar(x_hourly, efficiency_tera, color="#0072B2", alpha=0.8, width=0.8)  # Blue
-    ax3.set_ylabel("Efficiency\n[TFLOPs/kWh]", fontsize=20, labelpad=10)
-    ax3.set_xlabel("Time [day/month]", fontsize=20, labelpad=10)
-    ax3.tick_params(axis="both", labelsize=18)
+    ax3.set_ylabel("Efficiency\n[TFLOPs\n/kWh]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
+    ax3.set_xlabel("Time [day/month]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
+    ax3.tick_params(axis="both", labelsize=FONT_SIZE_AXIS_LABELS)
     ax3.set_xlim(-0.5, len(merged) - 0.5)
     ax3.set_ylim(0, 600)
-    ax3.set_yticks([0, 300, 600])  # 3 ticks: min, mid, max
-    
+    ax3.set_yticks([0, 300, 600])  # 3 ticks: min, mid, max\n    
     # Format x-axis with date labels (on bottom panel only)
     _format_time_axis(ax3, merged["period_start"], len(merged))
     
-    # Add panel labels (A, B, C) in white circles at bottom left
-    for ax, label in zip(axes, ["A", "B", "C"]):
+    # Add panel labels (A, B, C) in white circles
+    # A is positioned higher to avoid legend overlap
+    label_positions = [(0.03, 0.27), (0.03, 0.15), (0.03, 0.15)]  # (x, y) for A, B, C
+    for ax, label, (lx, ly) in zip(axes, ["A", "B", "C"], label_positions):
         ax.text(
-            0.03, 0.1,  # Position: bottom left
+            lx, ly,
             label,
             transform=ax.transAxes,
             fontsize=20,
@@ -300,7 +325,7 @@ def _calculate_hourly_flops(run_path: Path) -> pd.DataFrame:
 
 
 def _format_time_axis(ax: Axes, timestamps: pd.Series, plot_len: int) -> None:
-    """Format the x-axis with date labels."""
+    """Format the x-axis with date labels, excluding first and last."""
     timestamps = pd.to_datetime(timestamps)
     
     if plot_len <= 24:
@@ -311,5 +336,9 @@ def _format_time_axis(ax: Axes, timestamps: pd.Series, plot_len: int) -> None:
     tick_positions = list(range(0, plot_len, step))
     tick_labels = [timestamps.iloc[i].strftime("%d/%m") for i in tick_positions]
     
+    # Hide first label (keep ticks but blank labels)
+    if len(tick_labels) >= 1:
+        tick_labels[0] = ""
+    
     ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels, fontsize=16)
+    ax.set_xticklabels(tick_labels, fontsize=FONT_SIZE_AXIS_LABELS)

@@ -403,7 +403,7 @@
                     "root_selector": "data",
                     "source": "url",
                     "type": "json",
-                    "url": "http://api:8000/api/carbon_emission?interval_seconds=60",
+                    "url": "http://api:8000/api/co2_emission?interval_seconds=60",
                     "url_options": {
                         "data": "",
                         "method": "GET"

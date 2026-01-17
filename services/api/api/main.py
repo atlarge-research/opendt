@@ -295,7 +295,7 @@ async def get_power_data(
 # ============================================================================
 
 
-@app.get("/api/carbon_emission", response_model=CarbonDataResponse)
+@app.get("/api/co2_emission", response_model=CarbonDataResponse)
 async def get_carbon_emission_data(
     interval_seconds: int = Query(
         60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
