@@ -33,7 +33,7 @@ Query aligned power data from simulation and actual consumption.
 
 **Returns:** Timeseries of `timestamp`, `simulated_power`, `actual_power`
 
-### GET /api/carbon_emission
+### GET /api/co2_emission
 
 Query carbon emission data based on power draw and grid carbon intensity.
 
