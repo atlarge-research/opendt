@@ -15,7 +15,15 @@ import numpy as np
 import pandas as pd
 from matplotlib.ticker import FuncFormatter
 
-from .config import CAPSULE_DATA_DIR, COLOR_PALETTE, METRIC_POWER, WORKLOAD_DIR
+from .config import (
+    CAPSULE_DATA_DIR,
+    METRIC_POWER,
+    POWER_FOOTPRINTER,
+    POWER_GROUND_TRUTH,
+    POWER_MAPE,
+    POWER_OPENDT,
+    WORKLOAD_DIR,
+)
 from .data_loader import get_workload_start_time
 
 if TYPE_CHECKING:
@@ -221,9 +229,9 @@ def generate_energy_plot(
     fp_values = np.asarray(fp_5min.values) / 1000
     odt_values = np.asarray(odt_5min.values) / 1000
 
-    line1 = ax1.plot(x, rw_values, label="Ground Truth", color=COLOR_PALETTE[0], lw=1.5)
-    line2 = ax1.plot(x, fp_values, label="FootPrinter", color=COLOR_PALETTE[1], lw=1.5)
-    line3 = ax1.plot(x, odt_values, label="OpenDT", color=COLOR_PALETTE[2], lw=1.5)
+    line1 = ax1.plot(x, rw_values, label="Ground Truth", color=POWER_GROUND_TRUTH, lw=1.5)
+    line2 = ax1.plot(x, fp_values, label="FootPrinter", color=POWER_FOOTPRINTER, lw=1.5)
+    line3 = ax1.plot(x, odt_values, label="OpenDT", color=POWER_OPENDT, lw=1.5)
 
     # Create secondary y-axis for MAPE
     ax2 = ax1.twinx()
@@ -233,7 +241,7 @@ def generate_energy_plot(
         x,
         cumulative_mape_5min,
         label="MAPE (OpenDT)",
-        color=COLOR_PALETTE[3],
+        color=POWER_MAPE,
         lw=1.5,
         linestyle="--",
         alpha=0.8,

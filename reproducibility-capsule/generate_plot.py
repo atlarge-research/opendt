@@ -7,9 +7,14 @@ from OpenDT experiment runs. Users can select which experiment, data source,
 and which plots to generate.
 
 Available plots:
-1. Power Prediction Accuracy (Ground Truth vs FootPrinter vs OpenDT)
-2. Sustainability/Performance/Efficiency Overview
-3. Job Completion Efficiency
+Experiment 1:
+  1. Power Prediction Accuracy (Ground Truth vs FootPrinter vs OpenDT)
+  2. Sustainability/Performance/Efficiency Overview
+  3. Job Completion Efficiency
+
+Experiment 2:
+  1. MAPE Over Time (Calibrated vs Non-Calibrated)
+  (plus all Experiment 1 plots)
 
 Usage:
     python generate_plot.py
@@ -29,15 +34,24 @@ from rich.text import Text
 from plots.config import OUTPUT_DIR
 from plots.data_loader import discover_runs
 from plots.job_completion_plot import generate_jobs_per_kwh_plot
+from plots.mape_over_time_plot import generate_mape_over_time_plot
 from plots.power_prediction_plot import generate_energy_plot
 from plots.sustainability_overview_plot import generate_efficiency_plot
 
 console = Console()
 
-# Default plot settings (True = enabled by default)
-DEFAULT_PLOTS = {
+# Default plot settings for Experiment 1 (True = enabled by default)
+DEFAULT_PLOTS_EXP1 = {
     "power_prediction": False,
     "sustainability_overview": True,
+    "job_completion": False,
+}
+
+# Default plot settings for Experiment 2 (includes MAPE over time)
+DEFAULT_PLOTS_EXP2 = {
+    "mape_over_time": True,
+    "power_prediction": False,
+    "sustainability_overview": False,
     "job_completion": False,
 }
 
@@ -76,7 +90,7 @@ def select_experiment() -> int:
         console.print("[red]Invalid choice. Please enter 1 or 2.[/red]")
 
 
-def select_plots() -> dict[str, bool]:
+def select_plots(experiment: int) -> dict[str, bool]:
     """Interactively select which plots to generate using arrow keys and space."""
     from InquirerPy import inquirer
     from InquirerPy.separator import Separator
@@ -85,12 +99,22 @@ def select_plots() -> dict[str, bool]:
     console.print("[bold]Select plots to generate:[/bold]")
     console.print("[dim]Use ↑↓ to navigate, Space to toggle, Enter to confirm[/dim]")
     
-    # Define plot choices with defaults
-    choices = [
-        {"name": "Power Prediction Accuracy", "value": "power_prediction", "enabled": DEFAULT_PLOTS["power_prediction"]},
-        {"name": "Sustainability/Performance/Efficiency Overview", "value": "sustainability_overview", "enabled": DEFAULT_PLOTS["sustainability_overview"]},
-        {"name": "Job Completion Efficiency", "value": "job_completion", "enabled": DEFAULT_PLOTS["job_completion"]},
-    ]
+    # Use experiment-specific defaults
+    if experiment == 2:
+        defaults = DEFAULT_PLOTS_EXP2
+        choices = [
+            {"name": "MAPE Over Time (Calibrated vs Non-Calibrated)", "value": "mape_over_time", "enabled": defaults["mape_over_time"]},
+            {"name": "Power Prediction Accuracy", "value": "power_prediction", "enabled": defaults["power_prediction"]},
+            {"name": "Sustainability/Performance/Efficiency Overview", "value": "sustainability_overview", "enabled": defaults["sustainability_overview"]},
+            {"name": "Job Completion Efficiency", "value": "job_completion", "enabled": defaults["job_completion"]},
+        ]
+    else:
+        defaults = DEFAULT_PLOTS_EXP1
+        choices = [
+            {"name": "Power Prediction Accuracy", "value": "power_prediction", "enabled": defaults["power_prediction"]},
+            {"name": "Sustainability/Performance/Efficiency Overview", "value": "sustainability_overview", "enabled": defaults["sustainability_overview"]},
+            {"name": "Job Completion Efficiency", "value": "job_completion", "enabled": defaults["job_completion"]},
+        ]
     
     selected = inquirer.checkbox(
         message="",
@@ -104,7 +128,7 @@ def select_plots() -> dict[str, bool]:
     ).execute()
     
     # Convert to dict
-    enabled = {key: key in selected for key in DEFAULT_PLOTS.keys()}
+    enabled = {key: key in selected for key in defaults.keys()}
     
     # Show final selection
     console.print()
@@ -196,6 +220,63 @@ def select_data_source(runs: list[dict], experiment: int) -> dict | None:
         console.print(f"[red]Invalid choice. Enter a number 1-{len(valid_runs)}.[/red]")
 
 
+def select_non_calibrated_run(runs: list[dict]) -> dict | None:
+    """Select a non-calibrated run for MAPE comparison (Experiment 2)."""
+    console.print()
+    console.print("[bold yellow]MAPE Over Time requires a non-calibrated run for comparison.[/bold yellow]")
+    console.print("[bold]Select a non-calibrated data source:[/bold]")
+    console.print()
+
+    # Filter to non-calibrated runs
+    valid_runs = [
+        r for r in runs if r["has_simulator"] and r.get("calibration_enabled") is False
+    ]
+
+    if not valid_runs:
+        console.print("[red]No non-calibrated runs found.[/red]")
+        console.print("[dim]Run experiment 1 first to generate non-calibrated data.[/dim]")
+        return None
+
+    # Build table
+    table = Table(show_header=True, header_style="bold magenta", box=None)
+    table.add_column("#", style="cyan", width=4)
+    table.add_column("Run ID", style="bold")
+    table.add_column("Time", style="green")
+    table.add_column("Sim Duration", style="cyan")
+    table.add_column("Workload", style="yellow")
+
+    for i, run in enumerate(valid_runs, 1):
+        table.add_row(
+            str(i),
+            run["name"],
+            run["time_ago"],
+            run.get("sim_duration", "—"),
+            run.get("workload", "—"),
+        )
+
+    console.print(table)
+    console.print()
+
+    while True:
+        choice = console.input(
+            f"[bold]Select non-calibrated run (1-{len(valid_runs)}) or 'q' to skip: [/bold]"
+        ).strip()
+
+        if choice.lower() == "q":
+            return None
+
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(valid_runs):
+                selected = valid_runs[idx]
+                console.print(f"[bold green]✓[/bold green] Non-calibrated run: [cyan]{selected['name']}[/cyan]")
+                return selected
+        except ValueError:
+            pass
+
+        console.print(f"[red]Invalid choice. Enter a number 1-{len(valid_runs)}.[/red]")
+
+
 # --- Main ---
 
 
@@ -226,7 +307,15 @@ def main() -> None:
     console.print(f"[bold green]✓[/bold green] Selected: [cyan]{run['name']}[/cyan]")
 
     # Select which plots to generate
-    enabled_plots = select_plots()
+    enabled_plots = select_plots(experiment)
+
+    # For experiment 2, if MAPE over time is selected, we need a non-calibrated run
+    non_calibrated_run = None
+    if experiment == 2 and enabled_plots.get("mape_over_time"):
+        non_calibrated_run = select_non_calibrated_run(runs)
+        if non_calibrated_run is None:
+            console.print("[yellow]Skipping MAPE Over Time plot (no non-calibrated run selected).[/yellow]")
+            enabled_plots["mape_over_time"] = False
 
     # Get workload name for output path
     workload = run.get("workload", "unknown")
@@ -235,6 +324,47 @@ def main() -> None:
     # Create experiment-specific output directory
     experiment_output_dir = OUTPUT_DIR / f"experiment_{experiment}"
     experiment_output_dir.mkdir(parents=True, exist_ok=True)
+
+    # --- Generate MAPE Over Time Plot (Experiment 2 only) ---
+    if enabled_plots.get("mape_over_time") and non_calibrated_run is not None:
+        console.print()
+        console.print("[bold]Generating MAPE Over Time plot...[/bold]")
+        
+        # Ask about article-style date markers
+        console.print()
+        console.print("[dim]Add hardcoded date markers from article? (grey box at 09/10, black box at 11/10)[/dim]")
+        include_markers = console.input("[bold]Include article markers? (y/N): [/bold]").strip().lower() == "y"
+        
+        mape_output_path = experiment_output_dir / f"{workload}_mape_over_time.pdf"
+        
+        try:
+            avg_mape_c, avg_mape_nc, sample_count = generate_mape_over_time_plot(
+                calibrated_run_path=run_path,
+                non_calibrated_run_path=non_calibrated_run["path"],
+                output_path=mape_output_path,
+                workload=workload,
+                include_article_markers=include_markers,
+            )
+            
+            console.print(
+                Panel.fit(
+                    Text.assemble(
+                        ("MAPE Over Time Results\n\n", "bold"),
+                        ("Avg MAPE (Calibrated):     ", ""),
+                        (f"{avg_mape_c:.2f}%", "bold green"),
+                        ("\nAvg MAPE (Non-Calibrated): ", ""),
+                        (f"{avg_mape_nc:.2f}%", "bold yellow"),
+                        ("\n\nSamples: ", ""),
+                        (f"{sample_count:,}", "cyan"),
+                    ),
+                    border_style="green",
+                )
+            )
+            console.print(f"[bold green]✓[/bold green] Saved: [cyan]{mape_output_path}[/cyan]")
+        except FileNotFoundError as e:
+            console.print(f"[red]Error generating MAPE Over Time plot: {e}[/red]")
+        except Exception as e:
+            console.print(f"[red]Error generating MAPE Over Time plot: {e}[/red]")
 
     # --- Generate Power Prediction Accuracy Plot ---
     if enabled_plots.get("power_prediction"):

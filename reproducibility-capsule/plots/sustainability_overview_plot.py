@@ -26,7 +26,16 @@ plt.rcParams.update({
     "axes.formatter.use_mathtext": True,
 })
 
-from .config import CAPSULE_DATA_DIR, COLOR_PALETTE, METRIC_POWER, WORKLOAD_DIR
+from .config import (
+    CAPSULE_DATA_DIR,
+    METRIC_POWER,
+    SUST_EFFICIENCY,
+    SUST_FOOTPRINTER,
+    SUST_GROUND_TRUTH,
+    SUST_OPENDT,
+    SUST_PERFORMANCE,
+    WORKLOAD_DIR,
+)
 from .data_loader import get_workload_start_time
 from .processors import process_flops_data
 
@@ -120,9 +129,9 @@ def generate_efficiency_plot(
     fp_smoothed = smooth(raw_power_data["fp_power"] / 1000)
     odt_smoothed = smooth(raw_power_data["odt_power"] / 1000)
     
-    ax1.plot(x_power, rw_smoothed, label="Ground Truth", color="#666666", lw=LINE_THICKNESS)  # Gray
-    ax1.plot(x_power, fp_smoothed, label="FootPrinter", color=COLOR_PALETTE[1], lw=LINE_THICKNESS)
-    ax1.plot(x_power, odt_smoothed, label="OpenDT", color=COLOR_PALETTE[2], lw=LINE_THICKNESS)
+    ax1.plot(x_power, rw_smoothed, label="Ground Truth", color=SUST_GROUND_TRUTH, lw=LINE_THICKNESS)
+    ax1.plot(x_power, fp_smoothed, label="FootPrinter", color=SUST_FOOTPRINTER, lw=LINE_THICKNESS)
+    ax1.plot(x_power, odt_smoothed, label="OpenDT", color=SUST_OPENDT, lw=LINE_THICKNESS)
     ax1.set_ylabel("Power\ndraw\n[kW]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
     ax1.tick_params(axis="y", labelsize=FONT_SIZE_AXIS_LABELS)
     ax1.tick_params(axis="x", labelbottom=False)
@@ -136,7 +145,7 @@ def generate_efficiency_plot(
     ax2.grid(True, alpha=0.3, zorder=0)
     x_hourly = np.arange(len(merged))
     flops_tera = merged["flops"] / 1e12
-    ax2.bar(x_hourly, flops_tera, color="#7B2D8E", alpha=0.8, width=0.8)  # Purple
+    ax2.bar(x_hourly, flops_tera, color=SUST_PERFORMANCE, alpha=0.8, width=0.8)
     ax2.set_ylabel("Perfor-\nmance\n[TFLOPs]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
     ax2.tick_params(axis="y", labelsize=FONT_SIZE_AXIS_LABELS)
     ax2.tick_params(axis="x", labelbottom=False)
@@ -148,7 +157,7 @@ def generate_efficiency_plot(
     ax3 = axes[2]
     ax3.grid(True, alpha=0.3, zorder=0)
     efficiency_tera = merged["efficiency"] / 1e12
-    ax3.bar(x_hourly, efficiency_tera, color="#0072B2", alpha=0.8, width=0.8)  # Blue
+    ax3.bar(x_hourly, efficiency_tera, color=SUST_EFFICIENCY, alpha=0.8, width=0.8)
     ax3.set_ylabel("Efficiency\n[TFLOPs\n/kWh]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
     ax3.set_xlabel("Time [day/month]", fontsize=FONT_SIZE_AXIS_DESCRIPTIONS, labelpad=10)
     ax3.tick_params(axis="both", labelsize=FONT_SIZE_AXIS_LABELS)
@@ -325,18 +334,36 @@ def _calculate_hourly_flops(run_path: Path) -> pd.DataFrame:
 
 
 def _format_time_axis(ax: Axes, timestamps: pd.Series, plot_len: int) -> None:
-    """Format the x-axis with date labels, excluding first and last."""
+    """Format the x-axis with daily date labels (1 tick per day, hide first).
+    
+    Maps actual timestamps to bar chart x-positions (0 to plot_len-1) and places
+    ticks at positions where midnight of each day falls. Hides the first label
+    to avoid crowding near the y-axis.
+    """
     timestamps = pd.to_datetime(timestamps)
+    first_ts = timestamps.iloc[0]
+    last_ts = timestamps.iloc[-1]
     
-    if plot_len <= 24:
-        step = max(1, plot_len // 8)
-    else:
-        step = max(1, plot_len // 7)
+    # Find midnight of each day in the data range
+    start_date = first_ts.normalize() + pd.Timedelta(days=1)  # First midnight after data starts
+    end_date = last_ts.normalize() + pd.Timedelta(days=1)  # Last midnight before data ends
     
-    tick_positions = list(range(0, plot_len, step))
-    tick_labels = [timestamps.iloc[i].strftime("%d/%m") for i in tick_positions]
+    # Generate daily midnight timestamps
+    daily_midnights = pd.date_range(start=start_date, end=end_date, freq="D")
     
-    # Hide first label (keep ticks but blank labels)
+    # Map each midnight to an x-position in the bar chart
+    # Each bar represents 1 hour, so position = hours since first_ts
+    tick_positions = []
+    tick_labels = []
+    
+    for midnight in daily_midnights:
+        # Calculate hours from first timestamp to this midnight
+        hours_offset = (midnight - first_ts).total_seconds() / 3600
+        if 0 <= hours_offset < plot_len:
+            tick_positions.append(hours_offset)
+            tick_labels.append(midnight.strftime("%d/%m"))
+    
+    # Hide first label (keep tick but blank label)
     if len(tick_labels) >= 1:
         tick_labels[0] = ""
     
