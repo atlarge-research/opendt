@@ -16,6 +16,8 @@ from .data import (
     measured_power,
 )
 from .paths import PATHS, SetupError, check_setup, repo_root
+from .sim import SimResult, simulate, write_inputs
+from .topology import make_topology
 
 __all__ = [
     "CARBON_ZONES",
@@ -23,11 +25,15 @@ __all__ = [
     "TRACE_END",
     "TRACE_START",
     "SetupError",
+    "SimResult",
     "Surf",
     "carbon_intensity",
     "carbon_trace_path",
     "check_setup",
     "load_surf",
+    "make_topology",
     "measured_power",
     "repo_root",
+    "simulate",
+    "write_inputs",
 ]
