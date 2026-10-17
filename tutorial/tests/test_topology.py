@@ -19,11 +19,11 @@ def test_default_topology_matches_surf():
 
 
 def test_parameters_reach_the_host_and_power_source():
-    host = make_topology(hosts=138, r=7.5, idle_power=10, max_power=150, carbon="NO").clusters[0]
+    host = make_topology(hosts=138, r=7.5, idle_power=10, max_power=150, carbon="RO").clusters[0]
     assert host.hosts[0].count == 138
     model = host.hosts[0].cpuPowerModel
     assert (model.calibrationFactor, model.idlePower, model.maxPower) == (7.5, 10, 150)
-    assert host.powerSource.carbonTracePath == str(carbon_trace_path("NO"))
+    assert host.powerSource.carbonTracePath == str(carbon_trace_path("RO"))
 
 
 @pytest.mark.parametrize(

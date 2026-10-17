@@ -39,8 +39,14 @@ def test_measured_power_slice_has_30s_samples():
 
 
 def test_carbon_week_means():
-    assert abs(carbon_intensity("NO")[SURF_WEEK].mean() - 29.1) < 0.5
+    assert abs(carbon_intensity("RO")[SURF_WEEK].mean() - 343.3) < 0.5
     assert abs(carbon_intensity("PL")[SURF_WEEK].mean() - 868.0) < 2
+
+
+def test_romania_is_the_greenest_grid_of_the_surf_week():
+    """Notebook 3's story: of NL, DE, RO and PL, Romania had the lowest average carbon intensity."""
+    week_mean = {zone: carbon_intensity(zone)[SURF_WEEK].mean() for zone in CARBON_ZONES}
+    assert min(week_mean, key=week_mean.get) == "RO"
 
 
 def test_default_carbon_trace_is_opendts_own():
@@ -48,7 +54,7 @@ def test_default_carbon_trace_is_opendts_own():
 
 
 def test_unknown_zone_lists_available():
-    with pytest.raises(ValueError, match="SE, NO, FR, NL, DE, PL"):
+    with pytest.raises(ValueError, match="NL, DE, RO, PL"):
         carbon_intensity("XX")
 
 
