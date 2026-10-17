@@ -99,3 +99,6 @@ Dockerfile*
 
 # OS
 Thumbs.db
+
+# Tutorial notebooks, outputs and data are not needed in service images
+tutorial/
