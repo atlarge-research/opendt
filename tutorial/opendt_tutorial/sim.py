@@ -224,4 +224,7 @@ def _read_output(run_dir: Path, until: pd.Timestamp):
     for col in ("submission_time", "schedule_time", "finish_time"):
         tasks[col] = utc(tasks[col])
     tasks["wait_s"] = (tasks["schedule_time"] - tasks["submission_time"]).dt.total_seconds()
+    # When the simulation ends on an export instant, OpenDC writes that instant twice (0 J the 2nd time).
+    power = power[~power.index.duplicated()]
+    service = service[~service.index.duplicated()]
     return power[:until], service[:until], tasks

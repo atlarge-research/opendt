@@ -111,6 +111,13 @@ def test_result_ends_at_until():
 
 
 @pytest.mark.opendc
+def test_full_week_has_one_row_per_timestamp():
+    """OpenDC writes the very last instant of the trace twice (the second time with 0 J)."""
+    r = simulate(until=TRACE_END)
+    assert r.power.index.is_unique and r.service.index.is_unique
+
+
+@pytest.mark.opendc
 def test_summary_is_physically_consistent():
     s = simulate(until=SIX_HOURS).summary()
     assert s["energy_kwh"] == pytest.approx(
