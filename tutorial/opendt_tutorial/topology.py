@@ -19,9 +19,9 @@ def make_topology(
 ) -> Topology:
     """SURF's cluster (`workload/SURF/topology.json`) with a chosen size, power model and grid.
 
-    hosts       number of identical machines (16 cores @ 2.1 GHz each)
+    hosts       number of identical hosts (16 cores at 2.1 GHz each)
     r           exponent of OpenDC's power model P(u) = P_idle + (P_max - P_idle)(2u - u^r)
-    idle_power  watts a machine draws when idle; max_power: watts at full load
+    idle_power  watts a host draws when idle; max_power: watts at full load
     carbon      None = OpenDT's own carbon trace (as in the live twin), or a zone from CARBON_ZONES
     """
     # pydantic would also reject these, but with less readable messages

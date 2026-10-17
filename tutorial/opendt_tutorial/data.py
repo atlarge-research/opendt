@@ -61,7 +61,7 @@ def carbon_trace_path(zone: str | None = None) -> Path:
 
 
 def carbon_intensity(zone: str | None = None) -> pd.Series:
-    """Carbon intensity of the grid [gCO₂/kWh] over time (UTC index); see `carbon_trace_path`."""
+    """Carbon intensity of the grid [gCO2/kWh] over time (UTC index); see `carbon_trace_path`."""
     trace = pd.read_parquet(carbon_trace_path(zone)).set_index("timestamp")["carbon_intensity"]
     return trace.tz_localize("UTC")
 

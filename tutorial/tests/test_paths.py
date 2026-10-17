@@ -23,7 +23,7 @@ def test_check_setup_rejects_old_or_missing_java(monkeypatch, version):
 def test_check_setup_accepts_newer_java(monkeypatch, capsys):
     monkeypatch.setattr(paths, "_java_version", lambda: "23.0.1")
     check_setup()
-    assert capsys.readouterr().out.startswith("✅ Ready")
+    assert capsys.readouterr().out.startswith("Setup OK")
 
 
 @pytest.mark.opendc

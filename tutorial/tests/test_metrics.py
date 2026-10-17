@@ -1,11 +1,12 @@
 """Tests for comparing simulated with measured power, and the power plot."""
 
 import matplotlib
+import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
 from opendt_tutorial import TRACE_START, simulate
 from opendt_tutorial.metrics import align, mape
-from opendt_tutorial.plots import plot_power
+from opendt_tutorial.plots import legend_above, plot_power
 
 matplotlib.use("Agg")
 T = pd.date_range(TRACE_START, periods=2, freq="60s")
@@ -34,8 +35,19 @@ def test_mape_of_the_first_day_is_below_the_paper_threshold():
     assert 1 < mape(simulate(until=TRACE_START + pd.Timedelta("24h"))) < 10  # NFR1: within 10 %
 
 
+def test_legend_above_puts_the_key_in_one_row_above_the_axes():
+    ax = plt.subplots()[1]
+    for i in range(4):
+        ax.plot([0, 1], [i, i], label=f"line {i}")
+    legend_above(ax)
+    ax.figure.canvas.draw()
+    key = ax.get_legend()
+    assert len({round(text.get_window_extent().y0) for text in key.get_texts()}) == 1
+    assert key.get_window_extent().y0 >= ax.get_window_extent().y1
+
+
 @pytest.mark.opendc
 def test_plot_power_draws_measured_and_each_run():
     day = TRACE_START + pd.Timedelta("6h")
     ax = plot_power(simulate(until=day), simulate(until=day, hosts=138))
-    assert len(ax.lines) == 3 and ax.get_ylabel() == "Power [kW]"
+    assert len(ax.lines) == 3 and ax.get_ylabel() == "Power Draw [kW]"

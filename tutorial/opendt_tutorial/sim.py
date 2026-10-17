@@ -81,9 +81,7 @@ class SimResult:
             "co2_kg": float(power["carbon_emission"].sum() / 1000),
             "jobs_waited": int((jobs["wait_s"] > 0).sum()),
             "mean_wait_min": float(jobs["wait_s"].mean() / 60),
-            "waiting_at_end": int(
-                (jobs["schedule_time"] > end).sum()
-            ),  # submitted, not yet started
+            "waiting_at_end": int((jobs["schedule_time"] > end).sum()),  # not started yet
         }
 
     def __repr__(self) -> str:

@@ -35,7 +35,7 @@ def test_task_ids_are_ints_and_times_are_utc():
 
 def test_measured_power_slice_has_30s_samples():
     one_hour = measured_power(TRACE_START, TRACE_START + pd.Timedelta("1h"))
-    assert len(one_hour) == 120  # 22:00:30 … 23:00:00 at 30-s steps
+    assert len(one_hour) == 120  # 22:00:30 to 23:00:00 at 30-s steps
 
 
 def test_carbon_week_means():

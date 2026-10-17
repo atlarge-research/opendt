@@ -1,4 +1,4 @@
-"""How far is the twin's predicted power from the power measured at SURF?"""
+"""MAPE between OpenDT's predicted power draw and the ground truth measured at SURF."""
 
 from __future__ import annotations
 

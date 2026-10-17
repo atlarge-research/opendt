@@ -1,4 +1,4 @@
-"""Where things live, and a one-call check that this machine can run the tutorial."""
+"""Paths to OpenDC and the SURF data, and a check that this computer can run the tutorial."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ def _java_version() -> str | None:
 
 
 def check_setup() -> None:
-    """Raise RuntimeError saying what to fix, or print one line confirming the machine is ready."""
+    """Check Java 21, OpenDC and the SURF trace; raise RuntimeError saying what to fix."""
     version = _java_version()
     if version is None or int(re.match(r"\d+", version).group()) < 21:
         raise RuntimeError(
@@ -69,4 +69,4 @@ def check_setup() -> None:
         )
     if not (PATHS.workload / "fragments.parquet").is_file():
         raise RuntimeError(f"The SURF workload trace is missing in {PATHS.workload}.")
-    print(f"✅ Ready: Java {version}, OpenDC, SURF trace, {os.cpu_count()} CPU cores")
+    print(f"Setup OK: Java {version}, OpenDC, SURF trace, {os.cpu_count()} CPU cores")

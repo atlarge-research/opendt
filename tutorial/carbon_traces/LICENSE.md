@@ -1,4 +1,4 @@
-# Carbon-intensity traces — source and licence
+# Carbon intensity traces: source and license
 
 The files in this folder are a **derived subset** (October 2022, hourly) of the Electricity Maps
 carbon-intensity datasets collected in the [opendc-traces](https://github.com/atlarge-research/opendc-traces)
@@ -7,12 +7,12 @@ repository (`carbon/traces/<ZONE>_2021-2024.parquet`). They were produced with
 
 | File | Zone | Unit |
 |---|---|---|
-| `NL.parquet` | Netherlands | gCO₂eq/kWh |
-| `DE.parquet` | Germany | gCO₂eq/kWh |
-| `RO.parquet` | Romania | gCO₂eq/kWh |
-| `PL.parquet` | Poland | gCO₂eq/kWh |
+| `NL.parquet` | Netherlands | gCO2eq/kWh |
+| `DE.parquet` | Germany | gCO2eq/kWh |
+| `RO.parquet` | Romania | gCO2eq/kWh |
+| `PL.parquet` | Poland | gCO2eq/kWh |
 
-## Licence
+## License
 
 This database is made available under the **Open Database License (ODbL) v1.0**:
 <https://opendatacommons.org/licenses/odbl/1-0/>. Any rights in individual contents of the database are
