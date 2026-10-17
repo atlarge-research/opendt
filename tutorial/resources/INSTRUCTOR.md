@@ -47,6 +47,13 @@ the previous one.
 
 Known issues:
 
+- Freshly built images get kafka-python 3.x (`kafka-python>=2.0.2` is not pinned), which rejected the `buffer_memory`
+  setting in `libs/common/odt_common/utils/kafka.py`: fixed on the tutorial branch (commit c2df7c5); images built before
+  the fix need `make up build=true`.
+- Docker Desktop needs at least 8 GB: with calibration, the calibrator container alone used 4.7 GB in the test run (it
+  picked r = 9, then 7, then 8 in the first minutes).
+- Port 9092: on the demo laptop, a local Java service listens on 127.0.0.1:9092, the host port of OpenDT's Kafka;
+  stop it before `make up`.
 - `make up` deletes the Kafka and Grafana volumes of the previous run.
 - The example body of `PUT /api/topology` in the API docs has `calibrationFactor: 10`; the SURF topology uses 4. Use
   the topology file above.

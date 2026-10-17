@@ -17,6 +17,7 @@ from .data import (
 from .metrics import align, mape
 from .paths import PATHS, check_setup, repo_root
 from .plots import legend_above, plot_power
+from .questions import ask_question, give_solution
 from .sim import SimResult, default_workers, simulate, simulate_many, write_inputs
 from .topology import make_topology
 
@@ -27,11 +28,13 @@ __all__ = [
     "TRACE_START",
     "SimResult",
     "align",
+    "ask_question",
     "carbon_intensity",
     "carbon_trace_path",
     "check_setup",
     "legend_above",
     "default_workers",
+    "give_solution",
     "load_surf",
     "make_topology",
     "mape",
