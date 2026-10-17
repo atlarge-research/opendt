@@ -118,7 +118,14 @@ def test_summary_is_physically_consistent():
     )  # 6 h at the average power
     grid = carbon_intensity()[TRACE_START:SIX_HOURS]
     assert grid.min() * s["energy_kwh"] / 1000 <= s["co2_kg"] <= grid.max() * s["energy_kwh"] / 1000
-    assert s["max_pending"] == 0 and s["jobs_waited"] == 0  # 277 hosts never queue on SURF
+    assert s["jobs_waited"] == 0 and s["waiting_at_end"] == 0  # 277 hosts never queue on SURF
+
+
+@pytest.mark.opendc
+def test_summary_counts_jobs_still_waiting_when_the_run_ends():
+    """With a quarter of the machines, part of day 1's work is deferred past the end of the day."""
+    s = simulate(until=TRACE_START + pd.Timedelta("24h"), hosts=69).summary()
+    assert s["waiting_at_end"] > 100 and s["jobs_waited"] > s["waiting_at_end"]
 
 
 @pytest.mark.opendc

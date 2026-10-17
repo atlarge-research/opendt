@@ -71,17 +71,19 @@ class SimResult:
     cached: bool
 
     def summary(self, start=TRACE_START, end=TRACE_END) -> dict:
-        """Key numbers between `start` and `end`."""
-        start, end = to_utc(start), to_utc(end)
-        power, service = self.power[start:end], self.service[start:end]
+        """Key numbers between `start` and `end` (at most `until`)."""
+        start, end = to_utc(start), min(to_utc(end), self.until)
+        power = self.power[start:end]
         jobs = self.tasks[self.tasks["submission_time"].between(start, end)]
         return {
             "avg_power_kw": float(power["power_draw"].mean() / 1000),
             "energy_kwh": float(power["energy_usage"].sum() / 3.6e6),
             "co2_kg": float(power["carbon_emission"].sum() / 1000),
-            "max_pending": int(service["tasks_pending"].max()),
             "jobs_waited": int((jobs["wait_s"] > 0).sum()),
             "mean_wait_min": float(jobs["wait_s"].mean() / 60),
+            "waiting_at_end": int(
+                (jobs["schedule_time"] > end).sum()
+            ),  # submitted, not yet started
         }
 
     def __repr__(self) -> str:
