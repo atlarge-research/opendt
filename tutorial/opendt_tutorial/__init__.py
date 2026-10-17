@@ -14,7 +14,9 @@ from .data import (
     load_surf,
     measured_power,
 )
+from .metrics import align, mape
 from .paths import PATHS, check_setup, repo_root
+from .plots import plot_power
 from .sim import SimResult, default_workers, simulate, simulate_many, write_inputs
 from .topology import make_topology
 
@@ -24,13 +26,16 @@ __all__ = [
     "TRACE_END",
     "TRACE_START",
     "SimResult",
+    "align",
     "carbon_intensity",
     "carbon_trace_path",
     "check_setup",
     "default_workers",
     "load_surf",
     "make_topology",
+    "mape",
     "measured_power",
+    "plot_power",
     "repo_root",
     "simulate",
     "simulate_many",
