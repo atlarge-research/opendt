@@ -28,6 +28,30 @@ for spare, share in [(0, 0.18), (50, 0.12)]:
     assert abs((off * IDLE_POWER * 150).sum() / 3.6e6 / used_kwh - share) < 0.01
 assert 18.5 < low_idle.summary()["avg_power_kw"] < 19.5 and 15 < mape(low_idle) < 21
 """,
+    "2.calibration.ipynb": """
+def power(u, r):
+    return P_IDLE + (P_MAX - P_IDLE) * (2 * u - u**r)
+assert [round(power(0.5, 4)), round(power(0.5, 9)), round(power(0.8, 4))] == [165, 174, 202]
+
+mape_per_r = errors.mean()
+assert mape_per_r.idxmin() == 7 and 4.3 < mape_per_r[7] < 4.7 and 6.2 < mape_per_r[4] < 6.6
+assert best_r_per_day.min() == 5 and best_r_per_day.max() == 9
+
+assert 6.2 < no_calibration.mean() < 6.6 and 0.77 < (no_calibration < 10).mean() < 0.83
+assert 3.4 < with_calibration.mean() < 3.9 and 0.88 < (with_calibration < 10).mean() < 0.94
+under = pd.DataFrame({r: align(run).eval("measured > simulated") for r, run in sweep.items()})
+under = under.resample("1h").mean()
+assert 0.91 < under[4.0].mean() < 0.95 and 0.66 < self_calibrate(under, best_r).mean() < 0.72
+assert worse.sum() == 5
+
+assert 4.1 < with_24h.mean() < 4.5 and (with_24h > no_calibration).sum() == 20
+assert (best_r == 9).sum() == 75
+best_wide = hourly_wide.idxmin(axis=1)
+assert 3.1 < with_wide.mean() < 3.5 and (best_wide == 12).sum() == 69
+edge = best_wide.index[best_wide == 12]
+under_12 = align(wider[12.0]).eval("measured > simulated").resample("1h").mean()
+assert under_12[edge].mean() > 0.9
+""",
 }
 
 
