@@ -41,7 +41,6 @@ def get_kafka_producer(bootstrap_servers: str | None = None, **kwargs: Any) -> K
         "batch_size": 16384,  # 16KB batch size (default)
         # Increase message size limits for large task aggregates with many fragments
         "max_request_size": 10485760,  # 10MB (default is 1MB)
-        "buffer_memory": 33554432,  # 32MB buffer (default)
     }
 
     # Merge with user-provided config
