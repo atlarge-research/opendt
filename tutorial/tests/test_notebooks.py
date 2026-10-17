@@ -52,6 +52,24 @@ edge = best_wide.index[best_wide == 12]
 under_12 = align(wider[12.0]).eval("measured > simulated").resample("1h").mean()
 assert under_12[edge].mean() > 0.9
 """,
+    "3.co2_migration.ipynb": """
+average = intensity.mean()
+assert list(average.sort_values().index) == ["RO", "NL", "DE", "PL"]
+assert [round(average["RO"]), round(average["NL"])] == [343, 373]
+assert len(intensity) == 169 and (intensity["NL"] < intensity["RO"]).sum() == 57
+assert [round(intensity["NL"].min()), round(intensity["NL"].max())] == [123, 528]
+
+energy, co2 = table["energy_kwh"], table["co2_kg"]
+assert energy.max() - energy.min() < 0.01 and round(energy.mean()) == 3424
+assert [round(co2[zone]) for zone in ["RO", "NL", "DE", "PL"]] == [1172, 1253, 1726, 2959]
+assert best == "RO" and round(saving) == 81 and round(saving / co2["NL"] * 100) == 6
+
+assert round(co2_per_hour.min(axis=1).sum()) == 1065 and switches == 11
+assert [round((1 - 1065 / co2[zone]) * 100) for zone in ["NL", "RO"]] == [15, 9]
+half_summary = half.summary()
+assert round(half_summary["co2_kg"]) == 971 and round((1 - half_summary["co2_kg"] / co2["NL"]) * 100) == 23
+assert half_summary["jobs_waited"] == 2631 and round(half_summary["mean_wait_min"]) == 78
+""",
 }
 
 
