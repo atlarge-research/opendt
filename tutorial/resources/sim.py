@@ -70,18 +70,16 @@ class SimResult:
     run_dir: Path
     cached: bool
 
-    def summary(self, start=TRACE_START, end=TRACE_END) -> dict:
-        """Key numbers between `start` and `end` (at most `until`)."""
-        start, end = to_utc(start), min(to_utc(end), self.until)
-        power = self.power[start:end]
-        jobs = self.tasks[self.tasks["submission_time"].between(start, end)]
+    def summary(self) -> dict:
+        """Key numbers of the run, from the start of the trace to `until`."""
+        power, jobs = self.power, self.tasks
         return {
             "avg_power_kw": float(power["power_draw"].mean() / 1000),
             "energy_kwh": float(power["energy_usage"].sum() / 3.6e6),
             "co2_kg": float(power["carbon_emission"].sum() / 1000),
             "jobs_waited": int((jobs["wait_s"] > 0).sum()),
             "mean_wait_min": float(jobs["wait_s"].mean() / 60),
-            "waiting_at_end": int((jobs["schedule_time"] > end).sum()),  # not started yet
+            "waiting_at_end": int((jobs["schedule_time"] > self.until).sum()),  # not started yet
         }
 
     def __repr__(self) -> str:
@@ -110,7 +108,7 @@ def write_inputs(until, out_dir: Path) -> int:
 
 
 def simulate(
-    until="2022-10-07 22:00",
+    until,
     *,
     hosts: int = 277,
     r: float = 4.0,
@@ -121,7 +119,7 @@ def simulate(
 ) -> SimResult:
     """Simulate SURF from the start of the trace until `until` on the given datacenter.
 
-    Results are cached in tutorial/output/, so running the same simulation again is instant.
+    Results are cached in tutorial/resources/output/, so running the same simulation again is instant.
     """
     until = _clip(until)
     topology = make_topology(
@@ -143,10 +141,14 @@ def simulate(
 def simulate_many(param: str, values, **common) -> dict:
     """Run `simulate` once per value of `param`, several at a time; returns {value: SimResult}."""
     load_surf()  # load the trace once here rather than in every thread
+
+    def run(value):
+        shown = value if isinstance(value, str) else f"{value:,g}"  # 2770 -> 2,770
+        return simulate(**common, **{param: value}, label=f"{param} = {shown}")
+
     values = list(values)
     with ThreadPoolExecutor(default_workers()) as pool:
-        runs = pool.map(lambda v: simulate(**common, **{param: v}, label=f"{param}={v}"), values)
-        return dict(zip(values, runs, strict=True))
+        return dict(zip(values, pool.map(run, values), strict=True))
 
 
 def default_workers() -> int:
@@ -181,7 +183,13 @@ def _run_opendc(run_dir: Path, until: pd.Timestamp, topology) -> None:
     }
     (inputs / "experiment.json").write_text(json.dumps(experiment, indent=2))
 
-    env = {**os.environ, "JAVA_HOME": detect_java_home()}
+    env = {
+        **os.environ,
+        "JAVA_HOME": detect_java_home(),
+        # Host names from /etc/hosts only: without it, parallel runs can wait 5 s for DNS at start-up.
+        # The serial garbage collector needs less CPU and memory on 2-core machines (e.g., Codespaces).
+        "OPEN_DC_EXPERIMENT_RUNNER_OPTS": "-Djdk.net.hosts.file=/etc/hosts -XX:+UseSerialGC",
+    }
     with open(run_dir / "opendc.log", "w") as log_file:
         result = subprocess.run(
             [str(PATHS.opendc_bin), "--experiment-path", str(inputs / "experiment.json")],
@@ -222,7 +230,8 @@ def _read_output(run_dir: Path, until: pd.Timestamp):
     for col in ("submission_time", "schedule_time", "finish_time"):
         tasks[col] = utc(tasks[col])
     tasks["wait_s"] = (tasks["schedule_time"] - tasks["submission_time"]).dt.total_seconds()
-    # When the simulation ends on an export instant, OpenDC writes that instant twice (0 J the 2nd time).
-    power = power[~power.index.duplicated()]
-    service = service[~service.index.duplicated()]
+    # When the simulation ends on an export instant, OpenDC writes that instant twice: for power, the
+    # second row is an empty interval (0 J); for service, it is the final state.
+    power = power[~power.index.duplicated(keep="first")]
+    service = service[~service.index.duplicated(keep="last")]
     return power[:until], service[:until], tasks

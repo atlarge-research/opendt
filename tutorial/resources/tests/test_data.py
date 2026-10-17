@@ -4,7 +4,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-from opendt_tutorial.data import (
+from resources.data import (
     CARBON_ZONES,
     TRACE_END,
     TRACE_START,

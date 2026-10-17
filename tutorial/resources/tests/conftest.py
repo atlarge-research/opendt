@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-TUTORIAL_DIR = Path(__file__).resolve().parents[1]
+TUTORIAL_DIR = Path(__file__).resolve().parents[2]
 REPO = TUTORIAL_DIR.parent
 
 if str(TUTORIAL_DIR) not in sys.path:
@@ -21,8 +21,8 @@ def pytest_configure(config: pytest.Config) -> None:
 
 @pytest.fixture(autouse=True, scope="session")
 def fresh_simulation_cache(tmp_path_factory):
-    """Run OpenDC for real instead of reusing the notebooks' cache in tutorial/output/."""
-    from opendt_tutorial import sim
+    """Run OpenDC for real instead of reusing the notebooks' cache in tutorial/resources/output/."""
+    from resources import sim
 
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(

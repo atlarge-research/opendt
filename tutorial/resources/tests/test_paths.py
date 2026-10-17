@@ -2,8 +2,8 @@
 
 import pytest
 from conftest import REPO
-from opendt_tutorial import paths
-from opendt_tutorial.paths import check_setup, repo_root
+from resources import paths
+from resources.paths import check_setup, repo_root
 
 
 def test_repo_root_does_not_depend_on_the_working_directory(tmp_path, monkeypatch):

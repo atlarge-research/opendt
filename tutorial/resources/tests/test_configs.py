@@ -6,7 +6,7 @@ from conftest import REPO, TUTORIAL_DIR
 from odt_common.config import AppConfig
 from odt_common.models import Topology
 
-CONFIGS = TUTORIAL_DIR / "configs"
+CONFIGS = TUTORIAL_DIR / "resources/configs"
 
 
 def test_live_twin_config_runs_fast_without_calibration():

@@ -15,7 +15,7 @@ from .paths import PATHS
 TRACE_START = pd.Timestamp("2022-10-06 22:00", tz="UTC")
 TRACE_END = TRACE_START + pd.Timedelta(days=7)
 
-# Electricity Maps zones shipped in tutorial/carbon_traces/ (October 2022).
+# Electricity Maps zones shipped in tutorial/resources/carbon_traces/ (October 2022).
 CARBON_ZONES = ("NL", "DE", "RO", "PL")
 
 

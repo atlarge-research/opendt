@@ -3,7 +3,7 @@
 The files in this folder are a **derived subset** (October 2022, hourly) of the Electricity Maps
 carbon-intensity datasets collected in the [opendc-traces](https://github.com/atlarge-research/opendc-traces)
 repository (`carbon/traces/<ZONE>_2021-2024.parquet`). They were produced with
-`tutorial/tools/make_carbon_subset.py`; values are unchanged, only rows outside October 2022 were dropped.
+`tutorial/resources/make_carbon_subset.py`; values are unchanged, only rows outside October 2022 were dropped.
 
 | File | Zone | Unit |
 |---|---|---|

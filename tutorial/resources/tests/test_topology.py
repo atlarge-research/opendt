@@ -5,8 +5,8 @@ import json
 import pytest
 from conftest import REPO
 from odt_common.models import Topology
-from opendt_tutorial.data import carbon_trace_path
-from opendt_tutorial.topology import make_topology
+from resources.data import carbon_trace_path
+from resources.topology import make_topology
 
 
 def test_default_topology_matches_surf():

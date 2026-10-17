@@ -1,9 +1,9 @@
-# OpenDT live twin of SURF for the tutorial (notebook 4), as in the ICPE demo.
-# Start: make up config=tutorial/configs/live_twin.yaml
+# OpenDT live twin of SURF with the Self-Calibrator (notebook 4), as in the ICPE demo.
+# Start: make up config=tutorial/resources/configs/live_twin_calibration.yaml
 
 global:
   speed_factor: -1  # 1 = real time, -1 = maximum speed
-  calibration_enabled: false
+  calibration_enabled: true
 
 services:
   dc-mock:
@@ -13,6 +13,14 @@ services:
   simulator:
     simulation_frequency_minutes: 5
     background_load_nodes: 0
+
+  calibrator:
+    calibrated_property: "cpuPowerModel.calibrationFactor"  # r in the power model
+    min_value: 3
+    max_value: 9
+    linspace_points: 7  # r = 3, 4, ..., 9
+    max_parallel_workers: 4
+    mape_window_minutes: 60
 
 kafka:
   topics:

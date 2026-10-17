@@ -4,9 +4,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
-from opendt_tutorial import TRACE_START, simulate
-from opendt_tutorial.metrics import align, mape
-from opendt_tutorial.plots import legend_above, plot_power
+from resources import TRACE_START, simulate
+from resources.metrics import align, mape
+from resources.plots import legend_above, plot_power
 
 matplotlib.use("Agg")
 T = pd.date_range(TRACE_START, periods=2, freq="60s")
@@ -47,7 +47,13 @@ def test_legend_above_puts_the_key_in_one_row_above_the_axes():
 
 
 @pytest.mark.opendc
-def test_plot_power_draws_measured_and_each_run():
+def test_plot_power_draws_measured_and_each_run_or_series():
     day = TRACE_START + pd.Timedelta("6h")
-    ax = plot_power(simulate(until=day), simulate(until=day, hosts=138))
-    assert len(ax.lines) == 3 and ax.get_ylabel() == "Power Draw [kW]"
+    run = simulate(until=day)
+    ax = plot_power(run, run.power["power_draw"].rename("a power series [W]"))
+    assert [line.get_label() for line in ax.lines] == [
+        "Ground Truth",
+        run.label,
+        "a power series [W]",
+    ]
+    assert ax.get_ylabel() == "Power Draw [kW]" and ax.get_ylim()[0] == 0

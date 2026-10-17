@@ -10,10 +10,10 @@ import pytest
 from conftest import REPO
 from odt_common.models import Fragment, Task
 from odt_common.odc_runner import OpenDCRunner
-from opendt_tutorial import sim
-from opendt_tutorial.data import TRACE_END, TRACE_START, carbon_intensity
-from opendt_tutorial.paths import PATHS
-from opendt_tutorial.sim import simulate, simulate_many, write_inputs
+from resources import sim
+from resources.data import TRACE_END, TRACE_START, carbon_intensity
+from resources.paths import PATHS
+from resources.sim import simulate, simulate_many, write_inputs
 
 SIX_HOURS = TRACE_START + pd.Timedelta("6h")
 LIVE_RUN = REPO / "data/2026_05_05_06_54_23"  # Radu's uncalibrated live-twin run (5-min windows)
@@ -115,6 +115,8 @@ def test_full_week_has_one_row_per_timestamp():
     """OpenDC writes the very last instant of the trace twice (the second time with 0 J)."""
     r = simulate(until=TRACE_END)
     assert r.power.index.is_unique and r.service.index.is_unique
+    # the service row kept for that instant is the final state: every job has finished
+    assert r.service["tasks_completed"].iloc[-1] == (r.tasks["finish_time"] <= TRACE_END).sum()
 
 
 @pytest.mark.opendc
@@ -131,15 +133,19 @@ def test_summary_is_physically_consistent():
 @pytest.mark.opendc
 def test_summary_counts_jobs_still_waiting_when_the_run_ends():
     """With a quarter of the machines, part of day 1's work is deferred past the end of the day."""
-    s = simulate(until=TRACE_START + pd.Timedelta("24h"), hosts=69).summary()
-    assert s["waiting_at_end"] > 100 and s["jobs_waited"] > s["waiting_at_end"]
+    r = simulate(until=TRACE_START + pd.Timedelta("24h"), hosts=69)
+    s = r.summary()
+    assert s["waiting_at_end"] == r.service["tasks_pending"].iloc[-1] > 100  # OpenDC agrees
+    assert s["jobs_waited"] > s["waiting_at_end"]
 
 
 @pytest.mark.opendc
 def test_simulate_many_hosts_keys():
-    runs = simulate_many("hosts", [138, 277], until=SIX_HOURS)
-    assert set(runs) == {138, 277} and runs[138].label == "hosts=138"
-    assert runs[138].service["hosts_up"].max() == 138 and runs[277].service["hosts_up"].max() == 277
+    runs = simulate_many("hosts", [138, 2770], until=SIX_HOURS)
+    assert set(runs) == {138, 2770} and runs[2770].label == "hosts = 2,770"
+    assert (
+        runs[138].service["hosts_up"].max() == 138 and runs[2770].service["hosts_up"].max() == 2770
+    )
 
 
 @pytest.mark.opendc
