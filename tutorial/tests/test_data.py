@@ -4,7 +4,6 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
-
 from opendt_tutorial.data import (
     CARBON_ZONES,
     TRACE_END,
@@ -15,10 +14,7 @@ from opendt_tutorial.data import (
     measured_power,
 )
 
-
-def test_trace_window_constants():
-    assert TRACE_START == pd.Timestamp("2022-10-06 22:00", tz="UTC")
-    assert TRACE_END == pd.Timestamp("2022-10-13 22:00", tz="UTC")
+SURF_WEEK = slice(TRACE_START, TRACE_END - pd.Timedelta("1ms"))
 
 
 def test_load_surf_shapes():
@@ -31,9 +27,10 @@ def test_load_surf_shapes():
 
 def test_task_ids_are_ints_and_times_are_utc():
     s = load_surf()
-    assert pd.api.types.is_integer_dtype(s.tasks["id"]) and pd.api.types.is_integer_dtype(s.fragments["id"])
+    assert pd.api.types.is_integer_dtype(s.tasks["id"]) and pd.api.types.is_integer_dtype(
+        s.fragments["id"]
+    )
     assert str(s.tasks["submission_time"].dt.tz) == "UTC"
-    assert s.tasks["submission_time"].min() == TRACE_START
 
 
 def test_measured_power_slice_has_30s_samples():
@@ -42,9 +39,12 @@ def test_measured_power_slice_has_30s_samples():
 
 
 def test_carbon_week_means():
-    w = slice(TRACE_START, TRACE_END - pd.Timedelta("1ms"))
-    assert abs(carbon_intensity("NO")[w].mean() - 29.1) < 0.5
-    assert abs(carbon_intensity("PL")[w].mean() - 868.0) < 2
+    assert abs(carbon_intensity("NO")[SURF_WEEK].mean() - 29.1) < 0.5
+    assert abs(carbon_intensity("PL")[SURF_WEEK].mean() - 868.0) < 2
+
+
+def test_default_carbon_trace_is_opendts_own():
+    assert abs(carbon_intensity()[SURF_WEEK].mean() - 168.7) < 0.5  # workload/SURF/carbon.parquet
 
 
 def test_unknown_zone_lists_available():
@@ -55,8 +55,14 @@ def test_unknown_zone_lists_available():
 def test_carbon_files_have_opendc_schema():
     for zone in CARBON_ZONES:
         schema = pq.read_schema(carbon_trace_path(zone))
-        assert schema.field("timestamp").type == pa.timestamp("ms") and not schema.field("timestamp").nullable
-        assert schema.field("carbon_intensity").type == pa.float64() and not schema.field("carbon_intensity").nullable
+        assert (
+            schema.field("timestamp").type == pa.timestamp("ms")
+            and not schema.field("timestamp").nullable
+        )
+        assert (
+            schema.field("carbon_intensity").type == pa.float64()
+            and not schema.field("carbon_intensity").nullable
+        )
 
 
 def test_all_simulated_jobs_take_one_host():

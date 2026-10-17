@@ -1,5 +1,6 @@
 """Test configuration for the OpenDT tutorial helper package."""
 
+import dataclasses
 import sys
 from pathlib import Path
 
@@ -16,3 +17,15 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "opendc: runs the bundled OpenDC simulator (needs Java 21+)")
     config.addinivalue_line("markers", "notebooks: executes tutorial notebooks (needs nbclient)")
     config.addinivalue_line("markers", "network: needs internet access")
+
+
+@pytest.fixture(autouse=True, scope="session")
+def fresh_simulation_cache(tmp_path_factory):
+    """Run OpenDC for real instead of reusing the notebooks' cache in tutorial/output/."""
+    from opendt_tutorial import sim
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(
+            sim, "PATHS", dataclasses.replace(sim.PATHS, output=tmp_path_factory.mktemp("output"))
+        )
+        yield

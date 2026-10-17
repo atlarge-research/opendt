@@ -29,12 +29,10 @@ def main(source: Path, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     for zone in ZONES:
         df = pd.read_parquet(source / f"{zone}_2021-2024.parquet")
-        ts = pd.to_datetime(df["timestamp"])
-        if ts.dt.tz is not None:
-            ts = ts.dt.tz_convert("UTC").dt.tz_localize(None)
+        ts = df["timestamp"]  # naive UTC, timestamp[ms]
         keep = (ts >= START) & (ts < END)
         table = pa.table(
-            {"timestamp": ts[keep].astype("datetime64[ms]"), "carbon_intensity": df.loc[keep, "carbon_intensity"]},
+            {"timestamp": ts[keep], "carbon_intensity": df.loc[keep, "carbon_intensity"]},
             schema=SCHEMA,
         )
         pq.write_table(table, out / f"{zone}.parquet")
