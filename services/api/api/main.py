@@ -1,6 +1,5 @@
 """OpenDT API - FastAPI Application for datacenter simulation data."""
 
-import json
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -8,10 +7,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
-import pandas as pd
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from odt_common import load_config_from_env
 from odt_common.config import DynamicConfigEvent, GlobalConfig
 from odt_common.models.topology import (
@@ -357,12 +355,15 @@ async def get_carbon_emission_data(
 # ============================================================================
 
 
+def run_dir() -> Path:
+    return Path(os.getenv("DATA_DIR", "/app/data")) / os.getenv("RUN_ID", "")
+
+
 def twin_run() -> Path:
     """The run folder of this twin; 404 until its first window of operation is complete."""
-    run = Path(os.getenv("DATA_DIR", "/app/data")) / os.getenv("RUN_ID", "")
-    if not twin.windows(run):
+    if not twin.windows(run_dir()):
         raise HTTPException(status_code=404, detail="No window of operation is complete yet")
-    return run
+    return run_dir()
 
 
 def publish(topic: str, message: dict, key: str | None = None) -> None:
@@ -374,32 +375,62 @@ def publish(topic: str, message: dict, key: str | None = None) -> None:
 
 
 @app.get("/api/status")
-async def get_status():
+def get_status():
     """The twin's time, topology, and replay speed: the control panel's current values (a flat object)."""
     status = twin.status(twin_run())
     speed = app.state.speed_factor or app.state.config.global_config.speed_factor
     return {**status, "twin_time": status["twin_time"].isoformat(), "speed_factor": speed}
 
 
+def rows(table) -> Response:
+    """A table of the twin for Infinity, {"data": [...]}; no rows until the first window of operation is complete."""
+    run = run_dir()
+    data = table(run).to_json(orient="records", date_format="iso") if twin.windows(run) else "[]"
+    return Response(f'{{"data": {data}}}', media_type="application/json")
+
+
 @app.get("/api/cluster")
-async def get_cluster(start: datetime | None = None, end: datetime | None = None):
-    """Hosts up and in use (one job per host), jobs pending, running, and finished, and mean CPU utilization."""
-    run = Path(os.getenv("DATA_DIR", "/app/data")) / os.getenv("RUN_ID", "")
-    if not twin.windows(run):
-        return {"data": []}  # until the first window, the panels show "No data"
-    cluster = twin.cluster(run)
-    if start is not None:
-        cluster = cluster[cluster["timestamp"] >= pd.Timestamp(start)]
-    if end is not None:
-        cluster = cluster[cluster["timestamp"] <= pd.Timestamp(end)]
-    return {"data": json.loads(cluster.to_json(orient="records", date_format="iso"))}
+def get_cluster(start: datetime | None = None, end: datetime | None = None):
+    """Hosts, jobs, CPU of the hosts (mean, median, p95; demand vs. capacity in cores), and energy, CO2, and
+    embodied CO2 since the trace start."""
+    return rows(lambda run: twin.cluster(run).set_index("timestamp")[start:end].reset_index())
+
+
+@app.get("/api/totals")
+def get_totals(period: Literal["minute", "hour", "day", "week", "month", "year"] = "day"):
+    """Energy [kWh], CO2 [kg], and embodied CO2 [kg] per period; the last period runs up to the twin's time."""
+    return rows(lambda run: twin.totals(run, period))
+
+
+@app.get("/api/scheduling")
+def get_scheduling():
+    """Per window: hours until all jobs submitted so far are done, and the median and p95 time in queue [min]."""
+    return rows(twin.scheduling)
+
+
+@app.get("/api/jobs")
+def get_jobs():
+    """The jobs not done yet, with their predicted start and finish, and the hours left."""
+    return rows(twin.jobs)
+
+
+@app.get("/api/events")
+def get_events():
+    """Changes of hosts, r, and carbon zone, for markers on the graphs."""
+    return rows(twin.events)
+
+
+@app.get("/api/calibration")
+def get_calibration():
+    """The best r and its MAPE [%] per grid search of the calibrator."""
+    return rows(twin.calibration)
 
 
 class Control(BaseModel):
     """A change from the control panel; the fields left out stay as they are."""
 
     hosts: int | None = Field(None, ge=1)
-    carbon_zone: Literal["SURF", "NL", "DE", "RO", "PL"] | None = None
+    carbon_zone: Literal["Default", "NL", "DE", "RO", "PL"] | None = None
     speed_factor: float | None = None
 
     @field_validator("speed_factor")
@@ -428,7 +459,7 @@ async def control(change: Control):
         )
         publish("system", event.model_dump(), key=event.setting_key)  # sys.config is compacted
         app.state.speed_factor = change.speed_factor
-    return await get_status()
+    return get_status()
 
 
 if __name__ == "__main__":

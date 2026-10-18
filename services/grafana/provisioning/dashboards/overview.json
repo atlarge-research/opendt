@@ -1,38 +1,52 @@
 {
     "uid": "opendt-overview",
-    "title": "OpenDT overview",
+    "title": "OpenDT",
     "tags": [
         "opendt"
     ],
     "graphTooltip": 1,
-    "links": [
-        {
-            "title": "Cluster",
-            "type": "link",
-            "url": "/d/opendt-cluster",
-            "keepTime": true,
-            "icon": "dashboard"
-        },
-        {
-            "title": "Classic",
-            "type": "link",
-            "url": "/d/opendt-main",
-            "keepTime": true,
-            "icon": "dashboard"
-        }
-    ],
+    "annotations": {
+        "list": [
+            {
+                "name": "Topology changes",
+                "enable": true,
+                "iconColor": "#D55E00",
+                "datasource": {
+                    "type": "yesoreyeram-infinity-datasource",
+                    "uid": "df5tfgbpfeakgc"
+                },
+                "target": {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/events",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "time",
+                            "text": "time",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "text",
+                            "text": "text",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
     "panels": [
         {
             "id": 1,
             "type": "volkovlabs-form-panel",
             "title": "Control panel",
-            "description": "Changes the running twin from its next window of operation",
-            "gridPos": {
-                "x": 0,
-                "y": 0,
-                "w": 6,
-                "h": 14
-            },
             "options": {
                 "initial": {
                     "method": "GET",
@@ -43,7 +57,7 @@
                     "url": "http://localhost:3001/api/control",
                     "payloadMode": "updated",
                     "confirm": true,
-                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Control panel', 'The twin changes from its next window of operation']);\n} else {\n  context.grafana.notifyError(['Control panel', `The API answered ${response && response.status}`]);\n}"
+                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Control panel', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['Control panel', `The API answered ${response && response.status}`]);\n}"
                 },
                 "sync": false,
                 "elements": [
@@ -63,9 +77,9 @@
                         "labelWidth": 12,
                         "options": [
                             {
-                                "id": "SURF",
-                                "label": "SURF",
-                                "value": "SURF"
+                                "id": "Default",
+                                "label": "Default (OpenDT's trace)",
+                                "value": "Default"
                             },
                             {
                                 "id": "NL",
@@ -137,6 +151,12 @@
                     },
                     "confirm": "Apply"
                 }
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 13
             }
         },
         {
@@ -146,12 +166,6 @@
             "datasource": {
                 "type": "yesoreyeram-infinity-datasource",
                 "uid": "df5tfgbpfeakgc"
-            },
-            "gridPos": {
-                "x": 6,
-                "y": 0,
-                "w": 18,
-                "h": 4
             },
             "targets": [
                 {
@@ -225,7 +239,7 @@
                         "properties": [
                             {
                                 "id": "unit",
-                                "value": "dateTimeAsIso"
+                                "value": "time:MM-DD HH:mm"
                             }
                         ]
                     },
@@ -295,8 +309,17 @@
                 "colorMode": "none",
                 "graphMode": "none",
                 "textMode": "value_and_name",
-                "justifyMode": "center",
-                "orientation": "vertical"
+                "orientation": "vertical",
+                "text": {
+                    "titleSize": 12,
+                    "valueSize": 22
+                }
+            },
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 18,
+                "h": 4
             }
         },
         {
@@ -306,12 +329,6 @@
             "datasource": {
                 "type": "yesoreyeram-infinity-datasource",
                 "uid": "df5tfgbpfeakgc"
-            },
-            "gridPos": {
-                "x": 6,
-                "y": 4,
-                "w": 18,
-                "h": 10
             },
             "targets": [
                 {
@@ -414,9 +431,20 @@
                 ]
             },
             "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
                 "tooltip": {
                     "mode": "multi"
                 }
+            },
+            "gridPos": {
+                "x": 6,
+                "y": 4,
+                "w": 6,
+                "h": 9
             }
         },
         {
@@ -426,12 +454,6 @@
             "datasource": {
                 "type": "yesoreyeram-infinity-datasource",
                 "uid": "df5tfgbpfeakgc"
-            },
-            "gridPos": {
-                "x": 0,
-                "y": 14,
-                "w": 12,
-                "h": 10
             },
             "targets": [
                 {
@@ -536,9 +558,20 @@
                 ]
             },
             "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
                 "tooltip": {
                     "mode": "multi"
                 }
+            },
+            "gridPos": {
+                "x": 12,
+                "y": 4,
+                "w": 6,
+                "h": 9
             }
         },
         {
@@ -548,12 +581,6 @@
             "datasource": {
                 "type": "yesoreyeram-infinity-datasource",
                 "uid": "df5tfgbpfeakgc"
-            },
-            "gridPos": {
-                "x": 12,
-                "y": 14,
-                "w": 12,
-                "h": 10
             },
             "targets": [
                 {
@@ -579,7 +606,7 @@
                             "type": "number"
                         },
                         {
-                            "selector": "tasks_active",
+                            "selector": "hosts_in_use",
                             "text": "In use",
                             "type": "number"
                         }
@@ -641,9 +668,1670 @@
                 ]
             },
             "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
                 "tooltip": {
                     "mode": "multi"
                 }
+            },
+            "gridPos": {
+                "x": 18,
+                "y": 4,
+                "w": 6,
+                "h": 9
+            }
+        },
+        {
+            "id": 6,
+            "type": "row",
+            "title": "Scheduling",
+            "gridPos": {
+                "x": 0,
+                "y": 13,
+                "w": 24,
+                "h": 1
+            }
+        },
+        {
+            "id": 7,
+            "type": "stat",
+            "title": "Now",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/scheduling",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "completion_h",
+                            "text": "Time to full completion [h]",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "queue_median_min",
+                            "text": "Time in queue, median [min]",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "queue_p95_min",
+                            "text": "Time in queue, p95 [min]",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Time to full completion [h]": 0,
+                            "Time in queue, median [min]": 1,
+                            "Time in queue, p95 [min]": 2
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "#009E73"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Time to full completion [h]"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "none"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Time in queue, median [min]"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "none"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Time in queue, p95 [min]"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "none"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "colorMode": "none",
+                "textMode": "value_and_name",
+                "orientation": "horizontal",
+                "text": {
+                    "titleSize": 12,
+                    "valueSize": 22
+                }
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 14,
+                "w": 4,
+                "h": 8
+            }
+        },
+        {
+            "id": 8,
+            "type": "timeseries",
+            "title": "Time to full completion",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/scheduling",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "completion_h",
+                            "text": "Time to full completion",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Time to full completion": 0
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Time [h]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Time to full completion"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 4,
+                "y": 14,
+                "w": 5,
+                "h": 8
+            }
+        },
+        {
+            "id": 9,
+            "type": "timeseries",
+            "title": "Time in queue",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/scheduling",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "queue_median_min",
+                            "text": "Median",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "queue_p95_min",
+                            "text": "p95",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Median": 0,
+                            "p95": 1
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Time in queue [min]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Median"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "p95"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 9,
+                "y": 14,
+                "w": 5,
+                "h": 8
+            }
+        },
+        {
+            "id": 10,
+            "type": "timeseries",
+            "title": "Jobs",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "tasks_pending",
+                            "text": "Waiting",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "tasks_active",
+                            "text": "Running",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "tasks_completed",
+                            "text": "Finished",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Waiting": 0,
+                            "Running": 1,
+                            "Finished": 2
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Jobs",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    },
+                    "unit": "locale"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Waiting"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#9557a5"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Running"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Finished"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 14,
+                "y": 14,
+                "w": 5,
+                "h": 8
+            }
+        },
+        {
+            "id": 11,
+            "type": "table",
+            "title": "Jobs not done yet",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/jobs",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "task_id",
+                            "text": "Job",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "state",
+                            "text": "State",
+                            "type": "string"
+                        },
+                        {
+                            "selector": "time_left_h",
+                            "text": "Time left [h]",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Job": 0,
+                            "State": 1,
+                            "Time left [h]": 2
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Job"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "none"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 0
+                            },
+                            {
+                                "id": "custom.width",
+                                "value": 64
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "State"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 56
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Time left [h]"
+                        },
+                        "properties": [
+                            {
+                                "id": "min",
+                                "value": 0
+                            },
+                            {
+                                "id": "fieldMinMax",
+                                "value": true
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 1
+                            },
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            },
+                            {
+                                "id": "custom.cellOptions",
+                                "value": {
+                                    "type": "gauge",
+                                    "mode": "basic"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "x": 19,
+                "y": 14,
+                "w": 5,
+                "h": 8
+            }
+        },
+        {
+            "id": 12,
+            "type": "row",
+            "title": "Utilization",
+            "gridPos": {
+                "x": 0,
+                "y": 22,
+                "w": 24,
+                "h": 1
+            }
+        },
+        {
+            "id": 13,
+            "type": "stat",
+            "title": "Now",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "cpu_utilization_median",
+                            "text": "CPU, median",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "cpu_utilization",
+                            "text": "CPU, mean",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "cpu_utilization_p95",
+                            "text": "CPU, p95",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "hosts_up",
+                            "text": "Hosts available",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "hosts_in_use",
+                            "text": "Hosts in use",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "CPU, median": 0,
+                            "CPU, mean": 1,
+                            "CPU, p95": 2,
+                            "Hosts available": 3,
+                            "Hosts in use": 4
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "#009E73"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "CPU, median"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "percentunit"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "CPU, mean"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "percentunit"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "CPU, p95"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "percentunit"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Hosts available"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "locale"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Hosts in use"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "locale"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "colorMode": "none",
+                "textMode": "value_and_name",
+                "orientation": "horizontal",
+                "text": {
+                    "titleSize": 12,
+                    "valueSize": 22
+                }
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 23,
+                "w": 4,
+                "h": 8
+            }
+        },
+        {
+            "id": 14,
+            "type": "timeseries",
+            "title": "CPU utilization of the hosts",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "cpu_utilization_median",
+                            "text": "Median",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "cpu_utilization",
+                            "text": "Mean",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "cpu_utilization_p95",
+                            "text": "p95",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Median": 0,
+                            "Mean": 1,
+                            "p95": 2
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "CPU utilization [%]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    },
+                    "unit": "percentunit",
+                    "max": 1
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Median"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Mean"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#338ec1"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "p95"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 4,
+                "y": 23,
+                "w": 10,
+                "h": 8
+            }
+        },
+        {
+            "id": 15,
+            "type": "timeseries",
+            "title": "CPU demand vs. capacity",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "cpu_capacity_cores",
+                            "text": "Capacity",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "cpu_demand_cores",
+                            "text": "Demand",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Capacity": 0,
+                            "Demand": 1
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "CPU [cores]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    },
+                    "unit": "locale"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Capacity"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#338ec1"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Demand"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 14,
+                "y": 23,
+                "w": 10,
+                "h": 8
+            }
+        },
+        {
+            "id": 16,
+            "type": "row",
+            "title": "Energy and sustainability",
+            "gridPos": {
+                "x": 0,
+                "y": 31,
+                "w": 24,
+                "h": 1
+            }
+        },
+        {
+            "id": 17,
+            "type": "stat",
+            "title": "This $period",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/totals?period=$period",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "energy_kwh",
+                            "text": "Energy [kWh]",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "co2_kg",
+                            "text": "CO2 [kg]",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "embodied_co2_kg",
+                            "text": "Embodied CO2 [kg]",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Energy [kWh]": 0,
+                            "CO2 [kg]": 1,
+                            "Embodied CO2 [kg]": 2
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "#009E73"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Energy [kWh]"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "locale"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "CO2 [kg]"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "locale"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Embodied CO2 [kg]"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "locale"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "colorMode": "none",
+                "textMode": "value_and_name",
+                "orientation": "horizontal",
+                "text": {
+                    "titleSize": 12,
+                    "valueSize": 22
+                }
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 32,
+                "w": 4,
+                "h": 8
+            }
+        },
+        {
+            "id": 18,
+            "type": "timeseries",
+            "title": "Energy per $period",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/totals?period=$period",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "energy_kwh",
+                            "text": "Energy",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Energy": 0
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Energy [kWh]",
+                        "lineWidth": 2,
+                        "showPoints": "never",
+                        "drawStyle": "bars",
+                        "fillOpacity": 80,
+                        "barAlignment": -1
+                    },
+                    "unit": "locale"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Energy"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 4,
+                "y": 32,
+                "w": 10,
+                "h": 8
+            }
+        },
+        {
+            "id": 19,
+            "type": "timeseries",
+            "title": "Operational and embodied CO2 per $period",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/totals?period=$period",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "co2_kg",
+                            "text": "Operational",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "embodied_co2_kg",
+                            "text": "Embodied",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Operational": 0,
+                            "Embodied": 1
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "CO2 [kg]",
+                        "lineWidth": 2,
+                        "showPoints": "never",
+                        "stacking": {
+                            "mode": "normal"
+                        },
+                        "drawStyle": "bars",
+                        "fillOpacity": 80,
+                        "barAlignment": -1
+                    },
+                    "unit": "locale"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Operational"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Embodied"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#9557a5"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 14,
+                "y": 32,
+                "w": 10,
+                "h": 8
+            }
+        },
+        {
+            "id": 20,
+            "type": "row",
+            "title": "Twin accuracy",
+            "gridPos": {
+                "x": 0,
+                "y": 40,
+                "w": 24,
+                "h": 1
+            }
+        },
+        {
+            "id": 21,
+            "type": "stat",
+            "title": "Now",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/calibration",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "r",
+                            "text": "r",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "mape",
+                            "text": "MAPE [%]",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "r": 0,
+                            "MAPE [%]": 1
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "fixed",
+                        "fixedColor": "#009E73"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "r"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "none"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "MAPE [%]"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "none"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 1
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "colorMode": "none",
+                "textMode": "value_and_name",
+                "orientation": "horizontal",
+                "text": {
+                    "titleSize": 12,
+                    "valueSize": 22
+                }
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 41,
+                "w": 4,
+                "h": 8
+            }
+        },
+        {
+            "id": 22,
+            "type": "timeseries",
+            "title": "Calibrated r",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/calibration",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "r",
+                            "text": "r",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "r": 0
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "r",
+                        "lineWidth": 2,
+                        "showPoints": "never",
+                        "lineInterpolation": "stepAfter"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "r"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 4,
+                "y": 41,
+                "w": 10,
+                "h": 8
+            }
+        },
+        {
+            "id": 23,
+            "type": "timeseries",
+            "title": "MAPE of the best r per grid search",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/calibration",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "mape",
+                            "text": "MAPE",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "MAPE": 0
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "MAPE [%]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "MAPE"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#D55E00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 14,
+                "y": 41,
+                "w": 10,
+                "h": 8
             }
         }
     ],
@@ -653,14 +2341,51 @@
         "from": "2022-10-06T22:00:00.000Z",
         "to": "2022-10-13T22:00:00.000Z"
     },
-    "timepicker": {
-        "refresh_intervals": [
-            "5s",
-            "10s",
-            "30s",
-            "1m",
-            "5m"
+    "timezone": "utc",
+    "templating": {
+        "list": [
+            {
+                "name": "period",
+                "label": "Period",
+                "type": "custom",
+                "query": "minute,hour,day,week,month,year",
+                "current": {
+                    "text": "day",
+                    "value": "day"
+                },
+                "options": [
+                    {
+                        "text": "minute",
+                        "value": "minute",
+                        "selected": false
+                    },
+                    {
+                        "text": "hour",
+                        "value": "hour",
+                        "selected": false
+                    },
+                    {
+                        "text": "day",
+                        "value": "day",
+                        "selected": true
+                    },
+                    {
+                        "text": "week",
+                        "value": "week",
+                        "selected": false
+                    },
+                    {
+                        "text": "month",
+                        "value": "month",
+                        "selected": false
+                    },
+                    {
+                        "text": "year",
+                        "value": "year",
+                        "selected": false
+                    }
+                ]
+            }
         ]
-    },
-    "timezone": "utc"
+    }
 }

@@ -13,23 +13,31 @@ DASHBOARDS = REPO / "services" / "grafana" / "provisioning" / "dashboards"
 ROUTES = {(method, route.path) for route in main.app.routes for method in route.methods}
 
 
-def requests(panel):
-    """The host a panel should call, and the (host, method, path) of each of its requests: the Grafana server
-    reaches the API inside Docker, while the form panel sends its requests from the browser, to the host port."""
-    if panel["type"] == "volkovlabs-form-panel":
-        host, sent = "localhost:3001", [panel["options"]["initial"], panel["options"]["update"]]
-        found = [(r["url"], r["method"]) for r in sent]
-    else:
-        host, found = "api:8000", [(t["url"], t["url_options"]["method"]) for t in panel["targets"]]
-    return host, [(urlparse(url).netloc, method, urlparse(url).path) for url, method in found]
+def queries(dashboard):
+    """(title, host it should call, url, method) of each request of a dashboard: the Grafana server reaches the
+    API inside Docker, while the control panel sends its requests from the browser, to the host port."""
+    for panel in dashboard["panels"]:
+        if panel["type"] == "volkovlabs-form-panel":
+            for r in (panel["options"]["initial"], panel["options"]["update"]):
+                yield panel["title"], "localhost:3001", r["url"], r["method"]
+        for t in panel.get("targets", []):  # a row has none
+            yield panel["title"], "api:8000", t["url"], t["url_options"]["method"]
+    for marker in dashboard["annotations"]["list"]:
+        if "target" in marker:  # not Grafana's own annotations
+            target = marker["target"]
+            yield marker["name"], "api:8000", target["url"], target["url_options"]["method"]
 
 
 @pytest.mark.parametrize("dashboard", sorted(DASHBOARDS.glob("*.json")), ids=lambda path: path.name)
 def test_panels_call_api_routes(dashboard):
-    for panel in json.loads(dashboard.read_text())["panels"]:
-        host, found = requests(panel)
-        for netloc, method, path in found:
-            assert netloc == host and (method, path) in ROUTES, (panel["title"], method, path)
+    for title, host, url, method in queries(json.loads(dashboard.read_text())):
+        url = urlparse(url)
+        assert url.netloc == host and (method, url.path) in ROUTES, (title, method, url.path)
+
+
+def test_graphs_mark_topology_changes():
+    markers = json.loads((DASHBOARDS / "overview.json").read_text())["annotations"]["list"]
+    assert [m["target"]["url"] for m in markers] == ["http://api:8000/api/events"]
 
 
 def test_control_panel_offers_the_carbon_zones_of_the_api():

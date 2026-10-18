@@ -1,9 +1,11 @@
 """The dashboard endpoints: the twin's status, the cluster over time, and the control panel."""
 
 import asyncio
+import json
 
 import pytest
 from api import main
+from conftest import write_window
 from odt_common import AppConfig
 from odt_common.config import DynamicConfigEvent
 from odt_common.models import Topology
@@ -40,22 +42,24 @@ def api(run_dir, monkeypatch):
     return sent
 
 
+def data(response):
+    return json.loads(response.body)["data"]
+
+
 def test_status_gives_the_control_panel_its_values(api):
-    status = asyncio.run(main.get_status())  # flat, so the form fills its fields by name
+    status = main.get_status()  # flat, so the form fills its fields by name
     assert status == {
         "twin_time": "2022-10-06T22:10:00+00:00",
         "window": 2,
         "hosts": 2770,
         "calibration_factor": 4.0,
-        "carbon_zone": "SURF",
+        "carbon_zone": "Default",
         "speed_factor": -1,
     }
 
 
 def test_cluster_can_be_cut_to_grafanas_time_range(api):
-    rows = asyncio.run(main.get_cluster(start="2022-10-06T22:05:00Z", end="2022-10-06T22:07:30Z"))[
-        "data"
-    ]
+    rows = data(main.get_cluster(start="2022-10-06T22:05:00Z", end="2022-10-06T22:07:30Z"))
     assert [row["tasks_active"] for row in rows] == [11, 22]
 
 
@@ -76,7 +80,7 @@ def test_control_sends_the_speed_to_the_data_source(api):
     event = DynamicConfigEvent(**message)
     assert (topic, key) == ("sys.config", "global.speed_factor")  # a compacted topic needs a key
     assert (event.setting_key, event.new_value) == ("global.speed_factor", 300)
-    assert asyncio.run(main.get_status())["speed_factor"] == 300
+    assert main.get_status()["speed_factor"] == 300
 
 
 def test_control_rejects_a_speed_the_twin_cannot_use():
@@ -84,9 +88,32 @@ def test_control_rejects_a_speed_the_twin_cannot_use():
         main.Control(speed_factor=0)
 
 
-def test_cluster_is_empty_before_the_first_window(api, tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        main.get_cluster,
+        main.get_scheduling,
+        main.get_jobs,
+        main.get_events,
+        main.get_calibration,
+        main.get_totals,
+    ],
+    ids=lambda endpoint: endpoint.__name__,
+)
+def test_tables_are_empty_before_the_first_window(api, tmp_path, monkeypatch, endpoint):
     monkeypatch.setenv("DATA_DIR", str(tmp_path / "no_run_yet"))
-    assert asyncio.run(main.get_cluster()) == {"data": []}
+    assert data(endpoint()) == []
+
+
+def test_markers_have_grafanas_time_format(api):
+    assert data(main.get_events()) == [
+        {"time": "2022-10-06T22:05:00.000Z", "text": "Hosts 277 to 2,770"}
+    ]
+
+
+def test_a_window_without_jobs_starting_has_no_queue_time(api, run_dir):
+    write_window(run_dir, 3, 15, hosts=2770, active=[30])  # job 4 starts only at 22:20
+    assert data(main.get_scheduling())[-1]["queue_median_min"] is None
 
 
 def test_swagger_example_uses_the_surf_power_model():

@@ -7,13 +7,15 @@ Visualization dashboards for OpenDT metrics.
 - **URL:** http://localhost:3000
 - **Authentication:** Disabled (anonymous admin access)
 
-The OpenDT overview is the home page.
+The OpenDT dashboard is the home page.
 
 ## Dashboards
 
-- **OpenDT overview:** the control panel (hosts, carbon zone, and replay speed of the running twin), the twin's
-  status, power, CO2 emission vs. carbon intensity, and hosts available vs. in use.
-- **OpenDT cluster:** hosts, jobs pending, running, and finished, and the mean CPU utilization of the hosts.
+- **OpenDT:** the control panel (hosts, carbon zone, and replay speed of the running twin), the twin's status, and
+  power; then a row each for scheduling (time to full completion, time in queue, jobs, and the jobs not done yet),
+  utilization (CPU of the hosts, demand vs. capacity, hosts in use), energy and sustainability (CO2 vs. carbon
+  intensity, energy, operational vs. embodied CO2), and twin accuracy (r and MAPE of the calibrator). Markers on
+  every graph show the topology changes (hosts, r, carbon zone); the legends show the latest values.
 - **OpenDT Dashboard** (classic): power and carbon emissions.
 
 The panels query the OpenDT API at `http://api:8000`, from the Grafana server. The control panel sends its requests
