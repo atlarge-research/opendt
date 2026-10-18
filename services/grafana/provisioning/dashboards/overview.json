@@ -1977,7 +1977,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#009E73"
+                                                    "fixedColor": "#E69F00"
                                                 }
                                             }
                                         ]
@@ -2167,7 +2167,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
+                                                    "fixedColor": "#009E73"
                                                 }
                                             }
                                         ]
@@ -2892,7 +2892,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#009E73"
+                                                    "fixedColor": "#338ec1"
                                                 }
                                             }
                                         ]
@@ -3072,7 +3072,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#009E73"
+                                                    "fixedColor": "#F0E442"
                                                 }
                                             }
                                         ]
@@ -3257,17 +3257,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#9557a5"
-                                                }
-                                            },
-                                            {
-                                                "id": "custom.lineStyle",
-                                                "value": {
-                                                    "fill": "dash",
-                                                    "dash": [
-                                                        8,
-                                                        4
-                                                    ]
+                                                    "fixedColor": "#F0E442"
                                                 }
                                             }
                                         ]
@@ -3282,7 +3272,17 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
+                                                    "fixedColor": "#338ec1"
+                                                }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
                                                 }
                                             }
                                         ]
@@ -3461,7 +3461,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
+                                                    "fixedColor": "#338ec1"
                                                 }
                                             },
                                             {
@@ -4059,7 +4059,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
+                                                    "fixedColor": "#009E73"
                                                 }
                                             }
                                         ]
@@ -4110,7 +4110,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}&points=100",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
@@ -4122,18 +4122,8 @@
                                                         "type": "timestamp"
                                                     },
                                                     {
-                                                        "selector": "cpu_0_20",
-                                                        "text": "0-20%",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "cpu_20_40",
-                                                        "text": "20-40%",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "cpu_40_60",
-                                                        "text": "40-60%",
+                                                        "selector": "cpu_80_100",
+                                                        "text": "80-100%",
                                                         "type": "number"
                                                     },
                                                     {
@@ -4142,8 +4132,18 @@
                                                         "type": "number"
                                                     },
                                                     {
-                                                        "selector": "cpu_80_100",
-                                                        "text": "80-100%",
+                                                        "selector": "cpu_40_60",
+                                                        "text": "40-60%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_20_40",
+                                                        "text": "20-40%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_0_20",
+                                                        "text": "0-20%",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -4159,11 +4159,11 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "0-20%": 0,
-                                                "20-40%": 1,
+                                                "80-100%": 0,
+                                                "60-80%": 1,
                                                 "40-60%": 2,
-                                                "60-80%": 3,
-                                                "80-100%": 4
+                                                "20-40%": 3,
+                                                "0-20%": 4
                                             }
                                         }
                                     }
@@ -4174,31 +4174,50 @@
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "heatmap",
+                        "group": "status-history",
                         "version": "",
                         "spec": {
                             "options": {
-                                "calculate": false,
-                                "yAxis": {
-                                    "axisLabel": "CPU utilization [%]"
-                                },
-                                "color": {
-                                    "mode": "scheme",
-                                    "scheme": "Greens",
-                                    "steps": 5,
-                                    "min": 0
-                                },
-                                "cellGap": 1,
+                                "showValue": "never",
+                                "rowHeight": 0.95,
+                                "colWidth": 1,
                                 "legend": {
-                                    "show": true
-                                },
-                                "tooltip": {
-                                    "mode": "single",
-                                    "yHistogram": false
+                                    "showLegend": true,
+                                    "displayMode": "list"
                                 }
                             },
                             "fieldConfig": {
-                                "defaults": {},
+                                "defaults": {
+                                    "unit": "locale",
+                                    "color": {
+                                        "mode": "thresholds"
+                                    },
+                                    "thresholds": {
+                                        "mode": "absolute",
+                                        "steps": [
+                                            {
+                                                "value": null,
+                                                "color": "#1d4e89"
+                                            },
+                                            {
+                                                "value": 50,
+                                                "color": "#2f74b5"
+                                            },
+                                            {
+                                                "value": 100,
+                                                "color": "#5b9bd5"
+                                            },
+                                            {
+                                                "value": 150,
+                                                "color": "#9cc3e6"
+                                            },
+                                            {
+                                                "value": 200,
+                                                "color": "#deebf7"
+                                            }
+                                        ]
+                                    }
+                                },
                                 "overrides": []
                             }
                         }
@@ -4330,7 +4349,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#9557a5"
+                                                    "fixedColor": "#E69F00"
                                                 }
                                             }
                                         ]
@@ -4762,7 +4781,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#009E73"
+                                                    "fixedColor": "#338ec1"
                                                 }
                                             }
                                         ]
@@ -4955,7 +4974,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#009E73"
+                                                    "fixedColor": "#E69F00"
                                                 }
                                             }
                                         ]
@@ -4970,7 +4989,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#9557a5"
+                                                    "fixedColor": "#E69F00"
                                                 }
                                             },
                                             {
@@ -5334,7 +5353,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#9557a5"
+                                                    "fixedColor": "#E69F00"
                                                 }
                                             }
                                         ]
@@ -5987,7 +6006,7 @@
                                                 "id": "color",
                                                 "value": {
                                                     "mode": "fixed",
-                                                    "fixedColor": "#009E73"
+                                                    "fixedColor": "#338ec1"
                                                 }
                                             }
                                         ]

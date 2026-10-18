@@ -73,6 +73,12 @@ def test_cluster_can_be_cut_to_grafanas_time_range(api):
     assert [row["tasks_active"] for row in rows] == [11, 22]
 
 
+def test_cluster_can_be_thinned_to_a_number_of_points(api):
+    # a week has thousands of samples, more than some plots can draw
+    rows = data(main.get_cluster(points=2))
+    assert [row["tasks_active"] for row in rows] == [10, 22]
+
+
 def sent_topology(api):
     [(topic, message, _)] = api
     assert topic == "sim.topology"

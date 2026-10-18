@@ -11,11 +11,11 @@ from panels import (
     GREY,
     ORANGE,
     POWER,
-    PURPLE,
     RANGE,
     RED,
     STATUS,
     TIME,
+    YELLOW,
     organize,
     override,
     stat,
@@ -61,7 +61,7 @@ co2 = timeseries(
     "CO₂ emissions vs. carbon intensity",
     CO2,
     "CO₂ emissions [kg/h]",
-    {"CO₂ emissions": GREEN, "Carbon intensity": BLUE},
+    {"CO₂ emissions": ORANGE, "Carbon intensity": BLUE},
     [("carbon_emission", "carbon_emission"), ("carbon_intensity", "Carbon intensity")],
     computed=[("carbon_emission/1000", "CO₂ emissions")],
     hide=["carbon_emission"],
@@ -72,7 +72,7 @@ hosts = timeseries(
     "Hosts available vs. in use",
     CLUSTER + RANGE,
     "Hosts",
-    {"Available": BLUE, "In use": ORANGE},
+    {"Available": BLUE, "In use": GREEN},
     [("hosts_up", "Available"), ("hosts_in_use", "In use")],
     unit="locale",
     decimals=0,
@@ -81,20 +81,33 @@ hosts = timeseries(
 
 # ---- the rows of the detailed screen, each plot shown or hidden in the Plots row ---------------
 
-BUCKETS = [(f"cpu_{low}_{low + 20}", f"{low}-{low + 20}%") for low in range(0, 100, 20)]
+# the hosts in each CPU-utilization bucket over time, the busiest bucket on top; the key gives each step
+BUCKETS = [(f"cpu_{low}_{low + 20}", f"{low}-{low + 20}%") for low in range(80, -1, -20)]
+# blues from few hosts to many, the fewest still apart from the dark background
+SHADES = {None: "#1d4e89", 50: "#2f74b5", 100: "#5b9bd5", 150: "#9cc3e6", 200: "#deebf7"}
 heatmap = {
-    "type": "heatmap",
+    "type": "status-history",
     "title": "Hosts per CPU utilization",
-    "targets": [target(CLUSTER + RANGE, [TIME, *BUCKETS])],
+    "targets": [
+        target(CLUSTER + RANGE + "&points=100", [TIME, *BUCKETS])
+    ],  # more, and it draws none
     "transformations": [organize([name for _, name in BUCKETS])],
-    "fieldConfig": {"defaults": {}, "overrides": []},
+    "fieldConfig": {
+        "defaults": {
+            "unit": "locale",
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+                "mode": "absolute",
+                "steps": [{"value": hosts, "color": shade} for hosts, shade in SHADES.items()],
+            },
+        },
+        "overrides": [],
+    },
     "options": {
-        "calculate": False,  # the API counts the hosts per bucket
-        "yAxis": {"axisLabel": "CPU utilization [%]"},
-        "color": {"mode": "scheme", "scheme": "Greens", "steps": 5, "min": 0},  # five shades
-        "cellGap": 1,
-        "legend": {"show": True},
-        "tooltip": {"mode": "single", "yHistogram": False},
+        "showValue": "never",
+        "rowHeight": 0.95,
+        "colWidth": 1,
+        "legend": {"showLegend": True, "displayMode": "list"},
     },
 }
 # the calibrator's decisions, counted by the data source
@@ -133,7 +146,7 @@ ROWS = {
             "Total runtime",
             SCHEDULING,
             "Total runtime [h]",
-            {"Total runtime": GREEN},
+            {"Total runtime": BLUE},
             [("completion_h", "Total runtime")],
             better="lower",
             gaps=True,
@@ -142,7 +155,7 @@ ROWS = {
             "Time in queue",
             SCHEDULING,
             "Time in queue [min]",
-            {"Median": GREEN},
+            {"Median": YELLOW},
             [("queue_median_min", "Median")],
             better="lower",
             gaps=True,
@@ -151,7 +164,7 @@ ROWS = {
             "Jobs",
             CLUSTER + RANGE,
             "Jobs",
-            {"Waiting": PURPLE, "Running": ORANGE, "Finished": GREEN},
+            {"Waiting": YELLOW, "Running": BLUE, "Finished": GREEN},
             [
                 ("tasks_pending", "Waiting"),
                 ("tasks_active", "Running"),
@@ -159,7 +172,7 @@ ROWS = {
             ],
             unit="locale",
             decimals=0,
-            apart=["Waiting"],
+            apart=["Running"],
         ),
         "jobs-left": table(
             "Jobs waiting or running",
@@ -173,7 +186,7 @@ ROWS = {
                     min=0,
                     fieldMinMax=True,  # the bars scale to the time left only, not to the job ids
                     decimals=1,
-                    color={"mode": "fixed", "fixedColor": ORANGE},
+                    color={"mode": "fixed", "fixedColor": BLUE},
                     custom__cellOptions={"type": "gauge", "mode": "basic"},
                 ),
             ],
@@ -220,7 +233,7 @@ ROWS = {
             "CPU demand vs. capacity",
             CLUSTER + RANGE,
             "CPU [cores]",
-            {"Capacity": BLUE, "Demand": ORANGE},
+            {"Capacity": BLUE, "Demand": GREEN},
             [("cpu_capacity_cores", "Capacity"), ("cpu_demand_cores", "Demand")],
             unit="locale",
             decimals=0,
@@ -231,7 +244,7 @@ ROWS = {
             "Idle hosts",
             CLUSTER + RANGE,
             "Hosts",
-            {"Running no job": PURPLE},
+            {"Running no job": ORANGE},
             [("hosts_up", "hosts_up"), ("hosts_in_use", "hosts_in_use")],
             better="lower",
             unit="locale",
@@ -269,7 +282,7 @@ ROWS = {
             "Energy per $period",
             TOTALS,
             "Energy [kWh]",
-            {"Energy": GREEN},
+            {"Energy": BLUE},
             [("energy_kwh", "Energy")],
             better="lower",
             unit="locale",
@@ -279,7 +292,7 @@ ROWS = {
             "CO₂ per $period",
             TOTALS,
             "CO₂ [kg]",
-            {"Operational": GREEN, "Embodied": PURPLE},
+            {"Operational": ORANGE, "Embodied": ORANGE},
             [("co2_kg", "Operational"), ("embodied_co2_kg", "Embodied")],
             better="lower",
             unit="locale",
@@ -300,7 +313,7 @@ ROWS = {
             "Power draw of idle hosts",
             CLUSTER + RANGE,
             "Power draw [kW]",
-            {"Idle hosts": PURPLE},
+            {"Idle hosts": ORANGE},
             [("idle_power_kw", "Idle hosts")],
             better="lower",
         ),
@@ -341,7 +354,7 @@ ROWS = {
             "Calibration parameter r",
             ACCURACY,
             "r",
-            {"r": GREEN},
+            {"r": BLUE},
             [("r", "r")],
             gaps=True,
             lineInterpolation="stepAfter",

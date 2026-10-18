@@ -12,9 +12,10 @@ ACCURACY, STATUS = f"{API}/api/accuracy", f"{API}/api/status"
 PERIODS = ["minute", "hour", "day", "week", "month", "year"]
 WEEK = {"from": "2022-10-06T22:00:00.000Z", "to": "2022-10-13T22:00:00.000Z"}  # the SURF week
 
-# the paper's colours (reproducibility-capsule/plots/config.py): measured grey, OpenDT green
-GREY, GREEN, ORANGE = "#999999", "#009E73", "#E69F00"
-BLUE, RED, PURPLE = "#338ec1", "#D55E00", "#9557a5"
+# the paper's colours (reproducibility-capsule/plots/config.py), each with a meaning: grey measured, green good
+# (OpenDT, work done), blue neutral, yellow a warning, orange bad-ish, red bad
+GREY, GREEN, BLUE = "#999999", "#009E73", "#338ec1"
+YELLOW, ORANGE, RED = "#F0E442", "#E69F00", "#D55E00"
 MARKERS = "rgba(255, 255, 255, 0.35)"  # light, so the data stays in front
 BOX = "#22252b"  # Grafana's dark secondary background: a box in a panel
 TEXT = {"titleSize": 12, "valueSize": 22}  # the same in every tile and box

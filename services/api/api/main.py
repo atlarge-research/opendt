@@ -398,10 +398,19 @@ def rows(table) -> Response:
 
 
 @app.get("/api/cluster")
-def get_cluster(start: datetime | None = None, end: datetime | None = None):
+def get_cluster(
+    start: datetime | None = None,
+    end: datetime | None = None,
+    points: Annotated[int | None, Query(gt=0)] = None,
+):
     """Hosts, jobs, CPU of the hosts (mean, median; demand vs. capacity in cores), and energy, CO2, and embodied
-    CO2 per sample."""
-    return rows(lambda run: twin.cluster(run).set_index("timestamp")[start:end].reset_index())
+    CO2 per sample; with `points`, every so many samples, about that many in all."""
+
+    def cut(run: Path) -> pd.DataFrame:
+        cluster = twin.cluster(run).set_index("timestamp")[start:end].reset_index()
+        return cluster.iloc[:: max(1, len(cluster) // points)] if points else cluster
+
+    return rows(cut)
 
 
 @app.get("/api/totals")
