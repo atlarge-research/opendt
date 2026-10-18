@@ -107,7 +107,9 @@ def init(
         with open(config_copy_path) as f:
             config_data = yaml.safe_load(f)
         calibration_enabled = config_data.get("global", {}).get("calibration_enabled", False)
-        profile_flag = "--profile calibration" if calibration_enabled else ""
+        # a calibrator with settings runs, also when off at the start: the control panel can switch it on
+        has_calibrator = config_data.get("services", {}).get("calibrator") is not None
+        profile_flag = "--profile calibration" if calibration_enabled or has_calibrator else ""
 
         # Get workload name from config
         workload_name = config_data.get("services", {}).get("dc-mock", {}).get("workload", "SURF")

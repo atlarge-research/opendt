@@ -4,7 +4,17 @@ runtime settings, which the services follow on sys.config."""
 import copy
 from typing import Literal
 
-from odt_common.config import PARALLEL_RUNS, SCHEDULER, SPEED_FACTOR, GlobalConfig
+from odt_common.config import (
+    CALIBRATION,
+    CALIBRATION_MAX,
+    CALIBRATION_MIN,
+    CALIBRATION_POINTS,
+    MAPE_WINDOW,
+    PARALLEL_RUNS,
+    SCHEDULER,
+    SPEED_FACTOR,
+    GlobalConfig,
+)
 from odt_common.models import Topology
 from pydantic import BaseModel, Field, field_validator
 
@@ -17,6 +27,11 @@ SETTINGS = {
     "scheduler": SCHEDULER,
     "speed_factor": SPEED_FACTOR,
     "parallel_simulations": PARALLEL_RUNS,
+    "calibration": CALIBRATION,
+    "calibration_min": CALIBRATION_MIN,
+    "calibration_max": CALIBRATION_MAX,
+    "calibration_points": CALIBRATION_POINTS,
+    "mape_window": MAPE_WINDOW,
 }
 
 
@@ -34,6 +49,11 @@ class Control(BaseModel):
     scheduler: Literal[SCHEDULERS] | None = None
     speed_factor: float | None = None
     parallel_simulations: int | None = Field(None, gt=0)  # of the calibrator
+    calibration: bool | None = None  # on or off
+    calibration_min: float | None = Field(None, gt=0)  # the range of r it tries, from
+    calibration_max: float | None = Field(None, gt=0)  # to
+    calibration_points: int | None = Field(None, ge=2)  # values of r in the range
+    mape_window: int | None = Field(None, gt=0)  # [min] of power the MAPE is over
 
     @field_validator("speed_factor")
     @classmethod

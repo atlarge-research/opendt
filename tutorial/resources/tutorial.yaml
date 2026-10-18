@@ -4,6 +4,7 @@
 
 Dynamic autoscaling:
   - question: "1.1"
+    do: Calibration Off (the calibrator would fit r to the ground truth again after each change of hosts)
     plots: [power, accuracy-now, mape, error]
   - question: "1.2"
     plots: [power, hosts]
@@ -20,6 +21,7 @@ Dynamic autoscaling:
 
 Simulation calibration:
   - question: "2.1"
+    do: Hosts 277 and Calibration On, then Apply
     plots: [power, error, energy-error]
   - question: "4.2"
     plots: [r, mape]

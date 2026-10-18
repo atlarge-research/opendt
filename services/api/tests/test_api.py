@@ -62,7 +62,7 @@ def test_status(api):
         "carbon_zone": "NL",
         "scheduler": "Mem",
         "speed_factor": -1,
-        "parallel_simulations": None,  # the test twin runs without a calibrator
+        "calibration": False,  # and no settings of a calibrator: the test twin runs without one
     }
 
 
@@ -139,6 +139,23 @@ def test_control_parallel_runs(api):
     [(topic, event, key)] = api
     assert (topic, key, event["new_value"]) == ("sys.config", "calibrator.max_parallel_workers", 2)
     assert main.get_status()["parallel_simulations"] == 2
+
+
+@pytest.mark.parametrize(
+    "field, value, key",
+    [
+        ("calibration", True, "calibrator.enabled"),
+        ("calibration_min", 4.0, "calibrator.min_value"),
+        ("calibration_max", 12.0, "calibrator.max_value"),
+        ("calibration_points", 10, "calibrator.linspace_points"),
+        ("mape_window", 1440, "calibrator.mape_window_minutes"),
+    ],
+)
+def test_control_calibration(api, field, value, key):
+    main.control(levers.Control(**{field: value}))
+    [(topic, event, sent)] = api
+    assert (topic, sent, event["new_value"]) == ("sys.config", key, value)
+    assert main.get_status()[field] == value
 
 
 def test_control_builds_on_last_sent(api):

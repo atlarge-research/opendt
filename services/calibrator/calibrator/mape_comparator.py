@@ -23,9 +23,12 @@ class MapeComparator:
             mape_window_minutes: Maximum time window for MAPE calculation
         """
         self.mape_window_minutes = mape_window_minutes
-        self.mape_window = timedelta(minutes=mape_window_minutes)
 
         logger.info(f"Initialized MapeComparator with window {mape_window_minutes} minutes")
+
+    @property
+    def mape_window(self) -> timedelta:
+        return timedelta(minutes=self.mape_window_minutes)
 
     def compare(
         self,

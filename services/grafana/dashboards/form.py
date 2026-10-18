@@ -58,8 +58,15 @@ TWIN_LEVERS = [
         tooltip="OpenDC's placement policy; Mem is OpenDC's default",
     ),
     select("speed_factor", "Speed factor", SPEEDS),
-    # the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more need more memory for Docker
+]
+# the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
+CALIBRATION_LEVERS = [
+    select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio"),
     select("parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 4, 8)]),
+    field("calibration_min", "r from", "number", min=0),
+    field("calibration_max", "r to", "number", min=0),
+    field("calibration_points", "Values of r", "number", min=2),
+    select("mape_window", "MAPE window", [(60, "1 h"), (360, "6 h"), (1440, "24 h")]),
 ]
 # the first group of hosts: SURF's, until changed on Topology
 HOSTS = field("count_1", "Hosts", "number", min=1)
@@ -106,7 +113,7 @@ def control(screen, own_fields, period=True):
                 "code": script("changed.js", "applied.js", week=WEEK),
             },
             "sync": False,  # true would reload the values at every refresh, over what is being typed
-            "elements": view + TWIN_LEVERS + own_fields,
+            "elements": view + TWIN_LEVERS + CALIBRATION_LEVERS + own_fields,
             "submit": {"text": "Apply"},
             "reset": {"text": "Full screen", "icon": "monitor", "variant": "secondary"},
             "resetAction": {"mode": "custom", "code": script("full_screen.js"), "confirm": False},

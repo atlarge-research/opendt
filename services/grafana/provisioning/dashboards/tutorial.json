@@ -274,6 +274,25 @@
                                         ]
                                     },
                                     {
+                                        "uid": "calibration",
+                                        "id": "calibration",
+                                        "title": "Calibration",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "True",
+                                                "label": "On",
+                                                "value": true
+                                            },
+                                            {
+                                                "id": "False",
+                                                "label": "Off",
+                                                "value": false
+                                            }
+                                        ]
+                                    },
+                                    {
                                         "uid": "parallel_simulations",
                                         "id": "parallel_simulations",
                                         "title": "Parallel runs",
@@ -299,6 +318,54 @@
                                                 "id": "8",
                                                 "label": "8",
                                                 "value": 8
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "calibration_min",
+                                        "id": "calibration_min",
+                                        "title": "r from",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 0
+                                    },
+                                    {
+                                        "uid": "calibration_max",
+                                        "id": "calibration_max",
+                                        "title": "r to",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 0
+                                    },
+                                    {
+                                        "uid": "calibration_points",
+                                        "id": "calibration_points",
+                                        "title": "Values of r",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 2
+                                    },
+                                    {
+                                        "uid": "mape_window",
+                                        "id": "mape_window",
+                                        "title": "MAPE window",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "60",
+                                                "label": "1 h",
+                                                "value": 60
+                                            },
+                                            {
+                                                "id": "360",
+                                                "label": "6 h",
+                                                "value": 360
+                                            },
+                                            {
+                                                "id": "1440",
+                                                "label": "24 h",
+                                                "value": 1440
                                             }
                                         ]
                                     },
@@ -1328,7 +1395,7 @@
                         "spec": {
                             "options": {
                                 "mode": "markdown",
-                                "content": "**Question 1.1:** with 10% as the community-accepted error rate, is OpenDT accurate enough for what-if analysis on SURF, and in\nwhich hours is it least accurate?\n\n\n<details><summary>Solution</summary>\n\n**Solution 1.1:** Yes: MAPE about 6%.\nOpenDT under-estimates the ground truth in almost every minute of the day, more in the first 6 hours (MAPE 10.4%)\nthan after (MAPE 4.6%); the OpenDT paper identifies the same underestimation trend.\n\n</details>"
+                                "content": "**Question 1.1:** with 10% as the community-accepted error rate, is OpenDT accurate enough for what-if analysis on SURF, and in\nwhich hours is it least accurate?\n\n\n**In the control panel:** Calibration Off (the calibrator would fit r to the ground truth again after each change of hosts).\n\n<details><summary>Solution</summary>\n\n**Solution 1.1:** Yes: MAPE about 6%.\nOpenDT under-estimates the ground truth in almost every minute of the day, more in the first 6 hours (MAPE 10.4%)\nthan after (MAPE 4.6%); the OpenDT paper identifies the same underestimation trend.\n\n</details>"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -1520,7 +1587,7 @@
                         "spec": {
                             "options": {
                                 "mode": "markdown",
-                                "content": "**Question 2.1:** in notebook 1, OpenDT under-estimates the ground truth in almost every minute; should the Self-Calibrator increase\nor decrease r to close the gap?\n\n\n<details><summary>Solution</summary>\n\n**Solution 2.1:** Increase r: at the same CPU utilization, a higher r gives a higher power draw (e.g., at 50% utilization, 165 W with\nr = 4 vs. 174 W with r = 9).\n\n</details>"
+                                "content": "**Question 2.1:** in notebook 1, OpenDT under-estimates the ground truth in almost every minute; should the Self-Calibrator increase\nor decrease r to close the gap?\n\n\n**In the control panel:** Hosts 277 and Calibration On, then Apply.\n\n<details><summary>Solution</summary>\n\n**Solution 2.1:** Increase r: at the same CPU utilization, a higher r gives a higher power draw (e.g., at 50% utilization, 165 W with\nr = 4 vs. 174 W with r = 9).\n\n</details>"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -4686,7 +4753,7 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 13,
+                                                "height": 18,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "control"
@@ -4790,7 +4857,7 @@
                                                 "x": 6,
                                                 "y": 8,
                                                 "width": 18,
-                                                "height": 5,
+                                                "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "decisions"

@@ -42,9 +42,10 @@ the previous one.
 2. Change the hosts on the Topology screen (Hosts 1, count 2,770, Apply), or from a terminal:
    `curl -X PUT -H "Content-Type: application/json" --data @tutorial/resources/configs/topology_2770_hosts.json http://localhost:3001/api/topology`.
    The predicted power draw jumps to about 4x; notebook 1 explains why. A dashed marker shows the change on every graph.
-3. Calibration: `make down`, `make up config=tutorial/resources/configs/live_twin_calibration.yaml`; the Twin accuracy
-   row shows r and the hourly MAPE (in the test run, r 4, then 9, then 6, and the MAPE from 14% to about 1% within six
-   trace hours); `make logs-calibrator` shows the MAPE of each candidate.
+3. Calibration: Hosts 277 and Calibration On in the control panel, then Apply (the range of r, the values of r, the
+   parallel runs, and the MAPE window are there too); the Twin accuracy row shows r and the hourly MAPE (in the test
+   run, r 4, then 9, then 6, and the MAPE from 14% to about 1% within six trace hours); `make logs-calibrator` shows
+   the MAPE of each candidate.
 4. `make down`.
 
 Known issues:

@@ -8,7 +8,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from odt_common import TaskAccumulator, load_config_from_env
-from odt_common.config import PARALLEL_RUNS, DynamicConfigEvent
+from odt_common.config import (
+    CALIBRATION,
+    CALIBRATION_MAX,
+    CALIBRATION_MIN,
+    CALIBRATION_POINTS,
+    MAPE_WINDOW,
+    PARALLEL_RUNS,
+    DynamicConfigEvent,
+)
 from odt_common.models import Task
 from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer
 
@@ -49,6 +57,7 @@ class CalibrationService:
         run_output_dir: str,
         run_id: str,
         speed_factor: float,
+        enabled: bool,
         consumer_group: str = "calibrators",
     ):
         """Initialize the calibration service."""
@@ -57,6 +66,7 @@ class CalibrationService:
         self.workload_topic = workload_topic
         self.system_topic = system_topic
         self.speed_factor = speed_factor
+        self.enabled = enabled  # calibrating, or waiting for the control panel to switch it on
         self.run_id = run_id
 
         # Calibration parameters
@@ -124,12 +134,20 @@ class CalibrationService:
         logger.info(f"MAPE window: {mape_window_minutes} minutes")
 
     def _process_config_event(self, message_data: dict) -> None:
-        """Follow a change of the parallel simulations, from the next grid search; the other runtime settings
+        """Follow a change of the calibration's settings, from the next grid search; the other runtime settings
         are not the calibrator's."""
         event = DynamicConfigEvent(**message_data)
-        if event.setting_key == PARALLEL_RUNS:
-            self.calibration_engine.max_workers = event.new_value
-            logger.info(f"Parallel simulations: {event.new_value}")
+        followed = {
+            CALIBRATION: (self, "enabled"),
+            PARALLEL_RUNS: (self.calibration_engine, "max_workers"),
+            CALIBRATION_MIN: (self, "min_value"),
+            CALIBRATION_MAX: (self, "max_value"),
+            CALIBRATION_POINTS: (self, "linspace_points"),
+            MAPE_WINDOW: (self.mape_comparator, "mape_window_minutes"),
+        }
+        if event.setting_key in followed:
+            setattr(*followed[event.setting_key], event.new_value)
+            logger.info(f"{event.setting_key}: {event.new_value}")
 
     def _consume_messages(self):
         """Consumer thread: accumulate tasks from Kafka."""
@@ -199,6 +217,9 @@ class CalibrationService:
         time.sleep(5)
 
         while self.running.is_set():
+            if not self.enabled:  # switched off in the control panel
+                time.sleep(1)
+                continue
             try:
                 calibration_start_time = datetime.now(UTC)
 
@@ -491,15 +512,11 @@ def main():
         logger.error(f"Failed to load configuration: {e}")
         raise
 
-    # Check if calibration is enabled
-    if not config.global_config.calibration_enabled:
-        logger.warning("Calibration is disabled in configuration. Exiting gracefully.")
-        return
-
-    # Ensure calibrator config exists
+    # off at the start, the calibrator waits until the control panel switches it on; without settings, it has
+    # nothing to calibrate
     if config.services.calibrator is None:
-        logger.error("Calibration is enabled but calibrator configuration is missing")
-        raise ValueError("Calibrator configuration required when calibration_enabled=true")
+        logger.info("No calibrator settings; exiting")
+        return
 
     # Get configuration
     kafka_bootstrap_servers = get_kafka_bootstrap_servers()
@@ -553,6 +570,7 @@ def main():
                 run_output_dir=str(run_output_dir),
                 run_id=run_id,
                 speed_factor=speed_factor,
+                enabled=config.global_config.calibration_enabled,
                 consumer_group=consumer_group,
             )
             service.run()

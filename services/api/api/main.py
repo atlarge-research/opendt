@@ -334,8 +334,16 @@ def get_status():
     config, calibrator = app.state.config, app.state.config.services.calibrator
     configured = {
         "speed_factor": config.global_config.speed_factor,
+        "calibration": config.global_config.calibration_enabled,
         "parallel_simulations": calibrator and calibrator.max_parallel_workers,
+        "calibration_min": calibrator and calibrator.min_value,
+        "calibration_max": calibrator and calibrator.max_value,
+        "calibration_points": calibrator and calibrator.linspace_points,
+        "mape_window": calibrator and calibrator.mape_window_minutes,
     }
+    configured = {
+        key: value for key, value in configured.items() if value is not None
+    }  # no calibrator, none
     status = twin.status(twin_run())
     return {
         **configured,

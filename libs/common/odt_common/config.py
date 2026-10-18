@@ -316,6 +316,11 @@ class AppConfig(BaseModel):
 SPEED_FACTOR = "global.speed_factor"
 SCHEDULER = "simulator.scheduler"
 PARALLEL_RUNS = "calibrator.max_parallel_workers"
+CALIBRATION = "calibrator.enabled"
+CALIBRATION_MIN = "calibrator.min_value"
+CALIBRATION_MAX = "calibrator.max_value"
+CALIBRATION_POINTS = "calibrator.linspace_points"
+MAPE_WINDOW = "calibrator.mape_window_minutes"
 
 
 class DynamicConfigEvent(BaseModel):

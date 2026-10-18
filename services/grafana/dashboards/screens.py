@@ -41,12 +41,12 @@ detailed = screen(
     "opendt-overview",
     "OpenDT, detailed",
     [
-        ("control", control("opendt-overview", [HOSTS]), 0, 0, 6, 11),
-        ("decisions", decisions, 0, 11, 6, 5),  # what the markers on the graphs stand for
+        ("control", control("opendt-overview", [HOSTS]), 0, 0, 6, 16),
+        ("decisions", decisions, 0, 16, 6, 5),  # what the markers on the graphs stand for
         *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
-        ("power", power, 6, 6, 6, 10),
-        ("co2", co2, 12, 6, 6, 10),
-        ("hosts", hosts, 18, 6, 6, 10),
+        ("power", power, 6, 6, 6, 15),
+        ("co2", co2, 12, 6, 6, 15),
+        ("hosts", hosts, 18, 6, 6, 15),
     ],
     rows=[
         row(
@@ -79,14 +79,14 @@ simple = screen(
     "opendt-simple",
     "OpenDT, simple",
     [
-        ("control", control("opendt-simple", [HOSTS], period=False), 0, 0, 6, 13),
-        ("twin-state", twin_state, 0, 13, 6, 8),
+        ("control", control("opendt-simple", [HOSTS], period=False), 0, 0, 6, 18),
+        ("twin-state", twin_state, 0, 18, 6, 8),
         ("physical", TILES["measured-now"], 6, 0, 9, 4),
-        ("power-simple", power, 6, 4, 9, 9),
-        ("arrivals", arrivals, 6, 13, 9, 8),
+        ("power-simple", power, 6, 4, 9, 11),
+        ("arrivals", arrivals, 6, 15, 9, 11),
         ("twin", TILES["opendt-now"], 15, 0, 9, 4),
-        ("heatmap", heatmap, 15, 4, 9, 9),
-        ("decisions", decisions, 15, 13, 9, 8),
+        ("heatmap", heatmap, 15, 4, 9, 11),
+        ("decisions", decisions, 15, 15, 9, 11),
     ],
 )
 
@@ -95,10 +95,10 @@ topology = screen(
     "opendt-topology",
     "OpenDT, topology",
     [
-        ("control", groups_control, 0, 0, 6, 21),
+        ("control", groups_control, 0, 0, 6, 25),
         ("groups", groups, 6, 0, 18, 5),
         ("catalog", catalog, 6, 5, 18, 8),
-        ("hosts-topology", hosts, 6, 13, 18, 8),
+        ("hosts-topology", hosts, 6, 13, 18, 12),
     ],
 )
 
@@ -117,10 +117,10 @@ tutorial = screen(
     "opendt-tutorial",
     "OpenDT, tutorial",
     [
-        ("control", control("opendt-tutorial", [HOSTS]), 0, 0, 6, 13),
+        ("control", control("opendt-tutorial", [HOSTS]), 0, 0, 6, 18),
         *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
         ("steps", stepper(len(STEPS)), 6, 6, 18, 2),
-        ("decisions", decisions, 6, 8, 18, 5),
+        ("decisions", decisions, 6, 8, 18, 10),
     ],
     rows=[
         row(

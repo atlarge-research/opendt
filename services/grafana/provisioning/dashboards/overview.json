@@ -274,6 +274,25 @@
                                         ]
                                     },
                                     {
+                                        "uid": "calibration",
+                                        "id": "calibration",
+                                        "title": "Calibration",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "True",
+                                                "label": "On",
+                                                "value": true
+                                            },
+                                            {
+                                                "id": "False",
+                                                "label": "Off",
+                                                "value": false
+                                            }
+                                        ]
+                                    },
+                                    {
                                         "uid": "parallel_simulations",
                                         "id": "parallel_simulations",
                                         "title": "Parallel runs",
@@ -299,6 +318,54 @@
                                                 "id": "8",
                                                 "label": "8",
                                                 "value": 8
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "calibration_min",
+                                        "id": "calibration_min",
+                                        "title": "r from",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 0
+                                    },
+                                    {
+                                        "uid": "calibration_max",
+                                        "id": "calibration_max",
+                                        "title": "r to",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 0
+                                    },
+                                    {
+                                        "uid": "calibration_points",
+                                        "id": "calibration_points",
+                                        "title": "Values of r",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 2
+                                    },
+                                    {
+                                        "uid": "mape_window",
+                                        "id": "mape_window",
+                                        "title": "MAPE window",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "60",
+                                                "label": "1 h",
+                                                "value": 60
+                                            },
+                                            {
+                                                "id": "360",
+                                                "label": "6 h",
+                                                "value": 360
+                                            },
+                                            {
+                                                "id": "1440",
+                                                "label": "24 h",
+                                                "value": 1440
                                             }
                                         ]
                                     },
@@ -5578,7 +5645,7 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 11,
+                                                "height": 16,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "control"
@@ -5589,7 +5656,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 0,
-                                                "y": 11,
+                                                "y": 16,
                                                 "width": 6,
                                                 "height": 5,
                                                 "element": {
@@ -5682,7 +5749,7 @@
                                                 "x": 6,
                                                 "y": 6,
                                                 "width": 6,
-                                                "height": 10,
+                                                "height": 15,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "power"
@@ -5695,7 +5762,7 @@
                                                 "x": 12,
                                                 "y": 6,
                                                 "width": 6,
-                                                "height": 10,
+                                                "height": 15,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "co2"
@@ -5708,7 +5775,7 @@
                                                 "x": 18,
                                                 "y": 6,
                                                 "width": 6,
-                                                "height": 10,
+                                                "height": 15,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "hosts"
