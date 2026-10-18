@@ -94,7 +94,14 @@ def control(screen, own_fields, period=True):
             "initial": {
                 "method": "GET",
                 "url": f"{BROWSER_API}/api/status",
-                "code": script("range.js", "initial.js", start=start, week=WEEK),
+                "code": script(
+                    "range.js",
+                    "initial.js",
+                    "follow.js",
+                    start=start,
+                    week=WEEK,
+                    status=f"{BROWSER_API}/api/status",
+                ),
             },
             "update": {
                 "method": "PATCH",
