@@ -102,22 +102,24 @@ topology = screen(
     ],
 )
 
-# the Tutorial screen, one step at a time, each step a row shown at its step: the twin on the left, its control
-# panel and its state in boxes; the step on the right, its question and its plots
-BOX_PLACES = [
-    ("time-box", 0, 16, 6),
-    ("truth-box", 0, 18, 3),
-    ("opendt-box", 3, 18, 3),
-    ("mape-box", 0, 20, 3),
-    ("co2-box", 3, 20, 3),
+# the Tutorial screen, one step at a time, each a row shown at its step: the twin on the left, its
+# control panel and its state in boxes; the step on the right, its question and its plots
+LEFT = [
+    ("control", 0, 0, 6, 16),
+    ("time-box", 0, 16, 6, 2),
+    ("truth-box", 0, 18, 3, 2),
+    ("opendt-box", 3, 18, 3, 2),
+    ("mape-box", 0, 20, 3, 2),
+    ("co2-box", 3, 20, 3, 2),
 ]
-# the step's height, then its plots down to the boxes' bottom; with its solution shown, the step is taller
-CARD, SOLUTION, BOTTOM = 8, 10, 22
+# the step's height, then its plots, all on a 1440x900 screen in full screen; with its solution, the
+# step is taller and the screen scrolls
+CARD, SOLUTION, PLOTS = 8, 11, 14
 
 
 def split(names, x, y, width, height):
-    """The plots of a step in the area, in two columns, each top to bottom, the left one with the fewer;
-    a single plot takes it all."""
+    """The plots of a step in the area, in two columns, each top to bottom, the left one with the
+    fewer; a single plot takes it all."""
     if len(names) == 1:
         return [(names[0], x, y, width, height)]
     half, left = width // 2, len(names) // 2
@@ -127,34 +129,33 @@ def split(names, x, y, width, height):
 
 
 def stack(names, x, y, width, height):
-    """The names one under the other, in equal parts of the height."""
-    h = height // len(names)
-    return [(name, x, y + i * h, width, h) for i, name in enumerate(names)]
+    """The names one under the other, to the bottom; the lower ones take what does not divide."""
+    tops = [y + height * i // len(names) for i in range(len(names) + 1)]
+    return [(name, x, tops[i], width, tops[i + 1] - tops[i]) for i, name in enumerate(names)]
 
 
-def slide(value, step, card):
-    """The row shown while the step variable has this value: n, or ns with the solution shown."""
-    plots = split([f"plot-{key}" for key in step["plots"]], 6, card, 18, BOTTOM - card)
-    boxes = [(name, x, y, w, 2) for name, x, y, w in BOX_PLACES]
-    places = [("control", 0, 0, 6, 16), *boxes, (f"step-{value}", 6, 0, 18, card), *plots]
-    return row("", grid(places), shown=when("step", "equals", value))
+def slide(value, step, shown):
+    """The row shown while the step variable has this value."""
+    card = SOLUTION if shown else CARD
+    plots = split([f"plot-{key}" for key in step["plots"]], 6, card, 18, PLOTS)
+    return row(
+        "",
+        grid([*LEFT, (f"step-{value}", 6, 0, 18, card), *plots]),
+        shown=when("step", "equals", value),
+    )
 
 
-SLIDES = []  # (value of the step variable, step, its card)
-for n, (_, step) in enumerate(steps.ORDER, 1):
-    SLIDES.append((str(n), step, steps.card(n)))
-    if "solution" in steps.QUESTIONS[step["question"]]:
-        SLIDES.append((f"{n}s", step, steps.card(n, shown=True)))
 tutorial = dashboard(
     "opendt-tutorial",
     "OpenDT, tutorial",
     {"control": control("opendt-tutorial", [HOSTS])}
     | BOXES
-    | {f"step-{value}": card for value, _, card in SLIDES}
-    | {f"plot-{key}": steps.PLOTS[key] for _, step, _ in SLIDES for key in step["plots"]},
-    [slide(value, step, SOLUTION if value.endswith("s") else CARD) for value, step, _ in SLIDES],
+    | {f"step-{value}": card for value, _, card, _ in steps.SLIDES}
+    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]},
+    [slide(value, step, shown) for value, step, _, shown in steps.SLIDES],
     [
         custom("period", "Interval", PERIODS, current="day"),
-        custom("step", "Step", [value for value, _, _ in SLIDES], current="1"),
+        custom("step", "Step", [value for value, *_ in steps.SLIDES], current="1"),
     ],
+    window="day",
 )

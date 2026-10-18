@@ -159,7 +159,8 @@ ANNOTATION = {
 }
 
 
-def dashboard(uid, title, panels, layout, variables=()):
+def dashboard(uid, title, panels, layout, variables=(), window="week"):
+    """A screen; `window`, its time at the start (week, day, or hours, the last 6)."""
     return {
         "apiVersion": "dashboard.grafana.app/v2beta1",
         "kind": "Dashboard",
@@ -178,7 +179,11 @@ def dashboard(uid, title, panels, layout, variables=()):
                 name: element(i, panel) for i, (name, panel) in enumerate(panels.items(), 1)
             },
             "layout": {"kind": "RowsLayout", "spec": {"rows": layout}},
-            "variables": [custom("markers", "Decisions", ["on", "off"]), *variables],
+            "variables": [
+                custom("markers", "Decisions", ["on", "off"]),
+                custom("window", "Time", ["week", "day", "hours"], current=window),
+                *variables,
+            ],
             "timeSettings": {
                 "timezone": "utc",
                 **WEEK,

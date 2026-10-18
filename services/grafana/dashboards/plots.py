@@ -67,9 +67,13 @@ TILES = {
         unit="locale",
         decimals=0,
     ),
-    # the simple screen's physical and digital twin, apart
-    "measured-now": tile("Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1),
-    "opendt-now": tile("OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1),
+    # the physical and digital twin apart, in the colours of their lines (Simple, Tutorial)
+    "measured-now": tile(
+        "Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1, color=GREY
+    ),
+    "opendt-now": tile(
+        "OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1, color=GREEN
+    ),
 }
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {
@@ -82,12 +86,8 @@ BOXES = {
         unit="time:YYYY-MM-DD HH:mm",
         color=BLUE,
     ),
-    "truth-box": tile(
-        "Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1, color=GREY
-    ),
-    "opendt-box": tile(
-        "OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1, color=GREEN
-    ),
+    "truth-box": TILES["measured-now"],
+    "opendt-box": TILES["opendt-now"],
     "mape-box": TILES["mape-now"],
     "co2-box": tile(
         "CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1, color=ORANGE

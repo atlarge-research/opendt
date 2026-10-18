@@ -93,3 +93,21 @@ def test_split():
     assert screens.split(["a", "b", "c"], 6, 9, 18, 14) == three
     four = [("a", 6, 9, 9, 7), ("b", 6, 16, 9, 7), ("c", 15, 9, 9, 7), ("d", 15, 16, 9, 7)]
     assert screens.split(["a", "b", "c", "d"], 6, 9, 18, 14) == four
+    # down to the bottom, the lower plot taller by what does not divide
+    assert screens.split(["a", "b", "c"], 6, 9, 18, 13)[1:] == [
+        ("b", 15, 9, 9, 6),
+        ("c", 15, 15, 9, 7),
+    ]
+
+
+def test_tutorial_starts_on_day():
+    def window(board):
+        [time] = [v["spec"] for v in board["spec"]["variables"] if v["spec"]["name"] == "window"]
+        code = board["spec"]["elements"]["control"]["spec"]["vizConfig"]["spec"]["options"][
+            "initial"
+        ]
+        assert "'${window}'" in code["code"]  # the control panel takes it from the address
+        return time["current"]["value"]
+
+    assert window(screens.tutorial) == "day"
+    assert window(screens.detailed) == window(screens.simple) == "week"
