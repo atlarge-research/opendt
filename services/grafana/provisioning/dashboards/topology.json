@@ -795,6 +795,16 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#338ec1"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
                                             }
                                         ]
                                     },
@@ -810,6 +820,18 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#E69F00"
                                                 }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }

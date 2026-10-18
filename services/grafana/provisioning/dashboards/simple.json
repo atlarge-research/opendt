@@ -423,7 +423,7 @@
                                 "colorMode": "background_solid",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
-                                "orientation": "auto",
+                                "orientation": "horizontal",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
                                 "justifyMode": "auto",
@@ -746,6 +746,16 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#999999"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
                                             }
                                         ]
                                     },
@@ -810,6 +820,18 @@
                                                 ]
                                             }
                                         ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -858,7 +880,7 @@
                                                     },
                                                     {
                                                         "selector": "jobs",
-                                                        "text": "Jobs",
+                                                        "text": "Arrivals [jobs/h]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -874,7 +896,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Jobs": 0
+                                                "Arrivals [jobs/h]": 0
                                             }
                                         }
                                     }
@@ -903,7 +925,7 @@
                                     "min": 0,
                                     "decimals": 0,
                                     "custom": {
-                                        "axisLabel": "Jobs per hour",
+                                        "axisLabel": "Arrivals [jobs/h]",
                                         "lineWidth": 2,
                                         "showPoints": "never",
                                         "drawStyle": "bars",
@@ -916,7 +938,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Jobs"
+                                            "options": "Arrivals [jobs/h]"
                                         },
                                         "properties": [
                                             {
@@ -925,6 +947,18 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#999999"
                                                 }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -1291,7 +1325,22 @@
                                             },
                                             {
                                                 "id": "custom.width",
-                                                "value": 110
+                                                "value": 95
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Change"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.cellOptions",
+                                                "value": {
+                                                    "type": "auto",
+                                                    "wrapText": true
+                                                }
                                             }
                                         ]
                                     },
@@ -1303,7 +1352,7 @@
                                         "properties": [
                                             {
                                                 "id": "custom.width",
-                                                "value": 90
+                                                "value": 80
                                             }
                                         ]
                                     }

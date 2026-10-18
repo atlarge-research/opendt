@@ -1614,6 +1614,16 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#999999"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
                                             }
                                         ]
                                     },
@@ -1676,6 +1686,18 @@
                                                         }
                                                     }
                                                 ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -1822,12 +1844,34 @@
                                                 }
                                             },
                                             {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
+                                            },
+                                            {
                                                 "id": "custom.axisPlacement",
                                                 "value": "right"
                                             },
                                             {
                                                 "id": "custom.axisLabel",
                                                 "value": "Carbon intensity [gCO₂/kWh]"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -1948,6 +1992,16 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#338ec1"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
                                             }
                                         ]
                                     },
@@ -1963,6 +2017,18 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#E69F00"
                                                 }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -2087,7 +2153,22 @@
                                             },
                                             {
                                                 "id": "custom.width",
-                                                "value": 110
+                                                "value": 95
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Change"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.cellOptions",
+                                                "value": {
+                                                    "type": "auto",
+                                                    "wrapText": true
+                                                }
                                             }
                                         ]
                                     },
@@ -2099,7 +2180,7 @@
                                         "properties": [
                                             {
                                                 "id": "custom.width",
-                                                "value": 90
+                                                "value": 80
                                             }
                                         ]
                                     }
@@ -2862,6 +2943,18 @@
                                                 ]
                                             }
                                         ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -3030,6 +3123,18 @@
                                                 ]
                                             }
                                         ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -3154,6 +3259,16 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#9557a5"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
                                             }
                                         ]
                                     },
@@ -3184,6 +3299,18 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#009E73"
                                                 }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -3720,6 +3847,16 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#338ec1"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
                                             }
                                         ]
                                     },
@@ -3767,6 +3904,18 @@
                                                         }
                                                     }
                                                 ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -3887,6 +4036,16 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#338ec1"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
                                             }
                                         ]
                                     },
@@ -3902,6 +4061,18 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#E69F00"
                                                 }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -4208,6 +4379,18 @@
                                                         }
                                                     }
                                                 ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -4630,6 +4813,18 @@
                                                 ]
                                             }
                                         ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -4777,6 +4972,10 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#9557a5"
                                                 }
+                                            },
+                                            {
+                                                "id": "custom.fillOpacity",
+                                                "value": 35
                                             }
                                         ]
                                     },
@@ -4824,6 +5023,18 @@
                                                         }
                                                     }
                                                 ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -4994,6 +5205,18 @@
                                                 ]
                                             }
                                         ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -5160,6 +5383,18 @@
                                                         }
                                                     }
                                                 ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -5560,7 +5795,7 @@
                                     "min": 0,
                                     "decimals": 1,
                                     "custom": {
-                                        "axisLabel": "MAPE [%]",
+                                        "axisLabel": "Power draw MAPE [%]",
                                         "lineWidth": 2,
                                         "showPoints": "never",
                                         "drawStyle": "bars",
@@ -5628,6 +5863,18 @@
                                                         }
                                                     }
                                                 ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -5744,6 +5991,18 @@
                                                 }
                                             }
                                         ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -5836,12 +6095,14 @@
                                 "defaults": {
                                     "decimals": 1,
                                     "custom": {
-                                        "axisLabel": "Error [kW]",
+                                        "axisLabel": "Power draw error [kW]",
                                         "lineWidth": 2,
                                         "showPoints": "never",
                                         "drawStyle": "bars",
                                         "fillOpacity": 80,
-                                        "barAlignment": 1
+                                        "barAlignment": 1,
+                                        "axisSoftMin": 0,
+                                        "axisSoftMax": 0
                                     }
                                 },
                                 "overrides": [
@@ -5857,6 +6118,18 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#D55E00"
                                                 }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -5953,7 +6226,9 @@
                                     "custom": {
                                         "axisLabel": "Energy error [%]",
                                         "lineWidth": 2,
-                                        "showPoints": "never"
+                                        "showPoints": "never",
+                                        "axisSoftMin": 0,
+                                        "axisSoftMax": 0
                                     }
                                 },
                                 "overrides": [
@@ -5969,6 +6244,18 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#D55E00"
                                                 }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -5998,7 +6285,7 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 12,
+                                                "height": 11,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "control"
@@ -6009,9 +6296,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 0,
-                                                "y": 12,
+                                                "y": 11,
                                                 "width": 6,
-                                                "height": 4,
+                                                "height": 5,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "decisions"
