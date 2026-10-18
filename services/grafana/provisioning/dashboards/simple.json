@@ -1238,7 +1238,9 @@
                         "group": "table",
                         "version": "",
                         "spec": {
-                            "options": {},
+                            "options": {
+                                "showHeader": false
+                            },
                             "fieldConfig": {
                                 "defaults": {
                                     "unit": "locale",

@@ -1901,10 +1901,129 @@
                     }
                 }
             },
-            "pick-0": {
+            "decisions": {
                 "kind": "Panel",
                 "spec": {
                     "id": 15,
+                    "title": "Decisions",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/events?markers=on",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "time",
+                                                        "text": "Time",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "text",
+                                                        "text": "Change",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Time": 0,
+                                                "Change": 1
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "kind": "sortBy",
+                                    "spec": {
+                                        "id": "sortBy",
+                                        "options": {
+                                            "sort": [
+                                                {
+                                                    "field": "Time",
+                                                    "desc": true
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "table",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "showHeader": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "unit": "locale",
+                                    "custom": {
+                                        "minWidth": 70
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Time"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "time:MM-DD HH:mm"
+                                            },
+                                            {
+                                                "id": "custom.width",
+                                                "value": 110
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "pick-0": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 16,
                     "title": "Performance",
                     "description": "",
                     "links": [],
@@ -1981,7 +2100,7 @@
             "pick-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 16,
+                    "id": 17,
                     "title": "Utilization",
                     "description": "",
                     "links": [],
@@ -2058,7 +2177,7 @@
             "pick-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
+                    "id": 18,
                     "title": "Sustainability",
                     "description": "",
                     "links": [],
@@ -2135,7 +2254,7 @@
             "pick-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 19,
                     "title": "Twin accuracy",
                     "description": "",
                     "links": [],
@@ -2212,7 +2331,7 @@
             "scheduling-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 20,
                     "title": "Performance now",
                     "description": "",
                     "links": [],
@@ -2360,7 +2479,7 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 21,
                     "title": "Total runtime",
                     "description": "",
                     "links": [],
@@ -2528,7 +2647,7 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 22,
                     "title": "Time in queue",
                     "description": "",
                     "links": [],
@@ -2696,7 +2815,7 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 23,
                     "title": "Jobs waiting or running",
                     "description": "",
                     "links": [],
@@ -2855,7 +2974,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 24,
                     "title": "Utilization now",
                     "description": "",
                     "links": [],
@@ -3017,7 +3136,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 25,
                     "title": "CPU utilization of the hosts",
                     "description": "",
                     "links": [],
@@ -3206,7 +3325,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 26,
                     "title": "CPU demand vs. capacity",
                     "description": "",
                     "links": [],
@@ -3340,7 +3459,7 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 27,
                     "title": "Hosts per CPU utilization",
                     "description": "",
                     "links": [],
@@ -3463,7 +3582,7 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 28,
                     "title": "This $period",
                     "description": "",
                     "links": [],
@@ -3611,7 +3730,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 29,
                     "title": "Energy per $period",
                     "description": "",
                     "links": [],
@@ -3782,7 +3901,7 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 30,
                     "title": "CO2 per $period",
                     "description": "",
                     "links": [],
@@ -3977,7 +4096,7 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 31,
                     "title": "Carbon intensity",
                     "description": "",
                     "links": [],
@@ -4145,7 +4264,7 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 32,
                     "title": "Accuracy now",
                     "description": "",
                     "links": [],
@@ -4293,7 +4412,7 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 33,
                     "title": "Power draw MAPE per hour",
                     "description": "",
                     "links": [],
@@ -4461,7 +4580,7 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 34,
                     "title": "Calibration parameter r",
                     "description": "",
                     "links": [],
@@ -4575,7 +4694,7 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 35,
                     "title": "Power draw error per hour",
                     "description": "",
                     "links": [],
@@ -4704,10 +4823,23 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 16,
+                                                "height": 12,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "control"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 12,
+                                                "width": 6,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "decisions"
                                                 }
                                             }
                                         },
