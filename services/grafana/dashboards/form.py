@@ -16,14 +16,6 @@ VIEW = ["screen", "window", "period", "markers"]  # what the screen shows, never
 ZONES = ["NL", "PL", "DE", "RO"]  # the API's twin.CARBON_TRACES; SURF's twin starts on NL
 SCHEDULERS = ["Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"]
 SPEEDS = [(1, "1x (real time)"), (60, "60x"), (300, "300x"), (3600, "3,600x"), (-1, "Maximum")]
-# the API's twin.SERVERS: SURF's node and OpenDC web's host templates
-KINDS = [
-    ("H01", "SURF-SARA (16 cores)"),
-    ("EPYC", "EPYC (64 cores)"),
-    ("Xeon", "Xeon (40 cores)"),
-    ("Memory", "Memory (48 cores, 1,024 GB)"),
-    ("Edge", "Edge (8 cores)"),
-]
 
 
 def script(*names, **consts):
@@ -69,7 +61,7 @@ CALIBRATION_LEVERS = [
     select("mape_window", "MAPE window", [(60, "1 h"), (360, "6 h"), (1440, "24 h")]),
 ]
 # the first group of hosts: SURF's, until changed on Topology
-HOSTS = field("count_1", "Hosts", "number", min=1)
+HOSTS = field("hosts", "Hosts", "number", min=1)
 
 
 def control(screen, own_fields, period=True):
@@ -125,19 +117,6 @@ def control(screen, own_fields, period=True):
             },
         },
     }
-
-
-def group(i):
-    """Group i of hosts, a kind and a count; group 3 shows once group 2 has a kind."""
-    shown = (
-        {"showIf": "return context.panel.elements.find((e) => e.id === 'kind_2').value"}
-        if i == 3
-        else {}
-    )
-    return [
-        select(f"kind_{i}", f"Hosts {i}", KINDS, **shown),
-        field(f"count_{i}", f"Count {i}", "number", min=0, **shown),
-    ]
 
 
 def picker(title, plots):

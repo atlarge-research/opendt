@@ -7,12 +7,13 @@ This module defines the hierarchical structure of a datacenter:
       - CPU
       - Memory
       - CPU Power Model
+      - GPUs and their power model (optional)
 """
 
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Discriminator, Field, Tag
+from pydantic import BaseModel, Discriminator, Field, Tag, model_validator
 
 
 class CPU(BaseModel):
@@ -79,6 +80,24 @@ CPUPowerModel = Annotated[
 ]
 
 
+class GPU(CPU):
+    """The GPUs of a host, all of one kind."""
+
+    count: int = Field(..., description="Number of GPUs per host", gt=0)
+    memorySize: int = Field(
+        ..., description="GPU memory size, in the unit of the host's memory", gt=0
+    )
+
+
+class GPUPowerModel(BaseModel):
+    """How GPU utilization translates to power, as OpenDC models it (e.g., linear, cubic)."""
+
+    modelType: str = Field(..., description="Power model type")
+    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
+    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
+    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
+
+
 class Host(BaseModel):
     """Host (physical server) in a datacenter cluster."""
 
@@ -89,6 +108,14 @@ class Host(BaseModel):
     cpuPowerModel: AsymptoticCPUPowerModel | MseCPUPowerModel = Field(
         ..., description="CPU power consumption model"
     )
+    gpu: GPU | None = Field(None, description="GPUs of the host, if any")
+    gpuPowerModel: GPUPowerModel | None = Field(None, description="GPU power consumption model")
+
+    @model_validator(mode="after")
+    def gpu_with_power(self):
+        if (self.gpu is None) != (self.gpuPowerModel is None):
+            raise ValueError("A host's GPUs need their power model, and the other way around")
+        return self
 
 
 class PowerSource(BaseModel):
@@ -154,7 +181,7 @@ class TopologySnapshot(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S")
-            if v.microsecond == 0
-            else v.isoformat()
+            datetime: lambda v: (
+                v.strftime("%Y-%m-%dT%H:%M:%S") if v.microsecond == 0 else v.isoformat()
+            )
         }

@@ -13,6 +13,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from api.hosts import summary
+
 SERVICE = ("hosts_up", "tasks_pending", "tasks_active", "tasks_completed")
 HOST = (
     "core_count",
@@ -36,33 +38,9 @@ CHANGES = {
 }
 PERIODS = {"minute": "min", "hour": "h", "day": "D", "week": "W-MON", "month": "MS", "year": "YS"}
 LOCK = threading.Lock()  # the panels of a dashboard ask at once; a new window is computed once
-GROUPS = 3  # kinds of servers the control panel can mix
 # hosts per CPU utilization bucket [%]
 LOWS = range(0, 100, 20)
 BUCKETS = [f"cpu_{low}_{low + 20}" for low in LOWS]
-
-
-def server(
-    cores: int, mhz: float, memory: int, idle: float, top: float, power: float | None = None
-):
-    power_model = {"modelType": "mse", "power": power or top, "idlePower": idle, "maxPower": top}
-    return {
-        "cpu": {"coreCount": cores, "coreSpeed": mhz},
-        "memory": {"memorySize": memory},
-        "cpuPowerModel": power_model,
-    }
-
-
-# SURF's node (H01) and four host templates of OpenDC web (Daniel Halasz, branch feat/refactor-web) in OpenDT's
-# format: all cores of a server, MHz, memory in SURF's unit (128 GB is 128,000,000), and OpenDT's mse power model
-# with the template's idle and maximum power. The twin's r applies to every kind; an assumption.
-SERVERS = {
-    "H01": server(16, 2100, 128_000_000, idle=25, top=174, power=300),
-    "EPYC": server(64, 3200, 256_000_000, idle=120, top=400),  # 2x AMD EPYC 7502
-    "Xeon": server(40, 2500, 192_000_000, idle=90, top=300),  # 2x Intel Xeon Gold 6248
-    "Memory": server(48, 2900, 1_024_000_000, idle=140, top=350),  # 2x Intel Xeon Gold 6248R, 1 TiB
-    "Edge": server(8, 3700, 32_000_000, idle=25, top=95),  # Intel Xeon E-2288G
-}
 
 
 def windows(run_dir: Path) -> list[Path]:
@@ -90,11 +68,6 @@ def topology(window: Path) -> dict:
     return json.loads((window / "input" / "topology.json").read_text())
 
 
-def groups(hosts: list[dict]) -> list[dict]:
-    """The host groups, as many as the control panel has, the missing ones empty."""
-    return (hosts + [{"name": None, "count": 0}] * GROUPS)[:GROUPS]
-
-
 @cache
 def settings(window: Path) -> dict:
     """Servers, power-model exponent r, carbon zone, and scheduler the window ran with."""
@@ -104,10 +77,8 @@ def settings(window: Path) -> dict:
     experiment = json.loads((window / "input" / "experiment.json").read_text())
     policies = experiment.get("allocationPolicies", [])  # none: OpenDC's default, Mem
     return {
-        "servers": " + ".join(f"{host['count']:,} {label(host)}" for host in hosts),
-        # the groups as the control panel's fields kind_1, count_1, ..., kind_3, count_3
-        **{f"kind_{i}": host["name"] for i, host in enumerate(groups(hosts), 1)},
-        **{f"count_{i}": host["count"] for i, host in enumerate(groups(hosts), 1)},
+        "servers": " + ".join(summary(host) for host in hosts),
+        "hosts": hosts[0]["count"],  # of the first group, the control panel's Hosts
         "calibration_factor": hosts[0]["cpuPowerModel"]["calibrationFactor"],
         # another trace (e.g., of an older run) by its file name
         "carbon_zone": next(
@@ -115,29 +86,6 @@ def settings(window: Path) -> dict:
         ),
         "scheduler": policies[0]["policyName"] if policies else "Mem",
     }
-
-
-def label(host: dict) -> str:
-    # SURF is the datacenter, SURF-SARA its cluster
-    return "SURF-SARA" if host["name"] == "H01" else host["name"]
-
-
-def specs(host: dict) -> dict:
-    """A kind of server as people read it: cores, GHz, GB, and idle and maximum power [W]."""
-    return {
-        "kind": label(host),
-        "cores": host["cpu"]["coreCount"],
-        "ghz": host["cpu"]["coreSpeed"] / 1000,
-        "memory_gb": host["memory"]["memorySize"] / 1e6,  # SURF's unit: 128 GB is 128,000,000
-        "idle_w": host["cpuPowerModel"]["idlePower"],
-        "max_w": host["cpuPowerModel"]["maxPower"],
-    }
-
-
-def server_groups(run_dir: Path) -> pd.DataFrame:
-    """The server groups the twin runs now, with their specs."""
-    hosts = topology(windows(run_dir)[-1])["clusters"][0]["hosts"]
-    return pd.DataFrame({**specs(host), "count": host["count"]} for host in hosts)
 
 
 def output(window: Path, name: str) -> Path:

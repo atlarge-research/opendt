@@ -53,7 +53,9 @@ What the Grafana screens read, in Infinity's `{"data": [...]}` form, from the tw
 - `GET /api/jobs`: the jobs not done yet, with the hours left
 - `GET /api/arrivals`: the jobs submitted per hour
 - `GET /api/events?markers`: the decisions (hosts, r, CO₂ zone, scheduler), automatic or manual
-- `GET /api/servers`, `GET /api/server_kinds`: the host groups now, and the kinds to choose from
+- `GET /api/hosts`, `POST /api/hosts`: the host groups as the Topology table shows them, and a row of it saved
+  (no `id`: a new group; `count=0`: a group removed)
+- `GET /api/components`: the CPUs and GPUs to choose from
 - `GET /api/accuracy?minutes`: the MAPE and the error of OpenDT's power vs. the ground truth, and r
 
 ## Data Sources

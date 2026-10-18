@@ -26,7 +26,7 @@ from odt_common.models.topology import (
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
 
-from api import levers, twin
+from api import hosts, levers, twin
 from api.carbon_query import CarbonDataQuery, CarbonDataResponse
 from api.power_query import PowerDataQuery, PowerDataResponse
 
@@ -344,17 +344,35 @@ def get_arrivals():
     return rows(twin.arrivals)
 
 
-@app.get("/api/servers")
-def get_servers():
-    """The server groups the twin runs now, with their specs."""
-    return rows(twin.server_groups)
+@app.get("/api/hosts")
+def get_hosts():
+    """The host groups the twin runs, or runs from its next window, as the Topology table shows them."""
+    topology = app.state.topology
+    if topology is None:
+        windows = twin.windows(run_dir())
+        if not windows:
+            return {"data": []}
+        topology = twin.topology(windows[-1])
+    return {"data": hosts.rows(topology)}
 
 
-@app.get("/api/server_kinds")
-def get_server_kinds():
-    """The kinds of servers the control panel offers, with their specs."""
+@app.post("/api/hosts")
+def edit_hosts(row: Annotated[hosts.Row, Query()]):
+    """Save a row of the Topology table: a host group changed, added (no id), or removed (count 0)."""
+    send_topology(row=row)
+    return get_hosts()
+
+
+@app.get("/api/components")
+def get_components(part: Literal[tuple(hosts.PARTS)] | None = None):
+    """The CPUs and GPUs the Topology table offers, with their specs."""
+    parts = [part] if part else hosts.PARTS
     return {
-        "data": [{"id": n, **twin.specs({"name": n, **spec})} for n, spec in twin.SERVERS.items()]
+        "data": [
+            {"part": kind, "name": name, **specs}
+            for kind in parts
+            for name, specs in hosts.PARTS[kind].items()
+        ]
     }
 
 
@@ -379,17 +397,23 @@ def configure(setting: str, value) -> None:
     publish("system", event.model_dump(), key=setting)
 
 
+def send_topology(**change) -> None:
+    """A new simulated topology to the simulator, built on the one sent last; 422 if the twin cannot run it."""
+    latest = twin.topology(twin.windows(twin_run())[-1])
+    try:
+        app.state.topology = levers.topology(app.state.topology, latest, **change)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    publish("sim_topology", app.state.topology, key="datacenter")
+
+
 @app.patch("/api/control")
 def control(change: levers.Control):
     """Change the running twin: hosts and CO2 zone as a new simulated topology, the scheduler, the replay
     speed, and the calibrator's parallel simulations as runtime settings."""
     if levers.moves_topology(change):
-        latest = twin.topology(twin.windows(twin_run())[-1])
-        try:
-            app.state.topology = levers.topology(change, app.state.topology, latest)
-        except ValueError as error:
-            raise HTTPException(status_code=422, detail=str(error)) from error
-        publish("sim_topology", app.state.topology, key="datacenter")
+        first = hosts.Row(id=1, count=change.hosts) if change.hosts else None
+        send_topology(row=first, zone=change.carbon_zone)
     for field, value in change.model_dump(include=set(levers.SETTINGS), exclude_none=True).items():
         configure(levers.SETTINGS[field], value)
         app.state.settings[field] = value

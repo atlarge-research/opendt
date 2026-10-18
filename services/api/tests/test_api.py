@@ -3,7 +3,7 @@
 import json
 
 import pytest
-from api import levers, main, twin
+from api import hosts, levers, main, twin
 from conftest import write_window
 from fastapi import HTTPException
 from odt_common import AppConfig
@@ -52,12 +52,7 @@ def test_status(api):
     assert main.get_status() == {
         "twin_time": "2022-10-06T22:10:00+00:00",
         "servers": "2,770 SURF-SARA",
-        "kind_1": "H01",
-        "count_1": 2770,
-        "kind_2": None,
-        "count_2": 0,
-        "kind_3": None,
-        "count_3": 0,
+        "hosts": 2770,
         "calibration_factor": 4.0,
         "carbon_zone": "NL",
         "scheduler": "Mem",
@@ -86,7 +81,7 @@ def sent_topology(api):
 
 
 def test_control_hosts_and_zone(api):
-    main.control(levers.Control(count_1=138, carbon_zone="RO"))
+    main.control(levers.Control(hosts=138, carbon_zone="RO"))
     cluster = sent_topology(api)
     assert cluster.hosts[0].count == 138
     assert cluster.powerSource.carbonTracePath == "/app/workload/carbon_zones/RO.parquet"
@@ -94,25 +89,24 @@ def test_control_hosts_and_zone(api):
     assert cluster.hosts[0].cpuPowerModel.calibrationFactor == 4.0
 
 
-def test_control_adds_kind(api):
-    main.control(levers.Control(kind_2="EPYC", count_2=40))
-    surf, epyc = sent_topology(api).hosts
-    assert (surf.name, surf.count, epyc.name, epyc.count) == ("H01", 2770, "EPYC", 40)
-    assert (epyc.cpu.coreCount, epyc.cpu.coreSpeed) == (64, 3200)  # 2 x 32 cores at 3.2 GHz
-    assert epyc.cpuPowerModel.calibrationFactor == 4.0
+def test_row_saved(api):
+    main.edit_hosts(hosts.Row(id=1, kind="SURF-SARA", count=138))
+    [h01] = sent_topology(api).hosts
+    assert (h01.name, h01.count) == ("H01", 138)
+    assert data(main.get_hosts())[0]["count"] == 138  # before the twin's next window runs it
 
 
-def test_control_swaps_kind(api):
-    main.control(levers.Control(kind_1="Edge", count_2=0))
-    [edge] = sent_topology(api).hosts
-    assert (edge.name, edge.count, edge.cpu.coreCount) == ("Edge", 2770, 8)
+def test_row_added(api):
+    main.edit_hosts(hosts.Row(kind="Edge", count=10, cpu="Xeon E-2288G", memory_gb=32))
+    _, edge = sent_topology(api).hosts
+    assert (edge.name, edge.count, edge.cpu.coreCount) == ("Edge", 10, 8)
+    assert edge.cpuPowerModel.calibrationFactor == 4.0  # the twin's r
 
 
-def test_control_kind_needs_count(api):
-    with pytest.raises(HTTPException) as error:
-        main.control(levers.Control(kind_2="EPYC"))
-    assert (error.value.status_code, error.value.detail) == (422, "Hosts 2 need a count")
-    assert not api
+def test_no_last_row(api):
+    with pytest.raises(HTTPException) as refused:
+        main.edit_hosts(hosts.Row(id=1, count=0))
+    assert refused.value.status_code == 422 and not api
 
 
 def test_control_speed(api):
@@ -160,7 +154,7 @@ def test_control_calibration(api, field, value, key):
 
 def test_control_builds_on_last_sent(api):
     # two changes within one window of operation: the second keeps the first
-    main.control(levers.Control(count_1=138))
+    main.control(levers.Control(hosts=138))
     main.control(levers.Control(carbon_zone="RO"))
     [_, (_, message, _)] = api
     cluster = Topology(**message).clusters[0]
@@ -168,16 +162,9 @@ def test_control_builds_on_last_sent(api):
     assert cluster.powerSource.carbonTracePath == twin.CARBON_TRACES["RO"]
 
 
-def test_control_keeps_one_host(api):
-    with pytest.raises(HTTPException) as refused:
-        main.control(levers.Control(count_1=0))
-    assert refused.value.status_code == 422 and not api
-
-
-def test_control_merges_kinds(api):
-    main.control(levers.Control(kind_2="EPYC", count_2=20, kind_3="EPYC", count_3=5))
-    groups = [(host.name, host.count) for host in sent_topology(api).hosts]
-    assert groups == [("H01", 2770), ("EPYC", 25)]
+def test_control_keeps_one_host():
+    with pytest.raises(ValueError):
+        levers.Control(hosts=0)
 
 
 def test_control_rejects_speed_0():
@@ -194,7 +181,7 @@ def test_control_rejects_speed_0():
         main.get_events,
         main.get_accuracy,
         main.get_arrivals,
-        main.get_servers,
+        main.get_hosts,
         main.get_totals,
     ],
     ids=lambda endpoint: endpoint.__name__,
@@ -218,8 +205,11 @@ def test_markers_off(api):
     assert data(main.get_events(markers="off")) == []
 
 
-def test_server_kinds():
-    assert [kind["id"] for kind in data(main.get_server_kinds())] == list(twin.SERVERS)
+def test_components():
+    names = [component["name"] for component in data(main.get_components())]
+    assert names == [*hosts.CPUS, "None", *hosts.GPUS]
+    # a host can also have no GPU
+    assert [gpu["name"] for gpu in data(main.get_components(part="GPU"))] == ["None", *hosts.GPUS]
 
 
 def test_no_queue_time_without_starts(api, run_dir):
