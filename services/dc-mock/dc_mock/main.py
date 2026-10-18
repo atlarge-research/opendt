@@ -121,7 +121,6 @@ class DCMockOrchestrator:
                 "skipping topology publishing"
             )
 
-        logger.info("\n" + "=" * 70)
         logger.info("All producers started and synchronized")
 
     def wait_for_completion(self) -> None:
@@ -154,7 +153,6 @@ class DCMockOrchestrator:
 
     def stop_all(self) -> None:
         """Stop all running producers."""
-        logger.info("\n" + "=" * 70)
         logger.info("Stopping all producers...")
 
         producers = [

@@ -9,14 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def detect_java_home() -> str:
-    """Detect JAVA_HOME by finding the Java installation directory.
-
-    Returns:
-        Path to Java home directory
-
-    Raises:
-        RuntimeError: If Java cannot be found
-    """
+    """Detect JAVA_HOME by finding the Java installation directory."""
     # First check if JAVA_HOME is already set
     if "JAVA_HOME" in os.environ:
         java_home = os.environ["JAVA_HOME"]

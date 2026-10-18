@@ -22,12 +22,7 @@ class CalibrationResultProcessor:
     """Processes and aggregates calibration sweep results."""
 
     def __init__(self, calibrator_output_dir: Path):
-        """Initialize the result processor.
-
-        Args:
-            calibrator_output_dir: Base directory for calibrator outputs
-                                   (e.g., data/run_id/calibrator/)
-        """
+        """Initialize the result processor."""
         self.calibrator_output_dir = Path(calibrator_output_dir)
         self.agg_results_file = self.calibrator_output_dir / "agg_results.parquet"
         self.last_best_value: float | None = None
@@ -69,21 +64,7 @@ class CalibrationResultProcessor:
         calibrated_property: str,
         topology_changed: bool,
     ) -> None:
-        """Process results from a calibration sweep and update aggregated data.
-
-        Args:
-            run_number: The calibration run number
-            run_dir: Path to the calibration run directory
-            aligned_simulated_time: The end time of this calibration run
-            last_task_time: Timestamp of the last task in the sweep
-            task_count: Number of tasks processed
-            wall_clock_time: Wall clock time when calibration completed
-            mape_results: Dictionary mapping parameter values to MAPE scores
-            best_value: The best calibration parameter value found
-            best_mape: The MAPE score of the best value
-            calibrated_property: Name of the property being calibrated
-            topology_changed: Whether the topology was updated and broadcast
-        """
+        """Process results from a calibration sweep and update aggregated data."""
         logger.debug(
             f"Processing calibration results for run {run_number}: "
             f"best_value={best_value}, best_mape={best_mape:.4f}, "
@@ -131,17 +112,7 @@ class CalibrationResultProcessor:
         wall_clock_time: datetime,
         mape_results: dict[str, Any],
     ) -> None:
-        """Write metadata.json for a calibration sweep.
-
-        Args:
-            run_dir: Path to the calibration run directory
-            run_number: The calibration run number
-            aligned_simulated_time: The end time of this calibration run
-            last_task_time: Timestamp of the last task
-            task_count: Number of tasks processed
-            wall_clock_time: Wall clock time
-            mape_results: MAPE comparison results including window info
-        """
+        """Write metadata.json for a calibration sweep."""
         # Extract window info from mape_results
         # Note: window_start and window_end are already ISO format strings from MAPE comparator
         window_start_str = mape_results.get("window_start")
@@ -188,17 +159,7 @@ class CalibrationResultProcessor:
         topology_changed: bool,
         task_count: int,
     ) -> None:
-        """Append calibration result to aggregated parquet file.
-
-        Args:
-            run_number: The calibration run number
-            timestamp: Timestamp for this result
-            best_value: The best calibration parameter value (rounded to 2 decimals)
-            best_mape: The MAPE score of the best value
-            calibrated_property: Name of the property being calibrated
-            topology_changed: Whether the topology was updated and broadcast
-            task_count: Number of tasks processed
-        """
+        """Append calibration result to aggregated parquet file."""
         new_row = pd.DataFrame(
             {
                 "timestamp": [timestamp],
@@ -232,15 +193,7 @@ class CalibrationResultProcessor:
             )
 
     def should_broadcast_topology(self, new_best_value: float, tolerance: float = 1e-6) -> bool:
-        """Determine if topology should be broadcast based on value change.
-
-        Args:
-            new_best_value: The newly found best calibration value
-            tolerance: Minimum change to consider as different (default: 1e-6)
-
-        Returns:
-            True if topology should be broadcast, False otherwise
-        """
+        """Determine if topology should be broadcast based on value change."""
         if self.last_best_value is None:
             # First calibration run, always broadcast
             logger.info(f"First calibration: will broadcast best_value={new_best_value:.4f}")
@@ -263,11 +216,7 @@ class CalibrationResultProcessor:
         return value_changed
 
     def get_aggregated_results(self) -> pd.DataFrame | None:
-        """Get the current aggregated calibration results.
-
-        Returns:
-            DataFrame with aggregated results, or None if no results exist
-        """
+        """Get the current aggregated calibration results."""
         if not self.agg_results_file.exists():
             return None
 
@@ -278,11 +227,7 @@ class CalibrationResultProcessor:
             return None
 
     def get_stats(self) -> dict[str, Any]:
-        """Get statistics about the aggregated calibration results.
-
-        Returns:
-            Dictionary with statistics
-        """
+        """Get statistics about the aggregated calibration results."""
         if not self.agg_results_file.exists():
             return {
                 "exists": False,

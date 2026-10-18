@@ -1,4 +1,4 @@
-"""Simulator Service - Main Entry Point."""
+"""The simulator: runs OpenDC on the replayed workload, one window of operation at a time."""
 
 import copy
 import json
@@ -47,21 +47,7 @@ class SimulationService:
         background_load_nodes: int = 0,
         consumer_group: str = "simulators",
     ):
-        """Initialize the simulation service.
-
-        Args:
-            kafka_bootstrap_servers: Kafka broker addresses
-            workload_topic: Kafka topic name for workload events (dc.workload)
-            topology_topic: Kafka topic name for topology updates (dc.topology)
-            sim_topology_topic: Kafka topic name for simulated topology updates (sim.topology)
-            system_topic: Kafka topic name for runtime settings (sys.config), e.g., the scheduler
-            simulation_frequency_minutes: Simulation frequency in simulated time minutes
-            speed_factor: Configured simulation speed multiplier
-            run_output_dir: Base directory for run outputs
-            run_id: Unique run ID for this session
-            background_load_nodes: Number of nodes reserved for background load
-            consumer_group: Kafka consumer group ID
-        """
+        """Initialize the simulation service."""
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.consumer_group = consumer_group
         self.workload_topic = workload_topic

@@ -34,15 +34,7 @@ class BaseProducer(ABC):
         name: str | None = None,
         start_barrier: threading.Barrier | None = None,
     ):
-        """Initialize the base producer.
-
-        Args:
-            kafka_bootstrap_servers: Kafka broker addresses
-            speed: Shared simulation speed (1.0 = realtime, -1 = max speed), changeable at runtime
-            topic: Kafka topic name for this producer
-            name: Optional producer name for logging
-            start_barrier: Optional barrier for synchronized startup across producers
-        """
+        """Initialize the base producer."""
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.speed = speed
         self.topic = topic
@@ -57,22 +49,13 @@ class BaseProducer(ABC):
         logger.info(f"  Speed factor: {self.speed.factor}x")
 
     def _get_producer(self) -> KafkaProducer:
-        """Get or create the Kafka producer.
-
-        Returns:
-            Kafka producer instance
-        """
+        """Get or create the Kafka producer."""
         if self._producer is None:
             self._producer = get_kafka_producer(self.kafka_bootstrap_servers)
         return self._producer
 
     def emit_message(self, message: dict[str, Any], key: str | None = None) -> None:
-        """Emit a message to Kafka.
-
-        Args:
-            message: Message payload (will be JSON serialized)
-            key: Optional message key
-        """
+        """Emit a message to Kafka."""
         try:
             send_message(
                 self._get_producer(),
@@ -119,14 +102,7 @@ class BaseProducer(ABC):
                 return True
 
     def calculate_sleep_time(self, realtime_seconds: float) -> float:
-        """Calculate actual sleep time based on speed factor.
-
-        Args:
-            realtime_seconds: Desired sleep time in realtime seconds
-
-        Returns:
-            Actual sleep time adjusted for speed factor
-        """
+        """Calculate actual sleep time based on speed factor."""
         if self.speed.factor <= 0:
             # Max speed (-1): minimal sleep
             return 0.001
@@ -169,11 +145,7 @@ class BaseProducer(ABC):
             self._cleanup()
 
     def stop(self, timeout: float = 5.0) -> None:
-        """Stop the producer and wait for thread to finish.
-
-        Args:
-            timeout: Maximum time to wait for thread termination in seconds
-        """
+        """Stop the producer and wait for thread to finish."""
         if self._thread is None or not self._thread.is_alive():
             logger.debug(f"{self.name} is not running")
             return
@@ -201,28 +173,13 @@ class BaseProducer(ABC):
                 self._producer = None
 
     def is_running(self) -> bool:
-        """Check if the producer thread is running.
-
-        Returns:
-            True if thread is alive, False otherwise
-        """
+        """Check if the producer thread is running."""
         return self._thread is not None and self._thread.is_alive()
 
     def should_stop(self) -> bool:
-        """Check if stop has been requested.
-
-        Returns:
-            True if stop event is set, False otherwise
-        """
+        """Check if stop has been requested."""
         return self._stop_event.is_set()
 
     def wait_interruptible(self, seconds: float) -> bool:
-        """Wait for specified seconds, but can be interrupted by stop event.
-
-        Args:
-            seconds: Time to wait in seconds
-
-        Returns:
-            True if interrupted (should stop), False if timed out normally
-        """
+        """Wait for specified seconds, but can be interrupted by stop event."""
         return self._stop_event.wait(timeout=seconds)

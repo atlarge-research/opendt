@@ -17,11 +17,7 @@ class MapeComparator:
     """Compares simulated and actual power consumption using MAPE metric."""
 
     def __init__(self, mape_window_minutes: int):
-        """Initialize the MAPE comparator.
-
-        Args:
-            mape_window_minutes: Maximum time window for MAPE calculation
-        """
+        """Initialize the MAPE comparator."""
         self.mape_window_minutes = mape_window_minutes
 
         logger.info(f"Initialized MapeComparator with window {mape_window_minutes} minutes")
@@ -36,22 +32,7 @@ class MapeComparator:
         actual_power: pd.DataFrame,
         simulation_end_time: datetime,
     ) -> dict[str, Any]:
-        """Compare simulated vs actual power and calculate MAPE.
-
-        Args:
-            simulated_power: DataFrame with columns [timestamp, power_draw]
-            actual_power: DataFrame with columns [timestamp, power_draw]
-            simulation_end_time: End time of simulation (determines window end)
-
-        Returns:
-            Dictionary with:
-                - mape: Mean absolute percentage error (%)
-                - window_start: Start of comparison window
-                - window_end: End of comparison window
-                - num_points: Number of aligned data points
-                - mean_simulated: Mean simulated power
-                - mean_actual: Mean actual power
-        """
+        """Compare simulated vs actual power and calculate MAPE."""
         # Determine comparison window (rolling, capped at mape_window)
         window_end = simulation_end_time
 
@@ -216,15 +197,7 @@ class MapeComparator:
         }
 
     def _align_timeseries(self, sim_df: pd.DataFrame, actual_df: pd.DataFrame) -> pd.DataFrame:
-        """Align simulated and actual power timeseries by interpolation.
-
-        Args:
-            sim_df: Simulated power with columns [timestamp, power_draw]
-            actual_df: Actual power with columns [timestamp, power_draw]
-
-        Returns:
-            Aligned DataFrame with columns [timestamp, simulated_power, actual_power]
-        """
+        """Align simulated and actual power timeseries by interpolation."""
         sim_df = sim_df.copy()
         actual_df = actual_df.copy()
         sim_df["timestamp"] = pd.to_datetime(sim_df["timestamp"])

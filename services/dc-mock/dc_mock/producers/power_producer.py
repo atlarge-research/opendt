@@ -32,16 +32,7 @@ class PowerProducer(BaseProducer):
         earliest_task_time_ms: int,
         start_barrier: threading.Barrier | None = None,
     ):
-        """Initialize the power producer.
-
-        Args:
-            workload_context: Workload context with resolved file paths
-            kafka_bootstrap_servers: Kafka broker addresses
-            speed: Shared simulation speed
-            topic: Kafka topic name for power consumption events
-            earliest_task_time_ms: Earliest task submission time in epoch ms
-            start_barrier: Optional barrier for synchronized startup
-        """
+        """Initialize the power producer."""
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed=speed,
@@ -57,14 +48,7 @@ class PowerProducer(BaseProducer):
         logger.info(f"  Earliest task time: {earliest_task_time_ms}ms")
 
     def load_consumption_data(self) -> list[Consumption]:
-        """Load consumption data from Parquet file.
-
-        Returns:
-            List of Consumption records with absolute timestamps
-
-        Raises:
-            FileNotFoundError: If consumption file doesn't exist
-        """
+        """Load consumption data from Parquet file."""
         if not self.workload_context.consumption_file.exists():
             logger.warning(f"Consumption file not found: {self.workload_context.consumption_file}")
             return []

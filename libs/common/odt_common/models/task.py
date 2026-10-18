@@ -50,14 +50,7 @@ class Task(BaseModel):
     @field_validator("submission_time", mode="before")
     @classmethod
     def parse_submission_time(cls, v: datetime | int | float | str) -> datetime:
-        """Parse submission time from epoch milliseconds to datetime (UTC-aware).
-
-        Args:
-            v: Timestamp as milliseconds (int/float), datetime object, or ISO string
-
-        Returns:
-            UTC-aware datetime object
-        """
+        """Parse submission time from epoch milliseconds to datetime (UTC-aware)."""
         if isinstance(v, (int, float)):
             # Convert milliseconds to seconds for datetime, make it UTC-aware
             return datetime.fromtimestamp(v / 1000.0, tz=UTC)

@@ -30,12 +30,7 @@ class OpenDCRunner:
     """
 
     def __init__(self, opendc_bin_path: Path | None = None) -> None:
-        """Initialize the OpenDC runner.
-
-        Args:
-            opendc_bin_path: Path to OpenDCExperimentRunner binary.
-                Defaults to /app/opendc/bin/OpenDCExperimentRunner/bin/OpenDCExperimentRunner
-        """
+        """Initialize the OpenDC runner."""
         if opendc_bin_path is None:
             opendc_bin_path = Path(
                 "/app/opendc/bin/OpenDCExperimentRunner/bin/OpenDCExperimentRunner"
@@ -183,19 +178,7 @@ class OpenDCRunner:
         timeout_seconds: int = 120,
         scheduler: str | None = None,
     ) -> tuple[bool, Path]:
-        """Run OpenDC simulation with given tasks and topology.
-
-        Args:
-            tasks: List of Task models (with fragments)
-            topology: Topology model
-            run_dir: Directory for this run (e.g., /app/data/<timestamp>/opendc/run_5)
-            run_number: Run number for this simulation
-            simulated_time: Aligned simulation trigger time (frequency-based)
-            timeout_seconds: Maximum time to wait for simulation
-
-        Returns:
-            Tuple of (success: bool, output_dir: Path)
-        """
+        """Run OpenDC simulation with given tasks and topology."""
 
         logger.info(f"Starting OpenDC simulation: run_{run_number}")
         logger.debug(f"Tasks: {len(tasks)}, Fragments: {sum(len(t.fragments) for t in tasks)}")

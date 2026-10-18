@@ -1,4 +1,4 @@
-"""Calibrator Service - Main Entry Point."""
+"""The calibrator: fits the power model's r to the measured power with parallel OpenDC runs."""
 
 import logging
 import os

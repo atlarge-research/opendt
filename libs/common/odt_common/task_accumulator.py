@@ -22,11 +22,7 @@ class TaskAccumulator:
         self.first_task_time: datetime | None = None
 
     def add_task(self, task: Task) -> None:
-        """Add a task to the accumulator.
-
-        Args:
-            task: Task to add
-        """
+        """Add a task to the accumulator."""
         self.tasks.append(task)
 
         # Track the first task's submission time (rounded down to whole minutes)
@@ -39,15 +35,7 @@ class TaskAccumulator:
         logger.debug(f"Added task {task.id}, total tasks: {len(self.tasks)}")
 
     def should_simulate(self, heartbeat_time: datetime, frequency: timedelta) -> bool:
-        """Check if simulation should be triggered.
-
-        Args:
-            heartbeat_time: Current heartbeat timestamp
-            frequency: Simulation frequency
-
-        Returns:
-            True if enough time has elapsed since last simulation
-        """
+        """Check if simulation should be triggered."""
         if len(self.tasks) == 0:
             return False
 
@@ -75,12 +63,6 @@ class TaskAccumulator:
 
         This returns the exact time when the simulation should be considered to have run,
         aligned to the frequency intervals.
-
-        Args:
-            frequency: Simulation frequency
-
-        Returns:
-            Next aligned simulation time, or None if not ready
         """
         if self.last_simulation_time is None:
             # First simulation: first_task_time + frequency
@@ -92,17 +74,9 @@ class TaskAccumulator:
             return self.last_simulation_time + frequency
 
     def get_all_tasks(self) -> list[Task]:
-        """Get all accumulated tasks.
-
-        Returns:
-            List of all tasks
-        """
+        """Get all accumulated tasks."""
         return self.tasks.copy()
 
     def update_simulation_time(self, simulation_time: datetime) -> None:
-        """Update the last simulation time.
-
-        Args:
-            simulation_time: Timestamp of the simulation
-        """
+        """Update the last simulation time."""
         self.last_simulation_time = simulation_time

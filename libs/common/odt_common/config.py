@@ -258,30 +258,12 @@ class AppConfig(BaseModel):
         return self.global_config.calibration_enabled
 
     def get_workload_context(self, base_path: Path) -> WorkloadContext:
-        """Get workload context with resolved paths.
-
-        Args:
-            base_path: Override the default base path (/app/data)
-
-        Returns:
-            WorkloadContext with resolved file paths
-        """
+        """Get workload context with resolved paths."""
         return WorkloadContext(name=self.workload, base_path=base_path)
 
     @classmethod
     def load(cls, path: str | Path) -> "AppConfig":
-        """Load configuration from YAML file.
-
-        Args:
-            path: Path to YAML configuration file
-
-        Returns:
-            Loaded AppConfig instance
-
-        Raises:
-            FileNotFoundError: If config file doesn't exist
-            ValueError: If YAML is invalid
-        """
+        """Load configuration from YAML file."""
         config_path = Path(path)
 
         if not config_path.exists():
@@ -296,11 +278,7 @@ class AppConfig(BaseModel):
         return cls(**data)
 
     def save(self, path: str | Path) -> None:
-        """Save configuration to YAML file.
-
-        Args:
-            path: Path to save configuration file
-        """
+        """Save configuration to YAML file."""
         config_path = Path(path)
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -347,17 +325,7 @@ class DynamicConfigEvent(BaseModel):
     )
 
     def apply_to_config(self, config: AppConfig) -> AppConfig:
-        """Apply this configuration change to an AppConfig instance.
-
-        Args:
-            config: The configuration to update
-
-        Returns:
-            Updated configuration (new instance)
-
-        Raises:
-            ValueError: If setting_key is invalid
-        """
+        """Apply this configuration change to an AppConfig instance."""
         # Parse the setting key (e.g., "simulation.speed_factor")
         parts = self.setting_key.split(".")
 
@@ -387,18 +355,7 @@ class DynamicConfigEvent(BaseModel):
 
 # Convenience function for loading config from environment
 def load_config_from_env(env_var: str = "CONFIG_FILE") -> AppConfig:
-    """Load configuration from path specified in environment variable.
-
-    Args:
-        env_var: Name of environment variable containing config path
-
-    Returns:
-        Loaded AppConfig instance
-
-    Raises:
-        ValueError: If environment variable not set
-        FileNotFoundError: If config file doesn't exist
-    """
+    """Load configuration from path specified in environment variable."""
     import os
 
     config_path = os.getenv(env_var)

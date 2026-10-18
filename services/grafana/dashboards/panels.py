@@ -265,7 +265,10 @@ def editable(title, url, columns, save, delete, key="id"):
     def editor(field, kind):
         if kind in ("number", "string"):
             return {"type": kind}
-        return {"type": "select", "queryOptions": {"source": field, "value": "name", "label": "name"}}
+        return {
+            "type": "select",
+            "queryOptions": {"source": field, "value": "name", "label": "name"},
+        }
 
     def item(field, name, kind, shown=True):
         edit = {"enabled": shown, "editor": editor(field, kind)}
@@ -279,7 +282,10 @@ def editable(title, url, columns, save, delete, key="id"):
             "edit": {**edit, "permission": {"mode": "", "userRole": []}},
             "newRowEdit": edit,
             # wide enough for a list's names and a cell's editor
-            "appearance": {"width": {"auto": True, "min": 60 if kind == "number" else 120}, "wrap": False},
+            "appearance": {
+                "width": {"auto": True, "min": 60 if kind == "number" else 120},
+                "wrap": False,
+            },
         }
 
     def request(address):

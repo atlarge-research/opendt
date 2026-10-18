@@ -41,28 +41,13 @@ class ResultCache:
         self.last_run_dir: Path | None = None
 
     def _compute_topology_hash(self, topology: Topology) -> str:
-        """Compute deterministic hash of topology.
-
-        Args:
-            topology: Topology to hash
-
-        Returns:
-            SHA256 hash of sorted JSON representation
-        """
+        """Compute deterministic hash of topology."""
         topology_dict = topology.model_dump(mode="json")
         topology_json = json.dumps(topology_dict, sort_keys=True)
         return hashlib.sha256(topology_json.encode()).hexdigest()
 
     def can_reuse(self, topology: Topology, task_count: int) -> bool:
-        """Check if cached results can be reused for given inputs.
-
-        Args:
-            topology: Current topology
-            task_count: Current cumulative task count
-
-        Returns:
-            True if cache hit (topology and task count match), False otherwise
-        """
+        """Check if cached results can be reused for given inputs."""
         if self.last_state is None or self.last_run_dir is None:
             return False
 
@@ -77,21 +62,13 @@ class ResultCache:
         )
 
     def get_cached_run_dir(self) -> Path | None:
-        """Get cached run directory path.
-
-        Returns:
-            Path to cached run directory if available, None otherwise
-        """
+        """Get cached run directory path."""
         return self.last_run_dir
 
     def copy_to_new_run(self, source_run_dir: Path, destination_run_dir: Path) -> None:
         """Copy the cached run directory to the new run location, without its metadata.json.
 
         Readers take a run with metadata.json as complete, so the caller writes that one last.
-
-        Args:
-            source_run_dir: Source run directory (e.g., run_3/simulator/)
-            destination_run_dir: Destination run directory (e.g., run_5/simulator/)
         """
         if source_run_dir is None or not source_run_dir.exists():
             return
@@ -108,13 +85,7 @@ class ResultCache:
         )
 
     def update(self, topology: Topology, task_count: int, run_dir: Path) -> None:
-        """Update cache with new simulation state and run directory.
-
-        Args:
-            topology: Topology used in simulation
-            task_count: Number of tasks in simulation
-            run_dir: Path to run directory (e.g., run_3/simulator/)
-        """
+        """Update cache with new simulation state and run directory."""
         topology_hash = self._compute_topology_hash(topology)
         self.last_state = SimulationState(topology_hash=topology_hash, task_count=task_count)
         self.last_run_dir = run_dir

@@ -24,14 +24,7 @@ class PowerTracker:
         consumer_group: str = "calibrator-power",
         debug: bool = False,
     ):
-        """Initialize the power tracker.
-
-        Args:
-            kafka_bootstrap_servers: Kafka broker addresses
-            power_topic: Kafka topic for power consumption (dc.power)
-            consumer_group: Kafka consumer group ID
-            debug: Enable debug logging for power consumption
-        """
+        """Initialize the power tracker."""
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.power_topic = power_topic
         self.consumer_group = consumer_group
@@ -125,16 +118,7 @@ class PowerTracker:
     def get_power_in_window(
         self, start_time: datetime, end_time: datetime, prune_old: bool = True
     ) -> pd.DataFrame:
-        """Get power readings within a time window.
-
-        Args:
-            start_time: Window start time
-            end_time: Window end time
-            prune_old: If True, prune readings older than start_time to save memory
-
-        Returns:
-            DataFrame with columns: timestamp, power_draw (frozen copy at query time)
-        """
+        """Get power readings within a time window."""
         with self._lock:
             total_readings = len(self.power_readings)
 
@@ -196,21 +180,13 @@ class PowerTracker:
         return df
 
     def get_latest_timestamp(self) -> datetime | None:
-        """Get timestamp of most recent power reading.
-
-        Returns:
-            Latest timestamp or None if no readings
-        """
+        """Get timestamp of most recent power reading."""
         with self._lock:
             if not self.power_readings:
                 return None
             return self.power_readings[-1][0]
 
     def get_reading_count(self) -> int:
-        """Get current number of power readings in memory.
-
-        Returns:
-            Number of readings
-        """
+        """Get current number of power readings in memory."""
         with self._lock:
             return len(self.power_readings)

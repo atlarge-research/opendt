@@ -39,20 +39,7 @@ def _run_single_simulation(
     simulated_time: datetime,
     timeout_seconds: int,
 ) -> CalibrationResult:
-    """Run a single OpenDC simulation (executed in worker process).
-
-    Args:
-        sim_number: Simulation index
-        param_value: Value of calibrated parameter
-        topology: Topology variant to simulate
-        tasks: List of tasks to simulate
-        sim_dir: Directory for this simulation
-        simulated_time: Simulation time for metadata
-        timeout_seconds: OpenDC timeout
-
-    Returns:
-        CalibrationResult with simulation outcome
-    """
+    """Run a single OpenDC simulation (executed in worker process)."""
     try:
         # Initialize OpenDC runner in this process
         opendc_runner = OpenDCRunner()
@@ -136,11 +123,7 @@ class CalibrationEngine:
     """Orchestrates parallel OpenDC simulations for calibration."""
 
     def __init__(self, max_workers: int = 4):
-        """Initialize the calibration engine.
-
-        Args:
-            max_workers: Maximum number of parallel OpenDC simulations
-        """
+        """Initialize the calibration engine."""
         self.max_workers = max_workers
         logger.info(f"Initialized CalibrationEngine with max_workers={max_workers}")
 
@@ -158,24 +141,7 @@ class CalibrationEngine:
         topology_modifier_func: Any,
         timeout_seconds: int = 120,
     ) -> list[CalibrationResult]:
-        """Run calibration sweep across parameter values.
-
-        Args:
-            base_topology: Base topology to modify
-            tasks: List of tasks to simulate
-            property_path: Dot-notation path to property to calibrate
-            min_value: Minimum parameter value
-            max_value: Maximum parameter value
-            num_points: Number of linspace points
-            run_number: Calibration run number
-            calibrator_run_dir: Base directory for this calibration run (run_X/)
-            simulated_time: Simulation time for metadata
-            topology_modifier_func: Function to create topology variants
-            timeout_seconds: OpenDC timeout
-
-        Returns:
-            List of CalibrationResult objects
-        """
+        """Run calibration sweep across parameter values."""
         # Generate parameter values to test (rounded to 2 decimal places)
         param_values = np.linspace(min_value, max_value, num_points)
         param_values = np.round(param_values, 2)

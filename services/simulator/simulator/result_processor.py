@@ -20,12 +20,7 @@ class SimulationResultProcessor:
     """Processes and aggregates OpenDC simulation results."""
 
     def __init__(self, simulator_output_dir: Path):
-        """Initialize the result processor.
-
-        Args:
-            simulator_output_dir: Base directory for simulator outputs
-                                  (e.g., data/run_id/simulator/)
-        """
+        """Initialize the result processor."""
         self.simulator_output_dir = Path(simulator_output_dir)
         self.agg_results_file = self.simulator_output_dir / "agg_results.parquet"
         self.last_processed_time: datetime | None = None
@@ -52,14 +47,7 @@ class SimulationResultProcessor:
         aligned_simulated_time: datetime,
         cached: bool = False,
     ) -> None:
-        """Process results from a simulation run and append new data to aggregated file.
-
-        Args:
-            run_number: The simulation run number
-            output_dir: Path to the output directory for this run (e.g., run_17/output/)
-            aligned_simulated_time: The end time of this simulation run
-            cached: Whether this was a cached result
-        """
+        """Process results from a simulation run and append new data to aggregated file."""
         logger.debug(
             f"Processing results for run {run_number} (cached: {cached}, "
             f"simulated_time: {aligned_simulated_time.isoformat()}, output_dir: {output_dir})"
@@ -176,11 +164,7 @@ class SimulationResultProcessor:
             raise
 
     def get_aggregated_results(self) -> pd.DataFrame | None:
-        """Get the current aggregated results.
-
-        Returns:
-            DataFrame with aggregated results, or None if no results exist
-        """
+        """Get the current aggregated results."""
         if not self.agg_results_file.exists():
             return None
 
@@ -191,11 +175,7 @@ class SimulationResultProcessor:
             return None
 
     def get_stats(self) -> dict[str, Any]:
-        """Get statistics about the aggregated results.
-
-        Returns:
-            Dictionary with statistics
-        """
+        """Get statistics about the aggregated results."""
         if not self.agg_results_file.exists():
             return {
                 "exists": False,

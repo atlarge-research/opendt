@@ -33,16 +33,7 @@ class TopologyProducer(BaseProducer):
         publish_interval_seconds: float = 30.0,
         start_barrier: threading.Barrier | None = None,
     ):
-        """Initialize the topology producer.
-
-        Args:
-            topology_file: Path to topology.json file
-            kafka_bootstrap_servers: Kafka broker addresses
-            speed: Shared simulation speed
-            topic: Kafka topic name for topology events
-            publish_interval_seconds: Publish interval in realtime seconds (default: 30s)
-            start_barrier: Optional barrier for synchronized startup
-        """
+        """Initialize the topology producer."""
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed=speed,
@@ -57,15 +48,7 @@ class TopologyProducer(BaseProducer):
         logger.info(f"  Publish interval (realtime): {publish_interval_seconds}s")
 
     def load_topology(self) -> Topology:
-        """Load and validate topology from JSON file.
-
-        Returns:
-            Validated Topology object
-
-        Raises:
-            FileNotFoundError: If topology file doesn't exist
-            ValueError: If topology JSON is invalid
-        """
+        """Load and validate topology from JSON file."""
         if not self.topology_file.exists():
             raise FileNotFoundError(f"Topology file not found: {self.topology_file}")
 

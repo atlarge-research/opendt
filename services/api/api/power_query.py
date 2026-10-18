@@ -32,12 +32,7 @@ class PowerDataQuery:
     """Query and align power data from simulation and actual consumption."""
 
     def __init__(self, run_id: str, workload_context: WorkloadContext):
-        """Initialize power data query.
-
-        Args:
-            run_id: The run ID to query data for
-            workload_context: Workload context with resolved paths and metadata
-        """
+        """Initialize power data query."""
         self.run_id = run_id
         self.workload_context = workload_context
 
@@ -63,19 +58,7 @@ class PowerDataQuery:
     def query(
         self, interval_seconds: int = 60, start_time: datetime | None = None
     ) -> PowerDataResponse:
-        """Query and align power data at specified interval.
-
-        Args:
-            interval_seconds: Sampling interval in seconds (default: 60)
-            start_time: Optional start time to filter data (default: None, uses all data)
-
-        Returns:
-            PowerDataResponse with aligned timeseries data
-
-        Raises:
-            FileNotFoundError: If required data files don't exist
-            ValueError: If data is invalid or cannot be aligned
-        """
+        """Query and align power data at specified interval."""
         # Load simulated power data
         if not self.sim_results_path.exists():
             raise FileNotFoundError(f"Simulation results not found: {self.sim_results_path}")
@@ -135,14 +118,7 @@ class PowerDataQuery:
         return PowerDataResponse(data=data_points, metadata=metadata)
 
     def _prepare_simulated_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare simulated data for alignment.
-
-        Args:
-            df: Raw simulation results dataframe
-
-        Returns:
-            Prepared dataframe with timestamp and power_draw columns
-        """
+        """Prepare simulated data for alignment."""
         if "timestamp" not in df.columns:
             raise ValueError("Simulation data missing 'timestamp' column")
 
@@ -163,14 +139,7 @@ class PowerDataQuery:
         return result
 
     def _prepare_actual_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare actual consumption data for alignment.
-
-        Args:
-            df: Raw consumption dataframe
-
-        Returns:
-            Prepared dataframe with timestamp and power_draw columns
-        """
+        """Prepare actual consumption data for alignment."""
         # Get earliest task time from tasks.parquet
         if not self.tasks_path.exists():
             raise FileNotFoundError(f"Tasks file not found: {self.tasks_path}")
@@ -218,16 +187,7 @@ class PowerDataQuery:
     def _align_timeseries(
         self, sim_df: pd.DataFrame, actual_df: pd.DataFrame, interval_seconds: int
     ) -> pd.DataFrame:
-        """Align two timeseries to the same interval.
-
-        Args:
-            sim_df: Simulated power data
-            actual_df: Actual power data
-            interval_seconds: Target interval in seconds
-
-        Returns:
-            Aligned dataframe with both simulated and actual power at each timestamp
-        """
+        """Align two timeseries to the same interval."""
         # Create common time range (limited by shortest series)
         start_time = max(sim_df["timestamp"].min(), actual_df["timestamp"].min())
         end_time = min(sim_df["timestamp"].max(), actual_df["timestamp"].max())

@@ -32,16 +32,7 @@ class WorkloadProducer(BaseProducer):
         heartbeat_frequency_minutes: int = 1,
         start_barrier: threading.Barrier | None = None,
     ):
-        """Initialize the workload producer.
-
-        Args:
-            workload_context: Workload context with resolved file paths
-            kafka_bootstrap_servers: Kafka broker addresses
-            speed: Shared simulation speed
-            topic: Kafka topic name for workload events
-            heartbeat_frequency_minutes: Frequency in simulation minutes for heartbeat messages
-            start_barrier: Optional barrier for synchronized startup
-        """
+        """Initialize the workload producer."""
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed=speed,
@@ -58,14 +49,7 @@ class WorkloadProducer(BaseProducer):
         logger.info(f"  Heartbeat frequency: {heartbeat_frequency_minutes} simulated minutes")
 
     def load_and_aggregate_tasks(self) -> tuple[list[Task], datetime]:
-        """Load tasks and fragments, aggregating fragments into tasks.
-
-        Returns:
-            Tuple of (tasks, earliest_submission_time)
-
-        Raises:
-            FileNotFoundError: If required files don't exist
-        """
+        """Load tasks and fragments, aggregating fragments into tasks."""
         logger.info("Loading task and fragment data...")
 
         # Load tasks
@@ -237,11 +221,7 @@ class WorkloadProducer(BaseProducer):
             raise
 
     def get_earliest_task_time_ms(self) -> int | None:
-        """Get the earliest task submission time in epoch milliseconds.
-
-        Returns:
-            Earliest task time in ms, or None if no tasks loaded
-        """
+        """Get the earliest task submission time in epoch milliseconds."""
         if not self.tasks:
             return None
         return int(self.tasks[0].submission_time.timestamp() * 1000)

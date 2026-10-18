@@ -23,14 +23,7 @@ class TopologyManager:
         sim_topology_topic: str,
         consumer_group: str = "calibrator-topology",
     ):
-        """Initialize the topology manager.
-
-        Args:
-            kafka_bootstrap_servers: Kafka broker addresses
-            dc_topology_topic: Kafka topic for real topology (dc.topology)
-            sim_topology_topic: Kafka topic for simulated topology (sim.topology)
-            consumer_group: Kafka consumer group ID
-        """
+        """Initialize the topology manager."""
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.dc_topology_topic = dc_topology_topic
         self.sim_topology_topic = sim_topology_topic
@@ -127,24 +120,12 @@ class TopologyManager:
             logger.info("TopologyManager consumer thread exited")
 
     def get_current_topology(self) -> Topology | None:
-        """Get the current topology for calibration (prefer simulated over real).
-
-        Returns:
-            Current topology or None if no topology available
-        """
+        """Get the current topology for calibration (prefer simulated over real)."""
         with self._lock:
             return copy.deepcopy(self._sim_topology)
 
     def create_variant(self, property_path: str, value: float) -> Topology | None:
-        """Create a topology variant with modified property value.
-
-        Args:
-            property_path: Dot-notation path to property (e.g., "cpuPowerModel.asymUtil")
-            value: New value for the property
-
-        Returns:
-            Modified topology or None if current topology not available
-        """
+        """Create a topology variant with modified property value."""
         current = self.get_current_topology()
         if not current:
             logger.error("Cannot create variant: no topology available")
@@ -179,14 +160,7 @@ class TopologyManager:
         return current
 
     def publish_topology(self, topology: Topology) -> bool:
-        """Publish topology to simulated topology topic.
-
-        Args:
-            topology: Topology to publish
-
-        Returns:
-            True if published successfully, False otherwise
-        """
+        """Publish topology to simulated topology topic."""
         try:
             message_data = topology.model_dump(mode="json")
             # Use a consistent key for compacted topic (only latest topology is kept)
