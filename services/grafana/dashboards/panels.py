@@ -18,6 +18,9 @@ GREY, GREEN, BLUE = "#999999", "#009E73", "#338ec1"
 YELLOW, ORANGE, RED = "#F0E442", "#E69F00", "#D55E00"
 MARKERS = "rgba(255, 255, 255, 0.35)"  # light, so the data stays in front
 BOX = "#22252b"  # Grafana's dark secondary background: a box in a panel
+# Grafana's dark theme: text, text of less weight, lines, and the text of most weight
+INK, FAINT, LINE = "#ccccdc", "rgba(204, 204, 220, 0.6)", "rgba(204, 204, 220, 0.3)"
+WHITE = "#ffffff"
 TEXT = {"titleSize": 12, "valueSize": 22}  # the same in every tile and box
 TIME = ("timestamp", "timestamp", "timestamp")
 BARS = {"drawStyle": "bars", "fillOpacity": 80, "barAlignment": 1}  # a bar from each period's start
@@ -201,14 +204,26 @@ def tiles(url, columns, computed=(), hide=(), root="data", unit=None, decimals=N
 
 
 def tile(
-    title, url, key, kind="number", scale=None, root="data", unit=None, decimals=None, limit=None
+    title,
+    url,
+    key,
+    kind="number",
+    scale=None,
+    root="data",
+    unit=None,
+    decimals=None,
+    limit=None,
+    color=None,
 ):
-    """One value of the twin's state; with a `scale` ("/1000"), the API's column in other units; with a `limit`,
-    green under it and red from it on."""
+    """One value of the twin's state; with a `scale` ("/1000"), the API's column in other units; with a `color`,
+    the value in it, as its line in the plots; with a `limit`, green under it and red from it on."""
     columns, computed, hide = [(key, title, kind)], (), ()
     if scale:
         columns, computed, hide = [(key, key)], [(f"{key}{scale}", title)], [key]
     panel = tiles(url, columns, computed, hide, root, unit, decimals)
+    if color:
+        panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = color
+        panel["options"]["colorMode"] = "value"
     if limit is not None:
         steps = [{"value": None, "color": GREEN}, {"value": limit, "color": RED}]
         panel["fieldConfig"]["defaults"] |= {

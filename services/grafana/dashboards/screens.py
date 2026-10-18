@@ -1,10 +1,11 @@
 """The screens: each panel and its place, (name, panel, x, y, width, height) on a 24-column grid."""
 
 import steps
-from form import HOSTS, control, picker, stepper
+from form import HOSTS, control, picker
 from layout import auto, custom, dashboard, grid, picked, row, when
 from panels import PERIODS
 from plots import (
+    BOXES,
     ROWS,
     TILES,
     arrivals,
@@ -101,39 +102,60 @@ topology = screen(
     ],
 )
 
-# the Tutorial screen: the twin's state at the top, then the current step, its question and its plots
-STEPS = [(use_case, step) for use_case, items in steps.STEPS.items() for step in items]
-TEXTS = {
-    f"text-{n}": steps.text(f"Step {n} of {len(STEPS)}: {use_case}", step)
-    for n, (use_case, step) in enumerate(STEPS, 1)
-}
-# each plot once, shown at the steps that name it
-AT = {}
-for n, (_, step) in enumerate(STEPS, 1):
-    for key in step["plots"]:
-        AT.setdefault(key, []).append(str(n))
-tutorial = screen(
+# the Tutorial screen, one step at a time, each a row shown at its step: the twin on the left, its
+# control panel and its state in boxes; the step on the right, its question and its plots
+LEFT = [
+    ("control", 0, 0, 6, 16),
+    ("time-box", 0, 16, 6, 2),
+    ("truth-box", 0, 18, 3, 2),
+    ("opendt-box", 3, 18, 3, 2),
+    ("mape-box", 0, 20, 3, 2),
+    ("co2-box", 3, 20, 3, 2),
+]
+# the step's height, then its plots, all on a 1440x900 screen in full screen; with its solution, the
+# step is taller and the screen scrolls
+CARD, SOLUTION, PLOTS = 8, 11, 14
+
+
+def split(names, x, y, width, height):
+    """The plots of a step in the area, in two columns, each top to bottom, the left one with the
+    fewer; a single plot takes it all."""
+    if len(names) == 1:
+        return [(names[0], x, y, width, height)]
+    half, left = width // 2, len(names) // 2
+    return stack(names[:left], x, y, half, height) + stack(
+        names[left:], x + half, y, width - half, height
+    )
+
+
+def stack(names, x, y, width, height):
+    """The names one under the other, to the bottom; the lower ones take what does not divide."""
+    tops = [y + height * i // len(names) for i in range(len(names) + 1)]
+    return [(name, x, tops[i], width, tops[i + 1] - tops[i]) for i, name in enumerate(names)]
+
+
+def slide(value, step, shown):
+    """The row shown while the step variable has this value."""
+    card = SOLUTION if shown else CARD
+    plots = split([f"plot-{key}" for key in step["plots"]], 6, card, 18, PLOTS)
+    return row(
+        "",
+        grid([*LEFT, (f"step-{value}", 6, 0, 18, card), *plots]),
+        shown=when("step", "equals", value),
+    )
+
+
+tutorial = dashboard(
     "opendt-tutorial",
     "OpenDT, tutorial",
+    {"control": control("opendt-tutorial", [HOSTS])}
+    | BOXES
+    | {f"step-{value}": card for value, _, card, _ in steps.SLIDES}
+    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]},
+    [slide(value, step, shown) for value, step, _, shown in steps.SLIDES],
     [
-        ("control", control("opendt-tutorial", [HOSTS]), 0, 0, 6, 18),
-        *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
-        ("steps", stepper(len(STEPS)), 6, 6, 18, 2),
-        ("decisions", decisions, 6, 8, 18, 10),
-    ],
-    rows=[
-        row(
-            "Step",
-            auto(
-                [(name, when("step", "equals", str(n))) for n, name in enumerate(TEXTS, 1)]
-                + [(f"step-{key}", when("step", "equals", *at)) for key, at in AT.items()],
-                3,
-            ),
-        )
-    ],
-    panels=TEXTS | {f"step-{key}": steps.PLOTS[key] for key in AT},
-    variables=[
         custom("period", "Interval", PERIODS, current="day"),
-        custom("step", "Step", [str(n) for n in range(1, len(STEPS) + 1)], current="1"),
+        custom("step", "Step", [value for value, *_ in steps.SLIDES], current="1"),
     ],
+    window="day",
 )

@@ -80,8 +80,8 @@ def control(screen, own_fields, period=True):
         # the markers on the graphs
         select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
     ]
-    # the interval and the markers come from the address
-    start = {"screen": screen, "window": "week"}
+    # the time, the interval, and the markers come from the address
+    start = {"screen": screen}
     if period:
         own_fields = [
             select("period", "Interval", [(p, p) for p in PERIODS], value="day"),
@@ -94,7 +94,7 @@ def control(screen, own_fields, period=True):
             "initial": {
                 "method": "GET",
                 "url": f"{BROWSER_API}/api/status",
-                "code": script("initial.js", start=start),
+                "code": script("range.js", "initial.js", start=start, week=WEEK),
             },
             "update": {
                 "method": "PATCH",
@@ -102,7 +102,7 @@ def control(screen, own_fields, period=True):
                 "payloadMode": "custom",
                 "getPayload": script("changed.js", "payload.js", view=VIEW),
                 "confirm": True,
-                "code": script("changed.js", "applied.js", week=WEEK),
+                "code": script("changed.js", "range.js", "applied.js", week=WEEK),
             },
             "sync": False,  # true would reload the values at every refresh, over what is being typed
             "elements": view + TWIN_LEVERS + CALIBRATION_LEVERS + own_fields,
@@ -134,33 +134,6 @@ def picker(title, plots):
             "sync": False,
             "elements": [
                 field("plots", "", "checkboxList", labelWidth=1, options=boxes, value=mine)
-            ],
-        },
-    }
-
-
-def stepper(last):
-    """The steps of the tutorial, 1 to `last`, as tags, the current one selected; a click goes to its step."""
-    return {
-        "type": "volkovlabs-form-panel",
-        "title": "Steps",
-        "options": {
-            "initial": {
-                "method": "-",
-                "code": "context.panel.patchFormValue({ step: '${step}' });",
-            },
-            "update": {"method": "-"},
-            "updateEnabled": "disabled",  # no buttons
-            "elementValueChanged": "context.grafana.locationService.partial({ 'var-step': context.element.value });",
-            "sync": False,
-            "elements": [
-                select(
-                    "step",
-                    "",
-                    [(str(n), str(n)) for n in range(1, last + 1)],
-                    "radio",
-                    labelWidth=1,
-                )
             ],
         },
     }

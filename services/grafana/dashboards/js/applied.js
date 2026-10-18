@@ -9,9 +9,7 @@ if (response && response.ok) {
   if (sent.period) view['var-period'] = sent.period;
   if (sent.markers) view['var-markers'] = sent.markers;
   if (sent.window) {
-    const end = new Date(initial.twin_time).getTime();
-    const hours = { day: 24, hours: 6 }[sent.window];
-    Object.assign(view, hours ? { from: end - hours * 3600000, to: end } : week);
+    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));
   }
   if (sent.screen) {
     // not ${markers}: Grafana would put its own variable there

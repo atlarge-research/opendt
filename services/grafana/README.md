@@ -22,8 +22,8 @@ follows. Full screen switches the browser's full screen on and off, without Graf
 - **OpenDT, topology:** the host groups, edited in place (a row's pencil, + to add one, the bin to delete one), with
   CPUs and GPUs from lists (SURF's node and OpenDC web's host templates) or custom, and the lists themselves.
 - **OpenDT, tutorial:** the 12 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
-  its tag: a question of the notebooks, what to do in the control panel, the solution folded, and the step's plots;
-  the twin's state at the top.
+  its tag or by Back and Next: a question of the notebooks, what to do in the control panel, the solution folded, and
+  the step's plots; the twin's state in boxes under the control panel. It starts on Day, not on the week.
 - **OpenDT Dashboard** (classic): power and carbon emissions.
 
 The dashboards use Grafana's v2 format and its new layout (public preview in 12.4, enabled in the image), which
