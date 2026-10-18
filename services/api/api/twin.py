@@ -29,7 +29,7 @@ CARBON_TRACES = {
 SETTINGS = {
     "servers": "Hosts",
     "calibration_factor": "r",
-    "carbon_zone": "Carbon zone",
+    "carbon_zone": "CO₂ zone",
     "scheduler": "Scheduler",
 }
 PERIODS = {"minute": "min", "hour": "h", "day": "D", "week": "W-MON", "month": "MS", "year": "YS"}

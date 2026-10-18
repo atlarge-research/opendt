@@ -102,7 +102,7 @@ def test_events_mark_topology_changes_where_they_apply(run_dir):
     assert events["time"].dt.strftime("%H:%M").tolist() == ["22:05", "22:10"]
     assert events["text"].tolist() == [
         "Hosts 277 SURF-SARA to 2,770 SURF-SARA",
-        "Carbon zone NL to RO",
+        "CO₂ zone NL to RO",
     ]
 
 

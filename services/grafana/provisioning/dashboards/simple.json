@@ -167,7 +167,7 @@
                                     {
                                         "uid": "carbon_zone",
                                         "id": "carbon_zone",
-                                        "title": "CO2 zone",
+                                        "title": "CO₂ zone",
                                         "type": "select",
                                         "labelWidth": 14,
                                         "options": [

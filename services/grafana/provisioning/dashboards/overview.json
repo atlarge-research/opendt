@@ -167,7 +167,7 @@
                                     {
                                         "uid": "carbon_zone",
                                         "id": "carbon_zone",
-                                        "title": "CO2 zone",
+                                        "title": "CO₂ zone",
                                         "type": "select",
                                         "labelWidth": 14,
                                         "options": [
@@ -849,7 +849,7 @@
                                                 "computed_columns": [
                                                     {
                                                         "selector": "carbon_emission/1000",
-                                                        "text": "CO2 emissions [kg/h]",
+                                                        "text": "CO₂ emissions [kg/h]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -865,7 +865,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "CO2 emissions [kg/h]": 0
+                                                "CO₂ emissions [kg/h]": 0
                                             },
                                             "excludeByName": {
                                                 "carbon_emission": true
@@ -903,7 +903,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "CO2 emissions [kg/h]"
+                                            "options": "CO₂ emissions [kg/h]"
                                         },
                                         "properties": [
                                             {
@@ -1359,7 +1359,7 @@
                                                 "columns": [
                                                     {
                                                         "selector": "carbon_zone",
-                                                        "text": "CO2 zone",
+                                                        "text": "CO₂ zone",
                                                         "type": "string"
                                                     }
                                                 ]
@@ -1375,7 +1375,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "CO2 zone": 0
+                                                "CO₂ zone": 0
                                             }
                                         }
                                     }
@@ -1619,7 +1619,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 13,
-                    "title": "CO2 emissions vs. carbon intensity",
+                    "title": "CO₂ emissions vs. carbon intensity",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1668,7 +1668,7 @@
                                                 "computed_columns": [
                                                     {
                                                         "selector": "carbon_emission/1000",
-                                                        "text": "CO2 emissions",
+                                                        "text": "CO₂ emissions",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -1684,7 +1684,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "CO2 emissions": 0,
+                                                "CO₂ emissions": 0,
                                                 "Carbon intensity": 1
                                             },
                                             "excludeByName": {
@@ -1716,7 +1716,7 @@
                                 "defaults": {
                                     "min": 0,
                                     "custom": {
-                                        "axisLabel": "CO2 emissions [kg/h]",
+                                        "axisLabel": "CO₂ emissions [kg/h]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
                                     },
@@ -1726,7 +1726,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "CO2 emissions"
+                                            "options": "CO₂ emissions"
                                         },
                                         "properties": [
                                             {
@@ -1757,7 +1757,7 @@
                                             },
                                             {
                                                 "id": "custom.axisLabel",
-                                                "value": "Carbon intensity [gCO2/kWh]"
+                                                "value": "Carbon intensity [gCO₂/kWh]"
                                             }
                                         ]
                                     }
@@ -2225,7 +2225,7 @@
                                             },
                                             {
                                                 "id": "carbon",
-                                                "label": "CO2 per period",
+                                                "label": "CO₂ per period",
                                                 "value": "carbon"
                                             },
                                             {
@@ -3620,12 +3620,12 @@
                                                     },
                                                     {
                                                         "selector": "co2_kg",
-                                                        "text": "CO2 [kg]",
+                                                        "text": "CO₂ [kg]",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "embodied_co2_kg",
-                                                        "text": "Embodied CO2 [kg]",
+                                                        "text": "Embodied CO₂ [kg]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -3642,8 +3642,8 @@
                                         "options": {
                                             "indexByName": {
                                                 "Energy [kWh]": 0,
-                                                "CO2 [kg]": 1,
-                                                "Embodied CO2 [kg]": 2
+                                                "CO₂ [kg]": 1,
+                                                "Embodied CO₂ [kg]": 2
                                             }
                                         }
                                     }
@@ -3692,7 +3692,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "CO2 [kg]"
+                                            "options": "CO₂ [kg]"
                                         },
                                         "properties": [
                                             {
@@ -3708,7 +3708,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Embodied CO2 [kg]"
+                                            "options": "Embodied CO₂ [kg]"
                                         },
                                         "properties": [
                                             {
@@ -3902,7 +3902,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 30,
-                    "title": "CO2 per $period",
+                    "title": "CO₂ per $period",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3997,7 +3997,7 @@
                                 "defaults": {
                                     "min": 0,
                                     "custom": {
-                                        "axisLabel": "CO2 [kg]",
+                                        "axisLabel": "CO₂ [kg]",
                                         "lineWidth": 2,
                                         "showPoints": "never",
                                         "stacking": {
@@ -4186,7 +4186,7 @@
                                 "defaults": {
                                     "min": 0,
                                     "custom": {
-                                        "axisLabel": "Carbon intensity [gCO2/kWh]",
+                                        "axisLabel": "Carbon intensity [gCO₂/kWh]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
                                     },

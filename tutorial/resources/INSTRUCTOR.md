@@ -61,7 +61,7 @@ Known issues:
 - With other servers than SURF's and the calibrator on, the calibrator fits r so that the other servers match SURF's
   measured power; show what-ifs with the calibrator off.
 - The dashboards use Grafana's new layout (public preview in 12.4); if a screen misbehaves, the classic dashboard
-  ("OpenDT Dashboard") still shows power and CO2.
+  ("OpenDT Dashboard") still shows power and CO₂.
 - On a projector of 1,280 pixels or less, use Full screen: next to Grafana's menu, the control panel is too narrow
   for its fields.
 - When every candidate's MAPE is infinite, the calibrator still picks r = 3.0 and publishes it (seen in stored runs
