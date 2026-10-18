@@ -28,6 +28,7 @@ from panels import (
 
 SCHEDULING, TOTALS = f"{API}/api/scheduling", f"{API}/api/totals?period=$period"
 EVENTS = f"{API}/api/events?markers=on"
+NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
 
 # ---- the top of the detailed screen ------------------------------------------------------------
 
@@ -41,9 +42,9 @@ TILES = {
     "mape-now": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1),
     "co2-now": tile("CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1),
     "scheduler-now": tile("Scheduler", STATUS, "scheduler", "string", root=""),
-    "in-use-now": tile("Hosts in use", CLUSTER, "hosts_in_use", unit="locale"),
-    "cpu-now": tile("CPU utilization [%]", CLUSTER, "cpu_utilization", scale="*100", decimals=1),
-    "waiting-now": tile("Jobs waiting", CLUSTER, "tasks_pending", unit="locale"),
+    "in-use-now": tile("Hosts in use", NOW, "hosts_in_use", unit="locale"),
+    "cpu-now": tile("CPU utilization [%]", NOW, "cpu_utilization", scale="*100", decimals=1),
+    "waiting-now": tile("Jobs waiting", NOW, "tasks_pending", unit="locale"),
     "zone-now": tile("CO₂ zone", STATUS, "carbon_zone", "string", root=""),
 }
 power = timeseries(
@@ -88,9 +89,8 @@ SHADES = {None: "#1d4e89", 50: "#2f74b5", 100: "#5b9bd5", 150: "#9cc3e6", 200: "
 heatmap = {
     "type": "status-history",
     "title": "Hosts per CPU utilization",
-    "targets": [
-        target(CLUSTER + RANGE + "&points=100", [TIME, *BUCKETS])
-    ],  # more, and it draws none
+    # about 100 samples: with more, a status history draws none
+    "targets": [target(CLUSTER + RANGE + "&points=100", [TIME, *BUCKETS])],
     "transformations": [organize([name for _, name in BUCKETS])],
     "fieldConfig": {
         "defaults": {
@@ -127,13 +127,11 @@ ROWS = {
                 ("queue_median_min", "Queue time [min]"),
                 ("started_in_10_min_pct", "Started in 10 min [%]"),
             ],
-            units(
-                "none", "Total runtime [h]", "Queue time [min]", "Started in 10 min [%]", decimals=1
-            )
-            + units("locale", "Jobs waiting", "Jobs running", "Jobs finished", decimals=0),
+            units("locale", "Jobs waiting", "Jobs running", "Jobs finished", decimals=0),
+            decimals=1,
             more=[
                 target(
-                    CLUSTER,
+                    NOW,
                     [
                         ("tasks_pending", "Jobs waiting"),
                         ("tasks_active", "Jobs running"),
@@ -195,7 +193,7 @@ ROWS = {
     "Utilization": {
         "utilization-now": stat(
             "Utilization now",
-            CLUSTER,
+            NOW,
             [
                 ("cpu_utilization_busy_median", "CPU, busy hosts"),
                 ("cpu_utilization", "CPU, all hosts"),
@@ -204,15 +202,9 @@ ROWS = {
                 ("cpu_demand_cores", "CPU demand [cores]"),
                 ("cpu_capacity_cores", "CPU capacity [cores]"),
             ],
-            units("percentunit", "CPU, busy hosts", "CPU, all hosts", decimals=1)
-            + units(
-                "locale",
-                "Hosts in use",
-                "Idle hosts",
-                "CPU demand [cores]",
-                "CPU capacity [cores]",
-                decimals=0,
-            ),
+            units("percentunit", "CPU, busy hosts", "CPU, all hosts", decimals=1),
+            unit="locale",
+            decimals=0,
             computed=[("hosts_up - hosts_in_use", "Idle hosts")],
             hide=["hosts_up"],
         ),
@@ -258,16 +250,8 @@ ROWS = {
             "This $period",
             TOTALS,
             [(c, c) for c in ("energy_kwh", "co2_kg", "embodied_co2_kg")],
-            units(
-                "locale",
-                "Energy [kWh]",
-                "CO₂ [kg]",
-                "Embodied CO₂ [kg]",
-                "CO₂ in total [kg]",
-                "Intensity [gCO₂/kWh]",
-                "Embodied share [%]",
-                decimals=0,
-            ),
+            unit="locale",
+            decimals=0,
             computed=[
                 ("energy_kwh", "Energy [kWh]"),
                 ("co2_kg", "CO₂ [kg]"),
@@ -328,16 +312,8 @@ ROWS = {
                 ("energy_error_pct", "Energy error [%]"),
                 ("r", "r"),
             ],
-            units(
-                "none",
-                "MAPE, 1 h [%]",
-                "MAPE, 5 min [%]",
-                "Error, 1 h [kW]",
-                "Energy error [%]",
-                "r",
-                decimals=1,
-            )
-            + units("none", "Automatic decisions", decimals=0),
+            [override("Automatic decisions", decimals=0)],
+            decimals=1,
             more=[target(f"{ACCURACY}?minutes=5", [("mape", "MAPE, 5 min [%]")]), automatic],
         ),
         "mape": timeseries(
@@ -396,8 +372,8 @@ twin_state = stat(
         ("completion_h", "Total runtime [h]"),
         ("started_in_10_min_pct", "Started within 10 min [%]"),
     ],
-    [override("timestamp", displayName="Simulated time", unit="time:YYYY-MM-DD HH:mm")]
-    + units("none", "Total runtime [h]", "Started within 10 min [%]", decimals=1),
+    [override("timestamp", displayName="Simulated time", unit="time:YYYY-MM-DD HH:mm")],
+    decimals=1,
     orientation="horizontal",  # three boxes, one under the other
 )
 arrivals = timeseries(
@@ -416,9 +392,8 @@ decisions = table(
     [("time", "Time", "timestamp"), ("text", "Change", "string"), ("by", "By", "string")],
     [
         override("Time", unit="time:MM-DD HH:mm", custom__width=95),
-        override(
-            "Change", custom__cellOptions={"type": "auto", "wrapText": True}
-        ),  # two lines if long
+        # a long change takes two lines
+        override("Change", custom__cellOptions={"type": "auto", "wrapText": True}),
         override("By", custom__width=80),
     ],
     sort="Time",

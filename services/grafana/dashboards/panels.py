@@ -69,9 +69,8 @@ def better_axis(direction):
     """A flat, invisible line on the right axis, only for its label: BETTER and an arrow."""
     return {
         "custom__axisPlacement": "right",
-        "custom__axisLabel": "BETTER ←"
-        if direction == "higher"
-        else "BETTER →",  # read top to bottom
+        # the label reads top to bottom: ← points up, → down
+        "custom__axisLabel": "BETTER ←" if direction == "higher" else "BETTER →",
         "custom__lineWidth": 0,
         "custom__axisGridShow": False,
         "custom__hideFrom": {"legend": True, "tooltip": True, "viz": False},
@@ -147,9 +146,20 @@ def timeseries(
 
 
 def stat(
-    title, url, columns, overrides, computed=(), root="data", hide=(), more=(), orientation="auto"
+    title,
+    url,
+    columns,
+    overrides=(),
+    computed=(),
+    root="data",
+    hide=(),
+    more=(),
+    orientation="auto",
+    unit=None,
+    decimals=None,
 ):
-    """The latest values of an API table (and of the `more` queries), one box each, the name over the value."""
+    """The latest values of an API table (and of the `more` queries), one box each, the name over the value;
+    `unit` and `decimals` for all of them, `overrides` for the others."""
     queries = [target(url, columns, computed) | {"root_selector": root}, *more]
     for i, query in enumerate(queries):
         query["refId"] = "ABCDEF"[i]
@@ -162,33 +172,36 @@ def stat(
         "targets": queries,
         "transformations": [*merge, organize(names, hide)],
         "fieldConfig": {
-            "defaults": {"color": {"mode": "fixed", "fixedColor": BOX}},
-            "overrides": overrides,
+            "defaults": {"color": {"mode": "fixed", "fixedColor": BOX}}
+            | ({"unit": unit} if unit else {})
+            | ({} if decimals is None else {"decimals": decimals}),
+            "overrides": list(overrides),
         },
         "options": {
             "reduceOptions": {"fields": "/.*/"},
             "colorMode": "background_solid",
             "graphMode": "none",
             "textMode": "value_and_name",
-            "orientation": orientation,  # auto: a grid, two boxes per line in a row's first panel
+            # auto: a grid, two boxes per line in a row's first panel
+            "orientation": orientation,
             "minVizWidth": 100,
             "minVizHeight": 60,
-            "justifyMode": "auto",  # left, under the name
+            "justifyMode": "auto",  # left
             "wideLayout": False,
             "text": TEXT,
         },
     }
 
 
-def tile(title, url, key, kind="number", scale=None, root="data", **props):
+def tile(title, url, key, kind="number", scale=None, root="data", unit=None, decimals=None):
     """One value of the twin's state, its name inside the tile, since a title would be cut short; with a
     `scale` ("/1000"), the API's column in other units."""
     columns, computed, hide = [(key, title, kind)], (), ()
     if scale:
         columns, computed, hide = [(key, key)], [(f"{key}{scale}", title)], [key]
-    panel = stat("", url, columns, [override(title, **props)] if props else [], computed, root)
-    panel["transformations"] = [organize([title], hide)]
-    panel["options"] |= {"orientation": "vertical", "colorMode": "none"}  # the panel is the box
+    panel = stat("", url, columns, (), computed, root, hide, unit=unit, decimals=decimals)
+    # the panel is the box
+    panel["options"] |= {"orientation": "vertical", "colorMode": "none", "justifyMode": "center"}
     return panel
 
 

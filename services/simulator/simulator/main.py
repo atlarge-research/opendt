@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from odt_common import ResultCache, TaskAccumulator, load_config_from_env
-from odt_common.config import DynamicConfigEvent
+from odt_common.config import SCHEDULER, DynamicConfigEvent
 from odt_common.models import Task, Topology, TopologySnapshot
 from odt_common.odc_runner import OpenDCRunner
 from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer, get_kafka_producer
@@ -455,10 +455,10 @@ class SimulationService:
     def _process_config_event(self, message_data: dict[str, Any]) -> None:
         """Follow a scheduler change; the other runtime settings are not the simulator's."""
         event = DynamicConfigEvent(**message_data)
-        if event.setting_key == "simulator.scheduler" and event.new_value != self.scheduler:
+        if event.setting_key == SCHEDULER and event.new_value != self.scheduler:
             self.scheduler = event.new_value
             self.result_cache.clear()  # the same topology gives other results now
-            logger.info(f"Scheduler: {self.scheduler or 'OpenDC default'}")
+            logger.info(f"Scheduler: {self.scheduler}")
 
     def process_message(self, message):
         """Process a single Kafka message.

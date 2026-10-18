@@ -1,4 +1,4 @@
-"""A reused run is copied without its metadata.json: readers take a run with metadata.json as complete."""
+"""A reused run is copied without its metadata.json, which marks a run complete for its readers."""
 
 from odt_common import ResultCache
 

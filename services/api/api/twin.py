@@ -6,7 +6,7 @@ metadata.json is written last, so a window without it is still running.
 
 import json
 import threading
-from functools import lru_cache
+from functools import cache, lru_cache
 from itertools import pairwise
 from pathlib import Path
 
@@ -36,10 +36,9 @@ SETTINGS = {
 PERIODS = {"minute": "min", "hour": "h", "day": "D", "week": "W-MON", "month": "MS", "year": "YS"}
 LOCK = threading.Lock()  # the panels of a dashboard ask at once; a new window is computed once
 GROUPS = 3  # kinds of servers the control panel can mix
-BUCKETS = [
-    f"cpu_{low}_{low + 20}" for low in range(0, 100, 20)
-]  # hosts per CPU utilization bucket [%]
-ON_TIME_MIN = 10  # a job started on time waited at most this long
+# hosts per CPU utilization bucket [%]
+LOWS = range(0, 100, 20)
+BUCKETS = [f"cpu_{low}_{low + 20}" for low in LOWS]
 
 
 def server(
@@ -71,14 +70,14 @@ def windows(run_dir: Path) -> list[Path]:
     return sorted((m.parent for m in done), key=lambda w: int(w.name.split("_")[1]))
 
 
-@lru_cache(maxsize=4096)  # a complete window never changes
+@cache  # a complete window never changes
 def end_time(window: Path) -> pd.Timestamp:
     return pd.Timestamp(json.loads((window / "metadata.json").read_text())["simulated_time"])
 
 
 def slices(run_dir: Path):
     """Each complete window with its own slice of time, (start, end]: from the previous window's end to its own."""
-    start = None
+    start = pd.Timestamp(0, tz="UTC")
     for window in windows(run_dir):
         end = end_time(window)
         yield window, start, end
@@ -90,7 +89,12 @@ def topology(window: Path) -> dict:
     return json.loads((window / "input" / "topology.json").read_text())
 
 
-@lru_cache(maxsize=4096)
+def groups(hosts: list[dict]) -> list[dict]:
+    """The host groups, as many as the control panel has, the missing ones empty."""
+    return (hosts + [{"name": None, "count": 0}] * GROUPS)[:GROUPS]
+
+
+@cache
 def settings(window: Path) -> dict:
     """Servers, power-model exponent r, carbon zone, and scheduler the window ran with."""
     cluster = topology(window)["clusters"][0]
@@ -99,14 +103,10 @@ def settings(window: Path) -> dict:
     experiment = json.loads((window / "input" / "experiment.json").read_text())
     policies = experiment.get("allocationPolicies", [])  # none: OpenDC's default, Mem
     return {
-        "hosts": sum(host["count"] for host in hosts),
         "servers": " + ".join(f"{host['count']:,} {label(host)}" for host in hosts),
         # the groups as the control panel's fields kind_1, count_1, ..., kind_3, count_3
-        **{
-            f"{field}_{i}": value
-            for i, host in enumerate((hosts + [{"name": None, "count": 0}] * GROUPS)[:GROUPS], 1)
-            for field, value in (("kind", host["name"]), ("count", host["count"]))
-        },
+        **{f"kind_{i}": host["name"] for i, host in enumerate(groups(hosts), 1)},
+        **{f"count_{i}": host["count"] for i, host in enumerate(groups(hosts), 1)},
         "calibration_factor": hosts[0]["cpuPowerModel"]["calibrationFactor"],
         # another trace (e.g., of an older run) by its file name
         "carbon_zone": next(
@@ -117,9 +117,8 @@ def settings(window: Path) -> dict:
 
 
 def label(host: dict) -> str:
-    return (
-        "SURF-SARA" if host["name"] == "H01" else host["name"]
-    )  # SURF is the datacenter, SURF-SARA its cluster
+    # SURF is the datacenter, SURF-SARA its cluster
+    return "SURF-SARA" if host["name"] == "H01" else host["name"]
 
 
 def specs(host: dict) -> dict:
@@ -148,11 +147,9 @@ def ms(time: pd.Timestamp) -> int:
     return round(time.timestamp() * 1000)
 
 
-def read(window: Path, name: str, columns: tuple, start: pd.Timestamp | None, end: pd.Timestamp):
+def read(window: Path, name: str, columns: tuple, start: pd.Timestamp, end: pd.Timestamp):
     """The rows of one OpenDC output file of the window in (start, end], with UTC timestamps."""
-    rows = [("timestamp_absolute", "<=", ms(end))]
-    if start is not None:
-        rows.append(("timestamp_absolute", ">", ms(start)))
+    rows = [("timestamp_absolute", ">", ms(start)), ("timestamp_absolute", "<=", ms(end))]
     df = pd.read_parquet(
         output(window, name), columns=["timestamp_absolute", *columns], filters=rows
     )
@@ -160,17 +157,16 @@ def read(window: Path, name: str, columns: tuple, start: pd.Timestamp | None, en
     return df
 
 
-@lru_cache(maxsize=4096)
-def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -> pd.DataFrame:
+@cache
+def cluster_slice(window: Path, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     """Hosts and jobs (service output), CPU, jobs, idle power, and embodied carbon of the hosts (host output), and
     energy and CO2 (power source output), between start and end."""
     hosts = read(window, "host", HOST, start, end)
     hosts["cpu_demand_cores"] = hosts["cpu_demand"] / hosts["cpu_capacity"] * hosts["core_count"]
     hosts["in_use"] = hosts["tasks_running"] > 0
     hosts["idle_power_kw"] = hosts["power_draw"].where(~hosts["in_use"], 0) / 1000
-    hosts["bucket"] = pd.cut(
-        hosts["cpu_utilization"], [0, 0.2, 0.4, 0.6, 0.8, np.inf], right=False, labels=BUCKETS
-    )
+    edges = [low / 100 for low in LOWS] + [np.inf]
+    hosts["bucket"] = pd.cut(hosts["cpu_utilization"], edges, right=False, labels=BUCKETS)
     by_time = hosts.groupby("timestamp")
     cpu = by_time["cpu_utilization"]
     busy = hosts[hosts["in_use"]].groupby("timestamp")["cpu_utilization"]
@@ -179,7 +175,8 @@ def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -
             "hosts_in_use": by_time["in_use"].sum(),
             "idle_power_kw": by_time["idle_power_kw"].sum(),  # of the hosts running no job
             "cpu_utilization": cpu.mean(),
-            "cpu_utilization_busy_median": busy.median(),  # most hosts are idle: over all, the median is 0
+            # most hosts are idle: over all of them, the median is 0
+            "cpu_utilization_busy_median": busy.median(),
             "cpu_demand_cores": by_time["cpu_demand_cores"].sum(),
             "cpu_capacity_cores": by_time["core_count"].sum(),
             "embodied_carbon": by_time["embodied_carbon"].sum(),
@@ -214,6 +211,7 @@ def totals(run_dir: Path, period: str) -> pd.DataFrame:
     return by_period[["energy_kwh", "co2_kg", "embodied_co2_kg"]].sum().reset_index()
 
 
+@lru_cache(maxsize=2)  # the latest window, asked for by several panels
 def job_times(window: Path) -> pd.DataFrame:
     """Each job of the window with its submit, start, and finish time (UTC)."""
     columns = {"submission_time": "submit", "schedule_time": "start", "finish_time": "finish"}
@@ -229,17 +227,17 @@ def job_times(window: Path) -> pd.DataFrame:
     return pd.DataFrame({"task_id": tasks["task_id"], **times})
 
 
-@lru_cache(maxsize=4096)
-def window_scheduling(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -> dict:
+@cache
+def window_scheduling(window: Path, start: pd.Timestamp, end: pd.Timestamp) -> dict:
     jobs = job_times(window)
-    started = jobs["start"] <= end if start is None else jobs["start"].between(start, end, "right")
+    started = jobs["start"].between(start, end, "right")
     waited = (jobs["start"] - jobs["submit"]).dt.total_seconds() / 60
     return {
         "timestamp": end,
         "completion_h": (jobs["finish"].max() - end).total_seconds() / 3600,
         "queue_median_min": waited[started].median(),
         # of all the jobs started by the end of the window
-        "started_in_10_min_pct": (waited[jobs["start"] <= end] <= ON_TIME_MIN).mean() * 100,
+        "started_in_10_min_pct": (waited[jobs["start"] <= end] <= 10).mean() * 100,
     }
 
 
@@ -274,17 +272,19 @@ def shown(value) -> str:
 def events(run_dir: Path) -> pd.DataFrame:
     """Topology changes, at the end of the last window before them (from there on, the twin runs the new one), and
     who made them: r is the calibrator's (automatic), the rest the operator's, from the control panel (manual)."""
-    rows = [
-        {
-            "time": end_time(before),
-            "text": f"{name} {shown(old[key])} to {shown(new[key])}",
-            "by": "Automatic" if key == "calibration_factor" else "Manual",
-        }
-        for before, after in pairwise(windows(run_dir))
-        for old, new in [(settings(before), settings(after))]
-        for key, name in SETTINGS.items()
-        if old[key] != new[key]
-    ]
+    rows = []
+    for before, after in pairwise(windows(run_dir)):
+        old, new = settings(before), settings(after)
+        for key, name in SETTINGS.items():
+            if old[key] != new[key]:
+                by = "Automatic" if key == "calibration_factor" else "Manual"
+                rows.append(
+                    {
+                        "time": end_time(before),
+                        "text": f"{name} {shown(old[key])} to {shown(new[key])}",
+                        "by": by,
+                    }
+                )
     return pd.DataFrame(rows, columns=["time", "text", "by"])
 
 
@@ -310,8 +310,4 @@ def accuracy(run_dir: Path, power: pd.DataFrame, minutes: int = 60) -> pd.DataFr
 def status(run_dir: Path) -> dict:
     """The twin's current time and topology, from the latest complete window."""
     window = windows(run_dir)[-1]
-    return {
-        "twin_time": end_time(window),
-        "window": int(window.name.split("_")[1]),
-        **settings(window),
-    }
+    return {"twin_time": end_time(window), **settings(window)}

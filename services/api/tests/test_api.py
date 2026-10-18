@@ -44,15 +44,13 @@ def api(run_dir, monkeypatch):
 
 
 def data(response):
-    return json.loads(response.body)["data"]
+    return response["data"] if isinstance(response, dict) else json.loads(response.body)["data"]
 
 
 def test_status_gives_the_control_panel_its_values(api):
     # flat, so the form fills its fields by name
     assert main.get_status() == {
         "twin_time": "2022-10-06T22:10:00+00:00",
-        "window": 2,
-        "hosts": 2770,
         "servers": "2,770 SURF-SARA",
         "kind_1": "H01",
         "count_1": 2770,
@@ -75,8 +73,10 @@ def test_cluster_can_be_cut_to_grafanas_time_range(api):
 
 def test_cluster_can_be_thinned_to_a_number_of_points(api):
     # a week has thousands of samples, more than some plots can draw
+    # counted from the latest, which stays: one point is the latest sample, for the tiles
     rows = data(main.get_cluster(points=2))
-    assert [row["tasks_active"] for row in rows] == [10, 22]
+    assert [row["tasks_active"] for row in rows] == [11, 23]
+    assert [row["tasks_active"] for row in data(main.get_cluster(points=1))] == [23]
 
 
 def sent_topology(api):

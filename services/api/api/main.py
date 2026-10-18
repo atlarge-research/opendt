@@ -4,6 +4,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -57,7 +58,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize Kafka producer: {e}")
         app.state.kafka_producer = None
 
-    app.state.settings = {}  # the runtime settings the control panel sent; until then, the configured ones
+    app.state.settings = {}  # the runtime settings the control panel sent, by field; until then, the configured
     app.state.topology = None  # the simulated topology sent last
     yield
 
@@ -182,40 +183,9 @@ async def update_topology(
         HTTPException: 500 if Kafka producer is not available
         HTTPException: 500 if publishing to Kafka fails
     """
-    # Check if Kafka producer is available
-    if not app.state.kafka_producer:
-        logger.error("Kafka producer not initialized")
-        raise HTTPException(status_code=500, detail="Kafka producer not available")
-
-    # Check if config is loaded (to get topic name)
-    if not app.state.config:
-        logger.error("Configuration not loaded")
-        raise HTTPException(status_code=500, detail="Configuration not loaded")
-
-    # Topology already validated by Pydantic
-    logger.info(f"Topology validated: {len(topology.clusters)} cluster(s)")
-
-    # Get sim.topology topic name from config
-    sim_topology_topic = app.state.config.kafka.topics.get("sim_topology")
-    if not sim_topology_topic:
-        logger.error("sim.topology topic not configured")
-        raise HTTPException(status_code=500, detail="sim.topology topic not configured")
-
-    topic_name = sim_topology_topic.name
-
-    # Publish to sim.topology Kafka topic with compacted key
-    try:
-        send_message(
-            producer=app.state.kafka_producer,
-            topic=topic_name,
-            message=topology.model_dump(mode="json"),
-            key="datacenter",
-        )
-        app.state.topology = topology.model_dump(mode="json")
-        logger.info(f"Topology published to {topic_name}")
-    except Exception as e:
-        logger.error(f"Failed to publish topology to Kafka: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to publish topology: {e}") from e
+    app.state.topology = topology.model_dump(mode="json")
+    publish("sim_topology", app.state.topology, key="datacenter")
+    topic_name = app.state.config.kafka.topics["sim_topology"].name
 
     return {
         "status": "updated",
@@ -233,7 +203,7 @@ async def update_topology(
 
 
 @app.get("/api/power", response_model=PowerDataResponse)
-async def get_power_data(
+def get_power_data(
     interval_seconds: int = Query(
         60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
     ),
@@ -293,7 +263,7 @@ async def get_power_data(
 
 
 @app.get("/api/co2_emission", response_model=CarbonDataResponse)
-async def get_carbon_emission_data(
+def get_carbon_emission_data(
     interval_seconds: int = Query(
         60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
     ),
@@ -374,19 +344,19 @@ def publish(topic: str, message: dict, key: str | None = None) -> None:
 
 @app.get("/api/status")
 def get_status():
-    """The twin's time, topology, and replay speed: the control panel's current values (a flat object)."""
+    """The twin's time, topology, and runtime settings, as configured or as the control panel sent them: the
+    control panel's current values (a flat object)."""
+    config, calibrator = app.state.config, app.state.config.services.calibrator
+    configured = {
+        "speed_factor": config.global_config.speed_factor,
+        "parallel_simulations": calibrator and calibrator.max_parallel_workers,
+    }
     status = twin.status(twin_run())
-    sent, config = app.state.settings, app.state.config
-    speed = sent.get("global.speed_factor", config.global_config.speed_factor)
-    calibrator = config.services.calibrator
-    parallel = sent.get(
-        "calibrator.max_parallel_workers", calibrator and calibrator.max_parallel_workers
-    )
     return {
+        **configured,
+        **app.state.settings,
         **status,
         "twin_time": status["twin_time"].isoformat(),
-        "speed_factor": speed,
-        "parallel_simulations": parallel,
     }
 
 
@@ -404,17 +374,17 @@ def get_cluster(
     points: Annotated[int | None, Query(gt=0)] = None,
 ):
     """Hosts, jobs, CPU of the hosts (mean, median; demand vs. capacity in cores), and energy, CO2, and embodied
-    CO2 per sample; with `points`, every so many samples, about that many in all."""
+    CO2 per sample; with `points`, about that many, every so many samples counted from the latest."""
 
     def cut(run: Path) -> pd.DataFrame:
         cluster = twin.cluster(run).set_index("timestamp")[start:end].reset_index()
-        return cluster.iloc[:: max(1, len(cluster) // points)] if points else cluster
+        return cluster.iloc[:: -max(1, len(cluster) // points)][::-1] if points else cluster
 
     return rows(cut)
 
 
 @app.get("/api/totals")
-def get_totals(period: Literal["minute", "hour", "day", "week", "month", "year"] = "day"):
+def get_totals(period: Literal[tuple(twin.PERIODS)] = "day"):
     """Energy [kWh], CO2 [kg], and embodied CO2 [kg] per period; the last period runs up to the twin's time."""
     return rows(lambda run: twin.totals(run, period))
 
@@ -434,7 +404,7 @@ def get_jobs():
 @app.get("/api/events")
 def get_events(markers: Literal["on", "off"] = "on"):
     """Changes of servers, r, carbon zone, and scheduler, for markers on the graphs; none while switched off."""
-    return rows(twin.events if markers == "on" else lambda run: twin.events(run).iloc[:0])
+    return rows(twin.events) if markers == "on" else {"data": []}
 
 
 @app.get("/api/arrivals")
@@ -452,25 +422,22 @@ def get_servers():
 @app.get("/api/server_kinds")
 def get_server_kinds():
     """The kinds of servers the control panel offers, with their specs."""
-    kinds = pd.DataFrame(
-        {"id": name, **twin.specs({"name": name, **spec})} for name, spec in twin.SERVERS.items()
-    )
-    return Response(f'{{"data": {kinds.to_json(orient="records")}}}', media_type="application/json")
+    return {
+        "data": [{"id": n, **twin.specs({"name": n, **spec})} for n, spec in twin.SERVERS.items()]
+    }
 
 
 @app.get("/api/accuracy")
 def get_accuracy(minutes: int = Query(60, ge=1, le=1440)):
     """Per period (an hour; 5 minutes for the MAPE now): the MAPE [%] and the mean error [kW] of OpenDT's power vs.
-    the measured power, and the r the twin ran with."""
+    the measured power, the error of the energy so far, and the r the twin ran with."""
+    return rows(lambda run: accuracy(run, twin.windows(run)[-1], minutes))
 
-    def per_period(run: Path) -> pd.DataFrame:
-        query = PowerDataQuery(run_id=run.name, workload_context=workload())
-        power = query.query(interval_seconds=300)
-        return twin.accuracy(
-            run, pd.DataFrame([point.model_dump() for point in power.data]), minutes
-        )
 
-    return rows(per_period)
+@lru_cache(maxsize=4)  # once per window (`latest`), though several panels ask
+def accuracy(run: Path, latest: Path, minutes: int) -> pd.DataFrame:
+    power = PowerDataQuery(run_id=run.name, workload_context=workload()).query(interval_seconds=300)
+    return twin.accuracy(run, pd.DataFrame([point.model_dump() for point in power.data]), minutes)
 
 
 def configure(setting: str, value) -> None:
@@ -492,9 +459,9 @@ def control(change: levers.Control):
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
         publish("sim_topology", app.state.topology, key="datacenter")
-    for setting, value in levers.settings(change).items():
-        configure(setting, value)
-        app.state.settings[setting] = value
+    for field, value in change.model_dump(include=set(levers.SETTINGS), exclude_none=True).items():
+        configure(levers.SETTINGS[field], value)
+        app.state.settings[field] = value
     return get_status()
 
 

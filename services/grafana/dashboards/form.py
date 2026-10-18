@@ -25,12 +25,10 @@ KINDS = [
 ]
 
 
-def script(name, **consts):
-    """The code in js/<name>, after the constants it uses."""
-    return (
-        "".join(f"const {k} = {json.dumps(v)};\n" for k, v in consts.items())
-        + (JS / name).read_text()
-    )
+def script(*names, **consts):
+    """The code in js/<names>, after the constants it uses."""
+    head = "".join(f"const {k} = {json.dumps(v)};\n" for k, v in consts.items())
+    return head + "".join((JS / name).read_text() for name in names)
 
 
 def option(value, label):
@@ -41,14 +39,8 @@ def field(key, title, kind, **more):
     return {"uid": key, "id": key, "title": title, "type": kind, "labelWidth": 14, **more}
 
 
-def select(key, title, choices, **more):
-    return field(key, title, "select", options=[option(v, label) for v, label in choices], **more)
-
-
-def radio(key, title, choices, value):
-    return field(
-        key, title, "radio", options=[option(v, label) for v, label in choices], value=value
-    )
+def select(key, title, choices, kind="select", **more):
+    return field(key, title, kind, options=[option(v, label) for v, label in choices], **more)
 
 
 TWIN_LEVERS = [
@@ -78,17 +70,25 @@ def control(screen, own_fields, period=True):
     go to /api/control (from the browser, to the API's port) and the view follows."""
     view = [
         select("screen", "Screen", SCREENS, value=screen),
-        radio("window", "Time", [("week", "Week"), ("day", "Day"), ("hours", "6 h")], "week"),
+        select(
+            "window",
+            "Time",
+            [("week", "Week"), ("day", "Day"), ("hours", "6 h")],
+            "radio",
+            value="week",
+        ),
         # the markers on the graphs
-        radio("markers", "Decisions", [("on", "On"), ("off", "Off")], "on"),
+        select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
     ]
-    start = {"screen": screen, "window": "week", "markers": "on"}
+    start = {
+        "screen": screen,
+        "window": "week",
+    }  # the interval and the markers come from the address
     if period:
         own_fields = [
             select("period", "Interval", [(p, p) for p in PERIODS], value="day"),
             *own_fields,
         ]
-        start["period"] = "day"
     return {
         "type": "volkovlabs-form-panel",
         "title": "OpenDT",
@@ -102,9 +102,9 @@ def control(screen, own_fields, period=True):
                 "method": "PATCH",
                 "url": f"{BROWSER_API}/api/control",
                 "payloadMode": "custom",
-                "getPayload": script("payload.js", view=VIEW),
+                "getPayload": script("changed.js", "payload.js", view=VIEW),
                 "confirm": True,
-                "code": script("applied.js", week=WEEK),
+                "code": script("changed.js", "applied.js", week=WEEK),
             },
             "sync": False,  # true would reload the values at every refresh, over what is being typed
             "elements": view + TWIN_LEVERS + own_fields,

@@ -82,15 +82,15 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const start = {\"screen\": \"opendt-overview\", \"window\": \"week\", \"markers\": \"on\", \"period\": \"day\"};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n"
+                                    "code": "const start = {\"screen\": \"opendt-overview\", \"window\": \"week\"};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst { elements, initial } = context.panel;\nconst levers = elements.filter((e) => !view.includes(e.id) && e.value !== initial[e.id]);\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
+                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, elements, initial } = context.panel;\nif (response && response.ok) {\n  const changed = Object.fromEntries(elements.filter((e) => e.value !== initial[e.id]).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...changed });\n  const url = context.grafana.locationService;\n  const view = {};\n  if (changed.period) view['var-period'] = changed.period;\n  if (changed.markers) view['var-markers'] = changed.markers;\n  if (changed.window) {\n    const end = new Date(initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[changed.window];\n    Object.assign(view, hours ? { from: end - hours * 3600000, to: end } : week);\n  }\n  if (changed.screen) {\n    const range = { ...url.getSearchObject(), ...view };\n    const { from = week.from, to = week.to } = range;\n    url.push(`/d/${changed.screen}?from=${from}&to=${to}&var-markers=${range['var-markers'] || 'on'}`);\n  } else {\n    url.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const url = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    const end = new Date(initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[sent.window];\n    Object.assign(view, hours ? { from: end - hours * 3600000, to: end } : week);\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...url.getSearchObject(), ...view };\n    url.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    url.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
                                 "sync": false,
                                 "elements": [
@@ -606,7 +606,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -618,22 +618,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "unit": "time:YYYY-MM-DD HH:mm"
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Simulated time"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "time:YYYY-MM-DD HH:mm"
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -698,7 +686,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Ground truth [kW]": 0
+                                                "actual_power": 0,
+                                                "Ground truth [kW]": 1
                                             },
                                             "excludeByName": {
                                                 "actual_power": true
@@ -725,7 +714,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -737,22 +726,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Ground truth [kW]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -817,7 +794,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "OpenDT [kW]": 0
+                                                "simulated_power": 0,
+                                                "OpenDT [kW]": 1
                                             },
                                             "excludeByName": {
                                                 "simulated_power": true
@@ -844,7 +822,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -856,22 +834,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "OpenDT [kW]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -953,7 +919,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -965,22 +931,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Real-time MAPE [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -1045,7 +999,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "CO₂ emissions [kg/h]": 0
+                                                "carbon_emission": 0,
+                                                "CO₂ emissions [kg/h]": 1
                                             },
                                             "excludeByName": {
                                                 "carbon_emission": true
@@ -1072,7 +1027,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1084,22 +1039,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CO₂ emissions [kg/h]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -1181,7 +1124,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1229,7 +1172,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/cluster",
+                                                "url": "http://api:8000/api/cluster?points=1",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
@@ -1277,7 +1220,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1289,22 +1232,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "unit": "locale"
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Hosts in use"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -1338,7 +1269,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/cluster",
+                                                "url": "http://api:8000/api/cluster?points=1",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
@@ -1369,7 +1300,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "CPU utilization [%]": 0
+                                                "cpu_utilization": 0,
+                                                "CPU utilization [%]": 1
                                             },
                                             "excludeByName": {
                                                 "cpu_utilization": true
@@ -1396,7 +1328,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1408,22 +1340,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CPU utilization [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -1457,7 +1377,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/cluster",
+                                                "url": "http://api:8000/api/cluster?points=1",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
@@ -1505,7 +1425,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1517,22 +1437,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "unit": "locale"
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Jobs waiting"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -1614,7 +1522,7 @@
                                 "orientation": "vertical",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -2593,7 +2501,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/cluster",
+                                                "url": "http://api:8000/api/cluster?points=1",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
@@ -2677,57 +2585,10 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Total runtime [h]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Queue time [min]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Started in 10 min [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
                                     {
                                         "matcher": {
                                             "id": "byName",
@@ -3507,7 +3368,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/cluster",
+                                                "url": "http://api:8000/api/cluster?points=1",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
@@ -3608,7 +3469,9 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
                                 "overrides": [
                                     {
@@ -3640,70 +3503,6 @@
                                             {
                                                 "id": "decimals",
                                                 "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Hosts in use"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Idle hosts"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CPU demand [cores]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CPU capacity [cores]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
                                             }
                                         ]
                                     }
@@ -4562,106 +4361,11 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Energy [kWh]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CO₂ [kg]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Embodied CO₂ [kg]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CO₂ in total [kg]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Intensity [gCO₂/kWh]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Embodied share [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -5615,99 +5319,16 @@
                                     "color": {
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "MAPE, 1 h [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "MAPE, 5 min [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Error, 1 h [kW]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Energy error [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "r"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
                                     {
                                         "matcher": {
                                             "id": "byName",
                                             "options": "Automatic decisions"
                                         },
                                         "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
                                             {
                                                 "id": "decimals",
                                                 "value": 0

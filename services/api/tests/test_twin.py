@@ -143,12 +143,12 @@ def test_accuracy_is_the_hourly_mape_of_the_power_with_the_twins_r(run_dir):
 def test_status_is_the_latest_complete_window(run_dir):
     status = twin.status(run_dir)
     assert status["twin_time"] == pd.Timestamp("2022-10-06 22:10", tz="UTC")
-    assert (
-        status["window"],
-        status["hosts"],
-        status["calibration_factor"],
-        status["carbon_zone"],
-    ) == (2, 2770, 4.0, "NL")
+    # window 2 runs 2,770 hosts
+    assert (status["count_1"], status["calibration_factor"], status["carbon_zone"]) == (
+        2770,
+        4.0,
+        "NL",
+    )
 
 
 def test_carbon_zone_comes_from_the_trace_path(tmp_path):

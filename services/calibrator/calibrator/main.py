@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from odt_common import TaskAccumulator, load_config_from_env
-from odt_common.config import DynamicConfigEvent
+from odt_common.config import PARALLEL_RUNS, DynamicConfigEvent
 from odt_common.models import Task
 from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer
 
@@ -127,8 +127,8 @@ class CalibrationService:
         """Follow a change of the parallel simulations, from the next grid search; the other runtime settings
         are not the calibrator's."""
         event = DynamicConfigEvent(**message_data)
-        if event.setting_key == "calibrator.max_parallel_workers":
-            self.calibration_engine.max_workers = int(event.new_value)
+        if event.setting_key == PARALLEL_RUNS:
+            self.calibration_engine.max_workers = event.new_value
             logger.info(f"Parallel simulations: {event.new_value}")
 
     def _consume_messages(self):

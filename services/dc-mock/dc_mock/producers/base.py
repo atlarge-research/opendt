@@ -54,7 +54,7 @@ class BaseProducer(ABC):
 
         logger.info(f"Initialized {self.name}")
         logger.info(f"  Topic: {self.topic}")
-        logger.info(f"  Speed factor: {self.speed_factor}x")
+        logger.info(f"  Speed factor: {self.speed.factor}x")
 
     def _get_producer(self) -> KafkaProducer:
         """Get or create the Kafka producer.
@@ -89,17 +89,11 @@ class BaseProducer(ABC):
         if self._producer:
             self._producer.flush()
 
-    @property
-    def speed_factor(self) -> float:
-        return self.speed.factor
-
     def start_clock(self, trace_start: datetime) -> None:
         """Start replaying: `trace_start` of the trace is now."""
-        self._trace_start, self._wall_start, self._factor = (
-            trace_start,
-            time.time(),
-            self.speed.factor,
-        )
+        self._trace_start = trace_start
+        self._wall_start = time.time()
+        self._factor = self.speed.factor
 
     def wait_until(self, trace_time: datetime) -> bool:
         """Sleep until `trace_time` of the trace is due at the current speed; True if stopped meanwhile.
@@ -133,10 +127,10 @@ class BaseProducer(ABC):
         Returns:
             Actual sleep time adjusted for speed factor
         """
-        if self.speed_factor <= 0:
+        if self.speed.factor <= 0:
             # Max speed (-1): minimal sleep
             return 0.001
-        return realtime_seconds / self.speed_factor
+        return realtime_seconds / self.speed.factor
 
     @abstractmethod
     def run(self) -> None:

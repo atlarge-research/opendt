@@ -91,18 +91,12 @@ simple = screen(
     ],
 )
 
+groups_control = control("opendt-topology", group(1) + group(2) + group(3), period=False)
 topology = screen(
     "opendt-topology",
     "OpenDT, topology",
     [
-        (
-            "control",
-            control("opendt-topology", group(1) + group(2) + group(3), period=False),
-            0,
-            0,
-            6,
-            21,
-        ),
+        ("control", groups_control, 0, 0, 6, 21),
         ("groups", groups, 6, 0, 18, 5),
         ("catalog", catalog, 6, 5, 18, 8),
         ("hosts-topology", hosts, 6, 13, 18, 8),

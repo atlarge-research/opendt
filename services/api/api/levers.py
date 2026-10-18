@@ -4,7 +4,7 @@ runtime settings, which the services follow on sys.config."""
 import copy
 from typing import Literal
 
-from odt_common.config import GlobalConfig
+from odt_common.config import PARALLEL_RUNS, SCHEDULER, SPEED_FACTOR, GlobalConfig
 from odt_common.models import Topology
 from pydantic import BaseModel, Field, field_validator
 
@@ -14,12 +14,11 @@ from api import twin
 SCHEDULERS = Literal[
     "Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"
 ]
-KIND = Literal["H01", "EPYC", "Xeon", "Memory", "Edge"]  # twin.SERVERS
 # the runtime settings, by the field that changes them
 SETTINGS = {
-    "scheduler": "simulator.scheduler",
-    "speed_factor": "global.speed_factor",
-    "parallel_simulations": "calibrator.max_parallel_workers",
+    "scheduler": SCHEDULER,
+    "speed_factor": SPEED_FACTOR,
+    "parallel_simulations": PARALLEL_RUNS,
 }
 
 
@@ -27,13 +26,13 @@ class Control(BaseModel):
     """A change from the control panel; the fields left out stay as they are. The hosts come in up to three
     groups, each a kind and a count; a count of 0 removes the group."""
 
-    kind_1: KIND | None = None
+    kind_1: Literal[tuple(twin.SERVERS)] | None = None
     count_1: int | None = Field(None, ge=0)
-    kind_2: KIND | None = None
+    kind_2: Literal[tuple(twin.SERVERS)] | None = None
     count_2: int | None = Field(None, ge=0)
-    kind_3: KIND | None = None
+    kind_3: Literal[tuple(twin.SERVERS)] | None = None
     count_3: int | None = Field(None, ge=0)
-    carbon_zone: Literal["NL", "PL", "DE", "RO"] | None = None
+    carbon_zone: Literal[tuple(twin.CARBON_TRACES)] | None = None
     scheduler: SCHEDULERS | None = None
     speed_factor: float | None = None
     parallel_simulations: int | None = Field(None, gt=0)  # of the calibrator
@@ -48,23 +47,13 @@ def moves_topology(change: Control) -> bool:
     return bool(change.model_dump(exclude_none=True).keys() - SETTINGS.keys())
 
 
-def settings(change: Control) -> dict:
-    """The runtime settings the change sets, by their key on sys.config."""
-    return {
-        SETTINGS[f]: v
-        for f, v in change.model_dump(include=set(SETTINGS), exclude_none=True).items()
-    }
-
-
 def topology(change: Control, sent: dict | None, latest: dict) -> dict:
     """The topology with the change of hosts or CO2 zone, built on the one sent last (a window may not have run
     it yet) with the r of the latest window (the calibrator may have changed it)."""
     topology = copy.deepcopy(sent or latest)
     cluster = topology["clusters"][0]
     r = latest["clusters"][0]["hosts"][0]["cpuPowerModel"]["calibrationFactor"]
-    for host in cluster["hosts"]:
-        host["cpuPowerModel"]["calibrationFactor"] = r
-    cluster["hosts"] = hosts(cluster["hosts"], change)
+    cluster["hosts"] = hosts(cluster["hosts"], change, r)
     if not cluster["hosts"]:
         raise ValueError("The twin needs at least one host")
     if change.carbon_zone:
@@ -72,27 +61,19 @@ def topology(change: Control, sent: dict | None, latest: dict) -> dict:
     return Topology(**topology).model_dump(mode="json")
 
 
-def hosts(groups: list[dict], change: Control) -> list[dict]:
-    """The twin's host groups with the change applied: a new kind keeps the group's count and takes the twin's r,
-    and groups of the same kind become one."""
-    r = groups[0]["cpuPowerModel"]["calibrationFactor"]
+def hosts(groups: list[dict], change: Control, r: float) -> list[dict]:
+    """The host groups with the change applied, all with the twin's r: a new kind keeps its group's count, and
+    groups of the same kind become one."""
     merged = {}
-    for i, old in enumerate(
-        (groups + [{"name": None, "count": 0}] * twin.GROUPS)[: twin.GROUPS], 1
-    ):
-        kind = getattr(change, f"kind_{i}") or old["name"]
-        count = getattr(change, f"count_{i}")
-        count = old["count"] if count is None else count
-        if getattr(change, f"kind_{i}") and not count:
+    for i, old in enumerate(twin.groups(groups), 1):
+        new_kind, new_count = getattr(change, f"kind_{i}"), getattr(change, f"count_{i}")
+        kind = new_kind or old["name"]
+        count = old["count"] if new_count is None else new_count
+        if new_kind and not count:
             raise ValueError(f"Hosts {i} need a count")
-        if not kind or not count:
-            continue
-        host = old
-        if kind != old["name"]:
-            model = {**twin.SERVERS[kind]["cpuPowerModel"], "calibrationFactor": r}
-            host = {**twin.SERVERS[kind], "cpuPowerModel": model}
-        if kind in merged:
-            merged[kind]["count"] += count
-        else:
-            merged[kind] = {**host, "name": kind, "count": count}
+        if kind and count:
+            base = old if kind == old["name"] else twin.SERVERS[kind]
+            model = {**base["cpuPowerModel"], "calibrationFactor": r}
+            host = {**base, "name": kind, "count": 0, "cpuPowerModel": model}
+            merged.setdefault(kind, host)["count"] += count
     return list(merged.values())

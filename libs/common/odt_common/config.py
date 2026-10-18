@@ -312,6 +312,12 @@ class AppConfig(BaseModel):
         return self.model_dump()
 
 
+# the runtime settings on sys.config, by key: the API sends them, the services follow them
+SPEED_FACTOR = "global.speed_factor"
+SCHEDULER = "simulator.scheduler"
+PARALLEL_RUNS = "calibrator.max_parallel_workers"
+
+
 class DynamicConfigEvent(BaseModel):
     """Event model for runtime configuration updates via Kafka.
 
