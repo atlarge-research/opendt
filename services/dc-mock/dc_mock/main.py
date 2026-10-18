@@ -21,6 +21,7 @@ from odt_common import load_config_from_env
 from odt_common.utils import get_kafka_bootstrap_servers
 
 from dc_mock.producers import PowerProducer, TopologyProducer, WorkloadProducer
+from dc_mock.speed import Speed, follow
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -53,7 +54,7 @@ class DCMockOrchestrator:
         self,
         workload_context,
         kafka_bootstrap_servers: str,
-        speed_factor: float,
+        speed: Speed,
         topology_topic: str,
         workload_topic: str,
         power_topic: str,
@@ -64,7 +65,7 @@ class DCMockOrchestrator:
         Args:
             workload_context: Workload context with resolved file paths
             kafka_bootstrap_servers: Kafka broker addresses
-            speed_factor: Simulation speed multiplier
+            speed: Shared simulation speed (changed at runtime through sys.config)
             topology_topic: Kafka topic for topology events
             workload_topic: Kafka topic for workload events
             power_topic: Kafka topic for power consumption events
@@ -89,7 +90,7 @@ class DCMockOrchestrator:
         self.workload_producer = WorkloadProducer(
             workload_context=workload_context,
             kafka_bootstrap_servers=kafka_bootstrap_servers,
-            speed_factor=speed_factor,
+            speed=speed,
             topic=workload_topic,
             heartbeat_frequency_minutes=heartbeat_frequency_minutes,
             start_barrier=start_barrier if start_barrier else None,
@@ -115,7 +116,7 @@ class DCMockOrchestrator:
             self.power_producer = PowerProducer(
                 workload_context=workload_context,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=speed_factor,
+                speed=speed,
                 topic=power_topic,
                 earliest_task_time_ms=earliest_task_time_ms,
                 start_barrier=start_barrier,
@@ -133,7 +134,7 @@ class DCMockOrchestrator:
             self.topology_producer = TopologyProducer(
                 topology_file=workload_context.topology_file,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=speed_factor,
+                speed=speed,
                 topic=topology_topic,
                 publish_interval_seconds=30.0,
                 start_barrier=None,  # TopologyProducer doesn't need synchronization
@@ -248,11 +249,15 @@ class DCMockOrchestrator:
             # Setup signal handlers
             self.setup_signal_handlers()
 
+            # The replay speed starts as configured and follows changes from the control panel
+            speed = Speed(config.global_config.speed_factor)
+            follow(speed, config.kafka.topics["system"].name)
+
             # Start all producers
             self.start_all(
                 workload_context=workload_context,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=config.global_config.speed_factor,
+                speed=speed,
                 topology_topic=topology_topic,
                 workload_topic=workload_topic,
                 power_topic=power_topic,

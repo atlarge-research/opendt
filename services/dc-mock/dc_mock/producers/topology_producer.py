@@ -12,6 +12,7 @@ from pathlib import Path
 from odt_common import Topology, TopologySnapshot
 
 from dc_mock.producers.base import BaseProducer
+from dc_mock.speed import Speed
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class TopologyProducer(BaseProducer):
         self,
         topology_file: Path,
         kafka_bootstrap_servers: str,
-        speed_factor: float,
+        speed: Speed,
         topic: str,
         publish_interval_seconds: float = 30.0,
         start_barrier: threading.Barrier | None = None,
@@ -37,14 +38,14 @@ class TopologyProducer(BaseProducer):
         Args:
             topology_file: Path to topology.json file
             kafka_bootstrap_servers: Kafka broker addresses
-            speed_factor: Simulation speed multiplier
+            speed: Shared simulation speed
             topic: Kafka topic name for topology events
             publish_interval_seconds: Publish interval in realtime seconds (default: 30s)
             start_barrier: Optional barrier for synchronized startup
         """
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
-            speed_factor=speed_factor,
+            speed=speed,
             topic=topic,
             name="TopologyProducer",
             start_barrier=start_barrier,

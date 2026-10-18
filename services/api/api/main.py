@@ -1,16 +1,19 @@
 """OpenDT API - FastAPI Application for datacenter simulation data."""
 
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
+import pandas as pd
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from odt_common import load_config_from_env
+from odt_common.config import DynamicConfigEvent, GlobalConfig
 from odt_common.models.topology import (
     CPU,
     Cluster,
@@ -22,7 +25,9 @@ from odt_common.models.topology import (
 )
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
+from pydantic import BaseModel, Field, field_validator
 
+from api import twin
 from api.carbon_query import CarbonDataQuery, CarbonDataResponse
 from api.power_query import PowerDataQuery, PowerDataResponse
 
@@ -54,6 +59,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize Kafka producer: {e}")
         app.state.kafka_producer = None
 
+    app.state.speed_factor = None  # set by the control panel; until then, the configured speed
     yield
 
     # Shutdown
@@ -133,7 +139,7 @@ DEFAULT_TOPOLOGY = Topology(
                         power=300.0,
                         idlePower=25.0,
                         maxPower=174.0,
-                        calibrationFactor=10.0,
+                        calibrationFactor=4.0,
                     ),
                 )
             ],
@@ -344,6 +350,85 @@ async def get_carbon_emission_data(
     except Exception as e:
         logger.error(f"Error querying carbon emission data: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
+
+
+# ============================================================================
+# DASHBOARD: STATUS, CLUSTER, CONTROL PANEL
+# ============================================================================
+
+
+def twin_run() -> Path:
+    """The run folder of this twin; 404 until its first window of operation is complete."""
+    run = Path(os.getenv("DATA_DIR", "/app/data")) / os.getenv("RUN_ID", "")
+    if not twin.windows(run):
+        raise HTTPException(status_code=404, detail="No window of operation is complete yet")
+    return run
+
+
+def publish(topic: str, message: dict, key: str | None = None) -> None:
+    """Send a message to one of OpenDT's Kafka topics, by its name in the configuration."""
+    if not app.state.kafka_producer or not app.state.config:
+        raise HTTPException(status_code=500, detail="Kafka producer or configuration not available")
+    name = app.state.config.kafka.topics[topic].name
+    send_message(producer=app.state.kafka_producer, topic=name, message=message, key=key)
+
+
+@app.get("/api/status")
+async def get_status():
+    """The twin's time, topology, and replay speed: the control panel's current values (a flat object)."""
+    status = twin.status(twin_run())
+    speed = app.state.speed_factor or app.state.config.global_config.speed_factor
+    return {**status, "twin_time": status["twin_time"].isoformat(), "speed_factor": speed}
+
+
+@app.get("/api/cluster")
+async def get_cluster(start: datetime | None = None, end: datetime | None = None):
+    """Hosts up and in use (one job per host), jobs pending, running, and finished, and mean CPU utilization."""
+    run = Path(os.getenv("DATA_DIR", "/app/data")) / os.getenv("RUN_ID", "")
+    if not twin.windows(run):
+        return {"data": []}  # until the first window, the panels show "No data"
+    cluster = twin.cluster(run)
+    if start is not None:
+        cluster = cluster[cluster["timestamp"] >= pd.Timestamp(start)]
+    if end is not None:
+        cluster = cluster[cluster["timestamp"] <= pd.Timestamp(end)]
+    return {"data": json.loads(cluster.to_json(orient="records", date_format="iso"))}
+
+
+class Control(BaseModel):
+    """A change from the control panel; the fields left out stay as they are."""
+
+    hosts: int | None = Field(None, ge=1)
+    carbon_zone: Literal["SURF", "NL", "DE", "RO", "PL"] | None = None
+    speed_factor: float | None = None
+
+    @field_validator("speed_factor")
+    @classmethod
+    def twin_speed(cls, speed: float | None) -> float | None:
+        return speed if speed is None else GlobalConfig(speed_factor=speed).speed_factor
+
+
+@app.patch("/api/control")
+async def control(change: Control):
+    """Change the running twin: hosts and carbon zone (a new simulated topology), and the replay speed."""
+    if change.hosts or change.carbon_zone:
+        topology = twin.topology(twin.windows(twin_run())[-1])
+        cluster = topology["clusters"][0]
+        if change.hosts:
+            cluster["hosts"][0]["count"] = change.hosts
+        if change.carbon_zone:
+            cluster["powerSource"]["carbonTracePath"] = twin.CARBON_TRACES[change.carbon_zone]
+        publish("sim_topology", Topology(**topology).model_dump(mode="json"), key="datacenter")
+    if change.speed_factor is not None:
+        event = DynamicConfigEvent(
+            setting_key="global.speed_factor",
+            new_value=change.speed_factor,
+            timestamp=datetime.now(UTC).isoformat(),
+            source="api",
+        )
+        publish("system", event.model_dump(), key=event.setting_key)  # sys.config is compacted
+        app.state.speed_factor = change.speed_factor
+    return await get_status()
 
 
 if __name__ == "__main__":

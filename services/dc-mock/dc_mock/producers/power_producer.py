@@ -5,13 +5,13 @@ Streams historical power consumption data to Kafka with proper timing.
 
 import logging
 import threading
-import time
 from datetime import UTC
 
 import pandas as pd
 from odt_common import Consumption, WorkloadContext
 
 from dc_mock.producers.base import BaseProducer
+from dc_mock.speed import Speed
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class PowerProducer(BaseProducer):
         self,
         workload_context: WorkloadContext,
         kafka_bootstrap_servers: str,
-        speed_factor: float,
+        speed: Speed,
         topic: str,
         earliest_task_time_ms: int,
         start_barrier: threading.Barrier | None = None,
@@ -37,14 +37,14 @@ class PowerProducer(BaseProducer):
         Args:
             workload_context: Workload context with resolved file paths
             kafka_bootstrap_servers: Kafka broker addresses
-            speed_factor: Simulation speed multiplier
+            speed: Shared simulation speed
             topic: Kafka topic name for power consumption events
             earliest_task_time_ms: Earliest task submission time in epoch ms
             start_barrier: Optional barrier for synchronized startup
         """
         super().__init__(
             kafka_bootstrap_servers=kafka_bootstrap_servers,
-            speed_factor=speed_factor,
+            speed=speed,
             topic=topic,
             name="PowerProducer",
             start_barrier=start_barrier,
@@ -115,7 +115,7 @@ class PowerProducer(BaseProducer):
             from datetime import datetime
 
             sim_start_time = datetime.fromtimestamp(self.earliest_task_time_ms / 1000.0, tz=UTC)
-            real_start_time = time.time()
+            self.start_clock(sim_start_time)
 
             logger.info(f"PowerProducer synchronized to start time: {sim_start_time}")
 
@@ -124,21 +124,9 @@ class PowerProducer(BaseProducer):
                     logger.info("PowerProducer interrupted")
                     break
 
-                # Calculate elapsed simulation time
-                sim_elapsed = (consumption.timestamp - sim_start_time).total_seconds()
-
-                # Calculate required sleep based on speed_factor
-                if self.speed_factor > 0:
-                    required_real_elapsed = sim_elapsed / self.speed_factor
-                    real_elapsed = time.time() - real_start_time
-                    sleep_time = required_real_elapsed - real_elapsed
-
-                    if sleep_time > 0:
-                        # Use interruptible wait
-                        if self.wait_interruptible(sleep_time):
-                            logger.info("PowerProducer interrupted during sleep")
-                            break
-                # If speed_factor == -1, don't sleep (max speed)
+                if self.wait_until(consumption.timestamp):
+                    logger.info("PowerProducer interrupted during sleep")
+                    break
 
                 # Emit consumption event
                 consumption_msg = consumption.model_dump(mode="json")
@@ -147,8 +135,7 @@ class PowerProducer(BaseProducer):
                 if i < 5 or (i + 1) % 100 == 0:
                     logger.info(
                         f"PowerProducer sending power #{i + 1}: "
-                        f"timestamp={consumption.timestamp.isoformat()}, "
-                        f"sim_elapsed={sim_elapsed:.2f}s, real_elapsed={time.time() - real_start_time:.2f}s"
+                        f"timestamp={consumption.timestamp.isoformat()}"
                     )
 
                 self.emit_message(

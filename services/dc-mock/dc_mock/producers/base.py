@@ -2,12 +2,16 @@
 
 import logging
 import threading
+import time
 from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
 from typing import Any
 
 from kafka import KafkaProducer
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
+
+from dc_mock.speed import Speed
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +29,7 @@ class BaseProducer(ABC):
     def __init__(
         self,
         kafka_bootstrap_servers: str,
-        speed_factor: float,
+        speed: Speed,
         topic: str,
         name: str | None = None,
         start_barrier: threading.Barrier | None = None,
@@ -34,13 +38,13 @@ class BaseProducer(ABC):
 
         Args:
             kafka_bootstrap_servers: Kafka broker addresses
-            speed_factor: Simulation speed multiplier (1.0 = realtime, -1 = max speed)
+            speed: Shared simulation speed (1.0 = realtime, -1 = max speed), changeable at runtime
             topic: Kafka topic name for this producer
             name: Optional producer name for logging
             start_barrier: Optional barrier for synchronized startup across producers
         """
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
-        self.speed_factor = speed_factor
+        self.speed = speed
         self.topic = topic
         self.name = name or self.__class__.__name__
         self._stop_event = threading.Event()
@@ -84,6 +88,41 @@ class BaseProducer(ABC):
         """Flush buffered messages to Kafka."""
         if self._producer:
             self._producer.flush()
+
+    @property
+    def speed_factor(self) -> float:
+        return self.speed.factor
+
+    def start_clock(self, trace_start: datetime) -> None:
+        """Start replaying: `trace_start` of the trace is now."""
+        self._trace_start, self._wall_start, self._factor = (
+            trace_start,
+            time.time(),
+            self.speed.factor,
+        )
+
+    def wait_until(self, trace_time: datetime) -> bool:
+        """Sleep until `trace_time` of the trace is due at the current speed; True if stopped meanwhile.
+
+        The speed is checked at least every second; after a change, the pace restarts from where the replay is.
+        """
+        while True:
+            if self.speed.factor != self._factor:
+                if self._factor > 0:
+                    replayed = timedelta(seconds=(time.time() - self._wall_start) * self._factor)
+                    trace_time_now = min(self._trace_start + replayed, trace_time)
+                else:
+                    trace_time_now = trace_time
+                self._trace_start, self._wall_start = trace_time_now, time.time()
+                self._factor = self.speed.factor
+            if self._factor <= 0:  # -1: maximum speed
+                return self.should_stop()
+            due = (trace_time - self._trace_start).total_seconds() / self._factor
+            delay = due - (time.time() - self._wall_start)
+            if delay <= 0:
+                return False
+            if self.wait_interruptible(min(delay, 1.0)):
+                return True
 
     def calculate_sleep_time(self, realtime_seconds: float) -> float:
         """Calculate actual sleep time based on speed factor.
