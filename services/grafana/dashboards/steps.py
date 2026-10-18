@@ -19,7 +19,7 @@ def text(title, step):
     lines = [f"**Question {q}:** {QUESTIONS[q]['question']}"]
     if "do" in step:
         lines.append(f"**In the control panel:** {step['do']}.")
-    if step.get("solution", True) and "solution" in QUESTIONS[q]:
+    if "solution" in QUESTIONS[q]:
         solution = f"**Solution {q}:** {QUESTIONS[q]['solution']}"
         lines.append(f"<details><summary>Solution</summary>\n\n{solution}\n</details>")
     return {

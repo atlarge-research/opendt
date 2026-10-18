@@ -156,22 +156,27 @@ def picker(title, plots):
 
 
 def stepper(last):
-    """Back and Next through the steps of the tutorial, 1 to `last`."""
+    """The steps of the tutorial, 1 to `last`, as tags, the current one selected; a click goes to its step."""
     return {
         "type": "volkovlabs-form-panel",
-        "title": "",
+        "title": "Steps",
         "options": {
-            "initial": {"method": "-", "code": script("steps.js", last=last)},
-            "update": {"method": "-", "code": script("step.js", by=1, last=last)},
-            "updateEnabled": "manual",
-            "submit": {"text": "Next", "icon": "arrow-right"},
-            "reset": {"text": "Back", "icon": "arrow-left", "variant": "secondary"},
-            "resetAction": {
-                "mode": "custom",
-                "code": script("step.js", by=-1, last=last),
-                "confirm": False,
+            "initial": {
+                "method": "-",
+                "code": "context.panel.patchFormValue({ step: '${step}' });",
             },
+            "update": {"method": "-"},
+            "updateEnabled": "disabled",  # no buttons
+            "elementValueChanged": "context.grafana.locationService.partial({ 'var-step': context.element.value });",
             "sync": False,
-            "elements": [field("step", "Step", "disabled")],
+            "elements": [
+                select(
+                    "step",
+                    "",
+                    [(str(n), str(n)) for n in range(1, last + 1)],
+                    "radio",
+                    labelWidth=1,
+                )
+            ],
         },
     }

@@ -383,73 +383,10 @@
                     }
                 }
             },
-            "steps": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 2,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "initial": {
-                                    "method": "-",
-                                    "code": "const last = 13;\n// the step, as the address has it, of all of them; Next is always on\ncontext.panel.patchFormValue({ step: `${step} of ${last}` });\ncontext.panel.enableSubmit();\n"
-                                },
-                                "update": {
-                                    "method": "-",
-                                    "code": "const by = 1;\nconst last = 13;\n// Back or Next: the step `by` away, within the tutorial's steps\nconst step = Math.min(Math.max(Number('${step}') + by, 1), last);\ncontext.grafana.locationService.partial({ 'var-step': step });\ncontext.panel.enableSubmit();\n"
-                                },
-                                "updateEnabled": "manual",
-                                "submit": {
-                                    "text": "Next",
-                                    "icon": "arrow-right"
-                                },
-                                "reset": {
-                                    "text": "Back",
-                                    "icon": "arrow-left",
-                                    "variant": "secondary"
-                                },
-                                "resetAction": {
-                                    "mode": "custom",
-                                    "code": "const by = -1;\nconst last = 13;\n// Back or Next: the step `by` away, within the tutorial's steps\nconst step = Math.min(Math.max(Number('${step}') + by, 1), last);\ncontext.grafana.locationService.partial({ 'var-step': step });\ncontext.panel.enableSubmit();\n",
-                                    "confirm": false
-                                },
-                                "sync": false,
-                                "elements": [
-                                    {
-                                        "uid": "step",
-                                        "id": "step",
-                                        "title": "Step",
-                                        "type": "disabled",
-                                        "labelWidth": 14
-                                    }
-                                ]
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
             "twin-time": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
+                    "id": 2,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -546,7 +483,7 @@
             "measured-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
+                    "id": 3,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -654,7 +591,7 @@
             "opendt-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
+                    "id": 4,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -762,7 +699,7 @@
             "mape-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 5,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -859,7 +796,7 @@
             "co2-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 6,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -967,7 +904,7 @@
             "scheduler-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 7,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1063,7 +1000,7 @@
             "in-use-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 8,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1160,7 +1097,7 @@
             "cpu-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 9,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1268,7 +1205,7 @@
             "waiting-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 10,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1365,7 +1302,7 @@
             "zone-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 11,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1452,6 +1389,117 @@
                                         "fixedColor": "#22252b"
                                     }
                                 },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "steps": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 12,
+                    "title": "Steps",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "volkovlabs-form-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "initial": {
+                                    "method": "-",
+                                    "code": "context.panel.patchFormValue({ step: '${step}' });"
+                                },
+                                "update": {
+                                    "method": "-"
+                                },
+                                "updateEnabled": "disabled",
+                                "elementValueChanged": "context.grafana.locationService.partial({ 'var-step': context.element.value });",
+                                "sync": false,
+                                "elements": [
+                                    {
+                                        "uid": "step",
+                                        "id": "step",
+                                        "title": "",
+                                        "type": "radio",
+                                        "labelWidth": 1,
+                                        "options": [
+                                            {
+                                                "id": "1",
+                                                "label": "1",
+                                                "value": "1"
+                                            },
+                                            {
+                                                "id": "2",
+                                                "label": "2",
+                                                "value": "2"
+                                            },
+                                            {
+                                                "id": "3",
+                                                "label": "3",
+                                                "value": "3"
+                                            },
+                                            {
+                                                "id": "4",
+                                                "label": "4",
+                                                "value": "4"
+                                            },
+                                            {
+                                                "id": "5",
+                                                "label": "5",
+                                                "value": "5"
+                                            },
+                                            {
+                                                "id": "6",
+                                                "label": "6",
+                                                "value": "6"
+                                            },
+                                            {
+                                                "id": "7",
+                                                "label": "7",
+                                                "value": "7"
+                                            },
+                                            {
+                                                "id": "8",
+                                                "label": "8",
+                                                "value": "8"
+                                            },
+                                            {
+                                                "id": "9",
+                                                "label": "9",
+                                                "value": "9"
+                                            },
+                                            {
+                                                "id": "10",
+                                                "label": "10",
+                                                "value": "10"
+                                            },
+                                            {
+                                                "id": "11",
+                                                "label": "11",
+                                                "value": "11"
+                                            },
+                                            {
+                                                "id": "12",
+                                                "label": "12",
+                                                "value": "12"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
                                 "overrides": []
                             }
                         }
@@ -1614,7 +1662,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 14,
-                    "title": "Step 1 of 13: Dynamic autoscaling",
+                    "title": "Step 1 of 12: Dynamic autoscaling",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1646,7 +1694,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 15,
-                    "title": "Step 2 of 13: Dynamic autoscaling",
+                    "title": "Step 2 of 12: Dynamic autoscaling",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1678,7 +1726,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 16,
-                    "title": "Step 3 of 13: Dynamic autoscaling",
+                    "title": "Step 3 of 12: Dynamic autoscaling",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1710,7 +1758,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 17,
-                    "title": "Step 4 of 13: Dynamic autoscaling",
+                    "title": "Step 4 of 12: Dynamic autoscaling",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1742,7 +1790,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 18,
-                    "title": "Step 5 of 13: Dynamic autoscaling",
+                    "title": "Step 5 of 12: Dynamic autoscaling",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1774,39 +1822,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 19,
-                    "title": "Step 6 of 13: Dynamic autoscaling",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "text",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "mode": "markdown",
-                                "content": "**Question 1.5:** how many of the 277 hosts does SURF need over the day, at the busiest and at the quietest moment?\n\n\n**In the control panel:** Hosts 277, then Apply; Time Day."
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "text-7": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 20,
-                    "title": "Step 7 of 13: Dynamic autoscaling",
+                    "title": "Step 6 of 12: Dynamic autoscaling",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1834,11 +1850,11 @@
                     }
                 }
             },
-            "text-8": {
+            "text-7": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
-                    "title": "Step 8 of 13: Simulation calibration",
+                    "id": 20,
+                    "title": "Step 7 of 12: Simulation calibration",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1866,11 +1882,11 @@
                     }
                 }
             },
-            "text-9": {
+            "text-8": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
-                    "title": "Step 9 of 13: Simulation calibration",
+                    "id": 21,
+                    "title": "Step 8 of 12: Simulation calibration",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1898,11 +1914,11 @@
                     }
                 }
             },
-            "text-10": {
+            "text-9": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
-                    "title": "Step 10 of 13: Simulation calibration",
+                    "id": 22,
+                    "title": "Step 9 of 12: Simulation calibration",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1930,11 +1946,11 @@
                     }
                 }
             },
-            "text-11": {
+            "text-10": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
-                    "title": "Step 11 of 13: CO₂-aware workload migration",
+                    "id": 23,
+                    "title": "Step 10 of 12: CO₂-aware workload migration",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1962,11 +1978,11 @@
                     }
                 }
             },
-            "text-12": {
+            "text-11": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
-                    "title": "Step 12 of 13: CO₂-aware workload migration",
+                    "id": 24,
+                    "title": "Step 11 of 12: CO₂-aware workload migration",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1994,11 +2010,11 @@
                     }
                 }
             },
-            "text-13": {
+            "text-12": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
-                    "title": "Step 13 of 13: CO₂-aware workload migration",
+                    "id": 25,
+                    "title": "Step 12 of 12: CO₂-aware workload migration",
                     "description": "",
                     "links": [],
                     "data": {
@@ -2029,7 +2045,7 @@
             "step-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 26,
                     "title": "Power draw",
                     "description": "",
                     "links": [],
@@ -2254,7 +2270,7 @@
             "step-accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 27,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "links": [],
@@ -2468,7 +2484,7 @@
             "step-mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 28,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "links": [],
@@ -2651,7 +2667,7 @@
             "step-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 29,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "links": [],
@@ -2780,7 +2796,7 @@
             "step-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 30,
                     "title": "Hosts available vs. in use",
                     "description": "",
                     "links": [],
@@ -2937,7 +2953,7 @@
             "step-idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 31,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "links": [],
@@ -3132,7 +3148,7 @@
             "step-idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 32,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "links": [],
@@ -3312,7 +3328,7 @@
             "step-queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 33,
                     "title": "P3  Time in queue",
                     "description": "",
                     "links": [],
@@ -3492,7 +3508,7 @@
             "step-jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 34,
                     "title": "P4  Jobs",
                     "description": "",
                     "links": [],
@@ -3670,7 +3686,7 @@
             "step-completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 35,
                     "title": "P2  Total runtime",
                     "description": "",
                     "links": [],
@@ -3850,7 +3866,7 @@
             "step-energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 36,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "links": [],
@@ -3976,7 +3992,7 @@
             "step-r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 37,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "links": [],
@@ -4102,7 +4118,7 @@
             "step-intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 38,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "links": [],
@@ -4282,7 +4298,7 @@
             "step-co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 40,
+                    "id": 39,
                     "title": "CO₂ emissions vs. carbon intensity",
                     "description": "",
                     "links": [],
@@ -4456,7 +4472,7 @@
             "step-energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 41,
+                    "id": 40,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "links": [],
@@ -4640,7 +4656,7 @@
             "step-carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 42,
+                    "id": 41,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "links": [],
@@ -4852,7 +4868,7 @@
             "step-energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 43,
+                    "id": 42,
                     "title": "S1  This $period",
                     "description": "",
                     "links": [],
@@ -5022,23 +5038,10 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 11,
+                                                "height": 13,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "control"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 11,
-                                                "width": 6,
-                                                "height": 3,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "steps"
                                                 }
                                             }
                                         },
@@ -5178,7 +5181,20 @@
                                                 "x": 6,
                                                 "y": 6,
                                                 "width": 18,
-                                                "height": 8,
+                                                "height": 2,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "steps"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 8,
+                                                "width": 18,
+                                                "height": 5,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "decisions"
@@ -5521,32 +5537,6 @@
                                             "spec": {
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "text-13"
-                                                },
-                                                "conditionalRendering": {
-                                                    "kind": "ConditionalRenderingGroup",
-                                                    "spec": {
-                                                        "visibility": "show",
-                                                        "condition": "or",
-                                                        "items": [
-                                                            {
-                                                                "kind": "ConditionalRenderingVariable",
-                                                                "spec": {
-                                                                    "variable": "step",
-                                                                    "operator": "equals",
-                                                                    "value": "13"
-                                                                }
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "AutoGridLayoutItem",
-                                            "spec": {
-                                                "element": {
-                                                    "kind": "ElementReference",
                                                     "name": "step-power"
                                                 },
                                                 "conditionalRendering": {
@@ -5600,7 +5590,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "8"
+                                                                    "value": "7"
                                                                 }
                                                             }
                                                         ]
@@ -5660,7 +5650,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "9"
+                                                                    "value": "8"
                                                                 }
                                                             },
                                                             {
@@ -5668,7 +5658,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "10"
+                                                                    "value": "9"
                                                                 }
                                                             }
                                                         ]
@@ -5702,7 +5692,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "8"
+                                                                    "value": "7"
                                                                 }
                                                             }
                                                         ]
@@ -5746,14 +5736,6 @@
                                                                     "operator": "equals",
                                                                     "value": "6"
                                                                 }
-                                                            },
-                                                            {
-                                                                "kind": "ConditionalRenderingVariable",
-                                                                "spec": {
-                                                                    "variable": "step",
-                                                                    "operator": "equals",
-                                                                    "value": "7"
-                                                                }
                                                             }
                                                         ]
                                                     }
@@ -5787,14 +5769,6 @@
                                                                     "variable": "step",
                                                                     "operator": "equals",
                                                                     "value": "4"
-                                                                }
-                                                            },
-                                                            {
-                                                                "kind": "ConditionalRenderingVariable",
-                                                                "spec": {
-                                                                    "variable": "step",
-                                                                    "operator": "equals",
-                                                                    "value": "6"
                                                                 }
                                                             }
                                                         ]
@@ -5888,7 +5862,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "7"
+                                                                    "value": "6"
                                                                 }
                                                             }
                                                         ]
@@ -5940,7 +5914,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "8"
+                                                                    "value": "7"
                                                                 }
                                                             }
                                                         ]
@@ -5966,7 +5940,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "9"
+                                                                    "value": "8"
                                                                 }
                                                             },
                                                             {
@@ -5974,7 +5948,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "10"
+                                                                    "value": "9"
                                                                 }
                                                             }
                                                         ]
@@ -6000,7 +5974,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "11"
+                                                                    "value": "10"
                                                                 }
                                                             },
                                                             {
@@ -6008,7 +5982,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "13"
+                                                                    "value": "12"
                                                                 }
                                                             }
                                                         ]
@@ -6034,7 +6008,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "11"
+                                                                    "value": "10"
                                                                 }
                                                             }
                                                         ]
@@ -6060,7 +6034,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "12"
+                                                                    "value": "11"
                                                                 }
                                                             }
                                                         ]
@@ -6086,7 +6060,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "12"
+                                                                    "value": "11"
                                                                 }
                                                             },
                                                             {
@@ -6094,7 +6068,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "13"
+                                                                    "value": "12"
                                                                 }
                                                             }
                                                         ]
@@ -6120,7 +6094,7 @@
                                                                 "spec": {
                                                                     "variable": "step",
                                                                     "operator": "equals",
-                                                                    "value": "12"
+                                                                    "value": "11"
                                                                 }
                                                             }
                                                         ]
@@ -6220,7 +6194,7 @@
                 "spec": {
                     "name": "step",
                     "label": "Step",
-                    "query": "1,2,3,4,5,6,7,8,9,10,11,12,13",
+                    "query": "1,2,3,4,5,6,7,8,9,10,11,12",
                     "current": {
                         "text": "1",
                         "value": "1"
@@ -6284,11 +6258,6 @@
                         {
                             "text": "12",
                             "value": "12",
-                            "selected": false
-                        },
-                        {
-                            "text": "13",
-                            "value": "13",
                             "selected": false
                         }
                     ],

@@ -121,10 +121,10 @@ tutorial = screen(
     "opendt-tutorial",
     "OpenDT, tutorial",
     [
-        ("control", control("opendt-tutorial", [HOSTS]), 0, 0, 6, 11),
-        ("steps", stepper(len(STEPS)), 0, 11, 6, 3),
+        ("control", control("opendt-tutorial", [HOSTS]), 0, 0, 6, 13),
         *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
-        ("decisions", decisions, 6, 6, 18, 8),
+        ("steps", stepper(len(STEPS)), 6, 6, 18, 2),
+        ("decisions", decisions, 6, 8, 18, 5),
     ],
     rows=[
         row(

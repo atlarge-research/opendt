@@ -21,9 +21,9 @@ follows. Full screen switches the browser's full screen on and off, without Graf
   started within 10 minutes, hosts per CPU utilization, decisions).
 - **OpenDT, topology:** the host groups (SURF's node and OpenDC web's host templates), what runs now, and the kinds
   to choose from.
-- **OpenDT, tutorial:** the steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time with Back and
-  Next: a question of the notebooks, what to do in the control panel, the solution folded, and the step's plots; the
-  twin's state at the top.
+- **OpenDT, tutorial:** the 12 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
+  its tag: a question of the notebooks, what to do in the control panel, the solution folded, and the step's plots;
+  the twin's state at the top.
 - **OpenDT Dashboard** (classic): power and carbon emissions.
 
 The dashboards use Grafana's v2 format and its new layout (public preview in 12.4, enabled in the image), which

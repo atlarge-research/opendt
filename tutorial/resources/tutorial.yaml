@@ -1,6 +1,6 @@
-# The steps of the twin's Tutorial screen, per use case: a question of questions.yaml (its solution folded,
-# unless `solution: false`), what to do in the control panel, and the plots to look at, by their names in
-# services/grafana/dashboards/plots.py. After a change, run services/grafana/dashboards/build.py.
+# The steps of the twin's Tutorial screen, per use case: a question of questions.yaml (its solution folded), what
+# to do in the control panel, and the plots to look at, by their names in services/grafana/dashboards/plots.py.
+# After a change, run services/grafana/dashboards/build.py.
 
 Dynamic autoscaling:
   - question: "1.1"
@@ -15,10 +15,6 @@ Dynamic autoscaling:
   - question: "1.4"
     do: Hosts 138, then Apply; later, Hosts 69
     plots: [power, queue, jobs, completion]
-  - question: "1.5"
-    do: Hosts 277, then Apply; Time Day
-    solution: false  # the notebook's answer is for one day of the trace
-    plots: [hosts, idle-hosts]
   - question: "1.6"
     plots: [hosts, jobs]
 
