@@ -632,7 +632,7 @@
                     }
                 }
             },
-            "measured-now": {
+            "power-now": {
                 "kind": "Panel",
                 "spec": {
                     "id": 4,
@@ -670,12 +670,27 @@
                                                         "selector": "actual_power",
                                                         "text": "actual_power",
                                                         "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "simulated_power",
+                                                        "text": "simulated_power",
+                                                        "type": "number"
                                                     }
                                                 ],
                                                 "computed_columns": [
                                                     {
                                                         "selector": "actual_power/1000",
                                                         "text": "Ground truth [kW]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "simulated_power/1000",
+                                                        "text": "OpenDT [kW]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "(simulated_power - actual_power)/1000",
+                                                        "text": "Gap [kW]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -692,117 +707,13 @@
                                         "options": {
                                             "indexByName": {
                                                 "actual_power": 0,
-                                                "Ground truth [kW]": 1
+                                                "simulated_power": 1,
+                                                "Ground truth [kW]": 2,
+                                                "OpenDT [kW]": 3,
+                                                "Gap [kW]": 4
                                             },
                                             "excludeByName": {
-                                                "actual_power": true
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "stat",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
-                                },
-                                "colorMode": "none",
-                                "graphMode": "none",
-                                "textMode": "value_and_name",
-                                "orientation": "vertical",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "center",
-                                "wideLayout": false,
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
-                                    },
-                                    "decimals": 1
-                                },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "opendt-now": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 5,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/power?interval_seconds=60",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "simulated_power",
-                                                        "text": "simulated_power",
-                                                        "type": "number"
-                                                    }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "simulated_power/1000",
-                                                        "text": "OpenDT [kW]",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "simulated_power": 0,
-                                                "OpenDT [kW]": 1
-                                            },
-                                            "excludeByName": {
+                                                "actual_power": true,
                                                 "simulated_power": true
                                             }
                                         }
@@ -851,7 +762,7 @@
             "mape-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 5,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -918,7 +829,7 @@
                                 "reduceOptions": {
                                     "fields": "/.*/"
                                 },
-                                "colorMode": "none",
+                                "colorMode": "value",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "vertical",
@@ -934,10 +845,22 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
+                                        "mode": "thresholds"
                                     },
-                                    "decimals": 1
+                                    "decimals": 1,
+                                    "thresholds": {
+                                        "mode": "absolute",
+                                        "steps": [
+                                            {
+                                                "value": null,
+                                                "color": "#009E73"
+                                            },
+                                            {
+                                                "value": 10,
+                                                "color": "#D55E00"
+                                            }
+                                        ]
+                                    }
                                 },
                                 "overrides": []
                             }
@@ -948,7 +871,7 @@
             "co2-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 6,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1053,106 +976,10 @@
                     }
                 }
             },
-            "scheduler-now": {
+            "hosts-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/status",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "",
-                                                "columns": [
-                                                    {
-                                                        "selector": "scheduler",
-                                                        "text": "Scheduler",
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Scheduler": 0
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "stat",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
-                                },
-                                "colorMode": "none",
-                                "graphMode": "none",
-                                "textMode": "value_and_name",
-                                "orientation": "vertical",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "center",
-                                "wideLayout": false,
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
-                                    }
-                                },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "in-use-now": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 9,
+                    "id": 7,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1187,109 +1014,17 @@
                                                         "selector": "hosts_in_use",
                                                         "text": "Hosts in use",
                                                         "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Hosts in use": 0
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "stat",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
-                                },
-                                "colorMode": "none",
-                                "graphMode": "none",
-                                "textMode": "value_and_name",
-                                "orientation": "vertical",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "center",
-                                "wideLayout": false,
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
-                                    },
-                                    "unit": "locale"
-                                },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "cpu-now": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 10,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/cluster?points=1",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
+                                                    },
                                                     {
-                                                        "selector": "cpu_utilization",
-                                                        "text": "cpu_utilization",
+                                                        "selector": "hosts_up",
+                                                        "text": "hosts_up",
                                                         "type": "number"
                                                     }
                                                 ],
                                                 "computed_columns": [
                                                     {
-                                                        "selector": "cpu_utilization*100",
-                                                        "text": "CPU utilization [%]",
+                                                        "selector": "hosts_up - hosts_in_use",
+                                                        "text": "Idle hosts",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -1305,11 +1040,12 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "cpu_utilization": 0,
-                                                "CPU utilization [%]": 1
+                                                "Hosts in use": 0,
+                                                "hosts_up": 1,
+                                                "Idle hosts": 2
                                             },
                                             "excludeByName": {
-                                                "cpu_utilization": true
+                                                "hosts_up": true
                                             }
                                         }
                                     }
@@ -1346,7 +1082,8 @@
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
                                     },
-                                    "decimals": 1
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
                                 "overrides": []
                             }
@@ -1354,10 +1091,10 @@
                     }
                 }
             },
-            "waiting-now": {
+            "jobs-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 8,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1392,6 +1129,11 @@
                                                         "selector": "tasks_pending",
                                                         "text": "Jobs waiting",
                                                         "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "tasks_active",
+                                                        "text": "Jobs running",
+                                                        "type": "number"
                                                     }
                                                 ]
                                             }
@@ -1406,7 +1148,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Jobs waiting": 0
+                                                "Jobs waiting": 0,
+                                                "Jobs running": 1
                                             }
                                         }
                                     }
@@ -1443,103 +1186,8 @@
                                         "mode": "fixed",
                                         "fixedColor": "#22252b"
                                     },
-                                    "unit": "locale"
-                                },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "zone-now": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 12,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/status",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "",
-                                                "columns": [
-                                                    {
-                                                        "selector": "carbon_zone",
-                                                        "text": "CO₂ zone",
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "CO₂ zone": 0
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "stat",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
-                                },
-                                "colorMode": "none",
-                                "graphMode": "none",
-                                "textMode": "value_and_name",
-                                "orientation": "vertical",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "center",
-                                "wideLayout": false,
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
-                                    }
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
                                 "overrides": []
                             }
@@ -1550,7 +1198,7 @@
             "power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 9,
                     "title": "Power draw",
                     "description": "",
                     "links": [],
@@ -1775,7 +1423,7 @@
             "co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 10,
                     "title": "CO₂ emissions vs. carbon intensity",
                     "description": "",
                     "links": [],
@@ -1949,7 +1597,7 @@
             "hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 15,
+                    "id": 11,
                     "title": "Hosts available vs. in use",
                     "description": "",
                     "links": [],
@@ -2106,7 +1754,7 @@
             "pick-0": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 16,
+                    "id": 12,
                     "title": "Performance",
                     "description": "",
                     "links": [],
@@ -2189,7 +1837,7 @@
             "pick-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
+                    "id": 13,
                     "title": "Utilization",
                     "description": "",
                     "links": [],
@@ -2272,7 +1920,7 @@
             "pick-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 14,
                     "title": "Sustainability",
                     "description": "",
                     "links": [],
@@ -2355,7 +2003,7 @@
             "pick-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 15,
                     "title": "Twin accuracy",
                     "description": "",
                     "links": [],
@@ -2438,7 +2086,7 @@
             "scheduling-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 16,
                     "title": "P1  Performance now",
                     "description": "",
                     "links": [],
@@ -2651,7 +2299,7 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 17,
                     "title": "P2  Total runtime",
                     "description": "",
                     "links": [],
@@ -2831,7 +2479,7 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 18,
                     "title": "P3  Time in queue",
                     "description": "",
                     "links": [],
@@ -3011,7 +2659,7 @@
             "jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 19,
                     "title": "P4  Jobs",
                     "description": "",
                     "links": [],
@@ -3189,7 +2837,7 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 20,
                     "title": "P5  Jobs waiting or running",
                     "description": "",
                     "links": [],
@@ -3348,7 +2996,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 21,
                     "title": "U1  Utilization now",
                     "description": "",
                     "links": [],
@@ -3520,7 +3168,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 22,
                     "title": "U2  CPU utilization of the hosts",
                     "description": "",
                     "links": [],
@@ -3732,7 +3380,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 23,
                     "title": "U3  CPU demand vs. capacity",
                     "description": "",
                     "links": [],
@@ -3889,7 +3537,7 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 24,
                     "title": "U4  Hosts per CPU utilization",
                     "description": "",
                     "links": [],
@@ -4031,7 +3679,7 @@
             "idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 25,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "links": [],
@@ -4226,7 +3874,7 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 26,
                     "title": "S1  This $period",
                     "description": "",
                     "links": [],
@@ -4379,7 +4027,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 27,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "links": [],
@@ -4563,7 +4211,7 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 28,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "links": [],
@@ -4775,7 +4423,7 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 29,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "links": [],
@@ -4955,7 +4603,7 @@
             "idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 30,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "links": [],
@@ -5135,7 +4783,7 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 31,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "links": [],
@@ -5349,7 +4997,7 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 32,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "links": [],
@@ -5532,7 +5180,7 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 33,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "links": [],
@@ -5658,7 +5306,7 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 34,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "links": [],
@@ -5787,7 +5435,7 @@
             "energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 35,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "links": [],
@@ -5968,31 +5616,18 @@
                                             "spec": {
                                                 "x": 12,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 9,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "measured-now"
+                                                    "name": "power-now"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
-                                                "y": 0,
-                                                "width": 3,
-                                                "height": 3,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "opendt-now"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 18,
+                                                "x": 21,
                                                 "y": 0,
                                                 "width": 3,
                                                 "height": 3,
@@ -6005,9 +5640,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 21,
-                                                "y": 0,
-                                                "width": 3,
+                                                "x": 6,
+                                                "y": 3,
+                                                "width": 4,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6018,65 +5653,26 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 6,
+                                                "x": 10,
                                                 "y": 3,
-                                                "width": 6,
+                                                "width": 7,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "scheduler-now"
+                                                    "name": "hosts-now"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 12,
+                                                "x": 17,
                                                 "y": 3,
-                                                "width": 3,
+                                                "width": 7,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "in-use-now"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 15,
-                                                "y": 3,
-                                                "width": 3,
-                                                "height": 3,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "cpu-now"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 18,
-                                                "y": 3,
-                                                "width": 3,
-                                                "height": 3,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "waiting-now"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 21,
-                                                "y": 3,
-                                                "width": 3,
-                                                "height": 3,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "zone-now"
+                                                    "name": "jobs-now"
                                                 }
                                             }
                                         },

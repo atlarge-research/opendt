@@ -192,15 +192,30 @@ def stat(
     }
 
 
-def tile(title, url, key, kind="number", scale=None, root="data", unit=None, decimals=None):
-    """One value of the twin's state, its name inside the tile, since a title would be cut short; with a
-    `scale` ("/1000"), the API's column in other units."""
-    columns, computed, hide = [(key, title, kind)], (), ()
-    if scale:
-        columns, computed, hide = [(key, key)], [(f"{key}{scale}", title)], [key]
+def tiles(url, columns, computed=(), hide=(), root="data", unit=None, decimals=None):
+    """Values of the twin's state side by side in one tile, each with its name, since a title would be cut short."""
     panel = stat("", url, columns, (), computed, root, hide, unit=unit, decimals=decimals)
     # the panel is the box
     panel["options"] |= {"orientation": "vertical", "colorMode": "none", "justifyMode": "center"}
+    return panel
+
+
+def tile(
+    title, url, key, kind="number", scale=None, root="data", unit=None, decimals=None, limit=None
+):
+    """One value of the twin's state; with a `scale` ("/1000"), the API's column in other units; with a `limit`,
+    green under it and red from it on."""
+    columns, computed, hide = [(key, title, kind)], (), ()
+    if scale:
+        columns, computed, hide = [(key, key)], [(f"{key}{scale}", title)], [key]
+    panel = tiles(url, columns, computed, hide, root, unit, decimals)
+    if limit is not None:
+        steps = [{"value": None, "color": GREEN}, {"value": limit, "color": RED}]
+        panel["fieldConfig"]["defaults"] |= {
+            "color": {"mode": "thresholds"},
+            "thresholds": {"mode": "absolute", "steps": steps},
+        }
+        panel["options"]["colorMode"] = "value"
     return panel
 
 

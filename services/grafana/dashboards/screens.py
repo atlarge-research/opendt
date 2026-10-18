@@ -26,18 +26,14 @@ def screen(uid, title, placed, rows=(), panels=None, variables=()):
     return dashboard(uid, title, panels, [top, *rows], variables)
 
 
-# the tiles: Simulated time and Scheduler wide, the others in four columns
+# the tiles: the twin's time and power on top, then its CO₂, hosts, and jobs
 TILE_PLACES = [
     ("twin-time", 6, 0, 6),
-    ("measured-now", 12, 0, 3),
-    ("opendt-now", 15, 0, 3),
-    ("mape-now", 18, 0, 3),
-    ("co2-now", 21, 0, 3),
-    ("scheduler-now", 6, 3, 6),
-    ("in-use-now", 12, 3, 3),
-    ("cpu-now", 15, 3, 3),
-    ("waiting-now", 18, 3, 3),
-    ("zone-now", 21, 3, 3),
+    ("power-now", 12, 0, 9),
+    ("mape-now", 21, 0, 3),
+    ("co2-now", 6, 3, 4),
+    ("hosts-now", 10, 3, 7),
+    ("jobs-now", 17, 3, 7),
 ]
 PICKERS = {f"pick-{i}": picker(title, plots) for i, (title, plots) in enumerate(ROWS.items())}
 

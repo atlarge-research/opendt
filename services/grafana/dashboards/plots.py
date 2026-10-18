@@ -22,6 +22,7 @@ from panels import (
     table,
     target,
     tile,
+    tiles,
     timeseries,
     units,
 )
@@ -36,16 +37,38 @@ TILES = {
     "twin-time": tile(
         "Simulated time", STATUS, "twin_time", "timestamp", root="", unit="time:YYYY-MM-DD HH:mm"
     ),
+    # the power draw, measured and predicted, and how far apart
+    "power-now": tiles(
+        POWER,
+        [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
+        [
+            ("actual_power/1000", "Ground truth [kW]"),
+            ("simulated_power/1000", "OpenDT [kW]"),
+            ("(simulated_power - actual_power)/1000", "Gap [kW]"),
+        ],
+        ["actual_power", "simulated_power"],
+        decimals=1,
+    ),
+    # of the power draw, the last 5 minutes; 10% is the community-accepted error rate (question 1.1)
+    "mape-now": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1, limit=10),
+    "co2-now": tile("CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1),
+    "hosts-now": tiles(
+        NOW,
+        [("hosts_in_use", "Hosts in use"), ("hosts_up", "hosts_up")],
+        [("hosts_up - hosts_in_use", "Idle hosts")],
+        ["hosts_up"],
+        unit="locale",
+        decimals=0,
+    ),
+    "jobs-now": tiles(
+        NOW,
+        [("tasks_pending", "Jobs waiting"), ("tasks_active", "Jobs running")],
+        unit="locale",
+        decimals=0,
+    ),
+    # the simple screen's physical and digital twin, apart
     "measured-now": tile("Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1),
     "opendt-now": tile("OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1),
-    # of the power draw, the last 5 minutes
-    "mape-now": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1),
-    "co2-now": tile("CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1),
-    "scheduler-now": tile("Scheduler", STATUS, "scheduler", "string", root=""),
-    "in-use-now": tile("Hosts in use", NOW, "hosts_in_use", unit="locale"),
-    "cpu-now": tile("CPU utilization [%]", NOW, "cpu_utilization", scale="*100", decimals=1),
-    "waiting-now": tile("Jobs waiting", NOW, "tasks_pending", unit="locale"),
-    "zone-now": tile("CO₂ zone", STATUS, "carbon_zone", "string", root=""),
 }
 power = timeseries(
     "Power draw",
