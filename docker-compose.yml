@@ -200,17 +200,16 @@ services:
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
   grafana:
-    image: grafana/grafana:latest
+    build: services/grafana
     container_name: grafana
     restart: always
     environment:
-      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
       # Disable authentication - anonymous access with Admin role
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
-      # Set OpenDT dashboard as home page
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/power_dashboard.json
+      # The overview, with the control panel, is the home page
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/overview.json
     ports:
       - "3000:3000"
     volumes:

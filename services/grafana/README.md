@@ -7,17 +7,23 @@ Visualization dashboards for OpenDT metrics.
 - **URL:** http://localhost:3000
 - **Authentication:** Disabled (anonymous admin access)
 
-The OpenDT dashboard is set as the home page.
+The OpenDT overview is the home page.
 
 ## Dashboards
 
-### Power Dashboard
+- **OpenDT overview:** the control panel (hosts, carbon zone, and replay speed of the running twin), the twin's
+  status, power, CO2 emission vs. carbon intensity, and hosts available vs. in use.
+- **OpenDT cluster:** hosts, jobs pending, running, and finished, and the mean CPU utilization of the hosts.
+- **OpenDT Dashboard** (classic): power and carbon emissions.
 
-Displays:
-- **Power Consumption** - Actual vs simulated power draw over time
-- **Carbon Emissions** - Estimated carbon emissions based on power and grid intensity
+The panels query the OpenDT API at `http://api:8000`, from the Grafana server. The control panel sends its requests
+from the browser, to the API's port on the host, `http://localhost:3001` (`GET /api/status`, `PATCH /api/control`).
 
-Data is queried from the OpenDT API at `http://api:8000`.
+## Image
+
+The image pins Grafana 12.4.13, the [Infinity datasource](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/)
+3.11.1, and [Business Forms](https://grafana.com/grafana/plugins/volkovlabs-form-panel/) 6.3.5 (the control panel),
+so Grafana starts without internet; after a version change, `make up build=true` rebuilds it.
 
 ## Provisioning
 
@@ -29,10 +35,6 @@ To create an editable copy:
 3. Save with a new name
 
 Custom dashboards are persisted in the Docker volume.
-
-## Data Sources
-
-The [Infinity datasource](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/) is pre-configured to query JSON endpoints from the OpenDT API.
 
 ## Persistence
 

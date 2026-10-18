@@ -24,6 +24,7 @@ def windows(run_dir: Path) -> list[Path]:
     return sorted((m.parent for m in done), key=lambda w: int(w.name.split("_")[1]))
 
 
+@lru_cache(maxsize=4096)  # a complete window never changes
 def end_time(window: Path) -> pd.Timestamp:
     return pd.Timestamp(json.loads((window / "metadata.json").read_text())["simulated_time"])
 

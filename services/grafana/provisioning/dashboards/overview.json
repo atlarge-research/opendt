@@ -1,0 +1,666 @@
+{
+    "uid": "opendt-overview",
+    "title": "OpenDT overview",
+    "tags": [
+        "opendt"
+    ],
+    "graphTooltip": 1,
+    "links": [
+        {
+            "title": "Cluster",
+            "type": "link",
+            "url": "/d/opendt-cluster",
+            "keepTime": true,
+            "icon": "dashboard"
+        },
+        {
+            "title": "Classic",
+            "type": "link",
+            "url": "/d/opendt-main",
+            "keepTime": true,
+            "icon": "dashboard"
+        }
+    ],
+    "panels": [
+        {
+            "id": 1,
+            "type": "volkovlabs-form-panel",
+            "title": "Control panel",
+            "description": "Changes the running twin from its next window of operation",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 14
+            },
+            "options": {
+                "initial": {
+                    "method": "GET",
+                    "url": "http://localhost:3001/api/status"
+                },
+                "update": {
+                    "method": "PATCH",
+                    "url": "http://localhost:3001/api/control",
+                    "payloadMode": "updated",
+                    "confirm": true,
+                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Control panel', 'The twin changes from its next window of operation']);\n} else {\n  context.grafana.notifyError(['Control panel', `The API answered ${response && response.status}`]);\n}"
+                },
+                "sync": false,
+                "elements": [
+                    {
+                        "uid": "hosts",
+                        "id": "hosts",
+                        "title": "Hosts",
+                        "type": "number",
+                        "min": 1,
+                        "labelWidth": 12
+                    },
+                    {
+                        "uid": "carbon_zone",
+                        "id": "carbon_zone",
+                        "title": "Carbon zone",
+                        "type": "select",
+                        "labelWidth": 12,
+                        "options": [
+                            {
+                                "id": "SURF",
+                                "label": "SURF",
+                                "value": "SURF"
+                            },
+                            {
+                                "id": "NL",
+                                "label": "NL",
+                                "value": "NL"
+                            },
+                            {
+                                "id": "DE",
+                                "label": "DE",
+                                "value": "DE"
+                            },
+                            {
+                                "id": "RO",
+                                "label": "RO",
+                                "value": "RO"
+                            },
+                            {
+                                "id": "PL",
+                                "label": "PL",
+                                "value": "PL"
+                            }
+                        ]
+                    },
+                    {
+                        "uid": "speed_factor",
+                        "id": "speed_factor",
+                        "title": "Speed",
+                        "type": "select",
+                        "labelWidth": 12,
+                        "options": [
+                            {
+                                "id": "1",
+                                "label": "1x (real time)",
+                                "value": 1
+                            },
+                            {
+                                "id": "60",
+                                "label": "60x",
+                                "value": 60
+                            },
+                            {
+                                "id": "300",
+                                "label": "300x",
+                                "value": 300
+                            },
+                            {
+                                "id": "3600",
+                                "label": "3,600x",
+                                "value": 3600
+                            },
+                            {
+                                "id": "-1",
+                                "label": "max",
+                                "value": -1
+                            }
+                        ]
+                    }
+                ],
+                "submit": {
+                    "text": "Apply"
+                },
+                "confirmModal": {
+                    "title": "Change the twin",
+                    "body": "The twin changes from its next window of operation.",
+                    "columns": {
+                        "name": "",
+                        "oldValue": "Now",
+                        "newValue": "New"
+                    },
+                    "confirm": "Apply"
+                }
+            }
+        },
+        {
+            "id": 2,
+            "type": "stat",
+            "title": "Twin",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 18,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/status",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "",
+                    "columns": [
+                        {
+                            "selector": "twin_time",
+                            "text": "Twin time",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "window",
+                            "text": "Window",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "hosts",
+                            "text": "Hosts",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "calibration_factor",
+                            "text": "r",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "carbon_zone",
+                            "text": "Carbon zone",
+                            "type": "string"
+                        },
+                        {
+                            "selector": "speed_factor",
+                            "text": "Speed",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Twin time": 0,
+                            "Window": 1,
+                            "Hosts": 2,
+                            "r": 3,
+                            "Carbon zone": 4,
+                            "Speed": 5
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Twin time"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "dateTimeAsIso"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Hosts"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "locale"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "r"
+                        },
+                        "properties": [
+                            {
+                                "id": "decimals",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Speed"
+                        },
+                        "properties": [
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "type": "value",
+                                        "options": {
+                                            "1": {
+                                                "text": "1x"
+                                            },
+                                            "60": {
+                                                "text": "60x"
+                                            },
+                                            "300": {
+                                                "text": "300x"
+                                            },
+                                            "3600": {
+                                                "text": "3,600x"
+                                            },
+                                            "-1": {
+                                                "text": "max"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "reduceOptions": {
+                    "fields": "/.*/"
+                },
+                "colorMode": "none",
+                "graphMode": "none",
+                "textMode": "value_and_name",
+                "justifyMode": "center",
+                "orientation": "vertical"
+            }
+        },
+        {
+            "id": 3,
+            "type": "timeseries",
+            "title": "Power",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "gridPos": {
+                "x": 6,
+                "y": 4,
+                "w": 18,
+                "h": 10
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/power?interval_seconds=60",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "actual_power",
+                            "text": "actual_power",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "simulated_power",
+                            "text": "simulated_power",
+                            "type": "number"
+                        }
+                    ],
+                    "computed_columns": [
+                        {
+                            "selector": "actual_power/1000",
+                            "text": "Measured",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "simulated_power/1000",
+                            "text": "OpenDT",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Measured": 0,
+                            "OpenDT": 1
+                        },
+                        "excludeByName": {
+                            "actual_power": true,
+                            "simulated_power": true
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Power [kW]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Measured"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#999999"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "OpenDT"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "id": 4,
+            "type": "timeseries",
+            "title": "CO2 emission vs. carbon intensity",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 14,
+                "w": 12,
+                "h": 10
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/co2_emission?interval_seconds=60",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "carbon_emission",
+                            "text": "carbon_emission",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "carbon_intensity",
+                            "text": "Carbon intensity",
+                            "type": "number"
+                        }
+                    ],
+                    "computed_columns": [
+                        {
+                            "selector": "carbon_emission/1000",
+                            "text": "CO2 emission",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "CO2 emission": 0,
+                            "Carbon intensity": 1
+                        },
+                        "excludeByName": {
+                            "carbon_emission": true
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "CO2 emission [kg/h]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "CO2 emission"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Carbon intensity"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#338ec1"
+                                }
+                            },
+                            {
+                                "id": "custom.axisPlacement",
+                                "value": "right"
+                            },
+                            {
+                                "id": "custom.axisLabel",
+                                "value": "Carbon intensity [g/kWh]"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "id": 5,
+            "type": "timeseries",
+            "title": "Hosts available vs. in use",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "gridPos": {
+                "x": 12,
+                "y": 14,
+                "w": 12,
+                "h": 10
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "hosts_up",
+                            "text": "Available",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "tasks_active",
+                            "text": "In use",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Available": 0,
+                            "In use": 1
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Hosts",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    },
+                    "unit": "locale"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Available"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#338ec1"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "In use"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 42,
+    "time": {
+        "from": "2022-10-06T22:00:00.000Z",
+        "to": "2022-10-13T22:00:00.000Z"
+    },
+    "timepicker": {
+        "refresh_intervals": [
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m"
+        ]
+    },
+    "timezone": "utc"
+}

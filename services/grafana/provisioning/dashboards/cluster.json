@@ -1,0 +1,358 @@
+{
+    "uid": "opendt-cluster",
+    "title": "OpenDT cluster",
+    "tags": [
+        "opendt"
+    ],
+    "graphTooltip": 1,
+    "links": [
+        {
+            "title": "Overview",
+            "type": "link",
+            "url": "/d/opendt-overview",
+            "keepTime": true,
+            "icon": "dashboard"
+        },
+        {
+            "title": "Classic",
+            "type": "link",
+            "url": "/d/opendt-main",
+            "keepTime": true,
+            "icon": "dashboard"
+        }
+    ],
+    "panels": [
+        {
+            "id": 1,
+            "type": "timeseries",
+            "title": "Hosts available vs. in use",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 24,
+                "h": 10
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "hosts_up",
+                            "text": "Available",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "tasks_active",
+                            "text": "In use",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Available": 0,
+                            "In use": 1
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Hosts",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    },
+                    "unit": "locale"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Available"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#338ec1"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "In use"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "id": 2,
+            "type": "timeseries",
+            "title": "Jobs pending, running, and finished",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 10,
+                "w": 24,
+                "h": 10
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "tasks_pending",
+                            "text": "Pending",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "tasks_active",
+                            "text": "Running",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "tasks_completed",
+                            "text": "Finished",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Pending": 0,
+                            "Running": 1,
+                            "Finished": 2
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "Jobs",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    },
+                    "unit": "locale"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Pending"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#9557a5"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Running"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#E69F00"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Finished"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#009E73"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "id": 3,
+            "type": "timeseries",
+            "title": "CPU utilization",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "gridPos": {
+                "x": 0,
+                "y": 20,
+                "w": 24,
+                "h": 10
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "cpu_utilization",
+                            "text": "Mean of the hosts",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "Mean of the hosts": 0
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "CPU utilization [%]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    },
+                    "unit": "percentunit",
+                    "max": 1
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Mean of the hosts"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#D55E00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 42,
+    "time": {
+        "from": "2022-10-06T22:00:00.000Z",
+        "to": "2022-10-13T22:00:00.000Z"
+    },
+    "timepicker": {
+        "refresh_intervals": [
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m"
+        ]
+    },
+    "timezone": "utc"
+}
