@@ -30,7 +30,7 @@ SCHEDULING, TOTALS = f"{API}/api/scheduling", f"{API}/api/totals?period=$period"
 EVENTS = f"{API}/api/events?markers=on"
 NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
 
-# ---- the top of the detailed screen ------------------------------------------------------------
+# the top of the detailed screen
 
 TILES = {
     "twin-time": tile(
@@ -80,7 +80,7 @@ hosts = timeseries(
     apart=["Available"],
 )
 
-# ---- the rows of the detailed screen, each plot shown or hidden in the Plots row ---------------
+# the rows of the detailed screen, each plot shown or hidden in the Plots row
 
 # the hosts in each CPU-utilization bucket over time, the busiest bucket on top; the key gives each step
 BUCKETS = [(f"cpu_{low}_{low + 20}", f"{low}-{low + 20}%") for low in range(80, -1, -20)]
@@ -98,7 +98,7 @@ heatmap = {
             "color": {"mode": "thresholds"},
             "thresholds": {
                 "mode": "absolute",
-                "steps": [{"value": hosts, "color": shade} for hosts, shade in SHADES.items()],
+                "steps": [{"value": count, "color": shade} for count, shade in SHADES.items()],
             },
         },
         "overrides": [],
@@ -362,7 +362,7 @@ for row, plots in ROWS.items():
     for i, (key, plot) in enumerate(plots.items(), 1):
         plots[key] = plot | {"title": f"{row[0]}{i}  {plot['title']}"}
 
-# ---- the simple screen -------------------------------------------------------------------------
+# the simple screen
 
 twin_state = stat(
     "Twin state",
@@ -400,7 +400,7 @@ decisions = table(
     header=False,  # time, change, and by whom need no header
 )
 
-# ---- the topology screen -----------------------------------------------------------------------
+# the topology screen
 
 SPECS = [
     ("cores", "Cores"),

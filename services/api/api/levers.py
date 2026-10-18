@@ -11,9 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 from api import twin
 
 # OpenDC's placement schedulers (allocation policies); Mem is its default
-SCHEDULERS = Literal[
-    "Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"
-]
+SCHEDULERS = ("Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random")
 # the runtime settings, by the field that changes them
 SETTINGS = {
     "scheduler": SCHEDULER,
@@ -33,7 +31,7 @@ class Control(BaseModel):
     kind_3: Literal[tuple(twin.SERVERS)] | None = None
     count_3: int | None = Field(None, ge=0)
     carbon_zone: Literal[tuple(twin.CARBON_TRACES)] | None = None
-    scheduler: SCHEDULERS | None = None
+    scheduler: Literal[SCHEDULERS] | None = None
     speed_factor: float | None = None
     parallel_simulations: int | None = Field(None, gt=0)  # of the calibrator
 

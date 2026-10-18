@@ -1,4 +1,4 @@
-"""Writes the three dashboards into the provisioning folder: python3 services/grafana/dashboards/build.py"""
+"""Writes the dashboards into the provisioning folder: python3 services/grafana/dashboards/build.py"""
 
 import json
 from pathlib import Path

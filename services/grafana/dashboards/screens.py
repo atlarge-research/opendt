@@ -1,4 +1,4 @@
-"""The three screens: each panel and its place, (name, panel, x, y, width, height) on a 24-column grid."""
+"""The screens: each panel and its place, (name, panel, x, y, width, height) on a 24-column grid."""
 
 import steps
 from form import HOSTS, control, group, picker, stepper
@@ -72,8 +72,8 @@ detailed = screen(
             "hidden",
             "Hidden plots",
             ["none", *(k for p in ROWS.values() for k in p)],
-            True,
-            ["none"],
+            multi=True,
+            current=["none"],
         ),
     ],
 )

@@ -81,10 +81,8 @@ def control(screen, own_fields, period=True):
         # the markers on the graphs
         select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
     ]
-    start = {
-        "screen": screen,
-        "window": "week",
-    }  # the interval and the markers come from the address
+    # the interval and the markers come from the address
+    start = {"screen": screen, "window": "week"}
     if period:
         own_fields = [
             select("period", "Interval", [(p, p) for p in PERIODS], value="day"),

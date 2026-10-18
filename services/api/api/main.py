@@ -58,7 +58,8 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize Kafka producer: {e}")
         app.state.kafka_producer = None
 
-    app.state.settings = {}  # the runtime settings the control panel sent, by field; until then, the configured
+    # the runtime settings the control panel sent, by field (until then, the configured ones apply)
+    app.state.settings = {}
     app.state.topology = None  # the simulated topology sent last
     yield
 
@@ -168,24 +169,9 @@ async def update_topology(
         ),
     ] = DEFAULT_TOPOLOGY,
 ):
-    """Update the simulated datacenter topology.
-
-    This endpoint validates the topology structure and publishes it to Kafka.
-    The simulator will pick it up and use it for future simulations.
-
-    Args:
-        topology: Datacenter topology configuration with cluster details
-
-    Returns:
-        Success confirmation with topology details
-
-    Raises:
-        HTTPException: 500 if Kafka producer is not available
-        HTTPException: 500 if publishing to Kafka fails
-    """
+    """Publish a new simulated topology; the simulator runs it from its next window of operation."""
     app.state.topology = topology.model_dump(mode="json")
-    publish("sim_topology", app.state.topology, key="datacenter")
-    topic_name = app.state.config.kafka.topics["sim_topology"].name
+    topic_name = publish("sim_topology", app.state.topology, key="datacenter")
 
     return {
         "status": "updated",
@@ -334,18 +320,17 @@ def twin_run() -> Path:
     return run_dir()
 
 
-def publish(topic: str, message: dict, key: str | None = None) -> None:
-    """Send a message to one of OpenDT's Kafka topics, by its name in the configuration."""
-    if not app.state.kafka_producer or not app.state.config:
-        raise HTTPException(status_code=500, detail="Kafka producer or configuration not available")
+def publish(topic: str, message: dict, key: str | None = None) -> str:
+    """Send a message to one of OpenDT's Kafka topics, by its name in the configuration; returns the topic."""
     name = app.state.config.kafka.topics[topic].name
     send_message(producer=app.state.kafka_producer, topic=name, message=message, key=key)
+    return name
 
 
 @app.get("/api/status")
 def get_status():
-    """The twin's time, topology, and runtime settings, as configured or as the control panel sent them: the
-    control panel's current values (a flat object)."""
+    """The control panel's values, flat: the twin's time and topology, and the runtime settings as configured or
+    as sent last."""
     config, calibrator = app.state.config, app.state.config.services.calibrator
     configured = {
         "speed_factor": config.global_config.speed_factor,

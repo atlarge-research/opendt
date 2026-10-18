@@ -4,7 +4,7 @@ const { response, initial } = context.panel;
 if (response && response.ok) {
   const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));
   context.panel.setInitial({ ...initial, ...sent });
-  const url = context.grafana.locationService;
+  const address = context.grafana.locationService;
   const view = {};
   if (sent.period) view['var-period'] = sent.period;
   if (sent.markers) view['var-markers'] = sent.markers;
@@ -15,10 +15,10 @@ if (response && response.ok) {
   }
   if (sent.screen) {
     // not ${markers}: Grafana would put its own variable there
-    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...url.getSearchObject(), ...view };
-    url.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);
+    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };
+    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);
   } else {
-    url.partial(view);
+    address.partial(view);
   }
   context.grafana.notifySuccess(['OpenDT', 'Applied']);
 } else if (response) {

@@ -97,12 +97,10 @@ def timeseries(
     signed=False,
     **custom,
 ):
-    """A time series of an API table. `colors` maps each shown field to its colour, in legend order. The
-    legend gives each line its axis' unit and latest value (with `gaps`, the latest there is); `apart`
-    lines are dashed (bars: lighter), to tell them apart in grayscale. `right` is (field, label) of a
-    second axis; `better` ("higher" or "lower") labels the right axis; a `signed` axis goes below 0."""
+    """A time series of an API table; `colors` maps each shown field to its colour, in legend order."""
 
-    def named(name):  # a percentage shows its own %
+    # the legend gives each line its axis' unit, except a percentage, which shows its own %
+    def named(name):
         found = re.search(r"\[.+\]$", right[1] if right and name == right[0] else axis)
         return f"{name} {found.group()}" if found and unit != "percentunit" else name
 
@@ -110,22 +108,22 @@ def timeseries(
     columns = [(c[0], names.get(c[1], c[1]), *c[2:]) for c in columns]
     computed = [(e, names.get(n, n)) for e, n in computed]
     custom = {"axisLabel": axis, "lineWidth": 2, "showPoints": "never", **custom}
-    if signed:
-        custom |= {"axisSoftMin": 0, "axisSoftMax": 0}  # the axis still shows 0
+    if signed:  # below 0 too, and the axis still shows 0
+        custom |= {"axisSoftMin": 0, "axisSoftMax": 0}
     defaults = ({} if signed else {"min": 0}) | {"decimals": decimals, "custom": custom}
     defaults |= {"unit": unit} if unit else {}
     overrides = {names[n]: {"color": {"mode": "fixed", "fixedColor": c}} for n, c in colors.items()}
-    for name in apart:
+    for name in apart:  # dashed (bars: lighter), to tell them apart in grayscale
         bars = custom.get("drawStyle") == "bars"
         overrides[names[name]] |= (
             {"custom__fillOpacity": 35} if bars else {"custom__lineStyle": DASHED}
         )
-    if right:
+    if right:  # (field, label) of a second axis
         overrides[names[right[0]]] |= {
             "custom__axisPlacement": "right",
             "custom__axisLabel": right[1],
         }
-    if better:
+    if better:  # "higher" or "lower"
         computed = [*computed, ("0", "better")]
         overrides["better"] = better_axis(better)
     overrides["timestamp"] = {"custom__axisLabel": "Simulated time [UTC]"}
@@ -139,6 +137,7 @@ def timeseries(
             "overrides": [override(n, **p) for n, p in overrides.items()],
         },
         "options": {
+            # the latest value; with gaps, the latest there is
             "legend": {"calcs": ["lastNotNull" if gaps else "last"]},
             "tooltip": {"mode": "multi"},
         },
@@ -186,7 +185,7 @@ def stat(
             "orientation": orientation,
             "minVizWidth": 100,
             "minVizHeight": 60,
-            "justifyMode": "auto",  # left
+            "justifyMode": "auto",
             "wideLayout": False,
             "text": TEXT,
         },
@@ -212,7 +211,7 @@ def table(title, url, columns, overrides=(), sort=None, header=True):
         "title": title,
         "targets": [target(url, columns)],
         "transformations": [organize([c[1] for c in columns])],
-        # every column in view; 1,024 as elsewhere
+        # thousands separators, as elsewhere; minWidth: every column in view
         "fieldConfig": {
             "defaults": {"unit": "locale", "custom": {"minWidth": 70}},
             "overrides": list(overrides),

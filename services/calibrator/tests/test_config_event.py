@@ -12,9 +12,9 @@ def follow(setting, value):
     return service.calibration_engine.max_workers
 
 
-def test_the_calibrator_follows_the_parallel_simulations():
+def test_follows_parallel_runs():
     assert follow("calibrator.max_parallel_workers", 2) == 2
 
 
-def test_the_calibrator_leaves_the_other_settings():
+def test_ignores_other_settings():
     assert follow("simulator.scheduler", "Random") == 4

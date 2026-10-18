@@ -12,7 +12,7 @@ window, the interval of the totals, the decisions markers, and the twin's levers
 parallel runs of the calibrator, hosts). Nothing changes before Apply: then the levers go to the twin and the screen
 follows. Full screen switches the browser's full screen on and off, without Grafana's bars.
 
-- **OpenDT** (the home page, detailed): ten tiles of the twin's state, power, CO₂ vs. carbon intensity, and hosts;
+- **OpenDT, detailed** (the home page): ten tiles of the twin's state, power, CO₂ vs. carbon intensity, and hosts;
   then a row each for performance (P1-P5), utilization (U1-U5), sustainability (S1-S5, per interval), and twin
   accuracy (T1-T5). The Plots row picks the plots to show. Markers on every graph show the decisions (changes of
   hosts, r, CO₂ zone, and scheduler; automatic or manual), the legends the latest values, and the right axis which way
@@ -33,7 +33,7 @@ send their requests from the browser, to the API's port on the host, `http://loc
 
 ## Changing a screen
 
-The screens are built by the code in `dashboards/`, one concern per module:
+The screens are built by the code in `dashboards/`:
 
 - `plots.py`: what each plot shows, one definition per plot;
 - `steps.py`: what each step of the tutorial shows, from `tutorial/resources/tutorial.yaml`;

@@ -3,7 +3,6 @@
 import json
 import re
 from pathlib import Path
-from typing import get_args
 from urllib.parse import urlparse
 
 import pytest
@@ -14,11 +13,8 @@ DASHBOARDS = REPO / "services" / "grafana" / "provisioning" / "dashboards"
 ROUTES = {(method, route.path) for route in main.app.routes for method in route.methods}
 
 
-OURS = [
-    "overview.json",
-    "simple.json",
-    "topology.json",
-]  # Grafana's v2 format; the classic one is v1
+# ours, in Grafana's v2 format; the classic power_dashboard.json is v1
+OURS = ["overview.json", "simple.json", "topology.json", "tutorial.json"]
 
 
 def load(name):
@@ -86,10 +82,10 @@ def test_graphs_mark_topology_changes(name):
     [
         ("carbon_zone", list(twin.CARBON_TRACES)),
         ("kind_1", list(twin.SERVERS)),
-        ("scheduler", list(get_args(levers.SCHEDULERS))),
+        ("scheduler", list(levers.SCHEDULERS)),
     ],
 )
-def test_forms_offer_what_the_api_takes(field, api):
+def test_form_options(field, api):
     elements = [
         e
         for name in OURS
@@ -101,7 +97,7 @@ def test_forms_offer_what_the_api_takes(field, api):
     assert offered == api and all(other == offered for other in same)
 
 
-def test_home_page_is_a_provisioned_dashboard():
+def test_home_page():
     compose = (REPO / "docker-compose.yml").read_text()
     home = re.search(r"GF_USERS_HOME_PAGE=/d/(\S+)", compose).group(1)
     assert home in [load(name)["metadata"]["name"] for name in OURS]

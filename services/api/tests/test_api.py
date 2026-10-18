@@ -47,7 +47,7 @@ def data(response):
     return response["data"] if isinstance(response, dict) else json.loads(response.body)["data"]
 
 
-def test_status_gives_the_control_panel_its_values(api):
+def test_status(api):
     # flat, so the form fills its fields by name
     assert main.get_status() == {
         "twin_time": "2022-10-06T22:10:00+00:00",
@@ -66,12 +66,12 @@ def test_status_gives_the_control_panel_its_values(api):
     }
 
 
-def test_cluster_can_be_cut_to_grafanas_time_range(api):
+def test_cluster_range(api):
     rows = data(main.get_cluster(start="2022-10-06T22:05:00Z", end="2022-10-06T22:07:30Z"))
     assert [row["tasks_active"] for row in rows] == [11, 22]
 
 
-def test_cluster_can_be_thinned_to_a_number_of_points(api):
+def test_cluster_points(api):
     # a week has thousands of samples, more than some plots can draw
     # counted from the latest, which stays: one point is the latest sample, for the tiles
     rows = data(main.get_cluster(points=2))
@@ -85,7 +85,7 @@ def sent_topology(api):
     return Topology(**message).clusters[0]
 
 
-def test_control_changes_hosts_and_zone_of_the_current_topology(api):
+def test_control_hosts_and_zone(api):
     main.control(levers.Control(count_1=138, carbon_zone="RO"))
     cluster = sent_topology(api)
     assert cluster.hosts[0].count == 138
@@ -94,7 +94,7 @@ def test_control_changes_hosts_and_zone_of_the_current_topology(api):
     assert cluster.hosts[0].cpuPowerModel.calibrationFactor == 4.0
 
 
-def test_control_adds_a_second_kind_of_server_with_the_twins_r(api):
+def test_control_adds_kind(api):
     main.control(levers.Control(kind_2="EPYC", count_2=40))
     surf, epyc = sent_topology(api).hosts
     assert (surf.name, surf.count, epyc.name, epyc.count) == ("H01", 2770, "EPYC", 40)
@@ -102,20 +102,20 @@ def test_control_adds_a_second_kind_of_server_with_the_twins_r(api):
     assert epyc.cpuPowerModel.calibrationFactor == 4.0
 
 
-def test_control_swaps_a_kind_and_removes_a_group_set_to_zero(api):
+def test_control_swaps_kind(api):
     main.control(levers.Control(kind_1="Edge", count_2=0))
     [edge] = sent_topology(api).hosts
     assert (edge.name, edge.count, edge.cpu.coreCount) == ("Edge", 2770, 8)
 
 
-def test_control_rejects_a_kind_without_hosts(api):
+def test_control_kind_needs_count(api):
     with pytest.raises(HTTPException) as error:
         main.control(levers.Control(kind_2="EPYC"))
     assert (error.value.status_code, error.value.detail) == (422, "Hosts 2 need a count")
     assert not api
 
 
-def test_control_sends_the_speed_to_the_data_source(api):
+def test_control_speed(api):
     main.control(levers.Control(speed_factor=300))
     [(topic, message, key)] = api
     event = DynamicConfigEvent(**message)
@@ -124,7 +124,7 @@ def test_control_sends_the_speed_to_the_data_source(api):
     assert main.get_status()["speed_factor"] == 300
 
 
-def test_control_sends_the_scheduler_to_the_simulator(api):
+def test_control_scheduler(api):
     main.control(levers.Control(scheduler="ActiveServers"))
     [(topic, event, key)] = api
     assert (topic, key, event["new_value"]) == (
@@ -134,14 +134,14 @@ def test_control_sends_the_scheduler_to_the_simulator(api):
     )
 
 
-def test_control_sends_the_parallel_simulations_to_the_calibrator(api):
+def test_control_parallel_runs(api):
     main.control(levers.Control(parallel_simulations=2))
     [(topic, event, key)] = api
     assert (topic, key, event["new_value"]) == ("sys.config", "calibrator.max_parallel_workers", 2)
     assert main.get_status()["parallel_simulations"] == 2
 
 
-def test_control_builds_on_the_topology_it_sent_last(api):
+def test_control_builds_on_last_sent(api):
     # two changes within one window of operation: the second keeps the first
     main.control(levers.Control(count_1=138))
     main.control(levers.Control(carbon_zone="RO"))
@@ -151,7 +151,19 @@ def test_control_builds_on_the_topology_it_sent_last(api):
     assert cluster.powerSource.carbonTracePath == twin.CARBON_TRACES["RO"]
 
 
-def test_control_rejects_a_speed_the_twin_cannot_use():
+def test_control_keeps_one_host(api):
+    with pytest.raises(HTTPException) as refused:
+        main.control(levers.Control(count_1=0))
+    assert refused.value.status_code == 422 and not api
+
+
+def test_control_merges_kinds(api):
+    main.control(levers.Control(kind_2="EPYC", count_2=20, kind_3="EPYC", count_3=5))
+    groups = [(host.name, host.count) for host in sent_topology(api).hosts]
+    assert groups == [("H01", 2770), ("EPYC", 25)]
+
+
+def test_control_rejects_speed_0():
     with pytest.raises(ValueError):
         levers.Control(speed_factor=0)
 
@@ -170,12 +182,12 @@ def test_control_rejects_a_speed_the_twin_cannot_use():
     ],
     ids=lambda endpoint: endpoint.__name__,
 )
-def test_tables_are_empty_before_the_first_window(api, tmp_path, monkeypatch, endpoint):
+def test_tables_empty_at_start(api, tmp_path, monkeypatch, endpoint):
     monkeypatch.setenv("DATA_DIR", str(tmp_path / "no_run_yet"))
     assert data(endpoint()) == []
 
 
-def test_markers_have_grafanas_time_format(api):
+def test_markers_time_format(api):
     assert data(main.get_events()) == [
         {
             "time": "2022-10-06T22:05:00.000Z",
@@ -185,30 +197,18 @@ def test_markers_have_grafanas_time_format(api):
     ]
 
 
-def test_a_window_without_jobs_starting_has_no_queue_time(api, run_dir):
+def test_markers_off(api):
+    assert data(main.get_events(markers="off")) == []
+
+
+def test_server_kinds():
+    assert [kind["id"] for kind in data(main.get_server_kinds())] == list(twin.SERVERS)
+
+
+def test_no_queue_time_without_starts(api, run_dir):
     write_window(run_dir, 3, 15, hosts=2770, active=[30])  # job 4 starts only at 22:20
     assert data(main.get_scheduling())[-1]["queue_median_min"] is None
 
 
-def test_swagger_example_uses_the_surf_power_model():
+def test_swagger_example_r():
     assert main.DEFAULT_TOPOLOGY.clusters[0].hosts[0].cpuPowerModel.calibrationFactor == 4.0
-
-
-def test_control_keeps_at_least_one_server(api):
-    with pytest.raises(HTTPException) as refused:
-        main.control(levers.Control(count_1=0))
-    assert refused.value.status_code == 422 and not api
-
-
-def test_control_merges_groups_of_the_same_kind(api):
-    main.control(levers.Control(kind_2="EPYC", count_2=20, kind_3="EPYC", count_3=5))
-    groups = [(host.name, host.count) for host in sent_topology(api).hosts]
-    assert groups == [("H01", 2770), ("EPYC", 25)]
-
-
-def test_server_kinds_are_the_ones_the_control_panel_offers():
-    assert [kind["id"] for kind in data(main.get_server_kinds())] == list(twin.SERVERS)
-
-
-def test_markers_can_be_switched_off(api):
-    assert data(main.get_events(markers="off")) == []

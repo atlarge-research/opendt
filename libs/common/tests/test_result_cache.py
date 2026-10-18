@@ -3,7 +3,7 @@
 from odt_common import ResultCache
 
 
-def test_copy_leaves_the_metadata_to_be_written_last(tmp_path):
+def test_copy_skips_metadata(tmp_path):
     cached, new = tmp_path / "run_1", tmp_path / "run_2"
     (cached / "output").mkdir(parents=True)
     (cached / "output" / "host.parquet").write_text("results")

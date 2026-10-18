@@ -15,10 +15,10 @@ def experiment(tmp_path, **scheduler):
     return json.loads(path.read_text())
 
 
-def test_experiment_names_the_chosen_scheduler(tmp_path):
+def test_scheduler(tmp_path):
     policies = experiment(tmp_path, scheduler="ActiveServers")["allocationPolicies"]
     assert policies == [{"type": "prefab", "policyName": "ActiveServers"}]
 
 
-def test_experiment_keeps_opendcs_default_scheduler(tmp_path):
+def test_default_scheduler(tmp_path):
     assert "allocationPolicies" not in experiment(tmp_path)

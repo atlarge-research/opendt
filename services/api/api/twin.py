@@ -27,7 +27,8 @@ HOST = (
 CARBON_TRACES = {
     zone: f"/app/workload/carbon_zones/{zone}.parquet" for zone in ("NL", "PL", "DE", "RO")
 }
-SETTINGS = {
+# the settings whose changes are decisions, as the markers name them
+CHANGES = {
     "servers": "Hosts",
     "calibration_factor": "r",
     "carbon_zone": "CO₂ zone",
@@ -159,8 +160,7 @@ def read(window: Path, name: str, columns: tuple, start: pd.Timestamp, end: pd.T
 
 @cache
 def cluster_slice(window: Path, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
-    """Hosts and jobs (service output), CPU, jobs, idle power, and embodied carbon of the hosts (host output), and
-    energy and CO2 (power source output), between start and end."""
+    """The cluster per sample in (start, end]: the window's service, host, and power source output, joined."""
     hosts = read(window, "host", HOST, start, end)
     hosts["cpu_demand_cores"] = hosts["cpu_demand"] / hosts["cpu_capacity"] * hosts["core_count"]
     hosts["in_use"] = hosts["tasks_running"] > 0
@@ -275,7 +275,7 @@ def events(run_dir: Path) -> pd.DataFrame:
     rows = []
     for before, after in pairwise(windows(run_dir)):
         old, new = settings(before), settings(after)
-        for key, name in SETTINGS.items():
+        for key, name in CHANGES.items():
             if old[key] != new[key]:
                 by = "Automatic" if key == "calibration_factor" else "Manual"
                 rows.append(

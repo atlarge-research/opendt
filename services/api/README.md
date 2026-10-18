@@ -40,6 +40,22 @@ Update the simulated datacenter topology.
 
 Publishes the new topology to `sim.topology` Kafka topic. The simulator will use this topology for future simulations.
 
+### The screens and the control panel
+
+What the Grafana screens read, in Infinity's `{"data": [...]}` form, from the twin's windows of operation
+(`api/twin.py`), and how the control panel changes the twin (`api/levers.py`):
+
+- `GET /api/status`: the twin's time, hosts, CO₂ zone, scheduler, and runtime settings, as one object
+- `PATCH /api/control`: hosts, CO₂ zone (a new topology), scheduler, speed factor, parallel runs (`sys.config`)
+- `GET /api/cluster?start&end&points`: hosts, jobs, CPU, idle power, energy, and CO₂ per sample
+- `GET /api/totals?period`: energy, CO₂, and embodied CO₂ per minute, hour, day, week, month, or year
+- `GET /api/scheduling`: per window, the time until all jobs are done and the median time in queue
+- `GET /api/jobs`: the jobs not done yet, with the hours left
+- `GET /api/arrivals`: the jobs submitted per hour
+- `GET /api/events?markers`: the decisions (hosts, r, CO₂ zone, scheduler), automatic or manual
+- `GET /api/servers`, `GET /api/server_kinds`: the host groups now, and the kinds to choose from
+- `GET /api/accuracy?minutes`: the MAPE and the error of OpenDT's power vs. the ground truth, and r
+
 ## Data Sources
 
 The API reads from:
