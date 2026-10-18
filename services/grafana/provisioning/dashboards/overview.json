@@ -82,16 +82,16 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const view = { ...{\"screen\": \"opendt-overview\", \"window\": \"week\", \"markers\": \"on\", \"period\": \"day\"}, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });"
+                                    "code": "const start = {\"screen\": \"opendt-overview\", \"window\": \"week\", \"markers\": \"on\", \"period\": \"day\"};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "updated",
+                                    "payloadMode": "custom",
+                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst { elements, initial } = context.panel;\nconst levers = elements.filter((e) => !view.includes(e.id) && e.value !== initial[e.id]);\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  const sent = Object.fromEntries(context.panel.elements.map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...context.panel.initial, ...sent });\n  context.grafana.notifySuccess(['OpenDT', 'Sent to the twin']);\n} else if (response) {\n  response.json().then(({ detail }) => context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]));\n}"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, elements, initial } = context.panel;\nif (response && response.ok) {\n  const changed = Object.fromEntries(elements.filter((e) => e.value !== initial[e.id]).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...changed });\n  const url = context.grafana.locationService;\n  const view = {};\n  if (changed.period) view['var-period'] = changed.period;\n  if (changed.markers) view['var-markers'] = changed.markers;\n  if (changed.window) {\n    const end = new Date(initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[changed.window];\n    Object.assign(view, hours ? { from: end - hours * 3600000, to: end } : week);\n  }\n  if (changed.screen) {\n    const range = { ...url.getSearchObject(), ...view };\n    const { from = week.from, to = week.to } = range;\n    url.push(`/d/${changed.screen}?from=${from}&to=${to}&var-markers=${range['var-markers'] || 'on'}`);\n  } else {\n    url.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
-                                "elementValueChanged": "const { id, value } = context.element;\nconst view = [\"screen\", \"window\", \"period\", \"markers\"];\nif (view.includes(id)) {\n  context.panel.initial[id] = value;  // a view setting: applied at once, not sent to the twin\n  const url = context.grafana.locationService;\n  const range = url.getSearchObject();\n  if (id === 'screen') url.push(`/d/${value}?from=${range.from || '2022-10-06T22:00:00.000Z'}&to=${range.to || '2022-10-13T22:00:00.000Z'}`);\n  if (id === 'period') url.partial({ 'var-period': value });\n  if (id === 'markers') url.partial({ 'var-markers': value });\n  if (id === 'window') {\n    const end = new Date(context.panel.initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[value];\n    url.partial(hours ? { from: end - hours * 3600000, to: end } : {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"});\n  }\n}",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -356,12 +356,12 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "const bar = ['kiosk'];\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial(Object.fromEntries(bar.map((key) => [key, on || null])));",
+                                    "code": "// Grafana's kiosk mode (no menus, no bars; Esc leaves it) in the browser's full screen, like a game\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial({ kiosk: on || null });\n",
                                     "confirm": false
                                 },
                                 "confirmModal": {
-                                    "title": "Change the twin",
-                                    "body": "The twin changes from its next window of operation.",
+                                    "title": "Apply",
+                                    "body": "The view changes at once, the twin from its next window of operation.",
                                     "columns": {
                                         "name": "",
                                         "oldValue": "Now",
@@ -378,10 +378,162 @@
                     }
                 }
             },
-            "twin-time": {
+            "decisions": {
                 "kind": "Panel",
                 "spec": {
                     "id": 2,
+                    "title": "Decisions",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/events?markers=on",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "time",
+                                                        "text": "Time",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "text",
+                                                        "text": "Change",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "by",
+                                                        "text": "By",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Time": 0,
+                                                "Change": 1,
+                                                "By": 2
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "kind": "sortBy",
+                                    "spec": {
+                                        "id": "sortBy",
+                                        "options": {
+                                            "sort": [
+                                                {
+                                                    "field": "Time",
+                                                    "desc": true
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "table",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "showHeader": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "unit": "locale",
+                                    "custom": {
+                                        "minWidth": 70
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Time"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "time:MM-DD HH:mm"
+                                            },
+                                            {
+                                                "id": "custom.width",
+                                                "value": 95
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Change"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.cellOptions",
+                                                "value": {
+                                                    "type": "auto",
+                                                    "wrapText": true
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "By"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.width",
+                                                "value": 80
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "twin-time": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 3,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -490,7 +642,7 @@
             "measured-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
+                    "id": 4,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -609,7 +761,7 @@
             "opendt-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
+                    "id": 5,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -728,7 +880,7 @@
             "mape-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
+                    "id": 6,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -837,7 +989,7 @@
             "co2-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 7,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -956,7 +1108,7 @@
             "scheduler-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 8,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1052,7 +1204,7 @@
             "in-use-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 9,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1161,7 +1313,7 @@
             "cpu-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 10,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1280,7 +1432,7 @@
             "waiting-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 11,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1389,7 +1541,7 @@
             "zone-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 12,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1485,7 +1637,7 @@
             "power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 13,
                     "title": "Power draw",
                     "description": "",
                     "links": [],
@@ -1710,7 +1862,7 @@
             "co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 14,
                     "title": "CO₂ emissions vs. carbon intensity",
                     "description": "",
                     "links": [],
@@ -1884,7 +2036,7 @@
             "hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 15,
                     "title": "Hosts available vs. in use",
                     "description": "",
                     "links": [],
@@ -2038,158 +2190,6 @@
                     }
                 }
             },
-            "decisions": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 15,
-                    "title": "Decisions",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/events?markers=on",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "time",
-                                                        "text": "Time",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "text",
-                                                        "text": "Change",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "by",
-                                                        "text": "By",
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Time": 0,
-                                                "Change": 1,
-                                                "By": 2
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "kind": "sortBy",
-                                    "spec": {
-                                        "id": "sortBy",
-                                        "options": {
-                                            "sort": [
-                                                {
-                                                    "field": "Time",
-                                                    "desc": true
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "table",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "showHeader": false
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "unit": "locale",
-                                    "custom": {
-                                        "minWidth": 70
-                                    }
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Time"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "time:MM-DD HH:mm"
-                                            },
-                                            {
-                                                "id": "custom.width",
-                                                "value": 95
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Change"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.cellOptions",
-                                                "value": {
-                                                    "type": "auto",
-                                                    "wrapText": true
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "By"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.width",
-                                                "value": 80
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
             "pick-0": {
                 "kind": "Panel",
                 "spec": {
@@ -2213,13 +2213,13 @@
                             "options": {
                                 "initial": {
                                     "method": "-",
-                                    "code": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });"
+                                    "code": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\n// ticked: the plots of this row that are not hidden\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });\n"
                                 },
                                 "update": {
                                     "method": "-"
                                 },
                                 "updateEnabled": "disabled",
-                                "elementValueChanged": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}",
+                                "elementValueChanged": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\n// the address keeps the hidden plots, so a plot added later shows, even with an old address\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}\n",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -2231,27 +2231,27 @@
                                         "options": [
                                             {
                                                 "id": "scheduling-now",
-                                                "label": "Performance now",
+                                                "label": "P1  Performance now",
                                                 "value": "scheduling-now"
                                             },
                                             {
                                                 "id": "completion",
-                                                "label": "Total runtime",
+                                                "label": "P2  Total runtime",
                                                 "value": "completion"
                                             },
                                             {
                                                 "id": "queue",
-                                                "label": "Time in queue",
+                                                "label": "P3  Time in queue",
                                                 "value": "queue"
                                             },
                                             {
                                                 "id": "jobs",
-                                                "label": "Jobs",
+                                                "label": "P4  Jobs",
                                                 "value": "jobs"
                                             },
                                             {
                                                 "id": "jobs-left",
-                                                "label": "Jobs waiting or running",
+                                                "label": "P5  Jobs waiting or running",
                                                 "value": "jobs-left"
                                             }
                                         ],
@@ -2296,13 +2296,13 @@
                             "options": {
                                 "initial": {
                                     "method": "-",
-                                    "code": "const mine = [\"utilization-now\", \"cpu\", \"demand\", \"cpu-hosts\", \"idle-hosts\"];\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });"
+                                    "code": "const mine = [\"utilization-now\", \"cpu\", \"demand\", \"cpu-hosts\", \"idle-hosts\"];\n// ticked: the plots of this row that are not hidden\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });\n"
                                 },
                                 "update": {
                                     "method": "-"
                                 },
                                 "updateEnabled": "disabled",
-                                "elementValueChanged": "const mine = [\"utilization-now\", \"cpu\", \"demand\", \"cpu-hosts\", \"idle-hosts\"];\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}",
+                                "elementValueChanged": "const mine = [\"utilization-now\", \"cpu\", \"demand\", \"cpu-hosts\", \"idle-hosts\"];\n// the address keeps the hidden plots, so a plot added later shows, even with an old address\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}\n",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -2314,27 +2314,27 @@
                                         "options": [
                                             {
                                                 "id": "utilization-now",
-                                                "label": "Utilization now",
+                                                "label": "U1  Utilization now",
                                                 "value": "utilization-now"
                                             },
                                             {
                                                 "id": "cpu",
-                                                "label": "CPU utilization of the hosts",
+                                                "label": "U2  CPU utilization of the hosts",
                                                 "value": "cpu"
                                             },
                                             {
                                                 "id": "demand",
-                                                "label": "CPU demand vs. capacity",
+                                                "label": "U3  CPU demand vs. capacity",
                                                 "value": "demand"
                                             },
                                             {
                                                 "id": "cpu-hosts",
-                                                "label": "Hosts per CPU utilization",
+                                                "label": "U4  Hosts per CPU utilization",
                                                 "value": "cpu-hosts"
                                             },
                                             {
                                                 "id": "idle-hosts",
-                                                "label": "Idle hosts",
+                                                "label": "U5  Idle hosts",
                                                 "value": "idle-hosts"
                                             }
                                         ],
@@ -2379,13 +2379,13 @@
                             "options": {
                                 "initial": {
                                     "method": "-",
-                                    "code": "const mine = [\"energy-now\", \"energy\", \"carbon\", \"intensity\", \"idle-power\"];\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });"
+                                    "code": "const mine = [\"energy-now\", \"energy\", \"carbon\", \"intensity\", \"idle-power\"];\n// ticked: the plots of this row that are not hidden\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });\n"
                                 },
                                 "update": {
                                     "method": "-"
                                 },
                                 "updateEnabled": "disabled",
-                                "elementValueChanged": "const mine = [\"energy-now\", \"energy\", \"carbon\", \"intensity\", \"idle-power\"];\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}",
+                                "elementValueChanged": "const mine = [\"energy-now\", \"energy\", \"carbon\", \"intensity\", \"idle-power\"];\n// the address keeps the hidden plots, so a plot added later shows, even with an old address\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}\n",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -2397,27 +2397,27 @@
                                         "options": [
                                             {
                                                 "id": "energy-now",
-                                                "label": "This period",
+                                                "label": "S1  This period",
                                                 "value": "energy-now"
                                             },
                                             {
                                                 "id": "energy",
-                                                "label": "Energy per period",
+                                                "label": "S2  Energy per period",
                                                 "value": "energy"
                                             },
                                             {
                                                 "id": "carbon",
-                                                "label": "CO₂ per period",
+                                                "label": "S3  CO₂ per period",
                                                 "value": "carbon"
                                             },
                                             {
                                                 "id": "intensity",
-                                                "label": "Carbon intensity",
+                                                "label": "S4  Carbon intensity",
                                                 "value": "intensity"
                                             },
                                             {
                                                 "id": "idle-power",
-                                                "label": "Power draw of idle hosts",
+                                                "label": "S5  Power draw of idle hosts",
                                                 "value": "idle-power"
                                             }
                                         ],
@@ -2462,13 +2462,13 @@
                             "options": {
                                 "initial": {
                                     "method": "-",
-                                    "code": "const mine = [\"accuracy-now\", \"mape\", \"r\", \"error\", \"energy-error\"];\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });"
+                                    "code": "const mine = [\"accuracy-now\", \"mape\", \"r\", \"error\", \"energy-error\"];\n// ticked: the plots of this row that are not hidden\ncontext.panel.patchFormValue({ plots: mine.filter((p) => !'${hidden:csv}'.split(',').includes(p)) });\n"
                                 },
                                 "update": {
                                     "method": "-"
                                 },
                                 "updateEnabled": "disabled",
-                                "elementValueChanged": "const mine = [\"accuracy-now\", \"mape\", \"r\", \"error\", \"energy-error\"];\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}",
+                                "elementValueChanged": "const mine = [\"accuracy-now\", \"mape\", \"r\", \"error\", \"energy-error\"];\n// the address keeps the hidden plots, so a plot added later shows, even with an old address\nif (context.element.id === 'plots') {\n  const others = '${hidden:csv}'.split(',').filter((p) => !mine.includes(p));\n  const off = mine.filter((p) => !context.element.value.includes(p));\n  context.grafana.locationService.partial({ 'var-hidden': [...others, ...off] }, true);\n}\n",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -2480,27 +2480,27 @@
                                         "options": [
                                             {
                                                 "id": "accuracy-now",
-                                                "label": "Accuracy now",
+                                                "label": "T1  Accuracy now",
                                                 "value": "accuracy-now"
                                             },
                                             {
                                                 "id": "mape",
-                                                "label": "Power draw MAPE per hour",
+                                                "label": "T2  Power draw MAPE per hour",
                                                 "value": "mape"
                                             },
                                             {
                                                 "id": "r",
-                                                "label": "Calibration parameter r",
+                                                "label": "T3  Calibration parameter r",
                                                 "value": "r"
                                             },
                                             {
                                                 "id": "error",
-                                                "label": "Power draw error per hour",
+                                                "label": "T4  Power draw error per hour",
                                                 "value": "error"
                                             },
                                             {
                                                 "id": "energy-error",
-                                                "label": "Energy error so far",
+                                                "label": "T5  Energy error so far",
                                                 "value": "energy-error"
                                             }
                                         ],
@@ -2526,7 +2526,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 20,
-                    "title": "Performance now",
+                    "title": "P1  Performance now",
                     "description": "",
                     "links": [],
                     "data": {
@@ -2786,7 +2786,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 21,
-                    "title": "Total runtime",
+                    "title": "P2  Total runtime",
                     "description": "",
                     "links": [],
                     "data": {
@@ -2966,7 +2966,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 22,
-                    "title": "Time in queue",
+                    "title": "P3  Time in queue",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3146,7 +3146,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 23,
-                    "title": "Jobs",
+                    "title": "P4  Jobs",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3324,7 +3324,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 24,
-                    "title": "Jobs waiting or running",
+                    "title": "P5  Jobs waiting or running",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3483,7 +3483,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 25,
-                    "title": "Utilization now",
+                    "title": "U1  Utilization now",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3717,7 +3717,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 26,
-                    "title": "CPU utilization of the hosts",
+                    "title": "U2  CPU utilization of the hosts",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3929,7 +3929,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 27,
-                    "title": "CPU demand vs. capacity",
+                    "title": "U3  CPU demand vs. capacity",
                     "description": "",
                     "links": [],
                     "data": {
@@ -4086,7 +4086,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 28,
-                    "title": "Hosts per CPU utilization",
+                    "title": "U4  Hosts per CPU utilization",
                     "description": "",
                     "links": [],
                     "data": {
@@ -4209,7 +4209,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 29,
-                    "title": "Idle hosts",
+                    "title": "U5  Idle hosts",
                     "description": "",
                     "links": [],
                     "data": {
@@ -4404,7 +4404,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 30,
-                    "title": "This $period",
+                    "title": "S1  This $period",
                     "description": "",
                     "links": [],
                     "data": {
@@ -4652,7 +4652,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 31,
-                    "title": "Energy per $period",
+                    "title": "S2  Energy per $period",
                     "description": "",
                     "links": [],
                     "data": {
@@ -4836,7 +4836,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 32,
-                    "title": "CO₂ per $period",
+                    "title": "S3  CO₂ per $period",
                     "description": "",
                     "links": [],
                     "data": {
@@ -5048,7 +5048,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 33,
-                    "title": "Carbon intensity",
+                    "title": "S4  Carbon intensity",
                     "description": "",
                     "links": [],
                     "data": {
@@ -5228,7 +5228,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 34,
-                    "title": "Power draw of idle hosts",
+                    "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "links": [],
                     "data": {
@@ -5408,7 +5408,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 35,
-                    "title": "Accuracy now",
+                    "title": "T1  Accuracy now",
                     "description": "",
                     "links": [],
                     "data": {
@@ -5705,7 +5705,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 36,
-                    "title": "Power draw MAPE per hour",
+                    "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "links": [],
                     "data": {
@@ -5888,7 +5888,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 37,
-                    "title": "Calibration parameter r",
+                    "title": "T3  Calibration parameter r",
                     "description": "",
                     "links": [],
                     "data": {
@@ -6014,7 +6014,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 38,
-                    "title": "Power draw error per hour",
+                    "title": "T4  Power draw error per hour",
                     "description": "",
                     "links": [],
                     "data": {
@@ -6143,7 +6143,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 39,
-                    "title": "Energy error so far",
+                    "title": "T5  Energy error so far",
                     "description": "",
                     "links": [],
                     "data": {

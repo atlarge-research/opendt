@@ -82,16 +82,16 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const view = { ...{\"screen\": \"opendt-topology\", \"window\": \"week\", \"markers\": \"on\"}, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });"
+                                    "code": "const start = {\"screen\": \"opendt-topology\", \"window\": \"week\", \"markers\": \"on\"};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "updated",
+                                    "payloadMode": "custom",
+                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst { elements, initial } = context.panel;\nconst levers = elements.filter((e) => !view.includes(e.id) && e.value !== initial[e.id]);\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  const sent = Object.fromEntries(context.panel.elements.map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...context.panel.initial, ...sent });\n  context.grafana.notifySuccess(['OpenDT', 'Sent to the twin']);\n} else if (response) {\n  response.json().then(({ detail }) => context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]));\n}"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, elements, initial } = context.panel;\nif (response && response.ok) {\n  const changed = Object.fromEntries(elements.filter((e) => e.value !== initial[e.id]).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...changed });\n  const url = context.grafana.locationService;\n  const view = {};\n  if (changed.period) view['var-period'] = changed.period;\n  if (changed.markers) view['var-markers'] = changed.markers;\n  if (changed.window) {\n    const end = new Date(initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[changed.window];\n    Object.assign(view, hours ? { from: end - hours * 3600000, to: end } : week);\n  }\n  if (changed.screen) {\n    const range = { ...url.getSearchObject(), ...view };\n    const { from = week.from, to = week.to } = range;\n    url.push(`/d/${changed.screen}?from=${from}&to=${to}&var-markers=${range['var-markers'] || 'on'}`);\n  } else {\n    url.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
-                                "elementValueChanged": "const { id, value } = context.element;\nconst view = [\"screen\", \"window\", \"period\", \"markers\"];\nif (view.includes(id)) {\n  context.panel.initial[id] = value;  // a view setting: applied at once, not sent to the twin\n  const url = context.grafana.locationService;\n  const range = url.getSearchObject();\n  if (id === 'screen') url.push(`/d/${value}?from=${range.from || '2022-10-06T22:00:00.000Z'}&to=${range.to || '2022-10-13T22:00:00.000Z'}`);\n  if (id === 'period') url.partial({ 'var-period': value });\n  if (id === 'markers') url.partial({ 'var-markers': value });\n  if (id === 'window') {\n    const end = new Date(context.panel.initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[value];\n    url.partial(hours ? { from: end - hours * 3600000, to: end } : {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"});\n  }\n}",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -436,12 +436,12 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "const bar = ['kiosk'];\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial(Object.fromEntries(bar.map((key) => [key, on || null])));",
+                                    "code": "// Grafana's kiosk mode (no menus, no bars; Esc leaves it) in the browser's full screen, like a game\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial({ kiosk: on || null });\n",
                                     "confirm": false
                                 },
                                 "confirmModal": {
-                                    "title": "Change the twin",
-                                    "body": "The twin changes from its next window of operation.",
+                                    "title": "Apply",
+                                    "body": "The view changes at once, the twin from its next window of operation.",
                                     "columns": {
                                         "name": "",
                                         "oldValue": "Now",

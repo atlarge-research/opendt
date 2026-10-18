@@ -1,0 +1,429 @@
+"""What each plot shows, one definition per plot, from the API's endpoints."""
+
+from panels import (
+    ACCURACY,
+    API,
+    BARS,
+    BLUE,
+    CLUSTER,
+    CO2,
+    GREEN,
+    GREY,
+    ORANGE,
+    POWER,
+    PURPLE,
+    RANGE,
+    RED,
+    STATUS,
+    TIME,
+    organize,
+    override,
+    stat,
+    table,
+    target,
+    tile,
+    timeseries,
+    units,
+)
+
+SCHEDULING, TOTALS = f"{API}/api/scheduling", f"{API}/api/totals?period=$period"
+EVENTS = f"{API}/api/events?markers=on"
+
+# ---- the top of the detailed screen ------------------------------------------------------------
+
+TILES = {
+    "twin-time": tile(
+        "Simulated time", STATUS, "twin_time", "timestamp", root="", unit="time:YYYY-MM-DD HH:mm"
+    ),
+    "measured-now": tile("Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1),
+    "opendt-now": tile("OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1),
+    # of the power draw, the last 5 minutes
+    "mape-now": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1),
+    "co2-now": tile("CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1),
+    "scheduler-now": tile("Scheduler", STATUS, "scheduler", "string", root=""),
+    "in-use-now": tile("Hosts in use", CLUSTER, "hosts_in_use", unit="locale"),
+    "cpu-now": tile("CPU utilization [%]", CLUSTER, "cpu_utilization", scale="*100", decimals=1),
+    "waiting-now": tile("Jobs waiting", CLUSTER, "tasks_pending", unit="locale"),
+    "zone-now": tile("CO₂ zone", STATUS, "carbon_zone", "string", root=""),
+}
+power = timeseries(
+    "Power draw",
+    POWER,
+    "Power draw [kW]",
+    {"Ground truth": GREY, "OpenDT": GREEN},
+    [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
+    better="lower",
+    computed=[("actual_power/1000", "Ground truth"), ("simulated_power/1000", "OpenDT")],
+    hide=["actual_power", "simulated_power"],
+    apart=["Ground truth"],
+)
+co2 = timeseries(
+    "CO₂ emissions vs. carbon intensity",
+    CO2,
+    "CO₂ emissions [kg/h]",
+    {"CO₂ emissions": GREEN, "Carbon intensity": BLUE},
+    [("carbon_emission", "carbon_emission"), ("carbon_intensity", "Carbon intensity")],
+    computed=[("carbon_emission/1000", "CO₂ emissions")],
+    hide=["carbon_emission"],
+    right=("Carbon intensity", "Carbon intensity [gCO₂/kWh]"),
+    apart=["Carbon intensity"],
+)
+hosts = timeseries(
+    "Hosts available vs. in use",
+    CLUSTER + RANGE,
+    "Hosts",
+    {"Available": BLUE, "In use": ORANGE},
+    [("hosts_up", "Available"), ("hosts_in_use", "In use")],
+    unit="locale",
+    decimals=0,
+    apart=["Available"],
+)
+
+# ---- the rows of the detailed screen, each plot shown or hidden in the Plots row ---------------
+
+BUCKETS = [(f"cpu_{low}_{low + 20}", f"{low}-{low + 20}%") for low in range(0, 100, 20)]
+heatmap = {
+    "type": "heatmap",
+    "title": "Hosts per CPU utilization",
+    "targets": [target(CLUSTER + RANGE, [TIME, *BUCKETS])],
+    "transformations": [organize([name for _, name in BUCKETS])],
+    "fieldConfig": {"defaults": {}, "overrides": []},
+    "options": {
+        "calculate": False,  # the API counts the hosts per bucket
+        "yAxis": {"axisLabel": "CPU utilization [%]"},
+        "color": {"mode": "scheme", "scheme": "Greens", "steps": 5, "min": 0},  # five shades
+        "cellGap": 1,
+        "legend": {"show": True},
+        "tooltip": {"mode": "single", "yHistogram": False},
+    },
+}
+# the calibrator's decisions, counted by the data source
+automatic = target(EVENTS, [("text", "text", "string"), ("by", "by", "string")]) | {
+    "filterExpression": "by == 'Automatic'",
+    "summarizeExpression": "count(text)",
+    "summarizeAlias": "Automatic decisions",
+}
+
+ROWS = {
+    "Performance": {
+        "scheduling-now": stat(
+            "Performance now",
+            SCHEDULING,
+            [
+                ("completion_h", "Total runtime [h]"),
+                ("queue_median_min", "Queue time [min]"),
+                ("started_in_10_min_pct", "Started in 10 min [%]"),
+            ],
+            units(
+                "none", "Total runtime [h]", "Queue time [min]", "Started in 10 min [%]", decimals=1
+            )
+            + units("locale", "Jobs waiting", "Jobs running", "Jobs finished", decimals=0),
+            more=[
+                target(
+                    CLUSTER,
+                    [
+                        ("tasks_pending", "Jobs waiting"),
+                        ("tasks_active", "Jobs running"),
+                        ("tasks_completed", "Jobs finished"),
+                    ],
+                )
+            ],
+        ),
+        "completion": timeseries(
+            "Total runtime",
+            SCHEDULING,
+            "Total runtime [h]",
+            {"Total runtime": GREEN},
+            [("completion_h", "Total runtime")],
+            better="lower",
+            gaps=True,
+        ),
+        "queue": timeseries(
+            "Time in queue",
+            SCHEDULING,
+            "Time in queue [min]",
+            {"Median": GREEN},
+            [("queue_median_min", "Median")],
+            better="lower",
+            gaps=True,
+        ),
+        "jobs": timeseries(
+            "Jobs",
+            CLUSTER + RANGE,
+            "Jobs",
+            {"Waiting": PURPLE, "Running": ORANGE, "Finished": GREEN},
+            [
+                ("tasks_pending", "Waiting"),
+                ("tasks_active", "Running"),
+                ("tasks_completed", "Finished"),
+            ],
+            unit="locale",
+            decimals=0,
+            apart=["Waiting"],
+        ),
+        "jobs-left": table(
+            "Jobs waiting or running",
+            f"{API}/api/jobs",
+            [("task_id", "Job"), ("state", "State", "string"), ("time_left_h", "Time left [h]")],
+            [
+                override("Job", unit="none", decimals=0, custom__width=64),  # an id, not a quantity
+                override("State", custom__width=80),
+                override(
+                    "Time left [h]",
+                    min=0,
+                    fieldMinMax=True,  # the bars scale to the time left only, not to the job ids
+                    decimals=1,
+                    color={"mode": "fixed", "fixedColor": ORANGE},
+                    custom__cellOptions={"type": "gauge", "mode": "basic"},
+                ),
+            ],
+        ),
+    },
+    "Utilization": {
+        "utilization-now": stat(
+            "Utilization now",
+            CLUSTER,
+            [
+                ("cpu_utilization_busy_median", "CPU, busy hosts"),
+                ("cpu_utilization", "CPU, all hosts"),
+                ("hosts_up", "hosts_up"),
+                ("hosts_in_use", "Hosts in use"),
+                ("cpu_demand_cores", "CPU demand [cores]"),
+                ("cpu_capacity_cores", "CPU capacity [cores]"),
+            ],
+            units("percentunit", "CPU, busy hosts", "CPU, all hosts", decimals=1)
+            + units(
+                "locale",
+                "Hosts in use",
+                "Idle hosts",
+                "CPU demand [cores]",
+                "CPU capacity [cores]",
+                decimals=0,
+            ),
+            computed=[("hosts_up - hosts_in_use", "Idle hosts")],
+            hide=["hosts_up"],
+        ),
+        "cpu": timeseries(
+            "CPU utilization of the hosts",
+            CLUSTER + RANGE,
+            "CPU utilization [%]",
+            {"Busy hosts, median": GREEN, "All hosts, mean": BLUE},
+            [
+                ("cpu_utilization_busy_median", "Busy hosts, median"),
+                ("cpu_utilization", "All hosts, mean"),
+            ],
+            better="higher",
+            unit="percentunit",
+            apart=["All hosts, mean"],
+        ),
+        "demand": timeseries(
+            "CPU demand vs. capacity",
+            CLUSTER + RANGE,
+            "CPU [cores]",
+            {"Capacity": BLUE, "Demand": ORANGE},
+            [("cpu_capacity_cores", "Capacity"), ("cpu_demand_cores", "Demand")],
+            unit="locale",
+            decimals=0,
+            apart=["Capacity"],
+        ),
+        "cpu-hosts": heatmap,
+        "idle-hosts": timeseries(
+            "Idle hosts",
+            CLUSTER + RANGE,
+            "Hosts",
+            {"Running no job": PURPLE},
+            [("hosts_up", "hosts_up"), ("hosts_in_use", "hosts_in_use")],
+            better="lower",
+            unit="locale",
+            decimals=0,
+            computed=[("hosts_up - hosts_in_use", "Running no job")],
+            hide=["hosts_up", "hosts_in_use"],
+        ),
+    },
+    "Sustainability": {
+        "energy-now": stat(
+            "This $period",
+            TOTALS,
+            [(c, c) for c in ("energy_kwh", "co2_kg", "embodied_co2_kg")],
+            units(
+                "locale",
+                "Energy [kWh]",
+                "CO₂ [kg]",
+                "Embodied CO₂ [kg]",
+                "CO₂ in total [kg]",
+                "Intensity [gCO₂/kWh]",
+                "Embodied share [%]",
+                decimals=0,
+            ),
+            computed=[
+                ("energy_kwh", "Energy [kWh]"),
+                ("co2_kg", "CO₂ [kg]"),
+                ("embodied_co2_kg", "Embodied CO₂ [kg]"),
+                ("co2_kg + embodied_co2_kg", "CO₂ in total [kg]"),
+                ("co2_kg * 1000 / energy_kwh", "Intensity [gCO₂/kWh]"),  # the mean of the period
+                ("embodied_co2_kg * 100 / (co2_kg + embodied_co2_kg)", "Embodied share [%]"),
+            ],
+            hide=["energy_kwh", "co2_kg", "embodied_co2_kg"],
+        ),
+        "energy": timeseries(
+            "Energy per $period",
+            TOTALS,
+            "Energy [kWh]",
+            {"Energy": GREEN},
+            [("energy_kwh", "Energy")],
+            better="lower",
+            unit="locale",
+            **BARS,
+        ),
+        "carbon": timeseries(
+            "CO₂ per $period",
+            TOTALS,
+            "CO₂ [kg]",
+            {"Operational": GREEN, "Embodied": PURPLE},
+            [("co2_kg", "Operational"), ("embodied_co2_kg", "Embodied")],
+            better="lower",
+            unit="locale",
+            stacking={"mode": "normal"},  # together, the CO₂ of the period
+            apart=["Embodied"],
+            **BARS,
+        ),
+        "intensity": timeseries(
+            "Carbon intensity",
+            CO2,
+            "Carbon intensity [gCO₂/kWh]",
+            {"Intensity": BLUE},
+            [("carbon_intensity", "Intensity")],
+            better="lower",
+        ),
+        # what the idle hosts cost
+        "idle-power": timeseries(
+            "Power draw of idle hosts",
+            CLUSTER + RANGE,
+            "Power draw [kW]",
+            {"Idle hosts": PURPLE},
+            [("idle_power_kw", "Idle hosts")],
+            better="lower",
+        ),
+    },
+    "Twin accuracy": {
+        "accuracy-now": stat(
+            "Accuracy now",
+            ACCURACY,
+            [
+                ("mape", "MAPE, 1 h [%]"),
+                ("error_kw", "Error, 1 h [kW]"),
+                ("energy_error_pct", "Energy error [%]"),
+                ("r", "r"),
+            ],
+            units(
+                "none",
+                "MAPE, 1 h [%]",
+                "MAPE, 5 min [%]",
+                "Error, 1 h [kW]",
+                "Energy error [%]",
+                "r",
+                decimals=1,
+            )
+            + units("none", "Automatic decisions", decimals=0),
+            more=[target(f"{ACCURACY}?minutes=5", [("mape", "MAPE, 5 min [%]")]), automatic],
+        ),
+        "mape": timeseries(
+            "Power draw MAPE per hour",
+            ACCURACY,
+            "Power draw MAPE [%]",
+            {"MAPE": RED},
+            [("mape", "MAPE")],
+            better="lower",
+            gaps=True,
+            **BARS,
+        ),
+        "r": timeseries(
+            "Calibration parameter r",
+            ACCURACY,
+            "r",
+            {"r": GREEN},
+            [("r", "r")],
+            gaps=True,
+            lineInterpolation="stepAfter",
+        ),
+        # above 0, OpenDT predicts more power than measured; calibration brings it to 0
+        "error": timeseries(
+            "Power draw error per hour",
+            ACCURACY,
+            "Power draw error [kW]",
+            {"Error": RED},
+            [("error_kw", "Error")],
+            gaps=True,
+            signed=True,
+            **BARS,
+        ),
+        "energy-error": timeseries(
+            "Energy error so far",
+            ACCURACY,
+            "Energy error [%]",
+            {"Error": RED},
+            [("energy_error_pct", "Error")],
+            gaps=True,
+            signed=True,
+        ),
+    },
+}
+# P1, U2, ...: the row's letter and the plot's place in it, for the tutorial and the talk to point at
+for row, plots in ROWS.items():
+    for i, (key, plot) in enumerate(plots.items(), 1):
+        plots[key] = plot | {"title": f"{row[0]}{i}  {plot['title']}"}
+
+# ---- the simple screen -------------------------------------------------------------------------
+
+twin_state = stat(
+    "Twin state",
+    SCHEDULING,
+    [
+        TIME,
+        ("completion_h", "Total runtime [h]"),
+        ("started_in_10_min_pct", "Started within 10 min [%]"),
+    ],
+    [override("timestamp", displayName="Simulated time", unit="time:YYYY-MM-DD HH:mm")]
+    + units("none", "Total runtime [h]", "Started within 10 min [%]", decimals=1),
+    orientation="horizontal",  # three boxes, one under the other
+)
+arrivals = timeseries(
+    "Jobs arriving per hour",
+    f"{API}/api/arrivals",
+    "Arrivals [jobs/h]",
+    {"Arrivals": GREY},
+    [("jobs", "Arrivals")],
+    unit="locale",
+    decimals=0,
+    **BARS,
+)
+decisions = table(
+    "Decisions",
+    EVENTS,
+    [("time", "Time", "timestamp"), ("text", "Change", "string"), ("by", "By", "string")],
+    [
+        override("Time", unit="time:MM-DD HH:mm", custom__width=95),
+        override(
+            "Change", custom__cellOptions={"type": "auto", "wrapText": True}
+        ),  # two lines if long
+        override("By", custom__width=80),
+    ],
+    sort="Time",
+    header=False,  # time, change, and by whom need no header
+)
+
+# ---- the topology screen -----------------------------------------------------------------------
+
+SPECS = [
+    ("cores", "Cores"),
+    ("ghz", "Core speed [GHz]"),
+    ("memory_gb", "Memory [GB]"),
+    ("idle_w", "Idle power [W]"),
+    ("max_w", "Max power [W]"),
+]
+groups = table(
+    "Hosts now", f"{API}/api/servers", [("kind", "Kind", "string"), ("count", "Count"), *SPECS]
+)
+catalog = table(
+    "Kinds to choose from", f"{API}/api/server_kinds", [("kind", "Kind", "string"), *SPECS]
+)
