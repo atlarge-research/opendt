@@ -19,8 +19,8 @@ follows. Full screen switches the browser's full screen on and off, without Graf
   is better (BETTER with an arrow).
 - **OpenDT, simple:** the physical twin (power draw, jobs arriving) next to the digital twin (total runtime, jobs
   started within 10 minutes, hosts per CPU utilization, decisions).
-- **OpenDT, topology:** the host groups (SURF's node and OpenDC web's host templates), what runs now, and the kinds
-  to choose from.
+- **OpenDT, topology:** the host groups, edited in place (a row's pencil, + to add one, the bin to delete one), with
+  CPUs and GPUs from lists (SURF's node and OpenDC web's host templates) or custom, and the lists themselves.
 - **OpenDT, tutorial:** the 12 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
   its tag: a question of the notebooks, what to do in the control panel, the solution folded, and the step's plots;
   the twin's state at the top.
