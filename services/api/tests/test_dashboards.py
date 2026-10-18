@@ -78,7 +78,7 @@ def test_panels_call_api_routes(dashboard):
 
 @pytest.mark.parametrize("name", OURS)
 def test_graphs_mark_topology_changes(name):
-    assert [m["url"] for m in markers(load(name))] == ["http://api:8000/api/events"]
+    assert [urlparse(m["url"]).path for m in markers(load(name))] == ["/api/events"]
 
 
 @pytest.mark.parametrize(
@@ -104,14 +104,19 @@ def test_forms_offer_what_the_api_takes(field, api):
 def test_every_plot_can_be_picked_and_shown():
     spec = load("overview.json")["spec"]
     [plots] = [v["spec"] for v in spec["variables"] if v["spec"]["name"] == "plots"]
-    picker = spec["elements"]["layout"]["spec"]["vizConfig"]["spec"]["options"]["elements"][0]
+    pickable = [
+        o["value"]
+        for name, e in spec["elements"].items()
+        if name.startswith("pick-")
+        for o in e["spec"]["vizConfig"]["spec"]["options"]["elements"][0]["options"]
+    ]
     shown = [
         item["spec"]["element"]["name"]
         for row in spec["layout"]["spec"]["rows"]
         if row["spec"]["layout"]["kind"] == "AutoGridLayout"
         for item in row["spec"]["layout"]["spec"]["items"]
     ]
-    assert plots["query"].split(",") == [o["value"] for o in picker["options"]] == shown
+    assert plots["query"].split(",") == pickable == shown
 
 
 def test_home_page_is_a_provisioned_dashboard():

@@ -23,7 +23,7 @@
                 }
             ],
             "powerSource": {
-                "carbonTracePath": "/app/workload/carbon.parquet"
+                "carbonTracePath": "/app/workload/carbon_zones/NL.parquet"
             }
         }
     ]

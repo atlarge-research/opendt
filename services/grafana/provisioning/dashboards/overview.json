@@ -5,7 +5,7 @@
         "name": "opendt-overview"
     },
     "spec": {
-        "title": "OpenDT",
+        "title": "OpenDT, detailed",
         "description": "",
         "tags": [
             "opendt"
@@ -19,10 +19,10 @@
             {
                 "kind": "AnnotationQuery",
                 "spec": {
-                    "name": "Topology changes",
+                    "name": "Decisions",
                     "enable": true,
-                    "hide": false,
-                    "iconColor": "#D55E00",
+                    "hide": true,
+                    "iconColor": "rgba(255, 255, 255, 0.35)",
                     "query": {
                         "kind": "DataQuery",
                         "group": "yesoreyeram-infinity-datasource",
@@ -35,7 +35,7 @@
                             "source": "url",
                             "parser": "backend",
                             "format": "table",
-                            "url": "http://api:8000/api/events",
+                            "url": "http://api:8000/api/events?markers=$markers",
                             "url_options": {
                                 "method": "GET"
                             },
@@ -58,43 +58,11 @@
             }
         ],
         "elements": {
-            "screens-detailed": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 1,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "text",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "mode": "markdown",
-                                "content": "**Detailed** · [Simple](/d/opendt-simple?${__url_time_range}) · [Topology](/d/opendt-topology?${__url_time_range})"
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
             "control": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 2,
-                    "title": "Control panel",
+                    "id": 1,
+                    "title": "OpenDT",
                     "description": "",
                     "links": [],
                     "data": {
@@ -113,33 +81,105 @@
                             "options": {
                                 "initial": {
                                     "method": "GET",
-                                    "url": "http://localhost:3001/api/status"
+                                    "url": "http://localhost:3001/api/status",
+                                    "code": "const view = { ...{\"screen\": \"opendt-overview\", \"window\": \"week\", \"markers\": \"on\", \"period\": \"day\"}, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "updated",
                                     "confirm": true,
-                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Control panel', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['Control panel', `The API answered ${response && response.status}`]);\n}"
+                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['OpenDT', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['OpenDT', `The API answered ${response && response.status}`]);\n}"
                                 },
+                                "elementValueChanged": "const { id, value } = context.element;\nconst view = [\"screen\", \"window\", \"period\", \"markers\"];\nif (view.includes(id)) {\n  context.panel.initial[id] = value;  // a view setting: applied at once, not sent to the twin\n  const url = context.grafana.locationService;\n  const range = url.getSearchObject();\n  if (id === 'screen') url.push(`/d/${value}?from=${range.from || '2022-10-06T22:00:00.000Z'}&to=${range.to || '2022-10-13T22:00:00.000Z'}`);\n  if (id === 'period') url.partial({ 'var-period': value });\n  if (id === 'markers') url.partial({ 'var-markers': value });\n  if (id === 'window') {\n    const end = new Date(context.panel.initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[value];\n    url.partial(hours ? { from: end - hours * 3600000, to: end } : {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"});\n  }\n}",
                                 "sync": false,
                                 "elements": [
                                     {
-                                        "uid": "carbon_zone",
-                                        "id": "carbon_zone",
-                                        "title": "Carbon zone",
+                                        "uid": "screen",
+                                        "id": "screen",
+                                        "title": "Screen",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
-                                                "id": "Default",
-                                                "label": "Default (OpenDT's trace)",
-                                                "value": "Default"
+                                                "id": "opendt-overview",
+                                                "label": "Detailed",
+                                                "value": "opendt-overview"
                                             },
+                                            {
+                                                "id": "opendt-simple",
+                                                "label": "Simple",
+                                                "value": "opendt-simple"
+                                            },
+                                            {
+                                                "id": "opendt-topology",
+                                                "label": "Topology",
+                                                "value": "opendt-topology"
+                                            }
+                                        ],
+                                        "value": "opendt-overview"
+                                    },
+                                    {
+                                        "uid": "window",
+                                        "id": "window",
+                                        "title": "Time",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "week",
+                                                "label": "Week",
+                                                "value": "week"
+                                            },
+                                            {
+                                                "id": "day",
+                                                "label": "Day",
+                                                "value": "day"
+                                            },
+                                            {
+                                                "id": "hours",
+                                                "label": "6 h",
+                                                "value": "hours"
+                                            }
+                                        ],
+                                        "value": "week"
+                                    },
+                                    {
+                                        "uid": "markers",
+                                        "id": "markers",
+                                        "title": "Decisions",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "on",
+                                                "label": "On",
+                                                "value": "on"
+                                            },
+                                            {
+                                                "id": "off",
+                                                "label": "Off",
+                                                "value": "off"
+                                            }
+                                        ],
+                                        "value": "on"
+                                    },
+                                    {
+                                        "uid": "carbon_zone",
+                                        "id": "carbon_zone",
+                                        "title": "CO2 zone",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
                                             {
                                                 "id": "NL",
                                                 "label": "NL",
                                                 "value": "NL"
+                                            },
+                                            {
+                                                "id": "PL",
+                                                "label": "PL",
+                                                "value": "PL"
                                             },
                                             {
                                                 "id": "DE",
@@ -150,20 +190,16 @@
                                                 "id": "RO",
                                                 "label": "RO",
                                                 "value": "RO"
-                                            },
-                                            {
-                                                "id": "PL",
-                                                "label": "PL",
-                                                "value": "PL"
                                             }
-                                        ]
+                                        ],
+                                        "tooltip": "Electricity Maps zones: Netherlands, Poland, Germany, Romania"
                                     },
                                     {
                                         "uid": "scheduler",
                                         "id": "scheduler",
                                         "title": "Scheduler",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "Mem",
@@ -195,14 +231,15 @@
                                                 "label": "Random",
                                                 "value": "Random"
                                             }
-                                        ]
+                                        ],
+                                        "tooltip": "OpenDC's placement policy; Mem is OpenDC's default"
                                     },
                                     {
                                         "uid": "speed_factor",
                                         "id": "speed_factor",
-                                        "title": "Speed",
+                                        "title": "Speed factor",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "1",
@@ -226,10 +263,87 @@
                                             },
                                             {
                                                 "id": "-1",
-                                                "label": "max",
+                                                "label": "Maximum",
                                                 "value": -1
                                             }
                                         ]
+                                    },
+                                    {
+                                        "uid": "parallel_simulations",
+                                        "id": "parallel_simulations",
+                                        "title": "Parallel runs",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "1",
+                                                "label": "1",
+                                                "value": 1
+                                            },
+                                            {
+                                                "id": "2",
+                                                "label": "2",
+                                                "value": 2
+                                            },
+                                            {
+                                                "id": "4",
+                                                "label": "4",
+                                                "value": 4
+                                            },
+                                            {
+                                                "id": "8",
+                                                "label": "8",
+                                                "value": 8
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "period",
+                                        "id": "period",
+                                        "title": "Totals per",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "minute",
+                                                "label": "minute",
+                                                "value": "minute"
+                                            },
+                                            {
+                                                "id": "hour",
+                                                "label": "hour",
+                                                "value": "hour"
+                                            },
+                                            {
+                                                "id": "day",
+                                                "label": "day",
+                                                "value": "day"
+                                            },
+                                            {
+                                                "id": "week",
+                                                "label": "week",
+                                                "value": "week"
+                                            },
+                                            {
+                                                "id": "month",
+                                                "label": "month",
+                                                "value": "month"
+                                            },
+                                            {
+                                                "id": "year",
+                                                "label": "year",
+                                                "value": "year"
+                                            }
+                                        ],
+                                        "value": "day"
+                                    },
+                                    {
+                                        "uid": "count_1",
+                                        "id": "count_1",
+                                        "title": "Hosts",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 1
                                     }
                                 ],
                                 "submit": {
@@ -242,7 +356,7 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "document.documentElement.requestFullscreen();\ncontext.grafana.locationService.partial({ kiosk: true });",
+                                    "code": "if (document.fullscreenElement) {\n  document.exitFullscreen();\n  context.grafana.locationService.partial({ kiosk: null });\n} else {\n  document.documentElement.requestFullscreen();\n  context.grafana.locationService.partial({ kiosk: true });\n}",
                                     "confirm": false
                                 },
                                 "confirmModal": {
@@ -267,8 +381,8 @@
             "twin-time": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
-                    "title": "Twin time",
+                    "id": 2,
+                    "title": "",
                     "description": "",
                     "links": [],
                     "data": {
@@ -300,7 +414,7 @@
                                                 "columns": [
                                                     {
                                                         "selector": "twin_time",
-                                                        "text": "Twin time",
+                                                        "text": "Simulated time",
                                                         "type": "timestamp"
                                                     }
                                                 ]
@@ -316,7 +430,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Twin time": 0
+                                                "Simulated time": 0
                                             }
                                         }
                                     }
@@ -336,12 +450,14 @@
                                 },
                                 "colorMode": "none",
                                 "graphMode": "none",
-                                "textMode": "value",
+                                "textMode": "value_and_name",
                                 "orientation": "vertical",
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                }
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -349,12 +465,12 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Twin time"
+                                            "options": "Simulated time"
                                         },
                                         "properties": [
                                             {
                                                 "id": "unit",
-                                                "value": "time:MM-DD HH:mm"
+                                                "value": "time:YYYY-MM-DD HH:mm"
                                             }
                                         ]
                                     }
@@ -364,11 +480,11 @@
                     }
                 }
             },
-            "servers-now": {
+            "measured-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
-                    "title": "Servers",
+                    "id": 3,
+                    "title": "",
                     "description": "",
                     "links": [],
                     "data": {
@@ -392,15 +508,22 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/status",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
-                                                "root_selector": "",
+                                                "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "hosts",
-                                                        "text": "Servers",
+                                                        "selector": "actual_power",
+                                                        "text": "actual_power",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "actual_power/1000",
+                                                        "text": "Ground truth [kW]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -416,107 +539,10 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Servers": 0
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "stat",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
-                                },
-                                "colorMode": "none",
-                                "graphMode": "none",
-                                "textMode": "value",
-                                "orientation": "vertical",
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Servers"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            "r-now": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 5,
-                    "title": "r",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
+                                                "Ground truth [kW]": 0
                                             },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/status",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "",
-                                                "columns": [
-                                                    {
-                                                        "selector": "calibration_factor",
-                                                        "text": "r",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "r": 0
+                                            "excludeByName": {
+                                                "actual_power": true
                                             }
                                         }
                                     }
@@ -536,12 +562,14 @@
                                 },
                                 "colorMode": "none",
                                 "graphMode": "none",
-                                "textMode": "value",
+                                "textMode": "value_and_name",
                                 "orientation": "vertical",
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                }
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -549,7 +577,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "r"
+                                            "options": "Ground truth [kW]"
                                         },
                                         "properties": [
                                             {
@@ -564,11 +592,11 @@
                     }
                 }
             },
-            "zone-now": {
+            "opendt-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
-                    "title": "Carbon zone",
+                    "id": 4,
+                    "title": "",
                     "description": "",
                     "links": [],
                     "data": {
@@ -592,16 +620,23 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/status",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
-                                                "root_selector": "",
+                                                "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "carbon_zone",
-                                                        "text": "Carbon zone",
-                                                        "type": "string"
+                                                        "selector": "simulated_power",
+                                                        "text": "simulated_power",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "simulated_power/1000",
+                                                        "text": "OpenDT [kW]",
+                                                        "type": "number"
                                                     }
                                                 ]
                                             }
@@ -616,7 +651,10 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Carbon zone": 0
+                                                "OpenDT [kW]": 0
+                                            },
+                                            "excludeByName": {
+                                                "simulated_power": true
                                             }
                                         }
                                     }
@@ -636,16 +674,245 @@
                                 },
                                 "colorMode": "none",
                                 "graphMode": "none",
-                                "textMode": "value",
+                                "textMode": "value_and_name",
                                 "orientation": "vertical",
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                }
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
                             },
                             "fieldConfig": {
                                 "defaults": {},
-                                "overrides": []
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "OpenDT [kW]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "mape-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 5,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/accuracy?minutes=5",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "mape",
+                                                        "text": "Real-time MAPE [%]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Real-time MAPE [%]": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Real-time MAPE [%]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "co2-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 6,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/co2_emission?interval_seconds=60",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "carbon_emission",
+                                                        "text": "carbon_emission",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "carbon_emission/1000",
+                                                        "text": "CO2 emissions [kg/h]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "CO2 emissions [kg/h]": 0
+                                            },
+                                            "excludeByName": {
+                                                "carbon_emission": true
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "CO2 emissions [kg/h]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -655,7 +922,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 7,
-                    "title": "Scheduler",
+                    "title": "",
                     "description": "",
                     "links": [],
                     "data": {
@@ -723,12 +990,14 @@
                                 },
                                 "colorMode": "none",
                                 "graphMode": "none",
-                                "textMode": "value",
+                                "textMode": "value_and_name",
                                 "orientation": "vertical",
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                }
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -738,11 +1007,11 @@
                     }
                 }
             },
-            "mape-now": {
+            "in-use-now": {
                 "kind": "Panel",
                 "spec": {
                     "id": 8,
-                    "title": "MAPE [%]",
+                    "title": "",
                     "description": "",
                     "links": [],
                     "data": {
@@ -766,15 +1035,15 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/accuracy",
+                                                "url": "http://api:8000/api/cluster",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "mape",
-                                                        "text": "MAPE [%]",
+                                                        "selector": "hosts_in_use",
+                                                        "text": "Hosts in use",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -790,7 +1059,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "MAPE [%]": 0
+                                                "Hosts in use": 0
                                             }
                                         }
                                     }
@@ -810,12 +1079,14 @@
                                 },
                                 "colorMode": "none",
                                 "graphMode": "none",
-                                "textMode": "value",
+                                "textMode": "value_and_name",
                                 "orientation": "vertical",
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                }
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -823,7 +1094,119 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "MAPE [%]"
+                                            "options": "Hosts in use"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "locale"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "cpu-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 9,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/cluster",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "cpu_utilization",
+                                                        "text": "cpu_utilization",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "cpu_utilization*100",
+                                                        "text": "CPU utilization [%]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "CPU utilization [%]": 0
+                                            },
+                                            "excludeByName": {
+                                                "cpu_utilization": true
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "CPU utilization [%]"
                                         },
                                         "properties": [
                                             {
@@ -838,11 +1221,202 @@
                     }
                 }
             },
+            "waiting-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 10,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/cluster",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "tasks_pending",
+                                                        "text": "Jobs waiting",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Jobs waiting": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Jobs waiting"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "locale"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "zone-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 11,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "carbon_zone",
+                                                        "text": "CO2 zone",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "CO2 zone": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
             "power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
-                    "title": "Power",
+                    "id": 12,
+                    "title": "Power draw",
                     "description": "",
                     "links": [],
                     "data": {
@@ -891,7 +1465,7 @@
                                                 "computed_columns": [
                                                     {
                                                         "selector": "actual_power/1000",
-                                                        "text": "Measured",
+                                                        "text": "Ground truth",
                                                         "type": "number"
                                                     },
                                                     {
@@ -917,7 +1491,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Measured": 0,
+                                                "Ground truth": 0,
                                                 "OpenDT": 1,
                                                 "better": 2
                                             },
@@ -940,7 +1514,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -951,16 +1525,17 @@
                                 "defaults": {
                                     "min": 0,
                                     "custom": {
-                                        "axisLabel": "Power [kW]",
+                                        "axisLabel": "Power draw [kW]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Measured"
+                                            "options": "Ground truth"
                                         },
                                         "properties": [
                                             {
@@ -1043,8 +1618,8 @@
             "co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
-                    "title": "CO2 emission vs. carbon intensity",
+                    "id": 13,
+                    "title": "CO2 emissions vs. carbon intensity",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1093,7 +1668,7 @@
                                                 "computed_columns": [
                                                     {
                                                         "selector": "carbon_emission/1000",
-                                                        "text": "CO2 emission",
+                                                        "text": "CO2 emissions",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -1109,7 +1684,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "CO2 emission": 0,
+                                                "CO2 emissions": 0,
                                                 "Carbon intensity": 1
                                             },
                                             "excludeByName": {
@@ -1130,7 +1705,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -1141,16 +1716,17 @@
                                 "defaults": {
                                     "min": 0,
                                     "custom": {
-                                        "axisLabel": "CO2 emission [kg/h]",
+                                        "axisLabel": "CO2 emissions [kg/h]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "CO2 emission"
+                                            "options": "CO2 emissions"
                                         },
                                         "properties": [
                                             {
@@ -1181,7 +1757,7 @@
                                             },
                                             {
                                                 "id": "custom.axisLabel",
-                                                "value": "Carbon intensity [g/kWh]"
+                                                "value": "Carbon intensity [gCO2/kWh]"
                                             }
                                         ]
                                     }
@@ -1194,7 +1770,7 @@
             "hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 14,
                     "title": "Hosts available vs. in use",
                     "description": "",
                     "links": [],
@@ -1271,7 +1847,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -1325,11 +1901,11 @@
                     }
                 }
             },
-            "layout": {
+            "pick-0": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
-                    "title": "Plots to show",
+                    "id": 15,
+                    "title": "Performance",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1348,30 +1924,30 @@
                             "options": {
                                 "initial": {
                                     "method": "-",
-                                    "code": "context.panel.patchFormValue({ plots: '${plots:csv}'.split(',') });"
+                                    "code": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
                                 },
                                 "update": {
                                     "method": "-"
                                 },
                                 "updateEnabled": "disabled",
-                                "elementValueChanged": "if (context.element.id === 'plots') {\n  context.grafana.locationService.partial({ 'var-plots': context.element.value }, true);\n}",
+                                "elementValueChanged": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
                                 "sync": false,
                                 "elements": [
                                     {
                                         "uid": "plots",
                                         "id": "plots",
-                                        "title": "Plots",
+                                        "title": "",
                                         "type": "checkboxList",
-                                        "labelWidth": 12,
+                                        "labelWidth": 1,
                                         "options": [
                                             {
                                                 "id": "scheduling-now",
-                                                "label": "Scheduling now",
+                                                "label": "Performance now",
                                                 "value": "scheduling-now"
                                             },
                                             {
                                                 "id": "completion",
-                                                "label": "Time to full completion",
+                                                "label": "Total runtime",
                                                 "value": "completion"
                                             },
                                             {
@@ -1386,9 +1962,67 @@
                                             },
                                             {
                                                 "id": "jobs-left",
-                                                "label": "Jobs not done yet",
+                                                "label": "Jobs waiting or running",
                                                 "value": "jobs-left"
-                                            },
+                                            }
+                                        ],
+                                        "value": [
+                                            "scheduling-now",
+                                            "completion",
+                                            "queue",
+                                            "jobs",
+                                            "jobs-left"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "pick-1": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 16,
+                    "title": "Utilization",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "volkovlabs-form-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "initial": {
+                                    "method": "-",
+                                    "code": "const mine = [\"utilization-now\", \"cpu\", \"demand\", \"cpu-hosts\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
+                                },
+                                "update": {
+                                    "method": "-"
+                                },
+                                "updateEnabled": "disabled",
+                                "elementValueChanged": "const mine = [\"utilization-now\", \"cpu\", \"demand\", \"cpu-hosts\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
+                                "sync": false,
+                                "elements": [
+                                    {
+                                        "uid": "plots",
+                                        "id": "plots",
+                                        "title": "",
+                                        "type": "checkboxList",
+                                        "labelWidth": 1,
+                                        "options": [
                                             {
                                                 "id": "utilization-now",
                                                 "label": "Utilization now",
@@ -1405,6 +2039,68 @@
                                                 "value": "demand"
                                             },
                                             {
+                                                "id": "cpu-hosts",
+                                                "label": "Hosts per CPU utilization",
+                                                "value": "cpu-hosts"
+                                            }
+                                        ],
+                                        "value": [
+                                            "utilization-now",
+                                            "cpu",
+                                            "demand",
+                                            "cpu-hosts"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "pick-2": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 17,
+                    "title": "Sustainability",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "volkovlabs-form-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "initial": {
+                                    "method": "-",
+                                    "code": "const mine = [\"energy-now\", \"energy\", \"carbon\", \"intensity\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
+                                },
+                                "update": {
+                                    "method": "-"
+                                },
+                                "updateEnabled": "disabled",
+                                "elementValueChanged": "const mine = [\"energy-now\", \"energy\", \"carbon\", \"intensity\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
+                                "sync": false,
+                                "elements": [
+                                    {
+                                        "uid": "plots",
+                                        "id": "plots",
+                                        "title": "",
+                                        "type": "checkboxList",
+                                        "labelWidth": 1,
+                                        "options": [
+                                            {
                                                 "id": "energy-now",
                                                 "label": "This period",
                                                 "value": "energy-now"
@@ -1420,33 +2116,84 @@
                                                 "value": "carbon"
                                             },
                                             {
+                                                "id": "intensity",
+                                                "label": "Carbon intensity",
+                                                "value": "intensity"
+                                            }
+                                        ],
+                                        "value": [
+                                            "energy-now",
+                                            "energy",
+                                            "carbon",
+                                            "intensity"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "pick-3": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 18,
+                    "title": "Twin accuracy",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "volkovlabs-form-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "initial": {
+                                    "method": "-",
+                                    "code": "const mine = [\"accuracy-now\", \"mape\", \"r\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
+                                },
+                                "update": {
+                                    "method": "-"
+                                },
+                                "updateEnabled": "disabled",
+                                "elementValueChanged": "const mine = [\"accuracy-now\", \"mape\", \"r\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
+                                "sync": false,
+                                "elements": [
+                                    {
+                                        "uid": "plots",
+                                        "id": "plots",
+                                        "title": "",
+                                        "type": "checkboxList",
+                                        "labelWidth": 1,
+                                        "options": [
+                                            {
                                                 "id": "accuracy-now",
                                                 "label": "Accuracy now",
                                                 "value": "accuracy-now"
                                             },
                                             {
                                                 "id": "mape",
-                                                "label": "Power MAPE per hour, OpenDT vs. measured",
+                                                "label": "Power draw MAPE per hour, OpenDT vs. ground truth",
                                                 "value": "mape"
                                             },
                                             {
                                                 "id": "r",
-                                                "label": "r the twin runs with",
+                                                "label": "Calibration parameter r",
                                                 "value": "r"
                                             }
                                         ],
                                         "value": [
-                                            "scheduling-now",
-                                            "completion",
-                                            "queue",
-                                            "jobs",
-                                            "jobs-left",
-                                            "utilization-now",
-                                            "cpu",
-                                            "demand",
-                                            "energy-now",
-                                            "energy",
-                                            "carbon",
                                             "accuracy-now",
                                             "mape",
                                             "r"
@@ -1465,8 +2212,8 @@
             "scheduling-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
-                    "title": "Scheduling now",
+                    "id": 19,
+                    "title": "Performance now",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1497,13 +2244,8 @@
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
                                                         "selector": "completion_h",
-                                                        "text": "Time to full completion [h]",
+                                                        "text": "Total runtime [h]",
                                                         "type": "number"
                                                     },
                                                     {
@@ -1529,7 +2271,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Time to full completion [h]": 0,
+                                                "Total runtime [h]": 0,
                                                 "Time in queue, median [min]": 1,
                                                 "Started within 10 min [%]": 2
                                             }
@@ -1546,9 +2288,11 @@
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {},
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
                                 "colorMode": "none",
-                                "graphMode": "area",
+                                "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "horizontal",
                                 "text": {
@@ -1557,17 +2301,12 @@
                                 }
                             },
                             "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#009E73"
-                                    }
-                                },
+                                "defaults": {},
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Time to full completion [h]"
+                                            "options": "Total runtime [h]"
                                         },
                                         "properties": [
                                             {
@@ -1621,8 +2360,8 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
-                    "title": "Time to full completion",
+                    "id": 20,
+                    "title": "Total runtime",
                     "description": "",
                     "links": [],
                     "data": {
@@ -1659,7 +2398,7 @@
                                                     },
                                                     {
                                                         "selector": "completion_h",
-                                                        "text": "Time to full completion",
+                                                        "text": "Total runtime",
                                                         "type": "number"
                                                     }
                                                 ],
@@ -1682,7 +2421,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Time to full completion": 0,
+                                                "Total runtime": 0,
                                                 "better": 1
                                             }
                                         }
@@ -1711,16 +2450,17 @@
                                 "defaults": {
                                     "min": 0,
                                     "custom": {
-                                        "axisLabel": "Time [h]",
+                                        "axisLabel": "Total runtime [h]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Time to full completion"
+                                            "options": "Total runtime"
                                         },
                                         "properties": [
                                             {
@@ -1788,7 +2528,7 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 15,
+                    "id": 21,
                     "title": "Time in queue",
                     "description": "",
                     "links": [],
@@ -1881,7 +2621,8 @@
                                         "axisLabel": "Time in queue [min]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
                                     {
@@ -1955,7 +2696,7 @@
             "jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 16,
+                    "id": 22,
                     "title": "Jobs",
                     "description": "",
                     "links": [],
@@ -2038,7 +2779,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -2110,8 +2851,8 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
-                    "title": "Jobs not done yet",
+                    "id": 23,
+                    "title": "Jobs waiting or running",
                     "description": "",
                     "links": [],
                     "data": {
@@ -2221,7 +2962,7 @@
                                         "properties": [
                                             {
                                                 "id": "custom.width",
-                                                "value": 56
+                                                "value": 80
                                             }
                                         ]
                                     },
@@ -2268,7 +3009,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 24,
                     "title": "Utilization now",
                     "description": "",
                     "links": [],
@@ -2300,18 +3041,13 @@
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "cpu_utilization_median",
-                                                        "text": "CPU, median",
+                                                        "selector": "cpu_utilization_busy_median",
+                                                        "text": "CPU of busy hosts, median",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "cpu_utilization",
-                                                        "text": "CPU, mean",
+                                                        "text": "CPU of all hosts, mean",
                                                         "type": "number"
                                                     },
                                                     {
@@ -2337,8 +3073,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "CPU, median": 0,
-                                                "CPU, mean": 1,
+                                                "CPU of busy hosts, median": 0,
+                                                "CPU of all hosts, mean": 1,
                                                 "Hosts available": 2,
                                                 "Hosts in use": 3
                                             }
@@ -2355,9 +3091,11 @@
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {},
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
                                 "colorMode": "none",
-                                "graphMode": "area",
+                                "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "horizontal",
                                 "text": {
@@ -2366,34 +3104,37 @@
                                 }
                             },
                             "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#009E73"
-                                    }
-                                },
+                                "defaults": {},
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "CPU, median"
+                                            "options": "CPU of busy hosts, median"
                                         },
                                         "properties": [
                                             {
                                                 "id": "unit",
                                                 "value": "percentunit"
+                                            },
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
                                             }
                                         ]
                                     },
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "CPU, mean"
+                                            "options": "CPU of all hosts, mean"
                                         },
                                         "properties": [
                                             {
                                                 "id": "unit",
                                                 "value": "percentunit"
+                                            },
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
                                             }
                                         ]
                                     },
@@ -2430,7 +3171,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 25,
                     "title": "CPU utilization of the hosts",
                     "description": "",
                     "links": [],
@@ -2467,13 +3208,13 @@
                                                         "type": "timestamp"
                                                     },
                                                     {
-                                                        "selector": "cpu_utilization_median",
-                                                        "text": "Median",
+                                                        "selector": "cpu_utilization_busy_median",
+                                                        "text": "Busy hosts, median",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "cpu_utilization",
-                                                        "text": "Mean",
+                                                        "text": "All hosts, mean",
                                                         "type": "number"
                                                     }
                                                 ],
@@ -2496,8 +3237,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Median": 0,
-                                                "Mean": 1,
+                                                "Busy hosts, median": 0,
+                                                "All hosts, mean": 1,
                                                 "better": 2
                                             }
                                         }
@@ -2515,7 +3256,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -2536,7 +3277,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Median"
+                                            "options": "Busy hosts, median"
                                         },
                                         "properties": [
                                             {
@@ -2551,7 +3292,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Mean"
+                                            "options": "All hosts, mean"
                                         },
                                         "properties": [
                                             {
@@ -2619,7 +3360,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 26,
                     "title": "CPU demand vs. capacity",
                     "description": "",
                     "links": [],
@@ -2696,7 +3437,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -2750,10 +3491,132 @@
                     }
                 }
             },
+            "cpu-hosts": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 27,
+                    "title": "Hosts per CPU utilization",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_0_20",
+                                                        "text": "0-20%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_20_40",
+                                                        "text": "20-40%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_40_60",
+                                                        "text": "40-60%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_60_80",
+                                                        "text": "60-80%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_80_100",
+                                                        "text": "80-100%",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "0-20%": 0,
+                                                "20-40%": 1,
+                                                "40-60%": 2,
+                                                "60-80%": 3,
+                                                "80-100%": 4
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "heatmap",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "calculate": false,
+                                "yAxis": {
+                                    "axisLabel": "CPU utilization [%]"
+                                },
+                                "color": {
+                                    "mode": "scheme",
+                                    "scheme": "Greens",
+                                    "steps": 5
+                                },
+                                "cellGap": 1,
+                                "legend": {
+                                    "show": true
+                                },
+                                "tooltip": {
+                                    "mode": "single",
+                                    "yHistogram": false
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 28,
                     "title": "This $period",
                     "description": "",
                     "links": [],
@@ -2784,11 +3647,6 @@
                                                 },
                                                 "root_selector": "data",
                                                 "columns": [
-                                                    {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
                                                     {
                                                         "selector": "energy_kwh",
                                                         "text": "Energy [kWh]",
@@ -2834,9 +3692,11 @@
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {},
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
                                 "colorMode": "none",
-                                "graphMode": "area",
+                                "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "horizontal",
                                 "text": {
@@ -2845,12 +3705,7 @@
                                 }
                             },
                             "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#009E73"
-                                    }
-                                },
+                                "defaults": {},
                                 "overrides": [
                                     {
                                         "matcher": {
@@ -2909,7 +3764,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 29,
                     "title": "Energy per $period",
                     "description": "",
                     "links": [],
@@ -2988,7 +3843,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -3080,7 +3935,7 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 30,
                     "title": "Operational and embodied CO2 per $period",
                     "description": "",
                     "links": [],
@@ -3165,7 +4020,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -3272,10 +4127,178 @@
                     }
                 }
             },
+            "intensity": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 31,
+                    "title": "Carbon intensity",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/co2_emission?interval_seconds=60",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "carbon_intensity",
+                                                        "text": "Carbon intensity",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "0",
+                                                        "text": "better",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Carbon intensity": 0,
+                                                "better": 1
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "timeseries",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "legend": {
+                                    "calcs": [
+                                        "last"
+                                    ]
+                                },
+                                "tooltip": {
+                                    "mode": "multi"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "min": 0,
+                                    "custom": {
+                                        "axisLabel": "Carbon intensity [gCO2/kWh]",
+                                        "lineWidth": 2,
+                                        "showPoints": "never"
+                                    },
+                                    "decimals": 1
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Carbon intensity"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#338ec1"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "better"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisPlacement",
+                                                "value": "right"
+                                            },
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "lower is better ↓"
+                                            },
+                                            {
+                                                "id": "custom.lineWidth",
+                                                "value": 0
+                                            },
+                                            {
+                                                "id": "custom.axisGridShow",
+                                                "value": false
+                                            },
+                                            {
+                                                "id": "custom.hideFrom",
+                                                "value": {
+                                                    "legend": true,
+                                                    "tooltip": true,
+                                                    "viz": false
+                                                }
+                                            },
+                                            {
+                                                "id": "mappings",
+                                                "value": [
+                                                    {
+                                                        "type": "range",
+                                                        "options": {
+                                                            "from": -1000000000000.0,
+                                                            "to": 1000000000000.0,
+                                                            "result": {
+                                                                "text": " "
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 32,
                     "title": "Accuracy now",
                     "description": "",
                     "links": [],
@@ -3307,13 +4330,8 @@
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
                                                         "selector": "mape",
-                                                        "text": "Power MAPE, last hour [%]",
+                                                        "text": "Power draw MAPE, last hour [%]",
                                                         "type": "number"
                                                     },
                                                     {
@@ -3334,7 +4352,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Power MAPE, last hour [%]": 0,
+                                                "Power draw MAPE, last hour [%]": 0,
                                                 "r": 1
                                             }
                                         }
@@ -3350,9 +4368,11 @@
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {},
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
                                 "colorMode": "none",
-                                "graphMode": "area",
+                                "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "horizontal",
                                 "text": {
@@ -3361,17 +4381,12 @@
                                 }
                             },
                             "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#009E73"
-                                    }
-                                },
+                                "defaults": {},
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Power MAPE, last hour [%]"
+                                            "options": "Power draw MAPE, last hour [%]"
                                         },
                                         "properties": [
                                             {
@@ -3409,8 +4424,8 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
-                    "title": "Power MAPE per hour, OpenDT vs. measured",
+                    "id": 33,
+                    "title": "Power draw MAPE per hour, OpenDT vs. ground truth",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3502,7 +4517,8 @@
                                         "axisLabel": "MAPE [%]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
                                     {
@@ -3576,8 +4592,8 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
-                    "title": "r the twin runs with",
+                    "id": 34,
+                    "title": "Calibration parameter r",
                     "description": "",
                     "links": [],
                     "data": {
@@ -3662,7 +4678,8 @@
                                         "lineWidth": 2,
                                         "showPoints": "never",
                                         "lineInterpolation": "stepAfter"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
                                     {
@@ -3706,20 +4723,7 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 2,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "screens-detailed"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 2,
-                                                "width": 6,
-                                                "height": 11,
+                                                "height": 16,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "control"
@@ -3731,8 +4735,8 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
-                                                "height": 4,
+                                                "width": 6,
+                                                "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "twin-time"
@@ -3742,26 +4746,13 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
-                                                "y": 0,
-                                                "width": 3,
-                                                "height": 4,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "servers-now"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
                                                 "x": 12,
                                                 "y": 0,
                                                 "width": 3,
-                                                "height": 4,
+                                                "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "r-now"
+                                                    "name": "measured-now"
                                                 }
                                             }
                                         },
@@ -3771,10 +4762,10 @@
                                                 "x": 15,
                                                 "y": 0,
                                                 "width": 3,
-                                                "height": 4,
+                                                "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "zone-now"
+                                                    "name": "opendt-now"
                                                 }
                                             }
                                         },
@@ -3784,20 +4775,7 @@
                                                 "x": 18,
                                                 "y": 0,
                                                 "width": 3,
-                                                "height": 4,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "scheduler-now"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 21,
-                                                "y": 0,
-                                                "width": 3,
-                                                "height": 4,
+                                                "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "mape-now"
@@ -3807,10 +4785,88 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
+                                                "x": 21,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "co2-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
                                                 "x": 6,
-                                                "y": 4,
+                                                "y": 3,
                                                 "width": 6,
-                                                "height": 9,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "scheduler-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 12,
+                                                "y": 3,
+                                                "width": 3,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "in-use-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 15,
+                                                "y": 3,
+                                                "width": 3,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "cpu-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 18,
+                                                "y": 3,
+                                                "width": 3,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "waiting-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 21,
+                                                "y": 3,
+                                                "width": 3,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "zone-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 6,
+                                                "width": 6,
+                                                "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "power"
@@ -3821,9 +4877,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 12,
-                                                "y": 4,
+                                                "y": 6,
                                                 "width": 6,
-                                                "height": 9,
+                                                "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "co2"
@@ -3834,9 +4890,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 18,
-                                                "y": 4,
+                                                "y": 6,
                                                 "width": 6,
-                                                "height": 9,
+                                                "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "hosts"
@@ -3852,7 +4908,7 @@
                     {
                         "kind": "RowsLayoutRow",
                         "spec": {
-                            "title": "Layout",
+                            "title": "Plots",
                             "collapse": true,
                             "layout": {
                                 "kind": "GridLayout",
@@ -3863,11 +4919,50 @@
                                             "spec": {
                                                 "x": 0,
                                                 "y": 0,
-                                                "width": 24,
-                                                "height": 13,
+                                                "width": 6,
+                                                "height": 7,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "layout"
+                                                    "name": "pick-0"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 0,
+                                                "width": 6,
+                                                "height": 7,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "pick-1"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 6,
+                                                "height": 7,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "pick-2"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 18,
+                                                "y": 0,
+                                                "width": 6,
+                                                "height": 7,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "pick-3"
                                                 }
                                             }
                                         }
@@ -3879,7 +4974,7 @@
                     {
                         "kind": "RowsLayoutRow",
                         "spec": {
-                            "title": "Scheduling",
+                            "title": "Performance",
                             "collapse": false,
                             "layout": {
                                 "kind": "AutoGridLayout",
@@ -4081,7 +5176,7 @@
                             "layout": {
                                 "kind": "AutoGridLayout",
                                 "spec": {
-                                    "maxColumnCount": 3,
+                                    "maxColumnCount": 4,
                                     "columnWidthMode": "narrow",
                                     "rowHeightMode": "standard",
                                     "fillScreen": false,
@@ -4163,6 +5258,32 @@
                                                     }
                                                 }
                                             }
+                                        },
+                                        {
+                                            "kind": "AutoGridLayoutItem",
+                                            "spec": {
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "cpu-hosts"
+                                                },
+                                                "conditionalRendering": {
+                                                    "kind": "ConditionalRenderingGroup",
+                                                    "spec": {
+                                                        "visibility": "show",
+                                                        "condition": "or",
+                                                        "items": [
+                                                            {
+                                                                "kind": "ConditionalRenderingVariable",
+                                                                "spec": {
+                                                                    "variable": "plots",
+                                                                    "operator": "equals",
+                                                                    "value": "cpu-hosts"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
                                         }
                                     ]
                                 }
@@ -4196,6 +5317,14 @@
                                                 "operator": "equals",
                                                 "value": "demand"
                                             }
+                                        },
+                                        {
+                                            "kind": "ConditionalRenderingVariable",
+                                            "spec": {
+                                                "variable": "plots",
+                                                "operator": "equals",
+                                                "value": "cpu-hosts"
+                                            }
                                         }
                                     ]
                                 }
@@ -4205,12 +5334,12 @@
                     {
                         "kind": "RowsLayoutRow",
                         "spec": {
-                            "title": "Energy and sustainability",
+                            "title": "Sustainability",
                             "collapse": false,
                             "layout": {
                                 "kind": "AutoGridLayout",
                                 "spec": {
-                                    "maxColumnCount": 3,
+                                    "maxColumnCount": 4,
                                     "columnWidthMode": "narrow",
                                     "rowHeightMode": "standard",
                                     "fillScreen": false,
@@ -4292,6 +5421,32 @@
                                                     }
                                                 }
                                             }
+                                        },
+                                        {
+                                            "kind": "AutoGridLayoutItem",
+                                            "spec": {
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "intensity"
+                                                },
+                                                "conditionalRendering": {
+                                                    "kind": "ConditionalRenderingGroup",
+                                                    "spec": {
+                                                        "visibility": "show",
+                                                        "condition": "or",
+                                                        "items": [
+                                                            {
+                                                                "kind": "ConditionalRenderingVariable",
+                                                                "spec": {
+                                                                    "variable": "plots",
+                                                                    "operator": "equals",
+                                                                    "value": "intensity"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
                                         }
                                     ]
                                 }
@@ -4324,6 +5479,14 @@
                                                 "variable": "plots",
                                                 "operator": "equals",
                                                 "value": "carbon"
+                                            }
+                                        },
+                                        {
+                                            "kind": "ConditionalRenderingVariable",
+                                            "spec": {
+                                                "variable": "plots",
+                                                "operator": "equals",
+                                                "value": "intensity"
                                             }
                                         }
                                     ]
@@ -4467,8 +5630,37 @@
             {
                 "kind": "CustomVariable",
                 "spec": {
+                    "name": "markers",
+                    "label": "Decisions",
+                    "query": "on,off",
+                    "current": {
+                        "text": "on",
+                        "value": "on"
+                    },
+                    "options": [
+                        {
+                            "text": "on",
+                            "value": "on",
+                            "selected": true
+                        },
+                        {
+                            "text": "off",
+                            "value": "off",
+                            "selected": false
+                        }
+                    ],
+                    "multi": false,
+                    "includeAll": false,
+                    "allowCustomValue": false,
+                    "hide": "hideVariable",
+                    "skipUrlSync": false
+                }
+            },
+            {
+                "kind": "CustomVariable",
+                "spec": {
                     "name": "period",
-                    "label": "Period",
+                    "label": "Totals per",
                     "query": "minute,hour,day,week,month,year",
                     "current": {
                         "text": "day",
@@ -4509,7 +5701,7 @@
                     "multi": false,
                     "includeAll": false,
                     "allowCustomValue": false,
-                    "hide": "dontHide",
+                    "hide": "hideVariable",
                     "skipUrlSync": false
                 }
             },
@@ -4518,7 +5710,7 @@
                 "spec": {
                     "name": "plots",
                     "label": "Plots",
-                    "query": "scheduling-now,completion,queue,jobs,jobs-left,utilization-now,cpu,demand,energy-now,energy,carbon,accuracy-now,mape,r",
+                    "query": "scheduling-now,completion,queue,jobs,jobs-left,utilization-now,cpu,demand,cpu-hosts,energy-now,energy,carbon,intensity,accuracy-now,mape,r",
                     "current": {
                         "text": [
                             "scheduling-now",
@@ -4529,9 +5721,11 @@
                             "utilization-now",
                             "cpu",
                             "demand",
+                            "cpu-hosts",
                             "energy-now",
                             "energy",
                             "carbon",
+                            "intensity",
                             "accuracy-now",
                             "mape",
                             "r"
@@ -4545,9 +5739,11 @@
                             "utilization-now",
                             "cpu",
                             "demand",
+                            "cpu-hosts",
                             "energy-now",
                             "energy",
                             "carbon",
+                            "intensity",
                             "accuracy-now",
                             "mape",
                             "r"
@@ -4595,6 +5791,11 @@
                             "selected": true
                         },
                         {
+                            "text": "cpu-hosts",
+                            "value": "cpu-hosts",
+                            "selected": true
+                        },
+                        {
                             "text": "energy-now",
                             "value": "energy-now",
                             "selected": true
@@ -4607,6 +5808,11 @@
                         {
                             "text": "carbon",
                             "value": "carbon",
+                            "selected": true
+                        },
+                        {
+                            "text": "intensity",
+                            "value": "intensity",
                             "selected": true
                         },
                         {

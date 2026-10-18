@@ -35,9 +35,9 @@ the previous one.
 ## Live Demo (about 5 minutes)
 
 1. `make up config=tutorial/resources/configs/live_twin.yaml`, then open http://localhost:3000: the detailed screen,
-   with links to the Simple and Topology screens and a Full screen button at the top left. Set the speed to 60x in the
-   control panel: at max, the simulator falls behind the replay and a change shows only minutes later.
-2. Change the servers on the Topology screen (Servers 1, count 2,770, Apply), or from a terminal:
+   with the control panel at the top left (Screen: Detailed, Simple, Topology; Full screen). Set the speed factor to
+   60x: at max, the simulator falls behind the replay and a change shows only minutes later.
+2. Change the hosts on the Topology screen (Hosts 1, count 2,770, Apply), or from a terminal:
    `curl -X PUT -H "Content-Type: application/json" --data @tutorial/resources/configs/topology_2770_hosts.json http://localhost:3001/api/topology`.
    The predicted power draw jumps to about 4x; notebook 1 explains why. A dashed marker shows the change on every graph.
 3. Calibration: `make down`, `make up config=tutorial/resources/configs/live_twin_calibration.yaml`; the Twin accuracy
@@ -51,7 +51,8 @@ Known issues:
   setting in `libs/common/odt_common/utils/kafka.py`: fixed on the tutorial branch (commit c2df7c5); images built before
   the fix need `make up build=true`.
 - Docker Desktop needs at least 8 GB: with calibration, the calibrator container alone used 4.7 GB in the test run (it
-  picked r = 9, then 7, then 8 in the first minutes).
+  picked r = 9, then 7, then 8 in the first minutes). Each parallel run of the calibrator takes about 1.3 GB; with 4,
+  Docker killed dc-mock for memory, so keep Parallel runs at 2 or lower in the control panel.
 - Port 9092: on the demo laptop, a local Java service listens on 127.0.0.1:9092, the host port of OpenDT's Kafka;
   stop it before `make up`.
 - `make up` deletes the Kafka and Grafana volumes of the previous run.

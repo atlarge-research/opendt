@@ -7,16 +7,17 @@ Visualization dashboards for OpenDT metrics.
 - **URL:** http://localhost:3000
 - **Authentication:** Disabled (anonymous admin access)
 
-Three screens, linked at the top left of each, next to the control panel (carbon zone, scheduler, replay speed,
-and a full-screen button):
+Three screens, each with a control panel at the top left: the screen, the time window, the totals period, and the
+decisions markers apply at once; the twin's levers (CO2 zone, scheduler, speed factor, parallel runs of the
+calibrator, hosts) wait for Apply; Full screen switches the browser's full screen on and off.
 
-- **OpenDT** (the home page, detailed): the twin's state, power, CO2 vs. carbon intensity, and hosts; then a row each
-  for scheduling, utilization, energy and sustainability (per period, chosen at the top), and twin accuracy. The
-  Layout row picks the plots to show. Markers on every graph show the topology changes, the legends the latest
-  values, and the right axis whether higher or lower is better.
-- **OpenDT, simple:** the physical system (measured power, jobs arriving) next to the twin (time to full
-  completion, jobs started within 10 minutes, hosts per CPU utilization, decisions).
-- **OpenDT, topology:** the server groups (SURF's node and OpenDC web's host templates), what runs now, and the kinds
+- **OpenDT** (the home page, detailed): ten tiles of the twin's state, power, CO2 vs. carbon intensity, and hosts;
+  then a row each for performance, utilization, sustainability (per period), and twin accuracy. The Plots row picks
+  the plots to show. Markers on every graph show the decisions (changes of hosts, r, CO2 zone, and scheduler), the
+  legends the latest values, and the right axis whether higher or lower is better.
+- **OpenDT, simple:** the physical twin (power draw, jobs arriving) next to the digital twin (total runtime, jobs
+  started within 10 minutes, hosts per CPU utilization, decisions).
+- **OpenDT, topology:** the host groups (SURF's node and OpenDC web's host templates), what runs now, and the kinds
   to choose from.
 - **OpenDT Dashboard** (classic): power and carbon emissions.
 

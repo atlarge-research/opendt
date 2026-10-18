@@ -32,7 +32,7 @@ def api(run_dir, monkeypatch):
         }
     )
     main.app.state.kafka_producer = object()
-    main.app.state.speed_factor = None
+    main.app.state.speed_factor = main.app.state.parallel_simulations = None
     main.app.state.topology = None
     sent = []
     monkeypatch.setattr(
@@ -53,7 +53,7 @@ def test_status_gives_the_control_panel_its_values(api):
         "twin_time": "2022-10-06T22:10:00+00:00",
         "window": 2,
         "hosts": 2770,
-        "servers": "2,770 SURF",
+        "servers": "2,770 SURF-SARA",
         "kind_1": "H01",
         "count_1": 2770,
         "kind_2": None,
@@ -61,9 +61,10 @@ def test_status_gives_the_control_panel_its_values(api):
         "kind_3": None,
         "count_3": 0,
         "calibration_factor": 4.0,
-        "carbon_zone": "Default",
+        "carbon_zone": "NL",
         "scheduler": "Mem",
         "speed_factor": -1,
+        "parallel_simulations": None,  # the test twin runs without a calibrator
     }
 
 
@@ -120,6 +121,13 @@ def test_control_sends_the_scheduler_to_the_simulator(api):
     )
 
 
+def test_control_sends_the_parallel_simulations_to_the_calibrator(api):
+    main.control(main.Control(parallel_simulations=2))
+    [(topic, event, key)] = api
+    assert (topic, key, event["new_value"]) == ("sys.config", "calibrator.max_parallel_workers", 2)
+    assert main.get_status()["parallel_simulations"] == 2
+
+
 def test_control_builds_on_the_topology_it_sent_last(api):
     # two changes within one window of operation: the second keeps the first
     main.control(main.Control(count_1=138))
@@ -156,7 +164,7 @@ def test_tables_are_empty_before_the_first_window(api, tmp_path, monkeypatch, en
 
 def test_markers_have_grafanas_time_format(api):
     assert data(main.get_events()) == [
-        {"time": "2022-10-06T22:05:00.000Z", "text": "Servers 277 SURF to 2,770 SURF"}
+        {"time": "2022-10-06T22:05:00.000Z", "text": "Hosts 277 SURF-SARA to 2,770 SURF-SARA"}
     ]
 
 
@@ -183,3 +191,7 @@ def test_control_merges_groups_of_the_same_kind(api):
 
 def test_server_kinds_are_the_ones_the_control_panel_offers():
     assert [kind["id"] for kind in data(main.get_server_kinds())] == list(twin.SERVERS)
+
+
+def test_markers_can_be_switched_off(api):
+    assert data(main.get_events(markers="off")) == []

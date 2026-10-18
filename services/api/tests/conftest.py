@@ -28,7 +28,7 @@ def write_window(
     minutes,
     hosts,
     active,
-    zone_path="/app/workload/carbon.parquet",
+    zone_path="/app/workload/carbon_zones/NL.parquet",
     jobs=JOBS,
     scheduler=None,
 ):

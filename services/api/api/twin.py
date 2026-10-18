@@ -22,13 +22,12 @@ HOST = (
     "tasks_running",
     "embodied_carbon",
 )
-# Carbon intensity traces inside the containers: OpenDT's own (the default) and the Electricity Maps zones.
+# The CO2 zones: Electricity Maps carbon intensity traces inside the containers; SURF's twin starts on NL
 CARBON_TRACES = {
-    "Default": "/app/workload/carbon.parquet",
-    **{zone: f"/app/workload/carbon_zones/{zone}.parquet" for zone in ("NL", "DE", "RO", "PL")},
+    zone: f"/app/workload/carbon_zones/{zone}.parquet" for zone in ("NL", "PL", "DE", "RO")
 }
 SETTINGS = {
-    "servers": "Servers",
+    "servers": "Hosts",
     "calibration_factor": "r",
     "carbon_zone": "Carbon zone",
     "scheduler": "Scheduler",
@@ -108,13 +107,18 @@ def settings(window: Path) -> dict:
             for field, value in (("kind", host["name"]), ("count", host["count"]))
         },
         "calibration_factor": hosts[0]["cpuPowerModel"]["calibrationFactor"],
-        "carbon_zone": next(zone for zone, trace in CARBON_TRACES.items() if trace == path),
+        # another trace (e.g., of an older run) by its file name
+        "carbon_zone": next(
+            (zone for zone, trace in CARBON_TRACES.items() if trace == path), Path(path).stem
+        ),
         "scheduler": policies[0]["policyName"] if policies else "Mem",
     }
 
 
 def label(host: dict) -> str:
-    return "SURF" if host["name"] == "H01" else host["name"]
+    return (
+        "SURF-SARA" if host["name"] == "H01" else host["name"]
+    )  # SURF is the datacenter, SURF-SARA its cluster
 
 
 def specs(host: dict) -> dict:
@@ -167,11 +171,12 @@ def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -
     )
     by_time = hosts.groupby("timestamp")
     cpu = by_time["cpu_utilization"]
+    busy = hosts[hosts["in_use"]].groupby("timestamp")["cpu_utilization"]
     per_time = pd.DataFrame(
         {
             "hosts_in_use": by_time["in_use"].sum(),
             "cpu_utilization": cpu.mean(),
-            "cpu_utilization_median": cpu.median(),
+            "cpu_utilization_busy_median": busy.median(),  # most hosts are idle: over all, the median is 0
             "cpu_demand_cores": by_time["cpu_demand_cores"].sum(),
             "cpu_capacity_cores": by_time["core_count"].sum(),
             "embodied_carbon": by_time["embodied_carbon"].sum(),
@@ -278,13 +283,15 @@ def events(run_dir: Path) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["time", "text"])
 
 
-def accuracy(run_dir: Path, power: pd.DataFrame) -> pd.DataFrame:
-    """Per hour: the MAPE [%] of OpenDT's power vs. the measured power, and the r the twin ran with by then."""
+def accuracy(run_dir: Path, power: pd.DataFrame, minutes: int = 60) -> pd.DataFrame:
+    """Per period of `minutes`: the MAPE [%] of OpenDT's power vs. the measured power, and the r the twin ran with
+    by then."""
+    period = f"{minutes}min"
     error = (power["simulated_power"] - power["actual_power"]).abs() / power["actual_power"] * 100
-    hourly = error.groupby(power["timestamp"].dt.floor("h")).mean().rename("mape").to_frame()
+    per_period = error.groupby(power["timestamp"].dt.floor(period)).mean().rename("mape").to_frame()
     r = pd.Series({end_time(w): settings(w)["calibration_factor"] for w in windows(run_dir)})
-    hourly["r"] = r.resample("h").last().reindex(hourly.index).ffill()
-    return hourly.reset_index(names="timestamp")
+    per_period["r"] = r.resample(period).last().reindex(per_period.index).ffill()
+    return per_period.reset_index(names="timestamp")
 
 
 def status(run_dir: Path) -> dict:

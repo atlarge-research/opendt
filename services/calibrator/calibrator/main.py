@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from odt_common import TaskAccumulator, load_config_from_env
+from odt_common.config import DynamicConfigEvent
 from odt_common.models import Task
 from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer
 
@@ -38,6 +39,7 @@ class CalibrationService:
         topology_topic: str,
         sim_topology_topic: str,
         power_topic: str,
+        system_topic: str,
         calibrated_property: str,
         min_value: float,
         max_value: float,
@@ -53,6 +55,7 @@ class CalibrationService:
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.consumer_group = consumer_group
         self.workload_topic = workload_topic
+        self.system_topic = system_topic
         self.speed_factor = speed_factor
         self.run_id = run_id
 
@@ -70,7 +73,7 @@ class CalibrationService:
 
         # Initialize Kafka consumer for workload
         self.consumer = get_kafka_consumer(
-            topics=[workload_topic],
+            topics=[workload_topic, system_topic],  # sys.config: the parallel simulations
             group_id=consumer_group,
             bootstrap_servers=kafka_bootstrap_servers,
         )
@@ -120,6 +123,14 @@ class CalibrationService:
         logger.info(f"Max parallel workers: {max_parallel_workers}")
         logger.info(f"MAPE window: {mape_window_minutes} minutes")
 
+    def _process_config_event(self, message_data: dict) -> None:
+        """Follow a change of the parallel simulations, from the next grid search; the other runtime settings
+        are not the calibrator's."""
+        event = DynamicConfigEvent(**message_data)
+        if event.setting_key == "calibrator.max_parallel_workers":
+            self.calibration_engine.max_workers = int(event.new_value)
+            logger.info(f"Parallel simulations: {event.new_value}")
+
     def _consume_messages(self):
         """Consumer thread: accumulate tasks from Kafka."""
         logger.info("🔄 Consumer thread started")
@@ -143,6 +154,9 @@ class CalibrationService:
 
                 try:
                     value = message.value
+                    if message.topic == self.system_topic:
+                        self._process_config_event(value)
+                        continue
                     message_type = value.get("message_type")
 
                     if message_type == "task":
@@ -493,6 +507,7 @@ def main():
     topology_topic = config.kafka.topics["topology"].name
     sim_topology_topic = config.kafka.topics["sim_topology"].name
     power_topic = config.kafka.topics["power"].name
+    system_topic = config.kafka.topics["system"].name
 
     calibrator_config = config.services.calibrator
     calibrated_property = calibrator_config.calibrated_property
@@ -528,6 +543,7 @@ def main():
                 topology_topic=topology_topic,
                 sim_topology_topic=sim_topology_topic,
                 power_topic=power_topic,
+                system_topic=system_topic,
                 calibrated_property=calibrated_property,
                 min_value=min_value,
                 max_value=max_value,

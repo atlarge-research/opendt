@@ -29,7 +29,10 @@ def test_hosts_in_use_are_the_hosts_running_a_job(run_dir):
 def test_cluster_has_cpu_spread_and_demand(run_dir):
     cluster = twin.cluster(run_dir)
     last = cluster.iloc[-1]
-    assert last[["cpu_utilization", "cpu_utilization_median"]].tolist() == pytest.approx([0.4, 0.4])
+    # the mean of all hosts, the median of the hosts running a job (most hosts are idle; over all, it is 0)
+    assert last[["cpu_utilization", "cpu_utilization_busy_median"]].tolist() == pytest.approx(
+        [0.4, 0.6]
+    )
     # 3 + 12 of 2 x 16 cores
     assert last[["cpu_demand_cores", "cpu_capacity_cores"]].tolist() == [15, 32]
 
@@ -75,7 +78,7 @@ def test_hosts_per_cpu_utilization_bucket(run_dir):
 def test_server_groups_with_their_specs(run_dir):
     [surf] = twin.server_groups(run_dir).to_dict("records")
     assert surf == {
-        "kind": "SURF",
+        "kind": "SURF-SARA",
         "count": 2770,
         "cores": 16,
         "ghz": 2.1,
@@ -98,8 +101,8 @@ def test_events_mark_topology_changes_where_they_apply(run_dir):
     events = twin.events(run_dir)
     assert events["time"].dt.strftime("%H:%M").tolist() == ["22:05", "22:10"]
     assert events["text"].tolist() == [
-        "Servers 277 SURF to 2,770 SURF",
-        "Carbon zone Default to RO",
+        "Hosts 277 SURF-SARA to 2,770 SURF-SARA",
+        "Carbon zone NL to RO",
     ]
 
 
@@ -119,6 +122,7 @@ def test_accuracy_is_the_hourly_mape_of_the_power_with_the_twins_r(run_dir):
     assert accuracy["timestamp"].dt.strftime("%H:%M").tolist() == ["22:00", "23:00"]
     assert accuracy["mape"].tolist() == pytest.approx([10, 20])
     assert accuracy["r"].tolist() == [4, 4]  # the r of the last window so far
+    assert twin.accuracy(run_dir, power, minutes=30)["mape"].tolist() == pytest.approx([10, 10, 20])
 
 
 def test_status_is_the_latest_complete_window(run_dir):
@@ -129,7 +133,7 @@ def test_status_is_the_latest_complete_window(run_dir):
         status["hosts"],
         status["calibration_factor"],
         status["carbon_zone"],
-    ) == (2, 2770, 4.0, "Default")
+    ) == (2, 2770, 4.0, "NL")
 
 
 def test_carbon_zone_comes_from_the_trace_path(tmp_path):

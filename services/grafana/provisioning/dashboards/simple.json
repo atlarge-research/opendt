@@ -19,10 +19,10 @@
             {
                 "kind": "AnnotationQuery",
                 "spec": {
-                    "name": "Topology changes",
+                    "name": "Decisions",
                     "enable": true,
-                    "hide": false,
-                    "iconColor": "#D55E00",
+                    "hide": true,
+                    "iconColor": "rgba(255, 255, 255, 0.35)",
                     "query": {
                         "kind": "DataQuery",
                         "group": "yesoreyeram-infinity-datasource",
@@ -35,7 +35,7 @@
                             "source": "url",
                             "parser": "backend",
                             "format": "table",
-                            "url": "http://api:8000/api/events",
+                            "url": "http://api:8000/api/events?markers=$markers",
                             "url_options": {
                                 "method": "GET"
                             },
@@ -58,43 +58,11 @@
             }
         ],
         "elements": {
-            "screens-simple": {
+            "control": {
                 "kind": "Panel",
                 "spec": {
                     "id": 1,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "text",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "mode": "markdown",
-                                "content": "[Detailed](/d/opendt-overview?${__url_time_range}) · **Simple** · [Topology](/d/opendt-topology?${__url_time_range})"
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "control-simple": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 2,
-                    "title": "Control panel",
+                    "title": "OpenDT",
                     "description": "",
                     "links": [],
                     "data": {
@@ -113,33 +81,105 @@
                             "options": {
                                 "initial": {
                                     "method": "GET",
-                                    "url": "http://localhost:3001/api/status"
+                                    "url": "http://localhost:3001/api/status",
+                                    "code": "const view = { ...{\"screen\": \"opendt-simple\", \"window\": \"week\", \"markers\": \"on\"}, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "updated",
                                     "confirm": true,
-                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Control panel', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['Control panel', `The API answered ${response && response.status}`]);\n}"
+                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['OpenDT', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['OpenDT', `The API answered ${response && response.status}`]);\n}"
                                 },
+                                "elementValueChanged": "const { id, value } = context.element;\nconst view = [\"screen\", \"window\", \"period\", \"markers\"];\nif (view.includes(id)) {\n  context.panel.initial[id] = value;  // a view setting: applied at once, not sent to the twin\n  const url = context.grafana.locationService;\n  const range = url.getSearchObject();\n  if (id === 'screen') url.push(`/d/${value}?from=${range.from || '2022-10-06T22:00:00.000Z'}&to=${range.to || '2022-10-13T22:00:00.000Z'}`);\n  if (id === 'period') url.partial({ 'var-period': value });\n  if (id === 'markers') url.partial({ 'var-markers': value });\n  if (id === 'window') {\n    const end = new Date(context.panel.initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[value];\n    url.partial(hours ? { from: end - hours * 3600000, to: end } : {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"});\n  }\n}",
                                 "sync": false,
                                 "elements": [
                                     {
-                                        "uid": "carbon_zone",
-                                        "id": "carbon_zone",
-                                        "title": "Carbon zone",
+                                        "uid": "screen",
+                                        "id": "screen",
+                                        "title": "Screen",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
-                                                "id": "Default",
-                                                "label": "Default (OpenDT's trace)",
-                                                "value": "Default"
+                                                "id": "opendt-overview",
+                                                "label": "Detailed",
+                                                "value": "opendt-overview"
                                             },
+                                            {
+                                                "id": "opendt-simple",
+                                                "label": "Simple",
+                                                "value": "opendt-simple"
+                                            },
+                                            {
+                                                "id": "opendt-topology",
+                                                "label": "Topology",
+                                                "value": "opendt-topology"
+                                            }
+                                        ],
+                                        "value": "opendt-simple"
+                                    },
+                                    {
+                                        "uid": "window",
+                                        "id": "window",
+                                        "title": "Time",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "week",
+                                                "label": "Week",
+                                                "value": "week"
+                                            },
+                                            {
+                                                "id": "day",
+                                                "label": "Day",
+                                                "value": "day"
+                                            },
+                                            {
+                                                "id": "hours",
+                                                "label": "6 h",
+                                                "value": "hours"
+                                            }
+                                        ],
+                                        "value": "week"
+                                    },
+                                    {
+                                        "uid": "markers",
+                                        "id": "markers",
+                                        "title": "Decisions",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "on",
+                                                "label": "On",
+                                                "value": "on"
+                                            },
+                                            {
+                                                "id": "off",
+                                                "label": "Off",
+                                                "value": "off"
+                                            }
+                                        ],
+                                        "value": "on"
+                                    },
+                                    {
+                                        "uid": "carbon_zone",
+                                        "id": "carbon_zone",
+                                        "title": "CO2 zone",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
                                             {
                                                 "id": "NL",
                                                 "label": "NL",
                                                 "value": "NL"
+                                            },
+                                            {
+                                                "id": "PL",
+                                                "label": "PL",
+                                                "value": "PL"
                                             },
                                             {
                                                 "id": "DE",
@@ -150,20 +190,16 @@
                                                 "id": "RO",
                                                 "label": "RO",
                                                 "value": "RO"
-                                            },
-                                            {
-                                                "id": "PL",
-                                                "label": "PL",
-                                                "value": "PL"
                                             }
-                                        ]
+                                        ],
+                                        "tooltip": "Electricity Maps zones: Netherlands, Poland, Germany, Romania"
                                     },
                                     {
                                         "uid": "scheduler",
                                         "id": "scheduler",
                                         "title": "Scheduler",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "Mem",
@@ -195,14 +231,15 @@
                                                 "label": "Random",
                                                 "value": "Random"
                                             }
-                                        ]
+                                        ],
+                                        "tooltip": "OpenDC's placement policy; Mem is OpenDC's default"
                                     },
                                     {
                                         "uid": "speed_factor",
                                         "id": "speed_factor",
-                                        "title": "Speed",
+                                        "title": "Speed factor",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "1",
@@ -226,10 +263,47 @@
                                             },
                                             {
                                                 "id": "-1",
-                                                "label": "max",
+                                                "label": "Maximum",
                                                 "value": -1
                                             }
                                         ]
+                                    },
+                                    {
+                                        "uid": "parallel_simulations",
+                                        "id": "parallel_simulations",
+                                        "title": "Parallel runs",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "1",
+                                                "label": "1",
+                                                "value": 1
+                                            },
+                                            {
+                                                "id": "2",
+                                                "label": "2",
+                                                "value": 2
+                                            },
+                                            {
+                                                "id": "4",
+                                                "label": "4",
+                                                "value": 4
+                                            },
+                                            {
+                                                "id": "8",
+                                                "label": "8",
+                                                "value": 8
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "count_1",
+                                        "id": "count_1",
+                                        "title": "Hosts",
+                                        "type": "number",
+                                        "labelWidth": 14,
+                                        "min": 1
                                     }
                                 ],
                                 "submit": {
@@ -242,7 +316,7 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "document.documentElement.requestFullscreen();\ncontext.grafana.locationService.partial({ kiosk: true });",
+                                    "code": "if (document.fullscreenElement) {\n  document.exitFullscreen();\n  context.grafana.locationService.partial({ kiosk: null });\n} else {\n  document.documentElement.requestFullscreen();\n  context.grafana.locationService.partial({ kiosk: true });\n}",
                                     "confirm": false
                                 },
                                 "confirmModal": {
@@ -264,11 +338,11 @@
                     }
                 }
             },
-            "status-simple": {
+            "twin-state": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
-                    "title": "Twin",
+                    "id": 2,
+                    "title": "Twin state",
                     "description": "",
                     "links": [],
                     "data": {
@@ -292,36 +366,26 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/status",
+                                                "url": "http://api:8000/api/scheduling",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
-                                                "root_selector": "",
+                                                "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "twin_time",
-                                                        "text": "Twin time",
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
                                                         "type": "timestamp"
                                                     },
                                                     {
-                                                        "selector": "hosts",
-                                                        "text": "Servers",
+                                                        "selector": "completion_h",
+                                                        "text": "Total runtime [h]",
                                                         "type": "number"
                                                     },
                                                     {
-                                                        "selector": "calibration_factor",
-                                                        "text": "r",
+                                                        "selector": "started_in_10_min_pct",
+                                                        "text": "Started within 10 min [%]",
                                                         "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "carbon_zone",
-                                                        "text": "Carbon zone",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "scheduler",
-                                                        "text": "Scheduler",
-                                                        "type": "string"
                                                     }
                                                 ]
                                             }
@@ -336,11 +400,9 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Twin time": 0,
-                                                "Servers": 1,
-                                                "r": 2,
-                                                "Carbon zone": 3,
-                                                "Scheduler": 4
+                                                "timestamp": 0,
+                                                "Total runtime [h]": 1,
+                                                "Started within 10 min [%]": 2
                                             }
                                         }
                                     }
@@ -373,33 +435,45 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Twin time"
+                                            "options": "timestamp"
                                         },
                                         "properties": [
                                             {
+                                                "id": "displayName",
+                                                "value": "Simulated time"
+                                            },
+                                            {
                                                 "id": "unit",
-                                                "value": "time:MM-DD HH:mm"
+                                                "value": "time:YYYY-MM-DD HH:mm"
                                             }
                                         ]
                                     },
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Servers"
+                                            "options": "Total runtime [h]"
                                         },
                                         "properties": [
                                             {
                                                 "id": "unit",
-                                                "value": "locale"
+                                                "value": "none"
+                                            },
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
                                             }
                                         ]
                                     },
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "r"
+                                            "options": "Started within 10 min [%]"
                                         },
                                         "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "none"
+                                            },
                                             {
                                                 "id": "decimals",
                                                 "value": 1
@@ -415,8 +489,8 @@
             "physical": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
-                    "title": "Physical system",
+                    "id": 3,
+                    "title": "",
                     "description": "",
                     "links": [],
                     "data": {
@@ -440,20 +514,22 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/power?interval_seconds=300",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
                                                         "selector": "actual_power",
-                                                        "text": "Power, measured",
+                                                        "text": "actual_power",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "actual_power/1000",
+                                                        "text": "Physical twin, power draw [kW]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -469,7 +545,10 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Power, measured": 0
+                                                "Physical twin, power draw [kW]": 0
+                                            },
+                                            "excludeByName": {
+                                                "actual_power": true
                                             }
                                         }
                                     }
@@ -484,33 +563,32 @@
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {},
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
                                 "colorMode": "none",
-                                "graphMode": "area",
+                                "graphMode": "none",
                                 "textMode": "value_and_name",
-                                "orientation": "horizontal",
+                                "orientation": "vertical",
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                }
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
                             },
                             "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#009E73"
-                                    }
-                                },
+                                "defaults": {},
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Power, measured"
+                                            "options": "Physical twin, power draw [kW]"
                                         },
                                         "properties": [
                                             {
-                                                "id": "unit",
-                                                "value": "watt"
+                                                "id": "decimals",
+                                                "value": 1
                                             }
                                         ]
                                     }
@@ -523,8 +601,8 @@
             "power-simple": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
-                    "title": "Power",
+                    "id": 4,
+                    "title": "Power draw",
                     "description": "",
                     "links": [],
                     "data": {
@@ -573,7 +651,7 @@
                                                 "computed_columns": [
                                                     {
                                                         "selector": "actual_power/1000",
-                                                        "text": "Measured",
+                                                        "text": "Ground truth",
                                                         "type": "number"
                                                     },
                                                     {
@@ -599,7 +677,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Measured": 0,
+                                                "Ground truth": 0,
                                                 "OpenDT": 1,
                                                 "better": 2
                                             },
@@ -622,7 +700,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -633,16 +711,17 @@
                                 "defaults": {
                                     "min": 0,
                                     "custom": {
-                                        "axisLabel": "Power [kW]",
+                                        "axisLabel": "Power draw [kW]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
-                                    }
+                                    },
+                                    "decimals": 1
                                 },
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Measured"
+                                            "options": "Ground truth"
                                         },
                                         "properties": [
                                             {
@@ -725,7 +804,7 @@
             "arrivals": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 5,
                     "title": "Jobs arriving per hour",
                     "description": "",
                     "links": [],
@@ -796,7 +875,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -841,8 +920,8 @@
             "twin": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
-                    "title": "Digital twin",
+                    "id": 6,
+                    "title": "",
                     "description": "",
                     "links": [],
                     "data": {
@@ -866,25 +945,22 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/scheduling",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "completion_h",
-                                                        "text": "Time to full completion [h]",
+                                                        "selector": "simulated_power",
+                                                        "text": "simulated_power",
                                                         "type": "number"
-                                                    },
+                                                    }
+                                                ],
+                                                "computed_columns": [
                                                     {
-                                                        "selector": "started_in_10_min_pct",
-                                                        "text": "Started within 10 min [%]",
+                                                        "selector": "simulated_power/1000",
+                                                        "text": "Digital twin, power draw [kW]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -900,8 +976,10 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Time to full completion [h]": 0,
-                                                "Started within 10 min [%]": 1
+                                                "Digital twin, power draw [kW]": 0
+                                            },
+                                            "excludeByName": {
+                                                "simulated_power": true
                                             }
                                         }
                                     }
@@ -916,50 +994,29 @@
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {},
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
                                 "colorMode": "none",
-                                "graphMode": "area",
+                                "graphMode": "none",
                                 "textMode": "value_and_name",
-                                "orientation": "horizontal",
+                                "orientation": "vertical",
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                }
+                                },
+                                "justifyMode": "center",
+                                "wideLayout": false
                             },
                             "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#009E73"
-                                    }
-                                },
+                                "defaults": {},
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Time to full completion [h]"
+                                            "options": "Digital twin, power draw [kW]"
                                         },
                                         "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 1
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Started within 10 min [%]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "none"
-                                            },
                                             {
                                                 "id": "decimals",
                                                 "value": 1
@@ -975,7 +1032,7 @@
             "heatmap": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 7,
                     "title": "Hosts per CPU utilization",
                     "description": "",
                     "links": [],
@@ -1070,7 +1127,7 @@
                             "options": {
                                 "calculate": false,
                                 "yAxis": {
-                                    "axisLabel": "CPU utilization"
+                                    "axisLabel": "CPU utilization [%]"
                                 },
                                 "color": {
                                     "mode": "scheme",
@@ -1097,7 +1154,7 @@
             "decisions": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 8,
                     "title": "Decisions",
                     "description": "",
                     "links": [],
@@ -1122,7 +1179,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/events",
+                                                "url": "http://api:8000/api/events?markers=on",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
@@ -1230,23 +1287,10 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 2,
+                                                "height": 13,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "screens-simple"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 2,
-                                                "width": 6,
-                                                "height": 11,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "control-simple"
+                                                    "name": "control"
                                                 }
                                             }
                                         },
@@ -1259,7 +1303,7 @@
                                                 "height": 8,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "status-simple"
+                                                    "name": "twin-state"
                                                 }
                                             }
                                         },
@@ -1269,7 +1313,7 @@
                                                 "x": 6,
                                                 "y": 0,
                                                 "width": 9,
-                                                "height": 5,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "physical"
@@ -1280,9 +1324,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 6,
-                                                "y": 5,
+                                                "y": 4,
                                                 "width": 9,
-                                                "height": 8,
+                                                "height": 9,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "power-simple"
@@ -1308,7 +1352,7 @@
                                                 "x": 15,
                                                 "y": 0,
                                                 "width": 9,
-                                                "height": 5,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "twin"
@@ -1319,9 +1363,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 15,
-                                                "y": 5,
+                                                "y": 4,
                                                 "width": 9,
-                                                "height": 8,
+                                                "height": 9,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "heatmap"
@@ -1350,7 +1394,37 @@
                 ]
             }
         },
-        "variables": [],
+        "variables": [
+            {
+                "kind": "CustomVariable",
+                "spec": {
+                    "name": "markers",
+                    "label": "Decisions",
+                    "query": "on,off",
+                    "current": {
+                        "text": "on",
+                        "value": "on"
+                    },
+                    "options": [
+                        {
+                            "text": "on",
+                            "value": "on",
+                            "selected": true
+                        },
+                        {
+                            "text": "off",
+                            "value": "off",
+                            "selected": false
+                        }
+                    ],
+                    "multi": false,
+                    "includeAll": false,
+                    "allowCustomValue": false,
+                    "hide": "hideVariable",
+                    "skipUrlSync": false
+                }
+            }
+        ],
         "timeSettings": {
             "timezone": "utc",
             "from": "2022-10-06T22:00:00.000Z",

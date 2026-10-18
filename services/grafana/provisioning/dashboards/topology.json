@@ -19,10 +19,10 @@
             {
                 "kind": "AnnotationQuery",
                 "spec": {
-                    "name": "Topology changes",
+                    "name": "Decisions",
                     "enable": true,
-                    "hide": false,
-                    "iconColor": "#D55E00",
+                    "hide": true,
+                    "iconColor": "rgba(255, 255, 255, 0.35)",
                     "query": {
                         "kind": "DataQuery",
                         "group": "yesoreyeram-infinity-datasource",
@@ -35,7 +35,7 @@
                             "source": "url",
                             "parser": "backend",
                             "format": "table",
-                            "url": "http://api:8000/api/events",
+                            "url": "http://api:8000/api/events?markers=$markers",
                             "url_options": {
                                 "method": "GET"
                             },
@@ -58,43 +58,11 @@
             }
         ],
         "elements": {
-            "screens-topology": {
+            "control": {
                 "kind": "Panel",
                 "spec": {
                     "id": 1,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "text",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "mode": "markdown",
-                                "content": "[Detailed](/d/opendt-overview?${__url_time_range}) · [Simple](/d/opendt-simple?${__url_time_range}) · **Topology**"
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "servers": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 2,
-                    "title": "Servers",
+                    "title": "OpenDT",
                     "description": "",
                     "links": [],
                     "data": {
@@ -113,27 +81,232 @@
                             "options": {
                                 "initial": {
                                     "method": "GET",
-                                    "url": "http://localhost:3001/api/status"
+                                    "url": "http://localhost:3001/api/status",
+                                    "code": "const view = { ...{\"screen\": \"opendt-topology\", \"window\": \"week\", \"markers\": \"on\"}, period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "updated",
                                     "confirm": true,
-                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Servers', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['Servers', `The API answered ${response && response.status}`]);\n}"
+                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['OpenDT', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['OpenDT', `The API answered ${response && response.status}`]);\n}"
                                 },
+                                "elementValueChanged": "const { id, value } = context.element;\nconst view = [\"screen\", \"window\", \"period\", \"markers\"];\nif (view.includes(id)) {\n  context.panel.initial[id] = value;  // a view setting: applied at once, not sent to the twin\n  const url = context.grafana.locationService;\n  const range = url.getSearchObject();\n  if (id === 'screen') url.push(`/d/${value}?from=${range.from || '2022-10-06T22:00:00.000Z'}&to=${range.to || '2022-10-13T22:00:00.000Z'}`);\n  if (id === 'period') url.partial({ 'var-period': value });\n  if (id === 'markers') url.partial({ 'var-markers': value });\n  if (id === 'window') {\n    const end = new Date(context.panel.initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[value];\n    url.partial(hours ? { from: end - hours * 3600000, to: end } : {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"});\n  }\n}",
                                 "sync": false,
                                 "elements": [
                                     {
+                                        "uid": "screen",
+                                        "id": "screen",
+                                        "title": "Screen",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "opendt-overview",
+                                                "label": "Detailed",
+                                                "value": "opendt-overview"
+                                            },
+                                            {
+                                                "id": "opendt-simple",
+                                                "label": "Simple",
+                                                "value": "opendt-simple"
+                                            },
+                                            {
+                                                "id": "opendt-topology",
+                                                "label": "Topology",
+                                                "value": "opendt-topology"
+                                            }
+                                        ],
+                                        "value": "opendt-topology"
+                                    },
+                                    {
+                                        "uid": "window",
+                                        "id": "window",
+                                        "title": "Time",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "week",
+                                                "label": "Week",
+                                                "value": "week"
+                                            },
+                                            {
+                                                "id": "day",
+                                                "label": "Day",
+                                                "value": "day"
+                                            },
+                                            {
+                                                "id": "hours",
+                                                "label": "6 h",
+                                                "value": "hours"
+                                            }
+                                        ],
+                                        "value": "week"
+                                    },
+                                    {
+                                        "uid": "markers",
+                                        "id": "markers",
+                                        "title": "Decisions",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "on",
+                                                "label": "On",
+                                                "value": "on"
+                                            },
+                                            {
+                                                "id": "off",
+                                                "label": "Off",
+                                                "value": "off"
+                                            }
+                                        ],
+                                        "value": "on"
+                                    },
+                                    {
+                                        "uid": "carbon_zone",
+                                        "id": "carbon_zone",
+                                        "title": "CO2 zone",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "NL",
+                                                "label": "NL",
+                                                "value": "NL"
+                                            },
+                                            {
+                                                "id": "PL",
+                                                "label": "PL",
+                                                "value": "PL"
+                                            },
+                                            {
+                                                "id": "DE",
+                                                "label": "DE",
+                                                "value": "DE"
+                                            },
+                                            {
+                                                "id": "RO",
+                                                "label": "RO",
+                                                "value": "RO"
+                                            }
+                                        ],
+                                        "tooltip": "Electricity Maps zones: Netherlands, Poland, Germany, Romania"
+                                    },
+                                    {
+                                        "uid": "scheduler",
+                                        "id": "scheduler",
+                                        "title": "Scheduler",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "Mem",
+                                                "label": "Mem",
+                                                "value": "Mem"
+                                            },
+                                            {
+                                                "id": "CoreMem",
+                                                "label": "CoreMem",
+                                                "value": "CoreMem"
+                                            },
+                                            {
+                                                "id": "ActiveServers",
+                                                "label": "ActiveServers",
+                                                "value": "ActiveServers"
+                                            },
+                                            {
+                                                "id": "ActiveServersInv",
+                                                "label": "ActiveServersInv",
+                                                "value": "ActiveServersInv"
+                                            },
+                                            {
+                                                "id": "ProvisionedCores",
+                                                "label": "ProvisionedCores",
+                                                "value": "ProvisionedCores"
+                                            },
+                                            {
+                                                "id": "Random",
+                                                "label": "Random",
+                                                "value": "Random"
+                                            }
+                                        ],
+                                        "tooltip": "OpenDC's placement policy; Mem is OpenDC's default"
+                                    },
+                                    {
+                                        "uid": "speed_factor",
+                                        "id": "speed_factor",
+                                        "title": "Speed factor",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "1",
+                                                "label": "1x (real time)",
+                                                "value": 1
+                                            },
+                                            {
+                                                "id": "60",
+                                                "label": "60x",
+                                                "value": 60
+                                            },
+                                            {
+                                                "id": "300",
+                                                "label": "300x",
+                                                "value": 300
+                                            },
+                                            {
+                                                "id": "3600",
+                                                "label": "3,600x",
+                                                "value": 3600
+                                            },
+                                            {
+                                                "id": "-1",
+                                                "label": "Maximum",
+                                                "value": -1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "parallel_simulations",
+                                        "id": "parallel_simulations",
+                                        "title": "Parallel runs",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "1",
+                                                "label": "1",
+                                                "value": 1
+                                            },
+                                            {
+                                                "id": "2",
+                                                "label": "2",
+                                                "value": 2
+                                            },
+                                            {
+                                                "id": "4",
+                                                "label": "4",
+                                                "value": 4
+                                            },
+                                            {
+                                                "id": "8",
+                                                "label": "8",
+                                                "value": 8
+                                            }
+                                        ]
+                                    },
+                                    {
                                         "uid": "kind_1",
                                         "id": "kind_1",
-                                        "title": "Servers 1",
+                                        "title": "Hosts 1",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "H01",
-                                                "label": "SURF (16 cores)",
+                                                "label": "SURF-SARA (16 cores)",
                                                 "value": "H01"
                                             },
                                             {
@@ -148,7 +321,7 @@
                                             },
                                             {
                                                 "id": "Memory",
-                                                "label": "Memory, 1 TiB (48 cores)",
+                                                "label": "Memory (48 cores, 1,024 GB)",
                                                 "value": "Memory"
                                             },
                                             {
@@ -163,19 +336,19 @@
                                         "id": "count_1",
                                         "title": "Count",
                                         "type": "number",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "min": 0
                                     },
                                     {
                                         "uid": "kind_2",
                                         "id": "kind_2",
-                                        "title": "Servers 2",
+                                        "title": "Hosts 2",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "H01",
-                                                "label": "SURF (16 cores)",
+                                                "label": "SURF-SARA (16 cores)",
                                                 "value": "H01"
                                             },
                                             {
@@ -190,7 +363,7 @@
                                             },
                                             {
                                                 "id": "Memory",
-                                                "label": "Memory, 1 TiB (48 cores)",
+                                                "label": "Memory (48 cores, 1,024 GB)",
                                                 "value": "Memory"
                                             },
                                             {
@@ -205,19 +378,19 @@
                                         "id": "count_2",
                                         "title": "Count",
                                         "type": "number",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "min": 0
                                     },
                                     {
                                         "uid": "kind_3",
                                         "id": "kind_3",
-                                        "title": "Servers 3",
+                                        "title": "Hosts 3",
                                         "type": "select",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "H01",
-                                                "label": "SURF (16 cores)",
+                                                "label": "SURF-SARA (16 cores)",
                                                 "value": "H01"
                                             },
                                             {
@@ -232,7 +405,7 @@
                                             },
                                             {
                                                 "id": "Memory",
-                                                "label": "Memory, 1 TiB (48 cores)",
+                                                "label": "Memory (48 cores, 1,024 GB)",
                                                 "value": "Memory"
                                             },
                                             {
@@ -248,7 +421,7 @@
                                         "id": "count_3",
                                         "title": "Count",
                                         "type": "number",
-                                        "labelWidth": 12,
+                                        "labelWidth": 14,
                                         "min": 0,
                                         "showIf": "return context.panel.elements.find((e) => e.id === 'kind_2').value"
                                     }
@@ -263,7 +436,7 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "document.documentElement.requestFullscreen();\ncontext.grafana.locationService.partial({ kiosk: true });",
+                                    "code": "if (document.fullscreenElement) {\n  document.exitFullscreen();\n  context.grafana.locationService.partial({ kiosk: null });\n} else {\n  document.documentElement.requestFullscreen();\n  context.grafana.locationService.partial({ kiosk: true });\n}",
                                     "confirm": false
                                 },
                                 "confirmModal": {
@@ -288,8 +461,8 @@
             "groups": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
-                    "title": "Server groups now",
+                    "id": 2,
+                    "title": "Hosts now",
                     "description": "",
                     "links": [],
                     "data": {
@@ -326,7 +499,7 @@
                                                     },
                                                     {
                                                         "selector": "count",
-                                                        "text": "Servers",
+                                                        "text": "Count",
                                                         "type": "number"
                                                     },
                                                     {
@@ -336,7 +509,7 @@
                                                     },
                                                     {
                                                         "selector": "ghz",
-                                                        "text": "GHz",
+                                                        "text": "Core speed [GHz]",
                                                         "type": "number"
                                                     },
                                                     {
@@ -346,12 +519,12 @@
                                                     },
                                                     {
                                                         "selector": "idle_w",
-                                                        "text": "Idle [W]",
+                                                        "text": "Idle power [W]",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "max_w",
-                                                        "text": "Max [W]",
+                                                        "text": "Max power [W]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -368,12 +541,12 @@
                                         "options": {
                                             "indexByName": {
                                                 "Kind": 0,
-                                                "Servers": 1,
+                                                "Count": 1,
                                                 "Cores": 2,
-                                                "GHz": 3,
+                                                "Core speed [GHz]": 3,
                                                 "Memory [GB]": 4,
-                                                "Idle [W]": 5,
-                                                "Max [W]": 6
+                                                "Idle power [W]": 5,
+                                                "Max power [W]": 6
                                             }
                                         }
                                     }
@@ -398,7 +571,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Servers"
+                                            "options": "Count"
                                         },
                                         "properties": [
                                             {
@@ -416,7 +589,7 @@
             "catalog": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
+                    "id": 3,
                     "title": "Kinds to choose from",
                     "description": "",
                     "links": [],
@@ -459,7 +632,7 @@
                                                     },
                                                     {
                                                         "selector": "ghz",
-                                                        "text": "GHz",
+                                                        "text": "Core speed [GHz]",
                                                         "type": "number"
                                                     },
                                                     {
@@ -469,12 +642,12 @@
                                                     },
                                                     {
                                                         "selector": "idle_w",
-                                                        "text": "Idle [W]",
+                                                        "text": "Idle power [W]",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "max_w",
-                                                        "text": "Max [W]",
+                                                        "text": "Max power [W]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -492,10 +665,10 @@
                                             "indexByName": {
                                                 "Kind": 0,
                                                 "Cores": 1,
-                                                "GHz": 2,
+                                                "Core speed [GHz]": 2,
                                                 "Memory [GB]": 3,
-                                                "Idle [W]": 4,
-                                                "Max [W]": 5
+                                                "Idle power [W]": 4,
+                                                "Max power [W]": 5
                                             }
                                         }
                                     }
@@ -525,7 +698,7 @@
             "hosts-topology": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
+                    "id": 4,
                     "title": "Hosts available vs. in use",
                     "description": "",
                     "links": [],
@@ -602,7 +775,7 @@
                             "options": {
                                 "legend": {
                                     "calcs": [
-                                        "lastNotNull"
+                                        "last"
                                     ]
                                 },
                                 "tooltip": {
@@ -676,23 +849,10 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 2,
+                                                "height": 21,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "screens-topology"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 2,
-                                                "width": 6,
-                                                "height": 13,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "servers"
+                                                    "name": "control"
                                                 }
                                             }
                                         },
@@ -744,7 +904,37 @@
                 ]
             }
         },
-        "variables": [],
+        "variables": [
+            {
+                "kind": "CustomVariable",
+                "spec": {
+                    "name": "markers",
+                    "label": "Decisions",
+                    "query": "on,off",
+                    "current": {
+                        "text": "on",
+                        "value": "on"
+                    },
+                    "options": [
+                        {
+                            "text": "on",
+                            "value": "on",
+                            "selected": true
+                        },
+                        {
+                            "text": "off",
+                            "value": "off",
+                            "selected": false
+                        }
+                    ],
+                    "multi": false,
+                    "includeAll": false,
+                    "allowCustomValue": false,
+                    "hide": "hideVariable",
+                    "skipUrlSync": false
+                }
+            }
+        ],
         "timeSettings": {
             "timezone": "utc",
             "from": "2022-10-06T22:00:00.000Z",

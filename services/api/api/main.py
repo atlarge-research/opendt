@@ -60,6 +60,7 @@ async def lifespan(app: FastAPI):
         app.state.kafka_producer = None
 
     app.state.speed_factor = None  # set by the control panel; until then, the configured speed
+    app.state.parallel_simulations = None  # the same, for the calibrator
     app.state.topology = None  # the simulated topology sent last
     yield
 
@@ -144,7 +145,7 @@ DEFAULT_TOPOLOGY = Topology(
                     ),
                 )
             ],
-            powerSource=PowerSource(carbonTracePath="/app/workload/carbon.parquet"),
+            powerSource=PowerSource(carbonTracePath="/app/workload/carbon_zones/NL.parquet"),
         )
     ]
 )
@@ -379,7 +380,14 @@ def get_status():
     """The twin's time, topology, and replay speed: the control panel's current values (a flat object)."""
     status = twin.status(twin_run())
     speed = app.state.speed_factor or app.state.config.global_config.speed_factor
-    return {**status, "twin_time": status["twin_time"].isoformat(), "speed_factor": speed}
+    calibrator = app.state.config.services.calibrator
+    parallel = app.state.parallel_simulations or (calibrator and calibrator.max_parallel_workers)
+    return {
+        **status,
+        "twin_time": status["twin_time"].isoformat(),
+        "speed_factor": speed,
+        "parallel_simulations": parallel,
+    }
 
 
 def rows(table) -> Response:
@@ -415,9 +423,9 @@ def get_jobs():
 
 
 @app.get("/api/events")
-def get_events():
-    """Changes of servers, r, carbon zone, and scheduler, for markers on the graphs."""
-    return rows(twin.events)
+def get_events(markers: Literal["on", "off"] = "on"):
+    """Changes of servers, r, carbon zone, and scheduler, for markers on the graphs; none while switched off."""
+    return rows(twin.events if markers == "on" else lambda run: twin.events(run).iloc[:0])
 
 
 @app.get("/api/arrivals")
@@ -442,15 +450,18 @@ def get_server_kinds():
 
 
 @app.get("/api/accuracy")
-def get_accuracy():
-    """Per hour: the MAPE [%] of OpenDT's power vs. the measured power, and the r the twin ran with."""
+def get_accuracy(minutes: int = Query(60, ge=1, le=1440)):
+    """Per period (an hour; 5 minutes for the MAPE now): the MAPE [%] of OpenDT's power vs. the measured power,
+    and the r the twin ran with."""
 
-    def per_hour(run: Path) -> pd.DataFrame:
+    def per_period(run: Path) -> pd.DataFrame:
         query = PowerDataQuery(run_id=run.name, workload_context=workload())
         power = query.query(interval_seconds=300)
-        return twin.accuracy(run, pd.DataFrame([point.model_dump() for point in power.data]))
+        return twin.accuracy(
+            run, pd.DataFrame([point.model_dump() for point in power.data]), minutes
+        )
 
-    return rows(per_hour)
+    return rows(per_period)
 
 
 # OpenDC's placement schedulers (allocation policies); Mem is its default
@@ -472,14 +483,22 @@ class Control(BaseModel):
     count_2: int | None = Field(None, ge=0)
     kind_3: KIND | None = None
     count_3: int | None = Field(None, ge=0)
-    carbon_zone: Literal["Default", "NL", "DE", "RO", "PL"] | None = None
+    carbon_zone: Literal["NL", "PL", "DE", "RO"] | None = None
     scheduler: SCHEDULERS | None = None
     speed_factor: float | None = None
+    parallel_simulations: int | None = Field(None, gt=0)  # of the calibrator
 
     @field_validator("speed_factor")
     @classmethod
     def twin_speed(cls, speed: float | None) -> float | None:
         return speed if speed is None else GlobalConfig(speed_factor=speed).speed_factor
+
+
+RUNTIME = {
+    "scheduler",
+    "speed_factor",
+    "parallel_simulations",
+}  # on sys.config; the rest is the topology
 
 
 def servers(hosts: list[dict], change: Control) -> list[dict]:
@@ -514,10 +533,11 @@ def configure(setting: str, value) -> None:
 
 @app.patch("/api/control")
 def control(change: Control):
-    """Change the running twin: hosts and carbon zone (a new simulated topology), scheduler, and replay speed."""
+    """Change the running twin: hosts and carbon zone (a new simulated topology), scheduler, replay speed, and
+    the calibrator's parallel simulations."""
     # servers or zone: a new topology, from the one sent last (a window may not have run it yet), with the r of
     # the latest window (the calibrator may have changed it)
-    if change.model_dump(exclude_none=True).keys() - {"scheduler", "speed_factor"}:
+    if change.model_dump(exclude_none=True).keys() - RUNTIME:
         latest = twin.topology(twin.windows(twin_run())[-1])
         topology = copy.deepcopy(app.state.topology) or latest
         cluster = topology["clusters"][0]
@@ -536,6 +556,9 @@ def control(change: Control):
     if change.speed_factor is not None:
         configure("global.speed_factor", change.speed_factor)
         app.state.speed_factor = change.speed_factor
+    if change.parallel_simulations:
+        configure("calibrator.max_parallel_workers", change.parallel_simulations)
+        app.state.parallel_simulations = change.parallel_simulations
     return get_status()
 
 
