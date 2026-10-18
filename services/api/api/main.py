@@ -1,5 +1,6 @@
 """OpenDT API - FastAPI Application for datacenter simulation data."""
 
+import copy
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -7,11 +8,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
+import pandas as pd
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, Response
 from odt_common import load_config_from_env
-from odt_common.config import DynamicConfigEvent, GlobalConfig
+from odt_common.config import DynamicConfigEvent, GlobalConfig, WorkloadContext
 from odt_common.models.topology import (
     CPU,
     Cluster,
@@ -58,6 +60,7 @@ async def lifespan(app: FastAPI):
         app.state.kafka_producer = None
 
     app.state.speed_factor = None  # set by the control panel; until then, the configured speed
+    app.state.topology = None  # the simulated topology sent last
     yield
 
     # Shutdown
@@ -210,6 +213,7 @@ async def update_topology(
             message=topology.model_dump(mode="json"),
             key="datacenter",
         )
+        app.state.topology = topology.model_dump(mode="json")
         logger.info(f"Topology published to {topic_name}")
     except Exception as e:
         logger.error(f"Failed to publish topology to Kafka: {e}")
@@ -265,16 +269,7 @@ async def get_power_data(
         raise HTTPException(status_code=500, detail="Configuration not loaded")
 
     try:
-        # Get workload directory (mounted directly to specific workload)
-        workload_dir = Path(os.getenv("WORKLOAD_DIR", "/app/workload"))
-
-        # Create workload context directly with mounted workload directory
-        from odt_common.config import WorkloadContext
-
-        workload_context = WorkloadContext(workload_dir=workload_dir)
-
-        # Initialize query
-        query = PowerDataQuery(run_id=run_id, workload_context=workload_context)
+        query = PowerDataQuery(run_id=run_id, workload_context=workload())
 
         # Execute query
         result = query.query(interval_seconds=interval_seconds, start_time=start_time)
@@ -355,6 +350,11 @@ async def get_carbon_emission_data(
 # ============================================================================
 
 
+def workload() -> WorkloadContext:
+    """The workload mounted into the container: its trace, measured power, and carbon trace."""
+    return WorkloadContext(workload_dir=Path(os.getenv("WORKLOAD_DIR", "/app/workload")))
+
+
 def run_dir() -> Path:
     return Path(os.getenv("DATA_DIR", "/app/data")) / os.getenv("RUN_ID", "")
 
@@ -391,8 +391,8 @@ def rows(table) -> Response:
 
 @app.get("/api/cluster")
 def get_cluster(start: datetime | None = None, end: datetime | None = None):
-    """Hosts, jobs, CPU of the hosts (mean, median, p95; demand vs. capacity in cores), and energy, CO2, and
-    embodied CO2 since the trace start."""
+    """Hosts, jobs, CPU of the hosts (mean, median; demand vs. capacity in cores), and energy, CO2, and embodied
+    CO2 per sample."""
     return rows(lambda run: twin.cluster(run).set_index("timestamp")[start:end].reset_index())
 
 
@@ -404,7 +404,7 @@ def get_totals(period: Literal["minute", "hour", "day", "week", "month", "year"]
 
 @app.get("/api/scheduling")
 def get_scheduling():
-    """Per window: hours until all jobs submitted so far are done, and the median and p95 time in queue [min]."""
+    """Per window: hours until all jobs submitted so far are done, and the median time in queue [min]."""
     return rows(twin.scheduling)
 
 
@@ -416,21 +416,43 @@ def get_jobs():
 
 @app.get("/api/events")
 def get_events():
-    """Changes of hosts, r, and carbon zone, for markers on the graphs."""
+    """Changes of servers, r, carbon zone, and scheduler, for markers on the graphs."""
     return rows(twin.events)
 
 
-@app.get("/api/calibration")
-def get_calibration():
-    """The best r and its MAPE [%] per grid search of the calibrator."""
-    return rows(twin.calibration)
+@app.get("/api/accuracy")
+def get_accuracy():
+    """Per hour: the MAPE [%] of OpenDT's power vs. the measured power, and the r the twin ran with."""
+
+    def per_hour(run: Path) -> pd.DataFrame:
+        query = PowerDataQuery(run_id=run.name, workload_context=workload())
+        power = query.query(interval_seconds=300)
+        return twin.accuracy(run, pd.DataFrame([point.model_dump() for point in power.data]))
+
+    return rows(per_hour)
+
+
+# OpenDC's placement schedulers (allocation policies); Mem is its default
+SCHEDULERS = Literal[
+    "Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"
+]
+
+
+KIND = Literal["H01", "EPYC", "Xeon", "Memory", "Edge"]  # twin.SERVERS
 
 
 class Control(BaseModel):
-    """A change from the control panel; the fields left out stay as they are."""
+    """A change from the control panel; the fields left out stay as they are. The servers come in up to three
+    groups, each a kind and a count; a count of 0 removes the group."""
 
-    hosts: int | None = Field(None, ge=1)
+    kind_1: KIND | None = None
+    count_1: int | None = Field(None, ge=0)
+    kind_2: KIND | None = None
+    count_2: int | None = Field(None, ge=0)
+    kind_3: KIND | None = None
+    count_3: int | None = Field(None, ge=0)
     carbon_zone: Literal["Default", "NL", "DE", "RO", "PL"] | None = None
+    scheduler: SCHEDULERS | None = None
     speed_factor: float | None = None
 
     @field_validator("speed_factor")
@@ -439,25 +461,59 @@ class Control(BaseModel):
         return speed if speed is None else GlobalConfig(speed_factor=speed).speed_factor
 
 
+def servers(hosts: list[dict], change: Control) -> list[dict]:
+    """The twin's server groups with the change applied: a new kind keeps the group's count and takes the twin's r,
+    and groups of the same kind become one."""
+    r = hosts[0]["cpuPowerModel"]["calibrationFactor"]
+    merged = {}
+    for i, old in enumerate((hosts + [{"name": None, "count": 0}] * twin.GROUPS)[: twin.GROUPS], 1):
+        kind = getattr(change, f"kind_{i}") or old["name"]
+        count = getattr(change, f"count_{i}")
+        count = old["count"] if count is None else count
+        if not kind or not count:
+            continue
+        host = old
+        if kind != old["name"]:
+            model = {**twin.SERVERS[kind]["cpuPowerModel"], "calibrationFactor": r}
+            host = {**twin.SERVERS[kind], "cpuPowerModel": model}
+        if kind in merged:
+            merged[kind]["count"] += count
+        else:
+            merged[kind] = {**host, "name": kind, "count": count}
+    return list(merged.values())
+
+
+def configure(setting: str, value) -> None:
+    """A runtime setting of the twin's services, on the compacted sys.config topic, keyed by the setting."""
+    event = DynamicConfigEvent(
+        setting_key=setting, new_value=value, timestamp=datetime.now(UTC).isoformat(), source="api"
+    )
+    publish("system", event.model_dump(), key=setting)
+
+
 @app.patch("/api/control")
-async def control(change: Control):
-    """Change the running twin: hosts and carbon zone (a new simulated topology), and the replay speed."""
-    if change.hosts or change.carbon_zone:
-        topology = twin.topology(twin.windows(twin_run())[-1])
+def control(change: Control):
+    """Change the running twin: hosts and carbon zone (a new simulated topology), scheduler, and replay speed."""
+    # servers or zone: a new topology, from the one sent last (a window may not have run it yet), with the r of
+    # the latest window (the calibrator may have changed it)
+    if change.model_dump(exclude_none=True).keys() - {"scheduler", "speed_factor"}:
+        latest = twin.topology(twin.windows(twin_run())[-1])
+        topology = copy.deepcopy(app.state.topology) or latest
         cluster = topology["clusters"][0]
-        if change.hosts:
-            cluster["hosts"][0]["count"] = change.hosts
+        r = latest["clusters"][0]["hosts"][0]["cpuPowerModel"]["calibrationFactor"]
+        for host in cluster["hosts"]:
+            host["cpuPowerModel"]["calibrationFactor"] = r
+        cluster["hosts"] = servers(cluster["hosts"], change)
+        if not cluster["hosts"]:
+            raise HTTPException(status_code=422, detail="The twin needs at least one server")
         if change.carbon_zone:
             cluster["powerSource"]["carbonTracePath"] = twin.CARBON_TRACES[change.carbon_zone]
-        publish("sim_topology", Topology(**topology).model_dump(mode="json"), key="datacenter")
+        app.state.topology = Topology(**topology).model_dump(mode="json")
+        publish("sim_topology", app.state.topology, key="datacenter")
+    if change.scheduler:
+        configure("simulator.scheduler", change.scheduler)
     if change.speed_factor is not None:
-        event = DynamicConfigEvent(
-            setting_key="global.speed_factor",
-            new_value=change.speed_factor,
-            timestamp=datetime.now(UTC).isoformat(),
-            source="api",
-        )
-        publish("system", event.model_dump(), key=event.setting_key)  # sys.config is compacted
+        configure("global.speed_factor", change.speed_factor)
         app.state.speed_factor = change.speed_factor
     return get_status()
 

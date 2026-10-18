@@ -10,7 +10,6 @@ from functools import lru_cache
 from itertools import pairwise
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 SERVICE = ("hosts_up", "tasks_pending", "tasks_active", "tasks_completed")
@@ -27,9 +26,38 @@ CARBON_TRACES = {
     "Default": "/app/workload/carbon.parquet",
     **{zone: f"/app/workload/carbon_zones/{zone}.parquet" for zone in ("NL", "DE", "RO", "PL")},
 }
-SETTINGS = {"hosts": "Hosts", "calibration_factor": "r", "carbon_zone": "Carbon zone"}
+SETTINGS = {
+    "servers": "Servers",
+    "calibration_factor": "r",
+    "carbon_zone": "Carbon zone",
+    "scheduler": "Scheduler",
+}
 PERIODS = {"minute": "min", "hour": "h", "day": "D", "week": "W-MON", "month": "MS", "year": "YS"}
 LOCK = threading.Lock()  # the panels of a dashboard ask at once; a new window is computed once
+GROUPS = 3  # kinds of servers the control panel can mix
+
+
+def server(
+    cores: int, mhz: float, memory: int, idle: float, top: float, power: float | None = None
+):
+    power_model = {"modelType": "mse", "power": power or top, "idlePower": idle, "maxPower": top}
+    return {
+        "cpu": {"coreCount": cores, "coreSpeed": mhz},
+        "memory": {"memorySize": memory},
+        "cpuPowerModel": power_model,
+    }
+
+
+# SURF's node (H01) and four host templates of OpenDC web (Daniel Halasz, branch feat/refactor-web) in OpenDT's
+# format: all cores of a server, MHz, memory in SURF's unit (128 GB is 128,000,000), and OpenDT's mse power model
+# with the template's idle and maximum power. The twin's r applies to every kind; an assumption.
+SERVERS = {
+    "H01": server(16, 2100, 128_000_000, idle=25, top=174, power=300),
+    "EPYC": server(64, 3200, 256_000_000, idle=120, top=400),  # 2x AMD EPYC 7502
+    "Xeon": server(40, 2500, 192_000_000, idle=90, top=300),  # 2x Intel Xeon Gold 6248
+    "Memory": server(48, 2900, 1_024_000_000, idle=140, top=350),  # 2x Intel Xeon Gold 6248R, 1 TiB
+    "Edge": server(8, 3700, 32_000_000, idle=25, top=95),  # Intel Xeon E-2288G
+}
 
 
 def windows(run_dir: Path) -> list[Path]:
@@ -59,13 +87,26 @@ def topology(window: Path) -> dict:
 
 @lru_cache(maxsize=4096)
 def settings(window: Path) -> dict:
-    """Hosts, power-model exponent r, and carbon zone of the window's topology."""
+    """Servers, power-model exponent r, carbon zone, and scheduler the window ran with."""
     cluster = topology(window)["clusters"][0]
+    hosts = cluster["hosts"]
     path = cluster["powerSource"]["carbonTracePath"]
+    experiment = json.loads((window / "input" / "experiment.json").read_text())
+    policies = experiment.get("allocationPolicies", [])  # none: OpenDC's default, Mem
     return {
-        "hosts": sum(host["count"] for host in cluster["hosts"]),
-        "calibration_factor": cluster["hosts"][0]["cpuPowerModel"]["calibrationFactor"],
+        "hosts": sum(host["count"] for host in hosts),
+        "servers": " + ".join(
+            f"{h['count']:,} {'SURF' if h['name'] == 'H01' else h['name']}" for h in hosts
+        ),
+        # the groups as the control panel's fields kind_1, count_1, ..., kind_3, count_3
+        **{
+            f"{field}_{i}": value
+            for i, host in enumerate((hosts + [{"name": None, "count": 0}] * GROUPS)[:GROUPS], 1)
+            for field, value in (("kind", host["name"]), ("count", host["count"]))
+        },
+        "calibration_factor": hosts[0]["cpuPowerModel"]["calibrationFactor"],
         "carbon_zone": next(zone for zone, trace in CARBON_TRACES.items() if trace == path),
+        "scheduler": policies[0]["policyName"] if policies else "Mem",
     }
 
 
@@ -103,7 +144,6 @@ def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -
             "hosts_in_use": by_time["in_use"].sum(),
             "cpu_utilization": cpu.mean(),
             "cpu_utilization_median": cpu.median(),
-            "cpu_utilization_p95": cpu.quantile(0.95),
             "cpu_demand_cores": by_time["cpu_demand_cores"].sum(),
             "cpu_capacity_cores": by_time["core_count"].sum(),
             "embodied_carbon": by_time["embodied_carbon"].sum(),
@@ -162,7 +202,6 @@ def window_scheduling(window: Path, start: pd.Timestamp | None, end: pd.Timestam
         "timestamp": end,
         "completion_h": (jobs["finish"].max() - end).total_seconds() / 3600,
         "queue_median_min": queue.median(),
-        "queue_p95_min": queue.quantile(0.95),
     }
 
 
@@ -203,14 +242,13 @@ def events(run_dir: Path) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["time", "text"])
 
 
-def calibration(run_dir: Path) -> pd.DataFrame:
-    """One row per grid search of the calibrator: the best r and its MAPE; none while the calibrator is off."""
-    path = run_dir / "calibrator" / "agg_results.parquet"
-    if not path.exists():
-        return pd.DataFrame(columns=["timestamp", "r", "mape"])
-    results = pd.read_parquet(path, columns=["timestamp", "best_value", "best_mape"])
-    results["best_mape"] = results["best_mape"].replace(np.inf, np.nan)  # no candidate matched yet
-    return results.rename(columns={"best_value": "r", "best_mape": "mape"})
+def accuracy(run_dir: Path, power: pd.DataFrame) -> pd.DataFrame:
+    """Per hour: the MAPE [%] of OpenDT's power vs. the measured power, and the r the twin ran with by then."""
+    error = (power["simulated_power"] - power["actual_power"]).abs() / power["actual_power"] * 100
+    hourly = error.groupby(power["timestamp"].dt.floor("h")).mean().rename("mape").to_frame()
+    r = pd.Series({end_time(w): settings(w)["calibration_factor"] for w in windows(run_dir)})
+    hourly["r"] = r.resample("h").last().reindex(hourly.index).ffill()
+    return hourly.reset_index(names="timestamp")
 
 
 def status(run_dir: Path) -> dict:

@@ -23,7 +23,14 @@ JOBS = [
 
 
 def write_window(
-    run_dir, n, minutes, hosts, active, zone_path="/app/workload/carbon.parquet", jobs=JOBS
+    run_dir,
+    n,
+    minutes,
+    hosts,
+    active,
+    zone_path="/app/workload/carbon.parquet",
+    jobs=JOBS,
+    scheduler=None,
 ):
     """Window n ends `minutes` after T0; OpenDC output every 150 s, up to one sample past the end."""
     window = run_dir / "simulator" / "opendc" / f"run_{n}"
@@ -95,6 +102,8 @@ def write_window(
     }
     (window / "input").mkdir()
     (window / "input" / "topology.json").write_text(json.dumps(topology))
+    policies = [{"type": "prefab", "policyName": scheduler}] if scheduler else []
+    (window / "input" / "experiment.json").write_text(json.dumps({"allocationPolicies": policies}))
     end = pd.Timestamp(T0 + minutes * MIN, unit="ms", tz="UTC")
     (window / "metadata.json").write_text(
         json.dumps({"run_number": n, "simulated_time": end.isoformat()})

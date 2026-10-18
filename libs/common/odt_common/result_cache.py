@@ -30,9 +30,9 @@ class ResultCache:
     """Simple cache for simulation results to avoid redundant runs.
 
     Caches the last simulation's inputs (topology hash + task count) and run
-    directory path. If the next simulation has identical inputs, the entire
-    cached run directory (input/, output/, metadata.json) is copied to the
-    new run location.
+    directory path. If the next simulation has identical inputs, the cached
+    run directory (input/, output/) is copied to the new run location; the
+    caller writes its metadata.json last.
     """
 
     def __init__(self) -> None:
@@ -85,10 +85,9 @@ class ResultCache:
         return self.last_run_dir
 
     def copy_to_new_run(self, source_run_dir: Path, destination_run_dir: Path) -> None:
-        """Copy all contents from cached run directory to new run location.
+        """Copy the cached run directory to the new run location, without its metadata.json.
 
-        This recursively copies all files and folders (input/, output/, metadata.json)
-        from the cached run to the new run directory.
+        Readers take a run with metadata.json as complete, so the caller writes that one last.
 
         Args:
             source_run_dir: Source run directory (e.g., run_3/simulator/)
@@ -104,8 +103,9 @@ class ResultCache:
         if destination_run_dir.exists():
             shutil.rmtree(destination_run_dir)
 
-        # Copy entire run directory recursively
-        shutil.copytree(source_run_dir, destination_run_dir)
+        shutil.copytree(
+            source_run_dir, destination_run_dir, ignore=shutil.ignore_patterns("metadata.json")
+        )
 
     def update(self, topology: Topology, task_count: int, run_dir: Path) -> None:
         """Update cache with new simulation state and run directory.

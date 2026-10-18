@@ -162,8 +162,9 @@ class OpenDCRunner:
         topology_path: Path,
         output_path: Path,
         opendc_output_folder: str,
+        scheduler: str | None = None,
     ) -> None:
-        """Create experiment.json file for OpenDC."""
+        """Create experiment.json file for OpenDC; without a scheduler, OpenDC uses its default."""
         experiment = {
             "name": experiment_name,
             "topologies": [{"pathToFile": str(topology_path)}],
@@ -176,6 +177,8 @@ class OpenDCRunner:
                 }
             ],
         }
+        if scheduler:
+            experiment["allocationPolicies"] = [{"type": "prefab", "policyName": scheduler}]
 
         with open(output_path, "w") as f:
             json.dump(experiment, f, indent=2)
@@ -190,6 +193,7 @@ class OpenDCRunner:
         run_number: int,
         simulated_time: datetime,
         timeout_seconds: int = 120,
+        scheduler: str | None = None,
     ) -> tuple[bool, Path]:
         """Run OpenDC simulation with given tasks and topology.
 
@@ -229,7 +233,12 @@ class OpenDCRunner:
             opendc_output_folder = str(output_dir)
             experiment_name = f"run_{run_number}"
             self._create_experiment_json(
-                experiment_name, workload_dir, topology_file, experiment_file, opendc_output_folder
+                experiment_name,
+                workload_dir,
+                topology_file,
+                experiment_file,
+                opendc_output_folder,
+                scheduler,
             )
 
             # Run OpenDC

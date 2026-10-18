@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from odt_common import ResultCache, TaskAccumulator, load_config_from_env
+from odt_common.config import DynamicConfigEvent
 from odt_common.models import Task, Topology, TopologySnapshot
 from odt_common.odc_runner import OpenDCRunner
 from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer, get_kafka_producer
@@ -38,6 +39,7 @@ class SimulationService:
         workload_topic: str,
         topology_topic: str,
         sim_topology_topic: str,
+        system_topic: str,
         simulation_frequency_minutes: int,
         speed_factor: float,
         run_output_dir: str,
@@ -52,6 +54,7 @@ class SimulationService:
             workload_topic: Kafka topic name for workload events (dc.workload)
             topology_topic: Kafka topic name for topology updates (dc.topology)
             sim_topology_topic: Kafka topic name for simulated topology updates (sim.topology)
+            system_topic: Kafka topic name for runtime settings (sys.config), e.g., the scheduler
             simulation_frequency_minutes: Simulation frequency in simulated time minutes
             speed_factor: Configured simulation speed multiplier
             run_output_dir: Base directory for run outputs
@@ -64,6 +67,7 @@ class SimulationService:
         self.workload_topic = workload_topic
         self.topology_topic = topology_topic
         self.sim_topology_topic = sim_topology_topic
+        self.system_topic = system_topic
         self.simulation_frequency = timedelta(minutes=simulation_frequency_minutes)
         self.speed_factor = speed_factor
         self.run_id = run_id
@@ -81,7 +85,7 @@ class SimulationService:
         logger.info("Initialized result processor")
 
         # Initialize Kafka consumer
-        topics = [workload_topic, topology_topic, sim_topology_topic]
+        topics = [workload_topic, topology_topic, sim_topology_topic, system_topic]
         self.consumer = get_kafka_consumer(
             topics=topics,
             group_id=consumer_group,
@@ -105,6 +109,7 @@ class SimulationService:
         # Topology state
         self.real_topology: Topology | None = None
         self.simulated_topology: Topology | None = None
+        self.scheduler: str | None = None  # OpenDC's default until the control panel picks one
 
         # Statistics
         self.tasks_processed = 0
@@ -295,14 +300,14 @@ class SimulationService:
                 f"(topology unchanged, {len(all_tasks)} tasks)"
             )
 
-            # Copy entire cached run directory to new run location
+            # Copy the cached run, without its metadata.json, to the new run location
             cached_run_dir = self.result_cache.get_cached_run_dir()
             if cached_run_dir:
                 self.result_cache.copy_to_new_run(cached_run_dir, run_dir)
 
-                # Update metadata with new timestamp and cached flag
-                metadata_file = run_dir / "metadata.json"
-                metadata = json.loads(metadata_file.read_text())
+                # The cached run's metadata with the new time, written last: a run with
+                # metadata.json counts as complete
+                metadata = json.loads((cached_run_dir / "metadata.json").read_text())
                 metadata["simulated_time"] = aligned_simulated_time.replace(
                     microsecond=0
                 ).isoformat()
@@ -310,7 +315,7 @@ class SimulationService:
                     datetime.now(UTC).replace(microsecond=0, tzinfo=None).isoformat()
                 )
                 metadata["cached"] = True
-                metadata_file.write_text(json.dumps(metadata, indent=2))
+                (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
 
                 logger.info(f"✅ Cached results copied to run_{self.run_number}")
                 was_cached = True
@@ -325,6 +330,7 @@ class SimulationService:
                 run_number=self.run_number,
                 simulated_time=aligned_simulated_time,
                 timeout_seconds=120,
+                scheduler=self.scheduler,
             )
 
             if not success:
@@ -446,6 +452,14 @@ class SimulationService:
         except Exception as e:
             logger.error(f"Error processing topology update message: {e}", exc_info=True)
 
+    def _process_config_event(self, message_data: dict[str, Any]) -> None:
+        """Follow a scheduler change; the other runtime settings are not the simulator's."""
+        event = DynamicConfigEvent(**message_data)
+        if event.setting_key == "simulator.scheduler" and event.new_value != self.scheduler:
+            self.scheduler = event.new_value
+            self.result_cache.clear()  # the same topology gives other results now
+            logger.info(f"Scheduler: {self.scheduler or 'OpenDC default'}")
+
     def process_message(self, message):
         """Process a single Kafka message.
 
@@ -462,6 +476,8 @@ class SimulationService:
                 self._process_topology_message(value)
             elif topic == self.sim_topology_topic:
                 self._process_topology_update_message(value)
+            elif topic == self.system_topic:
+                self._process_config_event(value)
             else:
                 logger.warning(f"Unknown topic: {topic}")
 
@@ -506,6 +522,7 @@ def main():
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
     sim_topology_topic = config.kafka.topics["sim_topology"].name
+    system_topic = config.kafka.topics["system"].name
 
     # Get simulator configuration
     simulation_frequency_minutes = config.services.simulator.simulation_frequency_minutes
@@ -545,6 +562,7 @@ def main():
                 workload_topic=workload_topic,
                 topology_topic=topology_topic,
                 sim_topology_topic=sim_topology_topic,
+                system_topic=system_topic,
                 simulation_frequency_minutes=simulation_frequency_minutes,
                 speed_factor=speed_factor,
                 run_output_dir=str(run_output_dir),

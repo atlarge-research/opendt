@@ -1,6 +1,5 @@
 """What the live twin has computed: its complete windows, the cluster over time, and its current state."""
 
-import numpy as np
 import pandas as pd
 import pytest
 from api import twin
@@ -30,8 +29,7 @@ def test_hosts_in_use_are_the_hosts_running_a_job(run_dir):
 def test_cluster_has_cpu_spread_and_demand(run_dir):
     cluster = twin.cluster(run_dir)
     last = cluster.iloc[-1]
-    cpu = last[["cpu_utilization", "cpu_utilization_median", "cpu_utilization_p95"]].tolist()
-    assert cpu == pytest.approx([0.4, 0.4, 0.58])
+    assert last[["cpu_utilization", "cpu_utilization_median"]].tolist() == pytest.approx([0.4, 0.4])
     # 3 + 12 of 2 x 16 cores
     assert last[["cpu_demand_cores", "cpu_capacity_cores"]].tolist() == [15, 32]
 
@@ -55,7 +53,6 @@ def test_scheduling_forecasts_completion_and_queue_time_per_window(run_dir):
     assert scheduling["completion_h"].tolist() == pytest.approx([55 / 60, 3])
     # jobs started in each window's own slice: 1, 2, and 5 (0, 2, 1 min), then 3 (3 min)
     assert scheduling["queue_median_min"].tolist() == [1, 3]
-    assert scheduling["queue_p95_min"].tolist() == pytest.approx([1.9, 3])
 
 
 def test_jobs_left_at_twin_time_longest_first(run_dir):
@@ -70,22 +67,28 @@ def test_events_mark_topology_changes_where_they_apply(run_dir):
     write_window(run_dir, 3, 15, hosts=2770, active=[30], zone_path=twin.CARBON_TRACES["RO"])
     events = twin.events(run_dir)
     assert events["time"].dt.strftime("%H:%M").tolist() == ["22:05", "22:10"]
-    assert events["text"].tolist() == ["Hosts 277 to 2,770", "Carbon zone Default to RO"]
+    assert events["text"].tolist() == [
+        "Servers 277 SURF to 2,770 SURF",
+        "Carbon zone Default to RO",
+    ]
 
 
-def test_calibration_without_infinite_mape(run_dir):
-    assert twin.calibration(run_dir).empty  # the calibrator is off
-    (run_dir / "calibrator").mkdir()
-    pd.DataFrame(
-        {
-            "timestamp": pd.to_datetime(["2022-10-06 22:05", "2022-10-06 22:10"], utc=True),
-            "best_value": [3.0, 4.0],
-            "best_mape": [5.2, np.inf],
-        }
-    ).to_parquet(run_dir / "calibrator" / "agg_results.parquet")
-    calibration = twin.calibration(run_dir)
-    assert calibration["r"].tolist() == [3, 4]
-    assert calibration["mape"].isna().tolist() == [False, True]
+def test_the_scheduler_comes_from_the_experiment_of_the_window(run_dir):
+    write_window(run_dir, 3, 15, hosts=2770, active=[30], scheduler="ActiveServers")
+    assert twin.status(run_dir)["scheduler"] == "ActiveServers"
+    # without a scheduler, OpenDC runs Mem
+    assert twin.events(run_dir)["text"].tolist()[-1] == "Scheduler Mem to ActiveServers"
+
+
+def test_accuracy_is_the_hourly_mape_of_the_power_with_the_twins_r(run_dir):
+    times = pd.to_datetime(["2022-10-06 22:00", "2022-10-06 22:30", "2022-10-06 23:00"], utc=True)
+    power = pd.DataFrame(
+        {"timestamp": times, "actual_power": 100.0, "simulated_power": [90.0, 110.0, 120.0]}
+    )
+    accuracy = twin.accuracy(run_dir, power)
+    assert accuracy["timestamp"].dt.strftime("%H:%M").tolist() == ["22:00", "23:00"]
+    assert accuracy["mape"].tolist() == pytest.approx([10, 20])
+    assert accuracy["r"].tolist() == [4, 4]  # the r of the last window so far
 
 
 def test_status_is_the_latest_complete_window(run_dir):

@@ -62,12 +62,132 @@
                 "sync": false,
                 "elements": [
                     {
-                        "uid": "hosts",
-                        "id": "hosts",
-                        "title": "Hosts",
+                        "uid": "kind_1",
+                        "id": "kind_1",
+                        "title": "Servers 1",
+                        "type": "select",
+                        "labelWidth": 12,
+                        "options": [
+                            {
+                                "id": "H01",
+                                "label": "SURF (16 cores)",
+                                "value": "H01"
+                            },
+                            {
+                                "id": "EPYC",
+                                "label": "EPYC (64 cores)",
+                                "value": "EPYC"
+                            },
+                            {
+                                "id": "Xeon",
+                                "label": "Xeon (40 cores)",
+                                "value": "Xeon"
+                            },
+                            {
+                                "id": "Memory",
+                                "label": "Memory, 1 TiB (48 cores)",
+                                "value": "Memory"
+                            },
+                            {
+                                "id": "Edge",
+                                "label": "Edge (8 cores)",
+                                "value": "Edge"
+                            }
+                        ]
+                    },
+                    {
+                        "uid": "count_1",
+                        "id": "count_1",
+                        "title": "Count",
                         "type": "number",
-                        "min": 1,
-                        "labelWidth": 12
+                        "labelWidth": 12,
+                        "min": 0
+                    },
+                    {
+                        "uid": "kind_2",
+                        "id": "kind_2",
+                        "title": "Servers 2",
+                        "type": "select",
+                        "labelWidth": 12,
+                        "options": [
+                            {
+                                "id": "H01",
+                                "label": "SURF (16 cores)",
+                                "value": "H01"
+                            },
+                            {
+                                "id": "EPYC",
+                                "label": "EPYC (64 cores)",
+                                "value": "EPYC"
+                            },
+                            {
+                                "id": "Xeon",
+                                "label": "Xeon (40 cores)",
+                                "value": "Xeon"
+                            },
+                            {
+                                "id": "Memory",
+                                "label": "Memory, 1 TiB (48 cores)",
+                                "value": "Memory"
+                            },
+                            {
+                                "id": "Edge",
+                                "label": "Edge (8 cores)",
+                                "value": "Edge"
+                            }
+                        ]
+                    },
+                    {
+                        "uid": "count_2",
+                        "id": "count_2",
+                        "title": "Count",
+                        "type": "number",
+                        "labelWidth": 12,
+                        "min": 0
+                    },
+                    {
+                        "uid": "kind_3",
+                        "id": "kind_3",
+                        "title": "Servers 3",
+                        "type": "select",
+                        "labelWidth": 12,
+                        "options": [
+                            {
+                                "id": "H01",
+                                "label": "SURF (16 cores)",
+                                "value": "H01"
+                            },
+                            {
+                                "id": "EPYC",
+                                "label": "EPYC (64 cores)",
+                                "value": "EPYC"
+                            },
+                            {
+                                "id": "Xeon",
+                                "label": "Xeon (40 cores)",
+                                "value": "Xeon"
+                            },
+                            {
+                                "id": "Memory",
+                                "label": "Memory, 1 TiB (48 cores)",
+                                "value": "Memory"
+                            },
+                            {
+                                "id": "Edge",
+                                "label": "Edge (8 cores)",
+                                "value": "Edge"
+                            }
+                        ],
+                        "showIf": "return context.panel.elements.find((e) => e.id === 'kind_2').value"
+                    },
+                    {
+                        "uid": "count_3",
+                        "id": "count_3",
+                        "title": "Count",
+                        "type": "number",
+                        "labelWidth": 12,
+                        "min": 0,
+                        "showIf": "return context.panel.elements.find((e) => e.id === 'kind_2').value"
                     },
                     {
                         "uid": "carbon_zone",
@@ -100,6 +220,45 @@
                                 "id": "PL",
                                 "label": "PL",
                                 "value": "PL"
+                            }
+                        ]
+                    },
+                    {
+                        "uid": "scheduler",
+                        "id": "scheduler",
+                        "title": "Scheduler",
+                        "type": "select",
+                        "labelWidth": 12,
+                        "options": [
+                            {
+                                "id": "Mem",
+                                "label": "Mem",
+                                "value": "Mem"
+                            },
+                            {
+                                "id": "CoreMem",
+                                "label": "CoreMem",
+                                "value": "CoreMem"
+                            },
+                            {
+                                "id": "ActiveServers",
+                                "label": "ActiveServers",
+                                "value": "ActiveServers"
+                            },
+                            {
+                                "id": "ActiveServersInv",
+                                "label": "ActiveServersInv",
+                                "value": "ActiveServersInv"
+                            },
+                            {
+                                "id": "ProvisionedCores",
+                                "label": "ProvisionedCores",
+                                "value": "ProvisionedCores"
+                            },
+                            {
+                                "id": "Random",
+                                "label": "Random",
+                                "value": "Random"
                             }
                         ]
                     },
@@ -186,13 +345,8 @@
                             "type": "timestamp"
                         },
                         {
-                            "selector": "window",
-                            "text": "Window",
-                            "type": "number"
-                        },
-                        {
                             "selector": "hosts",
-                            "text": "Hosts",
+                            "text": "Servers",
                             "type": "number"
                         },
                         {
@@ -206,9 +360,9 @@
                             "type": "string"
                         },
                         {
-                            "selector": "speed_factor",
-                            "text": "Speed",
-                            "type": "number"
+                            "selector": "scheduler",
+                            "text": "Scheduler",
+                            "type": "string"
                         }
                     ]
                 }
@@ -219,11 +373,10 @@
                     "options": {
                         "indexByName": {
                             "Twin time": 0,
-                            "Window": 1,
-                            "Hosts": 2,
-                            "r": 3,
-                            "Carbon zone": 4,
-                            "Speed": 5
+                            "Servers": 1,
+                            "r": 2,
+                            "Carbon zone": 3,
+                            "Scheduler": 4
                         }
                     }
                 }
@@ -246,7 +399,7 @@
                     {
                         "matcher": {
                             "id": "byName",
-                            "options": "Hosts"
+                            "options": "Servers"
                         },
                         "properties": [
                             {
@@ -264,39 +417,6 @@
                             {
                                 "id": "decimals",
                                 "value": 1
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "Speed"
-                        },
-                        "properties": [
-                            {
-                                "id": "mappings",
-                                "value": [
-                                    {
-                                        "type": "value",
-                                        "options": {
-                                            "1": {
-                                                "text": "1x"
-                                            },
-                                            "60": {
-                                                "text": "60x"
-                                            },
-                                            "300": {
-                                                "text": "300x"
-                                            },
-                                            "3600": {
-                                                "text": "3,600x"
-                                            },
-                                            "-1": {
-                                                "text": "max"
-                                            }
-                                        }
-                                    }
-                                ]
                             }
                         ]
                     }
@@ -318,12 +438,39 @@
             "gridPos": {
                 "x": 6,
                 "y": 0,
-                "w": 18,
+                "w": 15,
                 "h": 4
             }
         },
         {
             "id": 3,
+            "type": "volkovlabs-form-panel",
+            "title": "View",
+            "options": {
+                "layout": {
+                    "variant": "none"
+                },
+                "initial": {
+                    "method": "-"
+                },
+                "update": {
+                    "method": "-",
+                    "code": "document.documentElement.requestFullscreen();\ncontext.grafana.locationService.partial({ kiosk: true });"
+                },
+                "submit": {
+                    "text": "Full screen",
+                    "icon": "monitor"
+                }
+            },
+            "gridPos": {
+                "x": 21,
+                "y": 0,
+                "w": 3,
+                "h": 4
+            }
+        },
+        {
+            "id": 4,
             "type": "timeseries",
             "title": "Power",
             "datasource": {
@@ -448,7 +595,7 @@
             }
         },
         {
-            "id": 4,
+            "id": 5,
             "type": "timeseries",
             "title": "CO2 emission vs. carbon intensity",
             "datasource": {
@@ -575,7 +722,7 @@
             }
         },
         {
-            "id": 5,
+            "id": 6,
             "type": "timeseries",
             "title": "Hosts available vs. in use",
             "datasource": {
@@ -685,7 +832,7 @@
             }
         },
         {
-            "id": 6,
+            "id": 7,
             "type": "row",
             "title": "Scheduling",
             "gridPos": {
@@ -696,7 +843,7 @@
             }
         },
         {
-            "id": 7,
+            "id": 8,
             "type": "stat",
             "title": "Now",
             "datasource": {
@@ -730,11 +877,6 @@
                             "selector": "queue_median_min",
                             "text": "Time in queue, median [min]",
                             "type": "number"
-                        },
-                        {
-                            "selector": "queue_p95_min",
-                            "text": "Time in queue, p95 [min]",
-                            "type": "number"
                         }
                     ]
                 }
@@ -745,8 +887,7 @@
                     "options": {
                         "indexByName": {
                             "Time to full completion [h]": 0,
-                            "Time in queue, median [min]": 1,
-                            "Time in queue, p95 [min]": 2
+                            "Time in queue, median [min]": 1
                         }
                     }
                 }
@@ -790,22 +931,6 @@
                                 "value": 1
                             }
                         ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "Time in queue, p95 [min]"
-                        },
-                        "properties": [
-                            {
-                                "id": "unit",
-                                "value": "none"
-                            },
-                            {
-                                "id": "decimals",
-                                "value": 1
-                            }
-                        ]
                     }
                 ]
             },
@@ -826,7 +951,7 @@
             }
         },
         {
-            "id": 8,
+            "id": 9,
             "type": "timeseries",
             "title": "Time to full completion",
             "datasource": {
@@ -914,7 +1039,7 @@
             }
         },
         {
-            "id": 9,
+            "id": 10,
             "type": "timeseries",
             "title": "Time in queue",
             "datasource": {
@@ -943,11 +1068,6 @@
                             "selector": "queue_median_min",
                             "text": "Median",
                             "type": "number"
-                        },
-                        {
-                            "selector": "queue_p95_min",
-                            "text": "p95",
-                            "type": "number"
                         }
                     ]
                 }
@@ -957,8 +1077,7 @@
                     "id": "organize",
                     "options": {
                         "indexByName": {
-                            "Median": 0,
-                            "p95": 1
+                            "Median": 0
                         }
                     }
                 }
@@ -987,21 +1106,6 @@
                                 }
                             }
                         ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "p95"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "mode": "fixed",
-                                    "fixedColor": "#E69F00"
-                                }
-                            }
-                        ]
                     }
                 ]
             },
@@ -1023,7 +1127,7 @@
             }
         },
         {
-            "id": 10,
+            "id": 11,
             "type": "timeseries",
             "title": "Jobs",
             "datasource": {
@@ -1154,7 +1258,7 @@
             }
         },
         {
-            "id": 11,
+            "id": 12,
             "type": "table",
             "title": "Jobs not done yet",
             "datasource": {
@@ -1283,7 +1387,7 @@
             }
         },
         {
-            "id": 12,
+            "id": 13,
             "type": "row",
             "title": "Utilization",
             "gridPos": {
@@ -1294,7 +1398,7 @@
             }
         },
         {
-            "id": 13,
+            "id": 14,
             "type": "stat",
             "title": "Now",
             "datasource": {
@@ -1330,11 +1434,6 @@
                             "type": "number"
                         },
                         {
-                            "selector": "cpu_utilization_p95",
-                            "text": "CPU, p95",
-                            "type": "number"
-                        },
-                        {
                             "selector": "hosts_up",
                             "text": "Hosts available",
                             "type": "number"
@@ -1354,9 +1453,8 @@
                         "indexByName": {
                             "CPU, median": 0,
                             "CPU, mean": 1,
-                            "CPU, p95": 2,
-                            "Hosts available": 3,
-                            "Hosts in use": 4
+                            "Hosts available": 2,
+                            "Hosts in use": 3
                         }
                     }
                 }
@@ -1385,18 +1483,6 @@
                         "matcher": {
                             "id": "byName",
                             "options": "CPU, mean"
-                        },
-                        "properties": [
-                            {
-                                "id": "unit",
-                                "value": "percentunit"
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "CPU, p95"
                         },
                         "properties": [
                             {
@@ -1448,7 +1534,7 @@
             }
         },
         {
-            "id": 14,
+            "id": 15,
             "type": "timeseries",
             "title": "CPU utilization of the hosts",
             "datasource": {
@@ -1482,11 +1568,6 @@
                             "selector": "cpu_utilization",
                             "text": "Mean",
                             "type": "number"
-                        },
-                        {
-                            "selector": "cpu_utilization_p95",
-                            "text": "p95",
-                            "type": "number"
                         }
                     ]
                 }
@@ -1497,8 +1578,7 @@
                     "options": {
                         "indexByName": {
                             "Median": 0,
-                            "Mean": 1,
-                            "p95": 2
+                            "Mean": 1
                         }
                     }
                 }
@@ -1544,21 +1624,6 @@
                                 }
                             }
                         ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "p95"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "mode": "fixed",
-                                    "fixedColor": "#E69F00"
-                                }
-                            }
-                        ]
                     }
                 ]
             },
@@ -1580,7 +1645,7 @@
             }
         },
         {
-            "id": 15,
+            "id": 16,
             "type": "timeseries",
             "title": "CPU demand vs. capacity",
             "datasource": {
@@ -1690,7 +1755,7 @@
             }
         },
         {
-            "id": 16,
+            "id": 17,
             "type": "row",
             "title": "Energy and sustainability",
             "gridPos": {
@@ -1701,7 +1766,7 @@
             }
         },
         {
-            "id": 17,
+            "id": 18,
             "type": "stat",
             "title": "This $period",
             "datasource": {
@@ -1831,7 +1896,7 @@
             }
         },
         {
-            "id": 18,
+            "id": 19,
             "type": "timeseries",
             "title": "Energy per $period",
             "datasource": {
@@ -1883,7 +1948,7 @@
                         "showPoints": "never",
                         "drawStyle": "bars",
                         "fillOpacity": 80,
-                        "barAlignment": -1
+                        "barAlignment": 1
                     },
                     "unit": "locale"
                 },
@@ -1923,7 +1988,7 @@
             }
         },
         {
-            "id": 19,
+            "id": 20,
             "type": "timeseries",
             "title": "Operational and embodied CO2 per $period",
             "datasource": {
@@ -1984,7 +2049,7 @@
                         },
                         "drawStyle": "bars",
                         "fillOpacity": 80,
-                        "barAlignment": -1
+                        "barAlignment": 1
                     },
                     "unit": "locale"
                 },
@@ -2039,7 +2104,7 @@
             }
         },
         {
-            "id": 20,
+            "id": 21,
             "type": "row",
             "title": "Twin accuracy",
             "gridPos": {
@@ -2050,7 +2115,7 @@
             }
         },
         {
-            "id": 21,
+            "id": 22,
             "type": "stat",
             "title": "Now",
             "datasource": {
@@ -2064,7 +2129,7 @@
                     "source": "url",
                     "parser": "backend",
                     "format": "table",
-                    "url": "http://api:8000/api/calibration",
+                    "url": "http://api:8000/api/accuracy",
                     "url_options": {
                         "method": "GET"
                     },
@@ -2076,13 +2141,13 @@
                             "type": "timestamp"
                         },
                         {
-                            "selector": "r",
-                            "text": "r",
+                            "selector": "mape",
+                            "text": "Power MAPE, last hour [%]",
                             "type": "number"
                         },
                         {
-                            "selector": "mape",
-                            "text": "MAPE [%]",
+                            "selector": "r",
+                            "text": "r",
                             "type": "number"
                         }
                     ]
@@ -2093,8 +2158,8 @@
                     "id": "organize",
                     "options": {
                         "indexByName": {
-                            "r": 0,
-                            "MAPE [%]": 1
+                            "Power MAPE, last hour [%]": 0,
+                            "r": 1
                         }
                     }
                 }
@@ -2110,7 +2175,7 @@
                     {
                         "matcher": {
                             "id": "byName",
-                            "options": "r"
+                            "options": "Power MAPE, last hour [%]"
                         },
                         "properties": [
                             {
@@ -2126,7 +2191,7 @@
                     {
                         "matcher": {
                             "id": "byName",
-                            "options": "MAPE [%]"
+                            "options": "r"
                         },
                         "properties": [
                             {
@@ -2158,9 +2223,9 @@
             }
         },
         {
-            "id": 22,
+            "id": 23,
             "type": "timeseries",
-            "title": "Calibrated r",
+            "title": "Power MAPE per hour, OpenDT vs. measured",
             "datasource": {
                 "type": "yesoreyeram-infinity-datasource",
                 "uid": "df5tfgbpfeakgc"
@@ -2172,7 +2237,95 @@
                     "source": "url",
                     "parser": "backend",
                     "format": "table",
-                    "url": "http://api:8000/api/calibration",
+                    "url": "http://api:8000/api/accuracy",
+                    "url_options": {
+                        "method": "GET"
+                    },
+                    "root_selector": "data",
+                    "columns": [
+                        {
+                            "selector": "timestamp",
+                            "text": "timestamp",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "mape",
+                            "text": "MAPE",
+                            "type": "number"
+                        }
+                    ]
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "organize",
+                    "options": {
+                        "indexByName": {
+                            "MAPE": 0
+                        }
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 0,
+                    "custom": {
+                        "axisLabel": "MAPE [%]",
+                        "lineWidth": 2,
+                        "showPoints": "never"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "MAPE"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "#D55E00"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "gridPos": {
+                "x": 4,
+                "y": 41,
+                "w": 10,
+                "h": 8
+            }
+        },
+        {
+            "id": 24,
+            "type": "timeseries",
+            "title": "r the twin runs with",
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "df5tfgbpfeakgc"
+            },
+            "targets": [
+                {
+                    "refId": "A",
+                    "type": "json",
+                    "source": "url",
+                    "parser": "backend",
+                    "format": "table",
+                    "url": "http://api:8000/api/accuracy",
                     "url_options": {
                         "method": "GET"
                     },
@@ -2223,94 +2376,6 @@
                                 "value": {
                                     "mode": "fixed",
                                     "fixedColor": "#009E73"
-                                }
-                            }
-                        ]
-                    }
-                ]
-            },
-            "options": {
-                "legend": {
-                    "calcs": [
-                        "lastNotNull"
-                    ]
-                },
-                "tooltip": {
-                    "mode": "multi"
-                }
-            },
-            "gridPos": {
-                "x": 4,
-                "y": 41,
-                "w": 10,
-                "h": 8
-            }
-        },
-        {
-            "id": 23,
-            "type": "timeseries",
-            "title": "MAPE of the best r per grid search",
-            "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "df5tfgbpfeakgc"
-            },
-            "targets": [
-                {
-                    "refId": "A",
-                    "type": "json",
-                    "source": "url",
-                    "parser": "backend",
-                    "format": "table",
-                    "url": "http://api:8000/api/calibration",
-                    "url_options": {
-                        "method": "GET"
-                    },
-                    "root_selector": "data",
-                    "columns": [
-                        {
-                            "selector": "timestamp",
-                            "text": "timestamp",
-                            "type": "timestamp"
-                        },
-                        {
-                            "selector": "mape",
-                            "text": "MAPE",
-                            "type": "number"
-                        }
-                    ]
-                }
-            ],
-            "transformations": [
-                {
-                    "id": "organize",
-                    "options": {
-                        "indexByName": {
-                            "MAPE": 0
-                        }
-                    }
-                }
-            ],
-            "fieldConfig": {
-                "defaults": {
-                    "min": 0,
-                    "custom": {
-                        "axisLabel": "MAPE [%]",
-                        "lineWidth": 2,
-                        "showPoints": "never"
-                    }
-                },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "MAPE"
-                        },
-                        "properties": [
-                            {
-                                "id": "color",
-                                "value": {
-                                    "mode": "fixed",
-                                    "fixedColor": "#D55E00"
                                 }
                             }
                         ]
