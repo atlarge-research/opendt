@@ -1132,7 +1132,8 @@
                                 "color": {
                                     "mode": "scheme",
                                     "scheme": "Greens",
-                                    "steps": 5
+                                    "steps": 5,
+                                    "min": 0
                                 },
                                 "cellGap": 1,
                                 "legend": {

@@ -62,6 +62,8 @@ Known issues:
   measured power; show what-ifs with the calibrator off.
 - The dashboards use Grafana's new layout (public preview in 12.4); if a screen misbehaves, the classic dashboard
   ("OpenDT Dashboard") still shows power and CO2.
+- On a projector of 1,280 pixels or less, use Full screen: next to Grafana's menu, the control panel is too narrow
+  for its fields.
 - When every candidate's MAPE is infinite, the calibrator still picks r = 3.0 and publishes it (seen in stored runs
   after about 1.5 trace days); keep the calibration demo within the first trace day.
 - The local `config/default.yaml` spells `linespace_points`; OpenDT ignores this field and tests 9 values (the

@@ -451,8 +451,8 @@ def get_server_kinds():
 
 @app.get("/api/accuracy")
 def get_accuracy(minutes: int = Query(60, ge=1, le=1440)):
-    """Per period (an hour; 5 minutes for the MAPE now): the MAPE [%] of OpenDT's power vs. the measured power,
-    and the r the twin ran with."""
+    """Per period (an hour; 5 minutes for the MAPE now): the MAPE [%] and the mean error [kW] of OpenDT's power vs.
+    the measured power, and the r the twin ran with."""
 
     def per_period(run: Path) -> pd.DataFrame:
         query = PowerDataQuery(run_id=run.name, workload_context=workload())

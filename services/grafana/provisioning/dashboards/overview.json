@@ -1924,13 +1924,13 @@
                             "options": {
                                 "initial": {
                                     "method": "-",
-                                    "code": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
+                                    "code": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs-left\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
                                 },
                                 "update": {
                                     "method": "-"
                                 },
                                 "updateEnabled": "disabled",
-                                "elementValueChanged": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs\", \"jobs-left\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
+                                "elementValueChanged": "const mine = [\"scheduling-now\", \"completion\", \"queue\", \"jobs-left\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -1956,11 +1956,6 @@
                                                 "value": "queue"
                                             },
                                             {
-                                                "id": "jobs",
-                                                "label": "Jobs",
-                                                "value": "jobs"
-                                            },
-                                            {
                                                 "id": "jobs-left",
                                                 "label": "Jobs waiting or running",
                                                 "value": "jobs-left"
@@ -1970,7 +1965,6 @@
                                             "scheduling-now",
                                             "completion",
                                             "queue",
-                                            "jobs",
                                             "jobs-left"
                                         ]
                                     }
@@ -2112,7 +2106,7 @@
                                             },
                                             {
                                                 "id": "carbon",
-                                                "label": "Operational and embodied CO2 per period",
+                                                "label": "CO2 per period",
                                                 "value": "carbon"
                                             },
                                             {
@@ -2161,13 +2155,13 @@
                             "options": {
                                 "initial": {
                                     "method": "-",
-                                    "code": "const mine = [\"accuracy-now\", \"mape\", \"r\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
+                                    "code": "const mine = [\"accuracy-now\", \"mape\", \"r\", \"error\"];\ncontext.panel.patchFormValue({ plots: '${plots:csv}'.split(',').filter((p) => mine.includes(p)) });"
                                 },
                                 "update": {
                                     "method": "-"
                                 },
                                 "updateEnabled": "disabled",
-                                "elementValueChanged": "const mine = [\"accuracy-now\", \"mape\", \"r\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
+                                "elementValueChanged": "const mine = [\"accuracy-now\", \"mape\", \"r\", \"error\"];\nif (context.element.id === 'plots') {\n  const others = '${plots:csv}'.split(',').filter((p) => !mine.includes(p));\n  context.grafana.locationService.partial({ 'var-plots': [...others, ...context.element.value] }, true);\n}",
                                 "sync": false,
                                 "elements": [
                                     {
@@ -2184,19 +2178,25 @@
                                             },
                                             {
                                                 "id": "mape",
-                                                "label": "Power draw MAPE per hour, OpenDT vs. ground truth",
+                                                "label": "Power draw MAPE per hour",
                                                 "value": "mape"
                                             },
                                             {
                                                 "id": "r",
                                                 "label": "Calibration parameter r",
                                                 "value": "r"
+                                            },
+                                            {
+                                                "id": "error",
+                                                "label": "Power draw error per hour",
+                                                "value": "error"
                                             }
                                         ],
                                         "value": [
                                             "accuracy-now",
                                             "mape",
-                                            "r"
+                                            "r",
+                                            "error"
                                         ]
                                     }
                                 ]
@@ -2693,165 +2693,10 @@
                     }
                 }
             },
-            "jobs": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 22,
-                    "title": "Jobs",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "tasks_pending",
-                                                        "text": "Waiting",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "tasks_active",
-                                                        "text": "Running",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "tasks_completed",
-                                                        "text": "Finished",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Waiting": 0,
-                                                "Running": 1,
-                                                "Finished": 2
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "timeseries",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
-                                },
-                                "tooltip": {
-                                    "mode": "multi"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "min": 0,
-                                    "custom": {
-                                        "axisLabel": "Jobs",
-                                        "lineWidth": 2,
-                                        "showPoints": "never"
-                                    },
-                                    "unit": "locale"
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Waiting"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#9557a5"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Running"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Finished"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#009E73"
-                                                }
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 22,
                     "title": "Jobs waiting or running",
                     "description": "",
                     "links": [],
@@ -3010,7 +2855,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 23,
                     "title": "Utilization now",
                     "description": "",
                     "links": [],
@@ -3172,7 +3017,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 24,
                     "title": "CPU utilization of the hosts",
                     "description": "",
                     "links": [],
@@ -3361,7 +3206,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 25,
                     "title": "CPU demand vs. capacity",
                     "description": "",
                     "links": [],
@@ -3495,7 +3340,7 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 26,
                     "title": "Hosts per CPU utilization",
                     "description": "",
                     "links": [],
@@ -3595,7 +3440,8 @@
                                 "color": {
                                     "mode": "scheme",
                                     "scheme": "Greens",
-                                    "steps": 5
+                                    "steps": 5,
+                                    "min": 0
                                 },
                                 "cellGap": 1,
                                 "legend": {
@@ -3617,7 +3463,7 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 27,
                     "title": "This $period",
                     "description": "",
                     "links": [],
@@ -3765,7 +3611,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 28,
                     "title": "Energy per $period",
                     "description": "",
                     "links": [],
@@ -3936,8 +3782,8 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
-                    "title": "Operational and embodied CO2 per $period",
+                    "id": 29,
+                    "title": "CO2 per $period",
                     "description": "",
                     "links": [],
                     "data": {
@@ -4131,7 +3977,7 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 30,
                     "title": "Carbon intensity",
                     "description": "",
                     "links": [],
@@ -4299,7 +4145,7 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 31,
                     "title": "Accuracy now",
                     "description": "",
                     "links": [],
@@ -4336,6 +4182,11 @@
                                                         "type": "number"
                                                     },
                                                     {
+                                                        "selector": "error_kw",
+                                                        "text": "Power draw error, last hour [kW]",
+                                                        "type": "number"
+                                                    },
+                                                    {
                                                         "selector": "r",
                                                         "text": "r",
                                                         "type": "number"
@@ -4354,7 +4205,8 @@
                                         "options": {
                                             "indexByName": {
                                                 "Power draw MAPE, last hour [%]": 0,
-                                                "r": 1
+                                                "Power draw error, last hour [kW]": 1,
+                                                "r": 2
                                             }
                                         }
                                     }
@@ -4403,6 +4255,22 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
+                                            "options": "Power draw error, last hour [kW]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "none"
+                                            },
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
                                             "options": "r"
                                         },
                                         "properties": [
@@ -4425,8 +4293,8 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
-                    "title": "Power draw MAPE per hour, OpenDT vs. ground truth",
+                    "id": 32,
+                    "title": "Power draw MAPE per hour",
                     "description": "",
                     "links": [],
                     "data": {
@@ -4593,7 +4461,7 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 33,
                     "title": "Calibration parameter r",
                     "description": "",
                     "links": [],
@@ -4694,6 +4562,118 @@
                                                 "value": {
                                                     "mode": "fixed",
                                                     "fixedColor": "#009E73"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "error": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 34,
+                    "title": "Power draw error per hour",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/accuracy",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "error_kw",
+                                                        "text": "OpenDT minus ground truth",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "OpenDT minus ground truth": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "timeseries",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "legend": {
+                                    "calcs": [
+                                        "lastNotNull"
+                                    ]
+                                },
+                                "tooltip": {
+                                    "mode": "multi"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "custom": {
+                                        "axisLabel": "Error [kW]",
+                                        "lineWidth": 2,
+                                        "showPoints": "never"
+                                    },
+                                    "decimals": 1
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "OpenDT minus ground truth"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#D55E00"
                                                 }
                                             }
                                         ]
@@ -4980,7 +4960,7 @@
                             "layout": {
                                 "kind": "AutoGridLayout",
                                 "spec": {
-                                    "maxColumnCount": 5,
+                                    "maxColumnCount": 4,
                                     "columnWidthMode": "narrow",
                                     "rowHeightMode": "standard",
                                     "fillScreen": false,
@@ -5068,32 +5048,6 @@
                                             "spec": {
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "jobs"
-                                                },
-                                                "conditionalRendering": {
-                                                    "kind": "ConditionalRenderingGroup",
-                                                    "spec": {
-                                                        "visibility": "show",
-                                                        "condition": "or",
-                                                        "items": [
-                                                            {
-                                                                "kind": "ConditionalRenderingVariable",
-                                                                "spec": {
-                                                                    "variable": "plots",
-                                                                    "operator": "equals",
-                                                                    "value": "jobs"
-                                                                }
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "AutoGridLayoutItem",
-                                            "spec": {
-                                                "element": {
-                                                    "kind": "ElementReference",
                                                     "name": "jobs-left"
                                                 },
                                                 "conditionalRendering": {
@@ -5146,14 +5100,6 @@
                                                 "variable": "plots",
                                                 "operator": "equals",
                                                 "value": "queue"
-                                            }
-                                        },
-                                        {
-                                            "kind": "ConditionalRenderingVariable",
-                                            "spec": {
-                                                "variable": "plots",
-                                                "operator": "equals",
-                                                "value": "jobs"
                                             }
                                         },
                                         {
@@ -5503,7 +5449,7 @@
                             "layout": {
                                 "kind": "AutoGridLayout",
                                 "spec": {
-                                    "maxColumnCount": 3,
+                                    "maxColumnCount": 4,
                                     "columnWidthMode": "narrow",
                                     "rowHeightMode": "standard",
                                     "fillScreen": false,
@@ -5585,6 +5531,32 @@
                                                     }
                                                 }
                                             }
+                                        },
+                                        {
+                                            "kind": "AutoGridLayoutItem",
+                                            "spec": {
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "error"
+                                                },
+                                                "conditionalRendering": {
+                                                    "kind": "ConditionalRenderingGroup",
+                                                    "spec": {
+                                                        "visibility": "show",
+                                                        "condition": "or",
+                                                        "items": [
+                                                            {
+                                                                "kind": "ConditionalRenderingVariable",
+                                                                "spec": {
+                                                                    "variable": "plots",
+                                                                    "operator": "equals",
+                                                                    "value": "error"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
                                         }
                                     ]
                                 }
@@ -5617,6 +5589,14 @@
                                                 "variable": "plots",
                                                 "operator": "equals",
                                                 "value": "r"
+                                            }
+                                        },
+                                        {
+                                            "kind": "ConditionalRenderingVariable",
+                                            "spec": {
+                                                "variable": "plots",
+                                                "operator": "equals",
+                                                "value": "error"
                                             }
                                         }
                                     ]
@@ -5711,13 +5691,12 @@
                 "spec": {
                     "name": "plots",
                     "label": "Plots",
-                    "query": "scheduling-now,completion,queue,jobs,jobs-left,utilization-now,cpu,demand,cpu-hosts,energy-now,energy,carbon,intensity,accuracy-now,mape,r",
+                    "query": "scheduling-now,completion,queue,jobs-left,utilization-now,cpu,demand,cpu-hosts,energy-now,energy,carbon,intensity,accuracy-now,mape,r,error",
                     "current": {
                         "text": [
                             "scheduling-now",
                             "completion",
                             "queue",
-                            "jobs",
                             "jobs-left",
                             "utilization-now",
                             "cpu",
@@ -5729,13 +5708,13 @@
                             "intensity",
                             "accuracy-now",
                             "mape",
-                            "r"
+                            "r",
+                            "error"
                         ],
                         "value": [
                             "scheduling-now",
                             "completion",
                             "queue",
-                            "jobs",
                             "jobs-left",
                             "utilization-now",
                             "cpu",
@@ -5747,7 +5726,8 @@
                             "intensity",
                             "accuracy-now",
                             "mape",
-                            "r"
+                            "r",
+                            "error"
                         ]
                     },
                     "options": [
@@ -5764,11 +5744,6 @@
                         {
                             "text": "queue",
                             "value": "queue",
-                            "selected": true
-                        },
-                        {
-                            "text": "jobs",
-                            "value": "jobs",
                             "selected": true
                         },
                         {
@@ -5829,6 +5804,11 @@
                         {
                             "text": "r",
                             "value": "r",
+                            "selected": true
+                        },
+                        {
+                            "text": "error",
+                            "value": "error",
                             "selected": true
                         }
                     ],

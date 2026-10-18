@@ -284,11 +284,15 @@ def events(run_dir: Path) -> pd.DataFrame:
 
 
 def accuracy(run_dir: Path, power: pd.DataFrame, minutes: int = 60) -> pd.DataFrame:
-    """Per period of `minutes`: the MAPE [%] of OpenDT's power vs. the measured power, and the r the twin ran with
-    by then."""
+    """Per period of `minutes`: the MAPE [%] of OpenDT's power vs. the measured power, the mean error [kW] (above 0,
+    OpenDT predicts more), and the r the twin ran with by then."""
     period = f"{minutes}min"
-    error = (power["simulated_power"] - power["actual_power"]).abs() / power["actual_power"] * 100
-    per_period = error.groupby(power["timestamp"].dt.floor(period)).mean().rename("mape").to_frame()
+    error = power["simulated_power"] - power["actual_power"]
+    per_period = (
+        pd.DataFrame({"mape": error.abs() / power["actual_power"] * 100, "error_kw": error / 1000})
+        .groupby(power["timestamp"].dt.floor(period))
+        .mean()
+    )
     r = pd.Series({end_time(w): settings(w)["calibration_factor"] for w in windows(run_dir)})
     per_period["r"] = r.resample(period).last().reindex(per_period.index).ffill()
     return per_period.reset_index(names="timestamp")

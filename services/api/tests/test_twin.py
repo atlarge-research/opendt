@@ -121,6 +121,9 @@ def test_accuracy_is_the_hourly_mape_of_the_power_with_the_twins_r(run_dir):
     accuracy = twin.accuracy(run_dir, power)
     assert accuracy["timestamp"].dt.strftime("%H:%M").tolist() == ["22:00", "23:00"]
     assert accuracy["mape"].tolist() == pytest.approx([10, 20])
+    assert accuracy["error_kw"].tolist() == pytest.approx(
+        [0, 0.02]
+    )  # OpenDT minus measured, signed
     assert accuracy["r"].tolist() == [4, 4]  # the r of the last window so far
     assert twin.accuracy(run_dir, power, minutes=30)["mape"].tolist() == pytest.approx([10, 10, 20])
 
