@@ -39,7 +39,7 @@ PATHS = Paths(
     root=_root,
     opendc_bin=_root / "opendc/bin/OpenDCExperimentRunner/bin/OpenDCExperimentRunner",
     workload=_root / "workload/SURF",
-    carbon=_root / "tutorial/resources/carbon_traces",
+    carbon=_root / "workload/SURF/carbon_zones",
     output=_root / "tutorial/resources/output",
 )
 

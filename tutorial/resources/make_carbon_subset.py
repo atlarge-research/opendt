@@ -1,7 +1,7 @@
-"""Derive tutorial/resources/carbon_traces/ from the Electricity Maps traces in opendc-traces.
+"""Derive workload/SURF/carbon_zones/ from the Electricity Maps traces in opendc-traces.
 
 Usage:
-    python tutorial/resources/make_carbon_subset.py ~/Atlarge/opendc-traces/carbon/traces tutorial/resources/carbon_traces
+    python tutorial/resources/make_carbon_subset.py ~/Atlarge/opendc-traces/carbon/traces workload/SURF/carbon_zones
 
 Source files are `<ZONE>_2021-2024.parquet` (hourly, Electricity Maps, ODbL 1.0). The tutorial keeps
 October 2022 only (the SURF trace runs 2022-10-06 22:00 to 2022-10-13 22:00 UTC) in the schema OpenDC

@@ -39,8 +39,8 @@ When something fails: OpenDC needs Java 21 (e.g., from [Adoptium](https://adopti
 
 ## What Is Where
 
-`resources/` holds the data and scripts of the notebooks (the helpers around the OpenDC simulator of OpenDT, the carbon
-traces, the configurations of the live twin, the images, and the tests); simulations are cached in
+`resources/` holds the data and scripts of the notebooks (the helpers around the OpenDC simulator of OpenDT, the
+configurations of the live twin, the images, and the tests); simulations are cached in
 `resources/output/`. The run-sheet of the session is [resources/INSTRUCTOR.md](resources/INSTRUCTOR.md).
 
 ## Data, Licenses, and Citation
@@ -48,7 +48,7 @@ traces, the configurations of the live twin, the images, and the tests); simulat
 The SURF traces come from Versluis et al., "Less is not more: We need rich datasets to explore", Future Generation
 Computer Systems 142 (2023), [doi:10.1016/j.future.2022.12.022](https://doi.org/10.1016/j.future.2022.12.022); the
 carbon intensity traces come from Electricity Maps, under the Open Database License
-([details](resources/carbon_traces/LICENSE.md)); and the figures come from the OpenDT paper (CC BY 4.0).
+([details](../workload/SURF/carbon_zones/LICENSE.md)); and the figures come from the OpenDT paper (CC BY 4.0).
 More in the [OpenDT documentation](https://atlarge-research.github.io/opendt/docs/).
 
 ```bibtex
