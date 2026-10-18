@@ -1,6 +1,5 @@
 """OpenDT API - FastAPI Application for datacenter simulation data."""
 
-import copy
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -13,7 +12,7 @@ from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, Response
 from odt_common import load_config_from_env
-from odt_common.config import DynamicConfigEvent, GlobalConfig, WorkloadContext
+from odt_common.config import DynamicConfigEvent, WorkloadContext
 from odt_common.models.topology import (
     CPU,
     Cluster,
@@ -25,9 +24,8 @@ from odt_common.models.topology import (
 )
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
-from pydantic import BaseModel, Field, field_validator
 
-from api import twin
+from api import levers, twin
 from api.carbon_query import CarbonDataQuery, CarbonDataResponse
 from api.power_query import PowerDataQuery, PowerDataResponse
 
@@ -59,8 +57,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize Kafka producer: {e}")
         app.state.kafka_producer = None
 
-    app.state.speed_factor = None  # set by the control panel; until then, the configured speed
-    app.state.parallel_simulations = None  # the same, for the calibrator
+    app.state.settings = {}  # the runtime settings the control panel sent; until then, the configured ones
     app.state.topology = None  # the simulated topology sent last
     yield
 
@@ -379,9 +376,12 @@ def publish(topic: str, message: dict, key: str | None = None) -> None:
 def get_status():
     """The twin's time, topology, and replay speed: the control panel's current values (a flat object)."""
     status = twin.status(twin_run())
-    speed = app.state.speed_factor or app.state.config.global_config.speed_factor
-    calibrator = app.state.config.services.calibrator
-    parallel = app.state.parallel_simulations or (calibrator and calibrator.max_parallel_workers)
+    sent, config = app.state.settings, app.state.config
+    speed = sent.get("global.speed_factor", config.global_config.speed_factor)
+    calibrator = config.services.calibrator
+    parallel = sent.get(
+        "calibrator.max_parallel_workers", calibrator and calibrator.max_parallel_workers
+    )
     return {
         **status,
         "twin_time": status["twin_time"].isoformat(),
@@ -473,67 +473,6 @@ def get_accuracy(minutes: int = Query(60, ge=1, le=1440)):
     return rows(per_period)
 
 
-# OpenDC's placement schedulers (allocation policies); Mem is its default
-SCHEDULERS = Literal[
-    "Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"
-]
-
-
-KIND = Literal["H01", "EPYC", "Xeon", "Memory", "Edge"]  # twin.SERVERS
-
-
-class Control(BaseModel):
-    """A change from the control panel; the fields left out stay as they are. The servers come in up to three
-    groups, each a kind and a count; a count of 0 removes the group."""
-
-    kind_1: KIND | None = None
-    count_1: int | None = Field(None, ge=0)
-    kind_2: KIND | None = None
-    count_2: int | None = Field(None, ge=0)
-    kind_3: KIND | None = None
-    count_3: int | None = Field(None, ge=0)
-    carbon_zone: Literal["NL", "PL", "DE", "RO"] | None = None
-    scheduler: SCHEDULERS | None = None
-    speed_factor: float | None = None
-    parallel_simulations: int | None = Field(None, gt=0)  # of the calibrator
-
-    @field_validator("speed_factor")
-    @classmethod
-    def twin_speed(cls, speed: float | None) -> float | None:
-        return speed if speed is None else GlobalConfig(speed_factor=speed).speed_factor
-
-
-RUNTIME = {
-    "scheduler",
-    "speed_factor",
-    "parallel_simulations",
-}  # on sys.config; the rest is the topology
-
-
-def servers(hosts: list[dict], change: Control) -> list[dict]:
-    """The twin's server groups with the change applied: a new kind keeps the group's count and takes the twin's r,
-    and groups of the same kind become one."""
-    r = hosts[0]["cpuPowerModel"]["calibrationFactor"]
-    merged = {}
-    for i, old in enumerate((hosts + [{"name": None, "count": 0}] * twin.GROUPS)[: twin.GROUPS], 1):
-        kind = getattr(change, f"kind_{i}") or old["name"]
-        count = getattr(change, f"count_{i}")
-        count = old["count"] if count is None else count
-        if getattr(change, f"kind_{i}") and not count:
-            raise HTTPException(status_code=422, detail=f"Hosts {i} need a count")
-        if not kind or not count:
-            continue
-        host = old
-        if kind != old["name"]:
-            model = {**twin.SERVERS[kind]["cpuPowerModel"], "calibrationFactor": r}
-            host = {**twin.SERVERS[kind], "cpuPowerModel": model}
-        if kind in merged:
-            merged[kind]["count"] += count
-        else:
-            merged[kind] = {**host, "name": kind, "count": count}
-    return list(merged.values())
-
-
 def configure(setting: str, value) -> None:
     """A runtime setting of the twin's services, on the compacted sys.config topic, keyed by the setting."""
     event = DynamicConfigEvent(
@@ -543,33 +482,19 @@ def configure(setting: str, value) -> None:
 
 
 @app.patch("/api/control")
-def control(change: Control):
-    """Change the running twin: hosts and carbon zone (a new simulated topology), scheduler, replay speed, and
-    the calibrator's parallel simulations."""
-    # servers or zone: a new topology, from the one sent last (a window may not have run it yet), with the r of
-    # the latest window (the calibrator may have changed it)
-    if change.model_dump(exclude_none=True).keys() - RUNTIME:
+def control(change: levers.Control):
+    """Change the running twin: hosts and CO2 zone as a new simulated topology, the scheduler, the replay
+    speed, and the calibrator's parallel simulations as runtime settings."""
+    if levers.moves_topology(change):
         latest = twin.topology(twin.windows(twin_run())[-1])
-        topology = copy.deepcopy(app.state.topology) or latest
-        cluster = topology["clusters"][0]
-        r = latest["clusters"][0]["hosts"][0]["cpuPowerModel"]["calibrationFactor"]
-        for host in cluster["hosts"]:
-            host["cpuPowerModel"]["calibrationFactor"] = r
-        cluster["hosts"] = servers(cluster["hosts"], change)
-        if not cluster["hosts"]:
-            raise HTTPException(status_code=422, detail="The twin needs at least one server")
-        if change.carbon_zone:
-            cluster["powerSource"]["carbonTracePath"] = twin.CARBON_TRACES[change.carbon_zone]
-        app.state.topology = Topology(**topology).model_dump(mode="json")
+        try:
+            app.state.topology = levers.topology(change, app.state.topology, latest)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
         publish("sim_topology", app.state.topology, key="datacenter")
-    if change.scheduler:
-        configure("simulator.scheduler", change.scheduler)
-    if change.speed_factor is not None:
-        configure("global.speed_factor", change.speed_factor)
-        app.state.speed_factor = change.speed_factor
-    if change.parallel_simulations:
-        configure("calibrator.max_parallel_workers", change.parallel_simulations)
-        app.state.parallel_simulations = change.parallel_simulations
+    for setting, value in levers.settings(change).items():
+        configure(setting, value)
+        app.state.settings[setting] = value
     return get_status()
 
 

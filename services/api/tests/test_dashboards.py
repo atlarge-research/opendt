@@ -7,7 +7,7 @@ from typing import get_args
 from urllib.parse import urlparse
 
 import pytest
-from api import main, twin
+from api import levers, main, twin
 
 REPO = Path(__file__).resolve().parents[3]
 DASHBOARDS = REPO / "services" / "grafana" / "provisioning" / "dashboards"
@@ -86,7 +86,7 @@ def test_graphs_mark_topology_changes(name):
     [
         ("carbon_zone", list(twin.CARBON_TRACES)),
         ("kind_1", list(twin.SERVERS)),
-        ("scheduler", list(get_args(main.SCHEDULERS))),
+        ("scheduler", list(get_args(levers.SCHEDULERS))),
     ],
 )
 def test_forms_offer_what_the_api_takes(field, api):
