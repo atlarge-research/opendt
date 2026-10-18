@@ -1,5 +1,8 @@
 """The screens: the provisioned JSON is what dashboards/ writes (change a plot there, run build.py)."""
 
+import re
+from html import escape
+
 import build
 import screens
 import steps
@@ -51,14 +54,42 @@ def test_steps_are_known():
 def test_one_step_at_a_time():
     spec = screens.tutorial["spec"]
     [step] = [v["spec"] for v in spec["variables"] if v["spec"]["name"] == "step"]
-    count = sum(len(use_case) for use_case in steps.STEPS.values())
-    assert step["query"].split(",") == [str(n) for n in range(1, count + 1)]
-    [area] = [
-        r["spec"]["layout"]["spec"]["items"]
+    rows = {
+        r["spec"]["conditionalRendering"]["spec"]["items"][0]["spec"]["value"]: r["spec"]
         for r in spec["layout"]["spec"]["rows"]
-        if r["spec"]["title"] == "Step"
-    ]
-    texts = [item["spec"] for item in area if item["spec"]["element"]["name"].startswith("text-")]
-    for n, text in enumerate(texts, 1):
-        [rule] = text["conditionalRendering"]["spec"]["items"]
-        assert rule["spec"] == {"variable": "step", "operator": "equals", "value": str(n)}
+    }
+    assert step["query"].split(",") == list(rows)  # a row for each value of the step
+    for n, (_, s) in enumerate(steps.ORDER, 1):
+        shown = [str(n)] + ([f"{n}s"] if "solution" in steps.QUESTIONS[s["question"]] else [])
+        for value in shown:  # the step, and the step with its solution
+            names = [i["spec"]["element"]["name"] for i in rows[value]["layout"]["spec"]["items"]]
+            assert {"control", f"step-{value}", *screens.BOXES} <= set(names)
+            plots = [name.removeprefix("plot-") for name in names if name.startswith("plot-")]
+            assert plots == s["plots"]
+
+
+def test_card():
+    last = len(steps.ORDER)
+    for n, (_, step) in enumerate(steps.ORDER, 1):
+        card = steps.card(n)["options"]["content"]
+        linked = {int(i) for i in re.findall(r'var-step=(\d+)"', card)}
+        assert linked == set(range(1, last + 1)) - {n}  # every other step, folded
+        solution = steps.QUESTIONS[step["question"]].get("solution")
+        if solution:
+            first = escape(solution.splitlines()[0])
+            assert first not in card and f'var-step={n}s"' in card
+            assert first in steps.card(n, shown=True)["options"]["content"]
+    assert ">Back<" not in steps.card(1)["options"]["content"]
+    assert ">Next<" not in steps.card(last)["options"]["content"]
+    middle = steps.card(2)["options"]["content"]
+    assert middle.index(">Back<") < middle.index(">Next<")
+
+
+def test_split():
+    assert screens.split(["a"], 6, 9, 18, 14) == [("a", 6, 9, 18, 14)]
+    assert screens.split(["a", "b"], 6, 9, 18, 14) == [("a", 6, 9, 9, 14), ("b", 15, 9, 9, 14)]
+    # top to bottom, then left to right; of three, the first is as tall as the area
+    three = [("a", 6, 9, 9, 14), ("b", 15, 9, 9, 7), ("c", 15, 16, 9, 7)]
+    assert screens.split(["a", "b", "c"], 6, 9, 18, 14) == three
+    four = [("a", 6, 9, 9, 7), ("b", 6, 16, 9, 7), ("c", 15, 9, 9, 7), ("d", 15, 16, 9, 7)]
+    assert screens.split(["a", "b", "c", "d"], 6, 9, 18, 14) == four

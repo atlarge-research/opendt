@@ -1,10 +1,11 @@
 """The screens: each panel and its place, (name, panel, x, y, width, height) on a 24-column grid."""
 
 import steps
-from form import HOSTS, control, group, picker, stepper
+from form import HOSTS, control, group, picker
 from layout import auto, custom, dashboard, grid, picked, row, when
 from panels import PERIODS
 from plots import (
+    BOXES,
     ROWS,
     TILES,
     arrivals,
@@ -102,39 +103,59 @@ topology = screen(
     ],
 )
 
-# the Tutorial screen: the twin's state at the top, then the current step, its question and its plots
-STEPS = [(use_case, step) for use_case, items in steps.STEPS.items() for step in items]
-TEXTS = {
-    f"text-{n}": steps.text(f"Step {n} of {len(STEPS)}: {use_case}", step)
-    for n, (use_case, step) in enumerate(STEPS, 1)
-}
-# each plot once, shown at the steps that name it
-AT = {}
-for n, (_, step) in enumerate(STEPS, 1):
-    for key in step["plots"]:
-        AT.setdefault(key, []).append(str(n))
-tutorial = screen(
+# the Tutorial screen, one step at a time, each step a row shown at its step: the twin on the left, its control
+# panel and its state in boxes; the step on the right, its question and its plots
+BOX_PLACES = [
+    ("time-box", 0, 16, 6),
+    ("truth-box", 0, 18, 3),
+    ("opendt-box", 3, 18, 3),
+    ("mape-box", 0, 20, 3),
+    ("co2-box", 3, 20, 3),
+]
+# the step's height, then its plots down to the boxes' bottom; with its solution shown, the step is taller
+CARD, SOLUTION, BOTTOM = 8, 10, 22
+
+
+def split(names, x, y, width, height):
+    """The plots of a step in the area, in two columns, each top to bottom, the left one with the fewer;
+    a single plot takes it all."""
+    if len(names) == 1:
+        return [(names[0], x, y, width, height)]
+    half, left = width // 2, len(names) // 2
+    return stack(names[:left], x, y, half, height) + stack(
+        names[left:], x + half, y, width - half, height
+    )
+
+
+def stack(names, x, y, width, height):
+    """The names one under the other, in equal parts of the height."""
+    h = height // len(names)
+    return [(name, x, y + i * h, width, h) for i, name in enumerate(names)]
+
+
+def slide(value, step, card):
+    """The row shown while the step variable has this value: n, or ns with the solution shown."""
+    plots = split([f"plot-{key}" for key in step["plots"]], 6, card, 18, BOTTOM - card)
+    boxes = [(name, x, y, w, 2) for name, x, y, w in BOX_PLACES]
+    places = [("control", 0, 0, 6, 16), *boxes, (f"step-{value}", 6, 0, 18, card), *plots]
+    return row("", grid(places), shown=when("step", "equals", value))
+
+
+SLIDES = []  # (value of the step variable, step, its card)
+for n, (_, step) in enumerate(steps.ORDER, 1):
+    SLIDES.append((str(n), step, steps.card(n)))
+    if "solution" in steps.QUESTIONS[step["question"]]:
+        SLIDES.append((f"{n}s", step, steps.card(n, shown=True)))
+tutorial = dashboard(
     "opendt-tutorial",
     "OpenDT, tutorial",
+    {"control": control("opendt-tutorial", [HOSTS])}
+    | BOXES
+    | {f"step-{value}": card for value, _, card in SLIDES}
+    | {f"plot-{key}": steps.PLOTS[key] for _, step, _ in SLIDES for key in step["plots"]},
+    [slide(value, step, SOLUTION if value.endswith("s") else CARD) for value, step, _ in SLIDES],
     [
-        ("control", control("opendt-tutorial", [HOSTS]), 0, 0, 6, 18),
-        *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
-        ("steps", stepper(len(STEPS)), 6, 6, 18, 2),
-        ("decisions", decisions, 6, 8, 18, 10),
-    ],
-    rows=[
-        row(
-            "Step",
-            auto(
-                [(name, when("step", "equals", str(n))) for n, name in enumerate(TEXTS, 1)]
-                + [(f"step-{key}", when("step", "equals", *at)) for key, at in AT.items()],
-                3,
-            ),
-        )
-    ],
-    panels=TEXTS | {f"step-{key}": steps.PLOTS[key] for key in AT},
-    variables=[
         custom("period", "Interval", PERIODS, current="day"),
-        custom("step", "Step", [str(n) for n in range(1, len(STEPS) + 1)], current="1"),
+        custom("step", "Step", [value for value, _, _ in SLIDES], current="1"),
     ],
 )
