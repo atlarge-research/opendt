@@ -39,10 +39,8 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
-    # Startup
     logger.info("Starting OpenDT API service...")
 
-    # Load configuration
     try:
         app.state.config = load_config_from_env()
         logger.info(f"Configuration loaded for workload: {app.state.config.workload}")
@@ -50,7 +48,6 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to load configuration: {e}")
         app.state.config = None
 
-    # Initialize Kafka producer (stored in app state for reuse)
     try:
         app.state.kafka_producer = get_kafka_producer()
         logger.info("Kafka producer initialized")
@@ -63,14 +60,12 @@ async def lifespan(app: FastAPI):
     app.state.topology = None  # the simulated topology sent last
     yield
 
-    # Shutdown
     logger.info("Shutting down OpenDT API service...")
     if app.state.kafka_producer:
         app.state.kafka_producer.close()
         logger.info("Kafka producer closed")
 
 
-# Create FastAPI application
 app = FastAPI(
     title="OpenDT API",
     description="Open Digital Twin - REST API for datacenter simulation",
@@ -80,30 +75,19 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for API access
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# ============================================================================
-# ROOT REDIRECT
-# ============================================================================
-
-
 @app.get("/", include_in_schema=False)
 async def root():
     """Redirect root to API documentation."""
     return RedirectResponse(url="/docs")
-
-
-# ============================================================================
-# API ENDPOINTS
-# ============================================================================
 
 
 @app.get("/health")
@@ -117,11 +101,6 @@ async def health_check():
         "kafka": kafka_status,
         "config": config_status,
     }
-
-
-# ============================================================================
-# TOPOLOGY MANAGEMENT
-# ============================================================================
 
 
 # Default topology for Swagger UI (matches SURF data)
@@ -183,11 +162,6 @@ async def update_topology(
     }
 
 
-# ============================================================================
-# POWER DATA QUERY
-# ============================================================================
-
-
 @app.get("/api/power", response_model=PowerDataResponse)
 def get_power_data(
     interval_seconds: int = Query(
@@ -202,33 +176,20 @@ def get_power_data(
     - `consumption.parquet`: Actual power consumption from workload
 
     The data is aligned to a common interval and clipped to the shortest timeseries.
-
-    Args:
-        interval_seconds: Sampling interval in seconds (default: 60)
-        start_time: Optional start time filter (ISO 8601 format)
-
-    Returns:
-        PowerDataResponse with aligned timeseries data
-
-    Raises:
-        HTTPException: If data files are not found or cannot be processed
     """
-    # Get run ID from environment
     run_id = os.getenv("RUN_ID")
     if not run_id:
         raise HTTPException(status_code=500, detail="RUN_ID environment variable not set")
 
-    # Get workload context from config
     if not app.state.config:
         raise HTTPException(status_code=500, detail="Configuration not loaded")
 
     try:
         query = PowerDataQuery(run_id=run_id, workload_context=workload())
 
-        # Execute query
         result = query.query(interval_seconds=interval_seconds, start_time=start_time)
 
-        logger.info(f"Power data query successful: {result.metadata['count']} data points")
+        logger.debug(f"Power data query successful: {result.metadata['count']} data points")
 
         return result
 
@@ -241,11 +202,6 @@ def get_power_data(
     except Exception as e:
         logger.error(f"Error querying power data: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
-
-
-# ============================================================================
-# CARBON EMISSION DATA QUERY
-# ============================================================================
 
 
 @app.get("/api/co2_emission", response_model=CarbonDataResponse)
@@ -261,30 +217,17 @@ def get_carbon_emission_data(
     based on power draw and carbon intensity.
 
     Carbon emission formula: power_draw (W) * carbon_intensity (gCO2/kWh) / 1000 = gCO2/h
-
-    Args:
-        interval_seconds: Sampling interval in seconds (default: 60)
-        start_time: Optional start time filter (ISO 8601 format)
-
-    Returns:
-        CarbonDataResponse with carbon emission timeseries data
-
-    Raises:
-        HTTPException: If data files are not found or cannot be processed
     """
-    # Get run ID from environment
     run_id = os.getenv("RUN_ID")
     if not run_id:
         raise HTTPException(status_code=500, detail="RUN_ID environment variable not set")
 
     try:
-        # Initialize query
         query = CarbonDataQuery(run_id=run_id)
 
-        # Execute query
         result = query.query(interval_seconds=interval_seconds, start_time=start_time)
 
-        logger.info(f"Carbon emission query successful: {result.metadata['count']} data points")
+        logger.debug(f"Carbon emission query successful: {result.metadata['count']} data points")
 
         return result
 
@@ -297,11 +240,6 @@ def get_carbon_emission_data(
     except Exception as e:
         logger.error(f"Error querying carbon emission data: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
-
-
-# ============================================================================
-# DASHBOARD: STATUS, CLUSTER, CONTROL PANEL
-# ============================================================================
 
 
 def workload() -> WorkloadContext:

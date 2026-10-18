@@ -60,9 +60,9 @@ When `true`, the calibrator service starts and actively tunes topology parameter
 
 The `services:` section contains configuration for individual services. See each service's README for detailed configuration options:
 
-- [dc-mock](../services/dc-mock/README.md#configuration) — Workload replay settings
-- [simulator](../services/simulator/README.md#configuration) — Simulation frequency
-- [calibrator](../services/calibrator/README.md#configuration) — Calibration search space and parallelism
+- [dc-mock](../services/dc-mock/README.md#configuration): workload replay settings
+- [simulator](../services/simulator/README.md#configuration): simulation frequency
+- [calibrator](../services/calibrator/README.md#configuration): calibration search space and parallelism
 
 ## Experiment Configurations
 

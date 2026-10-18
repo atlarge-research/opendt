@@ -35,7 +35,7 @@ class Consumption(BaseModel):
         elif isinstance(v, str):
             # Parse ISO format string
             dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
-            # Ensure UTC if not already timezone-aware
+            # naive times are UTC
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=UTC)
             return dt

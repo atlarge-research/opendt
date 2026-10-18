@@ -11,8 +11,6 @@ OpenDT is a distributed system that creates a real-time digital twin of datacent
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
 
----
-
 ## Quick Start
 
 **Prerequisites:** Docker, Docker Compose, Make, Python 3.11+, [uv](https://astral.sh/uv)
@@ -23,13 +21,11 @@ make up       # Start services
 ```
 
 **Access:**
-- **Dashboard:** http://localhost:3000 (Grafana)
+- **Dashboard:** http://localhost:3000 (Grafana: the Detailed, Simple, Topology, and Tutorial screens)
 - **API:** http://localhost:3001 (OpenAPI docs)
 
 ![OpenDT Grafana Dashboard](site/src/components/HomepageFeatures/grafana-dashboard.png)
 *Real-time dashboard comparing actual vs. simulated power consumption*
-
----
 
 ## Repository Structure
 
@@ -47,14 +43,12 @@ opendt/
 │   ├── api/                   # REST API (FastAPI)
 │   ├── calibrator/            # Topology calibration service
 │   ├── dc-mock/               # Datacenter mock (data replay)
-│   ├── grafana/               # Dashboard configuration
+│   ├── grafana/               # Dashboards (built by grafana/dashboards/build.py)
 │   ├── kafka-init/            # Kafka topic initialization
 │   └── simulator/             # OpenDC simulation engine
 └── workload/                  # Workload datasets
     └── SURF/                  # SURF datacenter workload
 ```
-
----
 
 ## Commands
 
@@ -69,8 +63,6 @@ opendt/
 | `make shell-<service>` | Open shell in a container |
 
 Run `make help` for the complete list.
-
----
 
 ## Documentation
 

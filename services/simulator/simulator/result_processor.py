@@ -146,7 +146,7 @@ class SimulationResultProcessor:
                 # Append to existing file
                 existing_df = pd.read_parquet(self.agg_results_file)
 
-                # Ensure existing data also only has required columns (for backwards compatibility)
+                # files of older runs have more columns
                 existing_columns = [col for col in required_columns if col in existing_df.columns]
                 if existing_columns != list(existing_df.columns):
                     logger.info(f"Filtering existing data to required columns: {required_columns}")

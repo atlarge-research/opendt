@@ -32,7 +32,7 @@ def opendc_bin_path() -> Path:
         if path.exists():
             return path
 
-    pytest.skip("OpenDC binary not found. Please ensure OpenDC binaries are available for testing.")
+    pytest.skip("OpenDC binary not found; the tests run OpenDC.")
 
 
 @pytest.fixture

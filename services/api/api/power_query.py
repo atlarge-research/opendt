@@ -55,10 +55,10 @@ class PowerDataQuery:
         self.tasks_path = workload_context.tasks_file
 
         workload_name = workload_context.name if workload_context.name else "mounted"
-        logger.info(f"Initialized PowerDataQuery for run {run_id}, workload {workload_name}")
-        logger.info(f"Simulation results: {self.sim_results_path}")
-        logger.info(f"Consumption data: {self.consumption_path}")
-        logger.info(f"Tasks data: {self.tasks_path}")
+        logger.debug(f"Initialized PowerDataQuery for run {run_id}, workload {workload_name}")
+        logger.debug(f"Simulation results: {self.sim_results_path}")
+        logger.debug(f"Consumption data: {self.consumption_path}")
+        logger.debug(f"Tasks data: {self.tasks_path}")
 
     def query(
         self, interval_seconds: int = 60, start_time: datetime | None = None
@@ -81,14 +81,14 @@ class PowerDataQuery:
             raise FileNotFoundError(f"Simulation results not found: {self.sim_results_path}")
 
         sim_df = pd.read_parquet(self.sim_results_path)
-        logger.info(f"Loaded {len(sim_df)} simulated power records")
+        logger.debug(f"Loaded {len(sim_df)} simulated power records")
 
         # Load actual consumption data
         if not self.consumption_path.exists():
             raise FileNotFoundError(f"Consumption data not found: {self.consumption_path}")
 
         actual_df = pd.read_parquet(self.consumption_path)
-        logger.info(f"Loaded {len(actual_df)} actual consumption records")
+        logger.debug(f"Loaded {len(actual_df)} actual consumption records")
 
         # Prepare simulated data
         sim_df = self._prepare_simulated_data(sim_df)
@@ -143,7 +143,6 @@ class PowerDataQuery:
         Returns:
             Prepared dataframe with timestamp and power_draw columns
         """
-        # Ensure timestamp is datetime
         if "timestamp" not in df.columns:
             raise ValueError("Simulation data missing 'timestamp' column")
 
@@ -183,13 +182,13 @@ class PowerDataQuery:
         # Get earliest task submission time and convert to milliseconds
         earliest_task_time = pd.to_datetime(tasks_df["submission_time"].min())
         earliest_task_time_ms = int(earliest_task_time.timestamp() * 1000)
-        logger.info(
+        logger.debug(
             f"Earliest task time: {earliest_task_time.isoformat()} ({earliest_task_time_ms}ms)"
         )
 
         # Get consumption offset from workload context
         offset_ms = self.workload_context.consumption_offset_ms
-        logger.info(f"Consumption offset: {offset_ms}ms")
+        logger.debug(f"Consumption offset: {offset_ms}ms")
 
         # Convert relative timestamps to absolute timestamps
         # Formula: absolute_time_ms = earliest_task_time_ms + relative_ms + offset_ms
@@ -200,7 +199,7 @@ class PowerDataQuery:
 
         # Convert from milliseconds to datetime (UTC-aware)
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
-        logger.info(f"Converted {len(df)} consumption timestamps to absolute datetime")
+        logger.debug(f"Converted {len(df)} consumption timestamps to absolute datetime")
 
         # Use power_draw column
         if "power_draw" not in df.columns:
@@ -233,12 +232,12 @@ class PowerDataQuery:
         start_time = max(sim_df["timestamp"].min(), actual_df["timestamp"].min())
         end_time = min(sim_df["timestamp"].max(), actual_df["timestamp"].max())
 
-        logger.info(f"Aligning data from {start_time} to {end_time}")
+        logger.debug(f"Aligning data from {start_time} to {end_time}")
 
         # Generate regular time grid at specified interval
         time_grid = pd.date_range(start=start_time, end=end_time, freq=f"{interval_seconds}s")
 
-        logger.info(f"Created time grid with {len(time_grid)} points")
+        logger.debug(f"Created time grid with {len(time_grid)} points")
 
         # Interpolate simulated data to time grid
         sim_df = sim_df.set_index("timestamp")
@@ -264,6 +263,6 @@ class PowerDataQuery:
         # Remove rows with NaN values (shouldn't happen with interpolation, but just in case)
         aligned = aligned.dropna()
 
-        logger.info(f"Aligned timeseries: {len(aligned)} data points")
+        logger.debug(f"Aligned timeseries: {len(aligned)} data points")
 
         return aligned

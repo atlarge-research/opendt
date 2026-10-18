@@ -85,7 +85,7 @@ def ensure_topics_exist(
                 if still_missing:
                     logger.warning(f"Some topics may not be ready yet: {still_missing}")
                 else:
-                    logger.info(f"✓ Successfully ensured all topics exist: {topic_names}")
+                    logger.info(f"Successfully ensured all topics exist: {topic_names}")
 
                 admin_client.close()
                 return True
@@ -141,7 +141,6 @@ def main() -> int:
             )
             new_topics.append(new_topic)
 
-        # Ensure topics exist
         logger.info("Creating Kafka topics...")
         success = ensure_topics_exist(
             bootstrap_servers=kafka_bootstrap_servers,
@@ -151,14 +150,14 @@ def main() -> int:
         )
 
         if success:
-            logger.info("✅ Kafka infrastructure initialization complete")
+            logger.info("Kafka infrastructure initialization complete")
             return 0
         else:
-            logger.error("❌ Failed to initialize Kafka infrastructure")
+            logger.error("Failed to initialize Kafka infrastructure")
             return 1
 
     except Exception as e:
-        logger.error(f"❌ Error during Kafka initialization: {e}", exc_info=True)
+        logger.error(f"Error during Kafka initialization: {e}", exc_info=True)
         return 1
 
 

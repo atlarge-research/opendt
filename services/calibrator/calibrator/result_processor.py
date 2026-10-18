@@ -199,7 +199,6 @@ class CalibrationResultProcessor:
             topology_changed: Whether the topology was updated and broadcast
             task_count: Number of tasks processed
         """
-        # Create new row (ensure best_value is rounded to 2 decimal places)
         new_row = pd.DataFrame(
             {
                 "timestamp": [timestamp],
@@ -212,7 +211,6 @@ class CalibrationResultProcessor:
             }
         )
 
-        # Ensure timestamp is UTC-aware
         new_row["timestamp"] = pd.to_datetime(new_row["timestamp"], utc=True)
 
         if self.agg_results_file.exists():

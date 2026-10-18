@@ -238,7 +238,7 @@ class AppConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_calibration_config(self) -> "AppConfig":
-        """Ensure calibrator config is provided when calibration is enabled."""
+        """Calibration needs the calibrator's settings."""
         if self.global_config.calibration_enabled and self.services.calibrator is None:
             raise ValueError(
                 "Calibration is enabled (global.calibration_enabled=true) but "

@@ -60,7 +60,7 @@ class OpenDCRunner:
             except Exception as e:
                 logger.error(f"Failed to make OpenDC runner executable: {e}")
 
-        logger.info(f"✅ OpenDC runner initialized: {self.opendc_path}")
+        logger.info(f"OpenDC runner initialized: {self.opendc_path}")
 
     def _create_tasks_parquet(self, tasks: list[Task], output_path: Path) -> None:
         """Create tasks.parquet file from Task models."""

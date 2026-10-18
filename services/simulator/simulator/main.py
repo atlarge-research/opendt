@@ -13,7 +13,7 @@ from odt_common import ResultCache, TaskAccumulator, load_config_from_env
 from odt_common.config import SCHEDULER, DynamicConfigEvent
 from odt_common.models import Task, Topology, TopologySnapshot
 from odt_common.odc_runner import OpenDCRunner
-from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer, get_kafka_producer
+from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer
 
 from simulator.result_processor import SimulationResultProcessor
 
@@ -73,18 +73,15 @@ class SimulationService:
         self.run_id = run_id
         self.background_load_nodes = background_load_nodes
 
-        # Setup output directories - simulator writes to run_dir/simulator/
         self.output_base_dir = Path(run_output_dir) / run_id / "simulator"
         self.output_base_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Simulator output directory: {self.output_base_dir}")
         logger.info(f"Configured speed factor: {self.speed_factor}x")
 
-        # Initialize result processor for aggregating simulation outputs
         self.result_processor = SimulationResultProcessor(self.output_base_dir)
         logger.info("Initialized result processor")
 
-        # Initialize Kafka consumer
         topics = [workload_topic, topology_topic, sim_topology_topic, system_topic]
         self.consumer = get_kafka_consumer(
             topics=topics,
@@ -92,13 +89,8 @@ class SimulationService:
             bootstrap_servers=kafka_bootstrap_servers,
         )
 
-        # Initialize Kafka producer (for future use)
-        self.producer = get_kafka_producer(kafka_bootstrap_servers)
-
-        # Initialize task accumulator
         self.task_accumulator = TaskAccumulator()
 
-        # Initialize OpenDC runner
         try:
             self.opendc_runner = OpenDCRunner()
         except FileNotFoundError as e:
@@ -111,17 +103,11 @@ class SimulationService:
         self.simulated_topology: Topology | None = None
         self.scheduler: str | None = None  # OpenDC's default until the control panel picks one
 
-        # Statistics
         self.tasks_processed = 0
         self.simulations_run = 0
         self.run_number = 0
 
-        # Initialize result cache
         self.result_cache = ResultCache()
-
-        # Speed tracking - to monitor if we're keeping up with configured speed
-        self.first_simulation_wall_time: float | None = None
-        self.first_simulation_sim_time: datetime | None = None
 
         logger.info(f"Initialized SimulationService with run ID: {run_id}")
         logger.info(f"Consumer group: {consumer_group}")
@@ -137,17 +123,10 @@ class SimulationService:
         Subtracts background_load_nodes from the first host type in the first cluster.
         This simulates nodes being occupied by background workload and unavailable
         for the simulation.
-
-        Args:
-            topology: Original topology
-
-        Returns:
-            New topology with reduced host count in first cluster
         """
         if self.background_load_nodes == 0:
             return topology
 
-        # Deep copy to avoid modifying the original
         reduced = copy.deepcopy(topology)
 
         if not reduced.clusters or not reduced.clusters[0].hosts:
@@ -175,11 +154,7 @@ class SimulationService:
         return reduced
 
     def _run_simulation(self) -> None:
-        """Run OpenDC simulation with accumulated tasks.
-
-        Args:
-            heartbeat_time: Timestamp that triggered this simulation
-        """
+        """Run OpenDC simulation with accumulated tasks."""
         if not self.opendc_runner:
             logger.warning("OpenDC runner not available, skipping simulation")
             return
@@ -188,19 +163,16 @@ class SimulationService:
             logger.warning("No topology available, skipping simulation")
             return
 
-        # Get all accumulated tasks
         all_tasks = self.task_accumulator.get_all_tasks()
 
         if not all_tasks:
             logger.info("No tasks to simulate, skipping")
             return
 
-        # Get task time range
         first_task_time = min(task.submission_time for task in all_tasks)
         latest_task_time = max(task.submission_time for task in all_tasks)
         task_span_minutes = (latest_task_time - first_task_time).total_seconds() / 60
 
-        # Calculate aligned simulation time
         aligned_simulated_time = self.task_accumulator.get_next_simulation_time(
             self.simulation_frequency
         )
@@ -208,12 +180,9 @@ class SimulationService:
             logger.error("Cannot calculate aligned simulation time")
             return
 
-        # Log detailed simulation overview
-        logger.info("=" * 80)
-        logger.info(f"🔬 Simulation Run {self.run_number + 1}")
-        logger.info("=" * 80)
+        logger.info(f"Simulation Run {self.run_number + 1}")
         logger.info(
-            f"📋 OpenDC Input Data:\n"
+            f"OpenDC Input Data:\n"
             f"   Total tasks:      {len(all_tasks)}\n"
             f"   First task:       {first_task_time.isoformat()}\n"
             f"   Latest task:      {latest_task_time.isoformat()}\n"
@@ -221,82 +190,16 @@ class SimulationService:
             f"   Simulation end:   {aligned_simulated_time.isoformat()}"
         )
 
-        # Track speed and drift
-        if self.first_simulation_wall_time is None:
-            # First simulation - establish baseline
-            self.first_simulation_wall_time = datetime.now(UTC)
-            self.first_simulation_sim_time = aligned_simulated_time
-            logger.info(
-                f"⏱️  First simulation baseline established:\n"
-                f"   Wall time: {self.first_simulation_wall_time.strftime('%H:%M:%S')}\n"
-                f"   Sim time:  {aligned_simulated_time.strftime('%H:%M:%S')}"
-            )
-        else:
-            # Calculate speed tracking
-            current_wall_time = datetime.now(UTC)
-            total_sim_elapsed_sec = (
-                aligned_simulated_time - self.first_simulation_sim_time
-            ).total_seconds()
-            total_wall_elapsed_sec = (
-                current_wall_time - self.first_simulation_wall_time
-            ).total_seconds()
-
-            if total_wall_elapsed_sec > 0:
-                actual_speedup = total_sim_elapsed_sec / total_wall_elapsed_sec
-
-                if self.speed_factor > 0:
-                    drift_percent = ((actual_speedup - self.speed_factor) / self.speed_factor) * 100
-                    drift_status = "ON TRACK ✓" if abs(drift_percent) < 5 else "DRIFTING ⚠️"
-                else:
-                    # Max speed mode
-                    drift_percent = 0
-                    drift_status = "MAX SPEED"
-
-                # Calculate expected vs actual position
-                if self.speed_factor > 0:
-                    expected_sim_elapsed = total_wall_elapsed_sec * self.speed_factor
-                    sim_lag_sec = expected_sim_elapsed - total_sim_elapsed_sec
-                    sim_lag_min = sim_lag_sec / 60
-                else:
-                    sim_lag_sec = 0
-                    sim_lag_min = 0
-
-                logger.info(
-                    f"⏱️  Speed Tracking:\n"
-                    f"   Configured speed:  {self.speed_factor}x\n"
-                    f"   Actual speed:      {actual_speedup:.2f}x\n"
-                    f"   Status:            {drift_status}\n"
-                    f"   Drift:             {drift_percent:+.1f}%\n"
-                    f"   \n"
-                    f"   Total simulated:   {total_sim_elapsed_sec / 60:.1f} minutes "
-                    f"({total_sim_elapsed_sec / 3600:.2f} hours)\n"
-                    f"   Total wall time:   {total_wall_elapsed_sec / 60:.1f} minutes "
-                    f"({total_wall_elapsed_sec / 3600:.2f} hours)\n"
-                    f"   Simulation lag:    {abs(sim_lag_min):.1f} minutes "
-                    f"({'behind' if sim_lag_sec < 0 else 'ahead'} of target)"
-                )
-
-                if abs(drift_percent) > 10 and self.speed_factor > 0:
-                    logger.warning(
-                        f"⚠️  WARNING: Simulator is {'lagging behind' if actual_speedup < self.speed_factor else 'running ahead of'} "
-                        f"target speed by {abs(drift_percent):.1f}%!"
-                    )
-
-        logger.info("=" * 80)
-
-        # Increment run number
         self.run_number += 1
 
-        # Apply background load reduction to topology
         topology_to_use = self._reduce_topology_for_background_load(self.simulated_topology)
 
-        # Create directories
         run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
         was_cached = False
 
         if self.result_cache.can_reuse(topology_to_use, len(all_tasks)):
             logger.info(
-                f"♻️  Reusing cached results for run {self.run_number} "
+                f"Reusing cached results for run {self.run_number} "
                 f"(topology unchanged, {len(all_tasks)} tasks)"
             )
 
@@ -317,10 +220,9 @@ class SimulationService:
                 metadata["cached"] = True
                 (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
 
-                logger.info(f"✅ Cached results copied to run_{self.run_number}")
+                logger.info(f"Cached results copied to run_{self.run_number}")
                 was_cached = True
         else:
-            # Run new simulation
             logger.info(f"Running simulation {self.run_number} with {len(all_tasks)} tasks")
 
             success, _ = self.opendc_runner.run_simulation(
@@ -339,9 +241,8 @@ class SimulationService:
 
             # Update cache with run directory (not output directory)
             self.result_cache.update(topology_to_use, len(all_tasks), run_dir)
-            logger.info(f"✅ Simulation {self.run_number} complete, results cached")
+            logger.info(f"Simulation {self.run_number} complete, results cached")
 
-        # Process and aggregate simulation results
         output_dir = run_dir / "output"
         try:
             self.result_processor.process_simulation_results(
@@ -353,42 +254,33 @@ class SimulationService:
         except Exception as e:
             logger.error(f"Failed to process simulation results: {e}", exc_info=True)
 
-        # Update statistics and simulation time
         self.simulations_run += 1
         self.task_accumulator.last_simulation_time = aligned_simulated_time
 
         logger.info(
-            f"📊 Total Stats: {self.tasks_processed} tasks processed, "
+            f"Total Stats: {self.tasks_processed} tasks processed, "
             f"{self.run_number} simulations completed\n"
         )
 
     def _process_workload_message(self, message_data: dict[str, Any]) -> None:
-        """Process a workload message (task or heartbeat) from Kafka.
-
-        Args:
-            message_data: Raw message data from Kafka
-        """
+        """Process a workload message (task or heartbeat) from Kafka."""
         try:
             message_type = message_data.get("message_type")
 
             if message_type == "task":
-                # Extract task
                 task = Task(**message_data["task"])
                 logger.debug(
                     f"Received task {task.id} at {task.submission_time} "
                     f"with {len(task.fragments)} fragments"
                 )
 
-                # Add to accumulator
                 self.task_accumulator.add_task(task)
                 self.tasks_processed += 1
 
             elif message_type == "heartbeat":
-                # Parse heartbeat timestamp
                 heartbeat_time = datetime.fromisoformat(message_data["timestamp"])
                 logger.debug(f"Received heartbeat at {heartbeat_time}")
 
-                # Check if we should trigger simulation
                 if self.task_accumulator.should_simulate(heartbeat_time, self.simulation_frequency):
                     self._run_simulation()
 
@@ -399,20 +291,12 @@ class SimulationService:
             logger.error(f"Error processing workload message: {e}", exc_info=True)
 
     def _process_topology_message(self, message_data: dict[str, Any]) -> None:
-        """Process a topology message from Kafka.
-
-        Args:
-            message_data: Raw message data from Kafka
-        """
+        """Process a topology message from Kafka."""
         try:
-            # Parse into TopologySnapshot model
             topology_snapshot = TopologySnapshot(**message_data)
 
-            logger.debug(
-                f"📡 Received topology snapshot (timestamp: {topology_snapshot.timestamp})"
-            )
+            logger.debug(f"Received topology snapshot (timestamp: {topology_snapshot.timestamp})")
 
-            # Update real topology
             self.real_topology = topology_snapshot.topology
 
             # Initialize simulated topology if not set
@@ -425,27 +309,19 @@ class SimulationService:
             logger.error(f"Error processing topology message: {e}", exc_info=True)
 
     def _process_topology_update_message(self, message_data: dict[str, Any]) -> None:
-        """Process a simulated topology update message from Kafka.
-
-        Args:
-            message_data: Raw message data from Kafka (raw Topology, not TopologySnapshot)
-        """
+        """Process a simulated topology update message from Kafka."""
         try:
             # Parse into Topology model (not TopologySnapshot)
             topology = Topology(**message_data)
 
-            logger.info(
-                f"🔄 Received simulated topology update: {len(topology.clusters)} cluster(s)"
-            )
+            logger.info(f"Received simulated topology update: {len(topology.clusters)} cluster(s)")
 
-            # Update simulated topology
             self.simulated_topology = topology
 
             # Clear result cache since topology changed
             self.result_cache.clear()
-            logger.info("🗑️  Cleared result cache due to topology update")
+            logger.info("Cleared result cache due to topology update")
 
-            # Log update details
             total_hosts = sum(host.count for cluster in topology.clusters for host in cluster.hosts)
             logger.info(f"   Total hosts: {total_hosts}")
 
@@ -461,11 +337,7 @@ class SimulationService:
             logger.info(f"Scheduler: {self.scheduler}")
 
     def process_message(self, message):
-        """Process a single Kafka message.
-
-        Args:
-            message: Kafka message
-        """
+        """Process a single Kafka message."""
         topic = message.topic
         value = message.value
 
@@ -503,13 +375,10 @@ class SimulationService:
         finally:
             logger.info("Closing Kafka connections...")
             self.consumer.close()
-            self.producer.close()
             logger.info("Simulation service stopped")
 
 
 def main():
-    """Main entry point."""
-    # Load configuration from environment
     try:
         config = load_config_from_env()
         logger.info(f"Loaded configuration for workload: {config.workload}")
@@ -517,14 +386,12 @@ def main():
         logger.error(f"Failed to load configuration: {e}")
         raise
 
-    # Get Kafka configuration from environment variable
     kafka_bootstrap_servers = get_kafka_bootstrap_servers()
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
     sim_topology_topic = config.kafka.topics["sim_topology"].name
     system_topic = config.kafka.topics["system"].name
 
-    # Get simulator configuration
     simulation_frequency_minutes = config.services.simulator.simulation_frequency_minutes
     background_load_nodes = config.services.simulator.background_load_nodes
     speed_factor = config.global_config.speed_factor
@@ -539,7 +406,6 @@ def main():
     logger.info(f"Speed factor: {speed_factor}x")
     logger.info(f"Data directory: {run_output_dir}")
 
-    # Get run ID from environment
     run_id = os.getenv("RUN_ID")
     if not run_id:
         logger.error("RUN_ID environment variable not set")
@@ -547,7 +413,6 @@ def main():
 
     logger.info(f"Run ID: {run_id}")
 
-    # Get consumer group from environment
     consumer_group = os.getenv("CONSUMER_GROUP", "simulators")
 
     # Wait for Kafka to be ready

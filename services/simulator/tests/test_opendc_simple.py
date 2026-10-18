@@ -34,7 +34,7 @@ def test_opendc_invocation_speed(opendc_bin_path, simple_task, simple_topology, 
     assert isinstance(success, bool)
     assert isinstance(output_dir, Path)
 
-    print(f"✅ OpenDC completed in {elapsed:.3f}s")
+    print(f"OpenDC completed in {elapsed:.3f}s")
     print(f"   Success: {success}")
     print(f"   Output dir: {output_dir}")
 
@@ -65,10 +65,10 @@ def test_opendc_with_valid_workload(opendc_bin_path, simple_task, simple_topolog
         assert (run_dir / "output").exists()
         assert (run_dir / "metadata.json").exists()
 
-        print("✅ Simulation successful:")
+        print("Simulation successful:")
         print(f"   Output dir: {output_dir}")
         print(f"   Run dir: {run_dir}")
     else:
         # Print error for debugging
-        print("⚠️  Simulation failed")
+        print("Simulation failed")
         print(f"   Output dir: {output_dir}")

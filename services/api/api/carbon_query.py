@@ -46,8 +46,8 @@ class CarbonDataQuery:
         # Path to aggregated simulation results
         self.sim_results_path = self.run_dir / "simulator" / "agg_results.parquet"
 
-        logger.info(f"Initialized CarbonDataQuery for run {run_id}")
-        logger.info(f"Simulation results: {self.sim_results_path}")
+        logger.debug(f"Initialized CarbonDataQuery for run {run_id}")
+        logger.debug(f"Simulation results: {self.sim_results_path}")
 
     def query(
         self, interval_seconds: int = 60, start_time: datetime | None = None
@@ -70,7 +70,7 @@ class CarbonDataQuery:
             raise FileNotFoundError(f"Simulation results not found: {self.sim_results_path}")
 
         df = pd.read_parquet(self.sim_results_path)
-        logger.info(f"Loaded {len(df)} simulation records")
+        logger.debug(f"Loaded {len(df)} simulation records")
 
         # Validate required columns
         required_cols = ["timestamp", "power_draw", "carbon_intensity"]
@@ -78,7 +78,6 @@ class CarbonDataQuery:
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
 
-        # Ensure timestamp is datetime
         df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
         # Calculate carbon emission: power_draw (W) * carbon_intensity (gCO2/kWh) / 1000
@@ -146,6 +145,6 @@ class CarbonDataQuery:
         # Remove NaN rows and reset index
         resampled = resampled.dropna().reset_index()
 
-        logger.info(f"Resampled to {len(resampled)} data points at {interval_seconds}s interval")
+        logger.debug(f"Resampled to {len(resampled)} data points at {interval_seconds}s interval")
 
         return resampled

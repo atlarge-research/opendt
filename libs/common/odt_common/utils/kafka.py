@@ -107,7 +107,7 @@ def send_message(
         _message_count["count"] += 1
         if _message_count["count"] <= 5:
             logger.info(
-                f"✓ Message {_message_count['count']} sent to {topic} "
+                f"Message {_message_count['count']} sent to {topic} "
                 f"partition {record_metadata.partition} offset {record_metadata.offset}"
             )
         else:

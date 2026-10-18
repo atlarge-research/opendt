@@ -236,11 +236,11 @@ class CalibrationEngine:
 
                     if result.success:
                         logger.info(
-                            f"✓ Simulation {sim_num} ({property_path}={param_value:.3f}) complete"
+                            f"Simulation {sim_num} ({property_path}={param_value:.3f}) complete"
                         )
                     else:
                         logger.error(
-                            f"✗ Simulation {sim_num} ({property_path}={param_value:.3f}) "
+                            f"Simulation {sim_num} ({property_path}={param_value:.3f}) "
                             f"failed: {result.error_message}"
                         )
 
