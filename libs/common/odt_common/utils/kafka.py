@@ -6,7 +6,6 @@ import os
 from typing import Any
 
 from kafka import KafkaConsumer, KafkaProducer
-from kafka.errors import KafkaError
 
 logger = logging.getLogger(__name__)
 
@@ -17,15 +16,7 @@ def get_kafka_bootstrap_servers() -> str:
 
 
 def get_kafka_producer(bootstrap_servers: str | None = None, **kwargs: Any) -> KafkaProducer:
-    """Create a Kafka producer with sensible defaults.
-
-    Args:
-        bootstrap_servers: Kafka bootstrap servers (defaults to env var)
-        **kwargs: Additional KafkaProducer configuration
-
-    Returns:
-        Configured KafkaProducer instance
-    """
+    """A producer of JSON messages; `kwargs` override its settings."""
     if bootstrap_servers is None:
         bootstrap_servers = get_kafka_bootstrap_servers()
 
@@ -36,14 +27,12 @@ def get_kafka_producer(bootstrap_servers: str | None = None, **kwargs: Any) -> K
         "acks": "all",
         "retries": 3,
         "max_in_flight_requests_per_connection": 1,
-        # Streaming-friendly settings: send immediately rather than batching
-        "linger_ms": 10,  # Wait max 10ms before sending a batch
-        "batch_size": 16384,  # 16KB batch size (default)
-        # Increase message size limits for large task aggregates with many fragments
-        "max_request_size": 10485760,  # 10MB (default is 1MB)
+        "linger_ms": 10,  # batches of at most 10 ms
+        "batch_size": 16384,
+        # tasks with many fragments make large messages
+        "max_request_size": 10485760,  # 10 MB, 10x Kafka's default
     }
 
-    # Merge with user-provided config
     config = {**default_config, **kwargs}
 
     logger.info(f"Creating Kafka producer for {bootstrap_servers}")
@@ -53,17 +42,7 @@ def get_kafka_producer(bootstrap_servers: str | None = None, **kwargs: Any) -> K
 def get_kafka_consumer(
     topics: list[str], group_id: str, bootstrap_servers: str | None = None, **kwargs: Any
 ) -> KafkaConsumer:
-    """Create a Kafka consumer with sensible defaults.
-
-    Args:
-        topics: List of topics to subscribe to
-        group_id: Consumer group ID
-        bootstrap_servers: Kafka bootstrap servers (defaults to env var)
-        **kwargs: Additional KafkaConsumer configuration
-
-    Returns:
-        Configured KafkaConsumer instance
-    """
+    """A consumer of JSON messages, from its group's earliest offset; `kwargs` override settings."""
     if bootstrap_servers is None:
         bootstrap_servers = get_kafka_bootstrap_servers()
 
@@ -77,47 +56,14 @@ def get_kafka_consumer(
         "max_poll_records": 500,
     }
 
-    # Merge with user-provided config
     config = {**default_config, **kwargs}
 
     logger.info(f"Creating Kafka consumer for topics {topics} in group {group_id}")
     return KafkaConsumer(*topics, **config)
 
 
-_message_count = {"count": 0}  # Mutable counter for first-message logging
-
-
 def send_message(
     producer: KafkaProducer, topic: str, message: dict[str, Any], key: str | None = None
 ) -> None:
-    """Send a message to a Kafka topic.
-
-    Args:
-        producer: KafkaProducer instance
-        topic: Topic name
-        message: Message payload (will be JSON serialized)
-        key: Optional message key
-    """
-    try:
-        future = producer.send(topic, key=key, value=message)
-        # Block for 'synchronous' sends
-        record_metadata = future.get(timeout=10)
-
-        # Log first few messages at INFO level for debugging
-        _message_count["count"] += 1
-        if _message_count["count"] <= 5:
-            logger.info(
-                f"Message {_message_count['count']} sent to {topic} "
-                f"partition {record_metadata.partition} offset {record_metadata.offset}"
-            )
-        else:
-            logger.debug(
-                f"Message sent to {topic} partition {record_metadata.partition} "
-                f"at offset {record_metadata.offset}"
-            )
-    except KafkaError as e:
-        logger.error(f"Failed to send message to {topic}: {e}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error sending message to {topic}: {e}", exc_info=True)
-        raise
+    """Send a message and wait until Kafka has it."""
+    producer.send(topic, key=key, value=message).get(timeout=10)

@@ -75,8 +75,9 @@ def test_cluster_points(api):
 
 
 def sent_topology(api):
-    [(topic, message, _)] = api
-    assert topic == "sim.topology"
+    [(topic, message, key)] = api
+    # the calibrator's key: the topic is compacted, so one latest topology
+    assert (topic, key) == ("sim.topology", "topology")
     return Topology(**message).clusters[0]
 
 

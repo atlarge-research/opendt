@@ -446,13 +446,8 @@ class CalibrationService:
 
 
 def main():
-    """Main entry point."""
-    try:
-        config = load_config_from_env()
-        logger.info(f"Loaded configuration for workload: {config.workload}")
-    except Exception as e:
-        logger.error(f"Failed to load configuration: {e}")
-        raise
+    config = load_config_from_env()
+    logger.info(f"Loaded configuration for workload: {config.workload}")
 
     # off at the start, the calibrator waits until the control panel switches it on; without settings, it has
     # nothing to calibrate

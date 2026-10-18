@@ -99,4 +99,7 @@ def test_delete():
 def test_summary():
     # as the decisions name a group: a change of GPUs is a decision too
     [gpu] = hosts.edit([H01], hosts.Row(id=1, gpu="A100 40 GiB", gpus=4))
-    assert (hosts.summary(H01), hosts.summary(gpu)) == ("277 SURF-SARA", "277 SURF-SARA with 4 GPUs each")
+    assert (hosts.summary(H01), hosts.summary(gpu)) == (
+        "277 SURF-SARA",
+        "277 SURF-SARA with 4 GPUs each",
+    )

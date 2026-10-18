@@ -263,70 +263,32 @@ class SimulationService:
         )
 
     def _process_workload_message(self, message_data: dict[str, Any]) -> None:
-        """Process a workload message (task or heartbeat) from Kafka."""
-        try:
-            message_type = message_data.get("message_type")
-
-            if message_type == "task":
-                task = Task(**message_data["task"])
-                logger.debug(
-                    f"Received task {task.id} at {task.submission_time} "
-                    f"with {len(task.fragments)} fragments"
-                )
-
-                self.task_accumulator.add_task(task)
-                self.tasks_processed += 1
-
-            elif message_type == "heartbeat":
-                heartbeat_time = datetime.fromisoformat(message_data["timestamp"])
-                logger.debug(f"Received heartbeat at {heartbeat_time}")
-
-                if self.task_accumulator.should_simulate(heartbeat_time, self.simulation_frequency):
-                    self._run_simulation()
-
-            else:
-                logger.warning(f"Unknown message_type: {message_type}")
-
-        except Exception as e:
-            logger.error(f"Error processing workload message: {e}", exc_info=True)
+        """A task joins the accumulated ones; a heartbeat may start a window of operation."""
+        message_type = message_data.get("message_type")
+        if message_type == "task":
+            task = Task(**message_data["task"])
+            logger.debug(f"Received task {task.id} at {task.submission_time}")
+            self.task_accumulator.add_task(task)
+            self.tasks_processed += 1
+        elif message_type == "heartbeat":
+            heartbeat_time = datetime.fromisoformat(message_data["timestamp"])
+            if self.task_accumulator.should_simulate(heartbeat_time, self.simulation_frequency):
+                self._run_simulation()
+        else:
+            logger.warning(f"Unknown message_type: {message_type}")
 
     def _process_topology_message(self, message_data: dict[str, Any]) -> None:
-        """Process a topology message from Kafka."""
-        try:
-            topology_snapshot = TopologySnapshot(**message_data)
-
-            logger.debug(f"Received topology snapshot (timestamp: {topology_snapshot.timestamp})")
-
-            self.real_topology = topology_snapshot.topology
-
-            # Initialize simulated topology if not set
-            if self.simulated_topology is None:
-                # Deep copy so we can modify it independently
-                self.simulated_topology = copy.deepcopy(self.real_topology)
-                logger.info("Initialized simulated topology from real topology")
-
-        except Exception as e:
-            logger.error(f"Error processing topology message: {e}", exc_info=True)
+        """The real topology; the simulated one starts as a copy of it."""
+        self.real_topology = TopologySnapshot(**message_data).topology
+        if self.simulated_topology is None:
+            self.simulated_topology = copy.deepcopy(self.real_topology)
+            logger.info("Initialized simulated topology from real topology")
 
     def _process_topology_update_message(self, message_data: dict[str, Any]) -> None:
-        """Process a simulated topology update message from Kafka."""
-        try:
-            # Parse into Topology model (not TopologySnapshot)
-            topology = Topology(**message_data)
-
-            logger.info(f"Received simulated topology update: {len(topology.clusters)} cluster(s)")
-
-            self.simulated_topology = topology
-
-            # Clear result cache since topology changed
-            self.result_cache.clear()
-            logger.info("Cleared result cache due to topology update")
-
-            total_hosts = sum(host.count for cluster in topology.clusters for host in cluster.hosts)
-            logger.info(f"   Total hosts: {total_hosts}")
-
-        except Exception as e:
-            logger.error(f"Error processing topology update message: {e}", exc_info=True)
+        """A new simulated topology (a Topology, not a TopologySnapshot): the cached results no longer hold."""
+        self.simulated_topology = Topology(**message_data)
+        self.result_cache.clear()
+        logger.info(f"Simulated topology: {self.simulated_topology.total_host_count()} hosts")
 
     def _process_config_event(self, message_data: dict[str, Any]) -> None:
         """Follow a scheduler change; the other runtime settings are not the simulator's."""
@@ -348,11 +310,8 @@ class SimulationService:
                 self._process_topology_message(value)
             elif topic == self.sim_topology_topic:
                 self._process_topology_update_message(value)
-            elif topic == self.system_topic:
+            else:  # the system topic, the last one the consumer follows
                 self._process_config_event(value)
-            else:
-                logger.warning(f"Unknown topic: {topic}")
-
         except Exception as e:
             logger.error(f"Error processing message from {topic}: {e}", exc_info=True)
 
@@ -367,11 +326,6 @@ class SimulationService:
 
         except KeyboardInterrupt:
             logger.info("Received interrupt signal, shutting down...")
-
-        except Exception as e:
-            logger.error(f"Error in simulation service: {e}", exc_info=True)
-            raise
-
         finally:
             logger.info("Closing Kafka connections...")
             self.consumer.close()
@@ -379,12 +333,8 @@ class SimulationService:
 
 
 def main():
-    try:
-        config = load_config_from_env()
-        logger.info(f"Loaded configuration for workload: {config.workload}")
-    except Exception as e:
-        logger.error(f"Failed to load configuration: {e}")
-        raise
+    config = load_config_from_env()
+    logger.info(f"Loaded configuration for workload: {config.workload}")
 
     kafka_bootstrap_servers = get_kafka_bootstrap_servers()
     workload_topic = config.kafka.topics["workload"].name

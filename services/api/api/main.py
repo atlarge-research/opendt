@@ -38,32 +38,14 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager for startup and shutdown events."""
-    logger.info("Starting OpenDT API service...")
-
-    try:
-        app.state.config = load_config_from_env()
-        logger.info(f"Configuration loaded for workload: {app.state.config.workload}")
-    except Exception as e:
-        logger.error(f"Failed to load configuration: {e}")
-        app.state.config = None
-
-    try:
-        app.state.kafka_producer = get_kafka_producer()
-        logger.info("Kafka producer initialized")
-    except Exception as e:
-        logger.error(f"Failed to initialize Kafka producer: {e}")
-        app.state.kafka_producer = None
-
+    """The configuration and one Kafka producer for all requests; compose starts the API once Kafka is up."""
+    app.state.config = load_config_from_env()
+    app.state.kafka_producer = get_kafka_producer()
     # the runtime settings the control panel sent, by field (until then, the configured ones apply)
     app.state.settings = {}
     app.state.topology = None  # the simulated topology sent last
     yield
-
-    logger.info("Shutting down OpenDT API service...")
-    if app.state.kafka_producer:
-        app.state.kafka_producer.close()
-        logger.info("Kafka producer closed")
+    app.state.kafka_producer.close()
 
 
 app = FastAPI(
@@ -92,15 +74,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    kafka_status = "connected" if app.state.kafka_producer else "disconnected"
-    config_status = "loaded" if app.state.config else "not loaded"
-
-    return {
-        "status": "healthy",
-        "kafka": kafka_status,
-        "config": config_status,
-    }
+    return {"status": "healthy"}
 
 
 # Default topology for Swagger UI (matches SURF data)
@@ -150,7 +124,7 @@ async def update_topology(
 ):
     """Publish a new simulated topology; the simulator runs it from its next window of operation."""
     app.state.topology = topology.model_dump(mode="json")
-    topic_name = publish("sim_topology", app.state.topology, key="datacenter")
+    topic_name = publish("sim_topology", app.state.topology, key="topology")
 
     return {
         "status": "updated",
@@ -164,82 +138,31 @@ async def update_topology(
 
 @app.get("/api/power", response_model=PowerDataResponse)
 def get_power_data(
-    interval_seconds: int = Query(
-        60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
-    ),
-    start_time: datetime | None = Query(None, description="Optional start time (ISO 8601 format)"),
+    interval_seconds: int = Query(60, gt=0, le=3600, description="Sampling interval [s]"),
+    start_time: datetime | None = Query(None, description="Optional start time (ISO 8601)"),
 ):
-    """Query aligned power usage data from simulation and actual consumption.
-
-    This endpoint reads from:
-    - `agg_results.parquet`: Aggregated simulation results
-    - `consumption.parquet`: Actual power consumption from workload
-
-    The data is aligned to a common interval and clipped to the shortest timeseries.
-    """
-    run_id = os.getenv("RUN_ID")
-    if not run_id:
-        raise HTTPException(status_code=500, detail="RUN_ID environment variable not set")
-
-    if not app.state.config:
-        raise HTTPException(status_code=500, detail="Configuration not loaded")
-
+    """The measured and the simulated power (simulator/agg_results.parquet), aligned to one interval and clipped to
+    the shorter series."""
     try:
-        query = PowerDataQuery(run_id=run_id, workload_context=workload())
-
-        result = query.query(interval_seconds=interval_seconds, start_time=start_time)
-
-        logger.debug(f"Power data query successful: {result.metadata['count']} data points")
-
-        return result
-
-    except FileNotFoundError as e:
-        logger.error(f"Data file not found: {e}")
-        raise HTTPException(status_code=404, detail=str(e)) from e
-    except ValueError as e:
-        logger.error(f"Invalid data: {e}")
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        logger.error(f"Error querying power data: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
+        return PowerDataQuery(run_dir().name, workload()).query(interval_seconds, start_time)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @app.get("/api/co2_emission", response_model=CarbonDataResponse)
 def get_carbon_emission_data(
-    interval_seconds: int = Query(
-        60, gt=0, le=3600, description="Sampling interval in seconds (1-3600)"
-    ),
-    start_time: datetime | None = Query(None, description="Optional start time (ISO 8601 format)"),
+    interval_seconds: int = Query(60, gt=0, le=3600, description="Sampling interval [s]"),
+    start_time: datetime | None = Query(None, description="Optional start time (ISO 8601)"),
 ):
-    """Query carbon emission data from simulation results.
-
-    This endpoint reads from `agg_results.parquet` and calculates carbon emission
-    based on power draw and carbon intensity.
-
-    Carbon emission formula: power_draw (W) * carbon_intensity (gCO2/kWh) / 1000 = gCO2/h
-    """
-    run_id = os.getenv("RUN_ID")
-    if not run_id:
-        raise HTTPException(status_code=500, detail="RUN_ID environment variable not set")
-
+    """The simulated CO2 emissions: power draw [W] x carbon intensity [gCO2/kWh] / 1000 = gCO2/h."""
     try:
-        query = CarbonDataQuery(run_id=run_id)
-
-        result = query.query(interval_seconds=interval_seconds, start_time=start_time)
-
-        logger.debug(f"Carbon emission query successful: {result.metadata['count']} data points")
-
-        return result
-
-    except FileNotFoundError as e:
-        logger.error(f"Data file not found: {e}")
-        raise HTTPException(status_code=404, detail=str(e)) from e
-    except ValueError as e:
-        logger.error(f"Invalid data: {e}")
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except Exception as e:
-        logger.error(f"Error querying carbon emission data: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
+        return CarbonDataQuery(run_dir().name).query(interval_seconds, start_time)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 def workload() -> WorkloadContext:
@@ -404,7 +327,7 @@ def send_topology(**change) -> None:
         app.state.topology = levers.topology(app.state.topology, latest, **change)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-    publish("sim_topology", app.state.topology, key="datacenter")
+    publish("sim_topology", app.state.topology, key="topology")
 
 
 @app.patch("/api/control")

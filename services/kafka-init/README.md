@@ -4,7 +4,7 @@ Creates and configures Kafka topics before application services start.
 
 ## Purpose
 
-kafka-init is an initialization container that ensures all required Kafka topics exist with proper retention and compaction settings. It runs once and exits, blocking other services until topics are ready.
+kafka-init creates the Kafka topics of the configuration, with their retention and compaction settings. It runs once and exits; the other services start after it.
 
 ## Topics Created
 
@@ -50,10 +50,8 @@ kafka:
 
 ## Startup Flow
 
-1. Wait for Kafka to be healthy (with retries)
-2. Create topics if they don't exist
-3. Apply topic configurations
-4. Exit with code 0 (success) or 1 (failure)
+1. Wait for Kafka to answer (30 attempts, 2 s apart); exit with 1 if it does not
+2. Create the topics that do not exist yet, with their settings
 
 Other services wait for kafka-init to complete before starting.
 

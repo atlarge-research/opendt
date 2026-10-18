@@ -43,22 +43,10 @@ class OpenDCRunner:
 
         self.opendc_path = opendc_bin_path
 
-        # Verify the binary exists
         if not self.opendc_path.exists():
             raise FileNotFoundError(
-                f"OpenDC runner not found at {self.opendc_path}. "
-                "Ensure the OpenDC binaries are mounted into the container."
+                f"OpenDC runner not found at {self.opendc_path}; mount OpenDC into the container"
             )
-
-        # Ensure it's executable
-        if not os.access(self.opendc_path, os.X_OK):
-            logger.warning(
-                f"OpenDC runner not executable, attempting to fix permissions: {self.opendc_path}"
-            )
-            try:
-                os.chmod(self.opendc_path, 0o755)
-            except Exception as e:
-                logger.error(f"Failed to make OpenDC runner executable: {e}")
 
         logger.info(f"OpenDC runner initialized: {self.opendc_path}")
 

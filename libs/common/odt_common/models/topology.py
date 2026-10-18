@@ -29,7 +29,15 @@ class Memory(BaseModel):
     memorySize: int = Field(..., description="Memory size in bytes", gt=0)
 
 
-class AsymptoticCPUPowerModel(BaseModel):
+class PowerModel(BaseModel):
+    """How utilization translates to power."""
+
+    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
+    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
+    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
+
+
+class AsymptoticCPUPowerModel(PowerModel):
     """Asymptotic CPU power consumption model.
 
     Defines how CPU utilization translates to power consumption using
@@ -39,9 +47,6 @@ class AsymptoticCPUPowerModel(BaseModel):
     modelType: Literal["asymptotic"] = Field(
         "asymptotic", description="Power model type (asymptotic)"
     )
-    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
-    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
-    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
     asymUtil: float = Field(
         default=0.5,
         description="Asymptotic utilization coefficient",
@@ -54,7 +59,7 @@ class AsymptoticCPUPowerModel(BaseModel):
     )
 
 
-class MseCPUPowerModel(BaseModel):
+class MseCPUPowerModel(PowerModel):
     """MSE-based CPU power consumption model.
 
     Defines how CPU utilization translates to power consumption using
@@ -62,9 +67,6 @@ class MseCPUPowerModel(BaseModel):
     """
 
     modelType: Literal["mse"] = Field("mse", description="Power model type (MSE)")
-    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
-    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
-    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
     calibrationFactor: float = Field(
         default=0.5,
         description="Calibration factor for MSE model",
@@ -89,13 +91,10 @@ class GPU(CPU):
     )
 
 
-class GPUPowerModel(BaseModel):
+class GPUPowerModel(PowerModel):
     """How GPU utilization translates to power, as OpenDC models it (e.g., linear, cubic)."""
 
     modelType: str = Field(..., description="Power model type")
-    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
-    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
-    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
 
 
 class Host(BaseModel):
