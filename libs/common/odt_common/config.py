@@ -96,22 +96,6 @@ class CalibratorConfig(BaseModel):
         gt=0,
     )
 
-    # Legacy fields for backwards compatibility (mapped to new fields)
-    asym_util_min: float | None = Field(None, exclude=True)
-    asym_util_max: float | None = Field(None, exclude=True)
-    asym_util_points: int | None = Field(None, exclude=True)
-
-    @model_validator(mode="after")
-    def handle_legacy_fields(self):
-        """Map legacy field names to new ones if present."""
-        if self.asym_util_min is not None:
-            self.min_value = self.asym_util_min
-        if self.asym_util_max is not None:
-            self.max_value = self.asym_util_max
-        if self.asym_util_points is not None:
-            self.linspace_points = self.asym_util_points
-        return self
-
 
 class ServicesConfig(BaseModel):
     """Configuration for all services."""
@@ -257,10 +241,6 @@ class AppConfig(BaseModel):
         """Check if calibration is enabled."""
         return self.global_config.calibration_enabled
 
-    def get_workload_context(self, base_path: Path) -> WorkloadContext:
-        """Get workload context with resolved paths."""
-        return WorkloadContext(name=self.workload, base_path=base_path)
-
     @classmethod
     def load(cls, path: str | Path) -> "AppConfig":
         """Load configuration from YAML file."""
@@ -276,18 +256,6 @@ class AppConfig(BaseModel):
             raise ValueError(f"Empty or invalid YAML in {config_path}")
 
         return cls(**data)
-
-    def save(self, path: str | Path) -> None:
-        """Save configuration to YAML file."""
-        config_path = Path(path)
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(config_path, "w") as f:
-            yaml.safe_dump(self.model_dump(), f, default_flow_style=False, sort_keys=False)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert config to dictionary."""
-        return self.model_dump()
 
 
 # the runtime settings on sys.config, by key: the API sends them, the services follow them
@@ -324,36 +292,7 @@ class DynamicConfigEvent(BaseModel):
         None, description="Source of the configuration change (e.g., 'api', 'admin')"
     )
 
-    def apply_to_config(self, config: AppConfig) -> AppConfig:
-        """Apply this configuration change to an AppConfig instance."""
-        # Parse the setting key (e.g., "simulation.speed_factor")
-        parts = self.setting_key.split(".")
 
-        if len(parts) < 2:
-            raise ValueError(f"Invalid setting_key: {self.setting_key}")
-
-        # Create a new config with the updated value
-        config_dict = config.to_dict()
-
-        # Navigate to the nested setting
-        target = config_dict
-        for part in parts[:-1]:
-            if part not in target:
-                raise ValueError(f"Invalid setting path: {self.setting_key}")
-            target = target[part]
-
-        # Update the value
-        final_key = parts[-1]
-        if final_key not in target:
-            raise ValueError(f"Invalid setting key: {self.setting_key}")
-
-        target[final_key] = self.new_value
-
-        # Return new config instance
-        return AppConfig(**config_dict)
-
-
-# Convenience function for loading config from environment
 def load_config_from_env(env_var: str = "CONFIG_FILE") -> AppConfig:
     """Load configuration from path specified in environment variable."""
     import os

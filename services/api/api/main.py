@@ -192,19 +192,19 @@ def publish(topic: str, message: dict, key: str | None = None) -> str:
 def get_status():
     """The control panel's values, flat: the twin's time and topology, and the runtime settings as configured or
     as sent last."""
-    config, calibrator = app.state.config, app.state.config.services.calibrator
+    config = app.state.config
     configured = {
         "speed_factor": config.global_config.speed_factor,
         "calibration": config.global_config.calibration_enabled,
-        "parallel_simulations": calibrator and calibrator.max_parallel_workers,
-        "calibration_min": calibrator and calibrator.min_value,
-        "calibration_max": calibrator and calibrator.max_value,
-        "calibration_points": calibrator and calibrator.linspace_points,
-        "mape_window": calibrator and calibrator.mape_window_minutes,
     }
-    configured = {
-        key: value for key, value in configured.items() if value is not None
-    }  # no calibrator, none
+    if calibrator := config.services.calibrator:  # no calibrator, none of its settings
+        configured |= {
+            "parallel_simulations": calibrator.max_parallel_workers,
+            "calibration_min": calibrator.min_value,
+            "calibration_max": calibrator.max_value,
+            "calibration_points": calibrator.linspace_points,
+            "mape_window": calibrator.mape_window_minutes,
+        }
     status = twin.status(twin_run())
     return {
         **configured,

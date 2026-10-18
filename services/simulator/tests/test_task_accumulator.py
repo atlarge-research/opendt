@@ -1,43 +1,9 @@
 """Test task accumulation and frequency-based triggering."""
 
-# Import the TaskAccumulator from main.py
-import sys
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 
-import pytest
-from odt_common.models import CPU, Cluster, CPUPowerModel, Fragment, Host, Memory, Task, Topology
-
-# Add parent directory to path to import from main
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from simulator.main import TaskAccumulator
-
-
-@pytest.fixture
-def sample_topology() -> Topology:
-    """Create a sample topology for testing."""
-    return Topology(
-        clusters=[
-            Cluster(
-                name="test-cluster",
-                hosts=[
-                    Host(
-                        count=1,
-                        name="test-host",
-                        memory=Memory(memorySize=32000),
-                        cpu=CPU(coreCount=8, coreSpeed=2400),
-                        cpuPowerModel=CPUPowerModel(
-                            modelType="asymptotic",
-                            power=200.0,
-                            idlePower=50.0,
-                            maxPower=250.0,
-                            asymUtil=0.5,
-                        ),
-                    )
-                ],
-            )
-        ]
-    )
+from odt_common.models import Fragment, Task
+from odt_common.task_accumulator import TaskAccumulator
 
 
 def test_task_accumulator_basic():
@@ -215,7 +181,3 @@ def test_multiple_simulations():
     assert accumulator.should_simulate(sim_time_2, frequency) is True
     accumulator.update_simulation_time(sim_time_2)
     assert len(accumulator.get_all_tasks()) == 2  # Accumulates all tasks
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
