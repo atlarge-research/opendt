@@ -171,7 +171,11 @@ def test_tables_are_empty_before_the_first_window(api, tmp_path, monkeypatch, en
 
 def test_markers_have_grafanas_time_format(api):
     assert data(main.get_events()) == [
-        {"time": "2022-10-06T22:05:00.000Z", "text": "Hosts 277 SURF-SARA to 2,770 SURF-SARA"}
+        {
+            "time": "2022-10-06T22:05:00.000Z",
+            "text": "Hosts 277 SURF-SARA to 2,770 SURF-SARA",
+            "by": "Manual",
+        }
     ]
 
 

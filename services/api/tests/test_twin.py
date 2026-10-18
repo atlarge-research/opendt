@@ -26,6 +26,10 @@ def test_hosts_in_use_are_the_hosts_running_a_job(run_dir):
     assert twin.cluster(run_dir)["hosts_in_use"].tolist() == [1, 1, 1, 1]  # H01-2 only
 
 
+def test_idle_power_is_the_power_of_the_hosts_running_no_job(run_dir):
+    assert twin.cluster(run_dir)["idle_power_kw"].tolist() == pytest.approx([0.1] * 4)  # H01-1 only
+
+
 def test_cluster_has_cpu_spread_and_demand(run_dir):
     cluster = twin.cluster(run_dir)
     last = cluster.iloc[-1]
@@ -104,6 +108,13 @@ def test_events_mark_topology_changes_where_they_apply(run_dir):
         "Hosts 277 SURF-SARA to 2,770 SURF-SARA",
         "CO₂ zone NL to RO",
     ]
+    assert events["by"].tolist() == ["Manual", "Manual"]  # the operator's, from the control panel
+
+
+def test_a_new_r_is_an_automatic_decision(run_dir):
+    write_window(run_dir, 3, 15, hosts=2770, active=[30], r=9.0)
+    event = twin.events(run_dir).iloc[-1]
+    assert (event["text"], event["by"]) == ("r 4.0 to 9.0", "Automatic")  # the calibrator's
 
 
 def test_the_scheduler_comes_from_the_experiment_of_the_window(run_dir):
@@ -121,9 +132,10 @@ def test_accuracy_is_the_hourly_mape_of_the_power_with_the_twins_r(run_dir):
     accuracy = twin.accuracy(run_dir, power)
     assert accuracy["timestamp"].dt.strftime("%H:%M").tolist() == ["22:00", "23:00"]
     assert accuracy["mape"].tolist() == pytest.approx([10, 20])
-    assert accuracy["error_kw"].tolist() == pytest.approx(
-        [0, 0.02]
-    )  # OpenDT minus measured, signed
+    # OpenDT minus measured, signed
+    assert accuracy["error_kw"].tolist() == pytest.approx([0, 0.02])
+    # the energy so far: 200 vs. 200, then 320 vs. 300
+    assert accuracy["energy_error_pct"].tolist() == pytest.approx([0, 20 / 3])
     assert accuracy["r"].tolist() == [4, 4]  # the r of the last window so far
     assert twin.accuracy(run_dir, power, minutes=30)["mape"].tolist() == pytest.approx([10, 10, 20])
 

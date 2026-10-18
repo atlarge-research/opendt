@@ -7,14 +7,15 @@ Visualization dashboards for OpenDT metrics.
 - **URL:** http://localhost:3000
 - **Authentication:** Disabled (anonymous admin access)
 
-Three screens, each with a control panel at the top left: the screen, the time window, the totals period, and the
-decisions markers apply at once; the twin's levers (CO₂ zone, scheduler, speed factor, parallel runs of the
-calibrator, hosts) wait for Apply; Full screen switches the browser's full screen on and off.
+Three screens, each with a control panel at the top left (in place of Grafana's time picker): the screen, the time
+window, the interval of the totals, and the decisions markers apply at once; the twin's levers (CO₂ zone, scheduler,
+speed factor, parallel runs of the calibrator, hosts) wait for Apply; Full screen switches the browser's full screen
+on and off, without Grafana's bars.
 
 - **OpenDT** (the home page, detailed): ten tiles of the twin's state, power, CO₂ vs. carbon intensity, and hosts;
   then a row each for performance, utilization, sustainability (per period), and twin accuracy. The Plots row picks
-  the plots to show. Markers on every graph show the decisions (changes of hosts, r, CO₂ zone, and scheduler), the
-  legends the latest values, and the right axis whether higher or lower is better.
+  the plots to show. Markers on every graph show the decisions (changes of hosts, r, CO₂ zone, and scheduler; automatic or manual), the
+  legends the latest values, and the right axis which way is better (BETTER with an arrow).
 - **OpenDT, simple:** the physical twin (power draw, jobs arriving) next to the digital twin (total runtime, jobs
   started within 10 minutes, hosts per CPU utilization, decisions).
 - **OpenDT, topology:** the host groups (SURF's node and OpenDC web's host templates), what runs now, and the kinds

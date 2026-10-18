@@ -101,22 +101,32 @@ def test_forms_offer_what_the_api_takes(field, api):
     assert offered == api and all(other == offered for other in same)
 
 
-def test_every_plot_can_be_picked_and_shown():
+def test_every_plot_can_be_picked_and_shows_until_hidden():
     spec = load("overview.json")["spec"]
-    [plots] = [v["spec"] for v in spec["variables"] if v["spec"]["name"] == "plots"]
+    [hidden] = [v["spec"] for v in spec["variables"] if v["spec"]["name"] == "hidden"]
     pickable = [
         o["value"]
         for name, e in spec["elements"].items()
         if name.startswith("pick-")
         for o in e["spec"]["vizConfig"]["spec"]["options"]["elements"][0]["options"]
     ]
-    shown = [
-        item["spec"]["element"]["name"]
+    items = [
+        item["spec"]
         for row in spec["layout"]["spec"]["rows"]
         if row["spec"]["layout"]["kind"] == "AutoGridLayout"
         for item in row["spec"]["layout"]["spec"]["items"]
     ]
-    assert plots["query"].split(",") == pickable == shown
+    assert hidden["query"].split(",") == ["none", *pickable]
+    assert [item["element"]["name"] for item in items] == pickable
+    # the address keeps the hidden plots, so a plot added later shows, even with an old address
+    assert hidden["current"]["value"] == ["none"]
+    for item in items:
+        [rule] = item["conditionalRendering"]["spec"]["items"]
+        assert rule["spec"] == {
+            "variable": "hidden",
+            "operator": "notEquals",
+            "value": item["element"]["name"],
+        }
 
 
 def test_home_page_is_a_provisioned_dashboard():

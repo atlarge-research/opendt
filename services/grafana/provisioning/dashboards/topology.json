@@ -436,7 +436,7 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "if (document.fullscreenElement) {\n  document.exitFullscreen();\n  context.grafana.locationService.partial({ kiosk: null });\n} else {\n  document.documentElement.requestFullscreen();\n  context.grafana.locationService.partial({ kiosk: true });\n}",
+                                    "code": "const bar = ['kiosk'];\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial(Object.fromEntries(bar.map((key) => [key, on || null])));",
                                     "confirm": false
                                 },
                                 "confirmModal": {
@@ -774,6 +774,7 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
+                                    "decimals": 0,
                                     "custom": {
                                         "axisLabel": "Hosts",
                                         "lineWidth": 2,
@@ -936,7 +937,7 @@
                 "1m",
                 "5m"
             ],
-            "hideTimepicker": false,
+            "hideTimepicker": true,
             "fiscalYearStartMonth": 0
         }
     }

@@ -20,6 +20,7 @@ HOST = (
     "cpu_demand",
     "cpu_utilization",
     "tasks_running",
+    "power_draw",
     "embodied_carbon",
 )
 # The CO2 zones: Electricity Maps carbon intensity traces inside the containers; SURF's twin starts on NL
@@ -161,11 +162,12 @@ def read(window: Path, name: str, columns: tuple, start: pd.Timestamp | None, en
 
 @lru_cache(maxsize=4096)
 def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -> pd.DataFrame:
-    """Hosts and jobs (service output), CPU, jobs, and embodied carbon of the hosts (host output), and energy and
-    CO2 (power source output), between start and end."""
+    """Hosts and jobs (service output), CPU, jobs, idle power, and embodied carbon of the hosts (host output), and
+    energy and CO2 (power source output), between start and end."""
     hosts = read(window, "host", HOST, start, end)
     hosts["cpu_demand_cores"] = hosts["cpu_demand"] / hosts["cpu_capacity"] * hosts["core_count"]
     hosts["in_use"] = hosts["tasks_running"] > 0
+    hosts["idle_power_kw"] = hosts["power_draw"].where(~hosts["in_use"], 0) / 1000
     hosts["bucket"] = pd.cut(
         hosts["cpu_utilization"], [0, 0.2, 0.4, 0.6, 0.8, np.inf], right=False, labels=BUCKETS
     )
@@ -175,6 +177,7 @@ def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -
     per_time = pd.DataFrame(
         {
             "hosts_in_use": by_time["in_use"].sum(),
+            "idle_power_kw": by_time["idle_power_kw"].sum(),  # of the hosts running no job
             "cpu_utilization": cpu.mean(),
             "cpu_utilization_busy_median": busy.median(),  # most hosts are idle: over all, the median is 0
             "cpu_demand_cores": by_time["cpu_demand_cores"].sum(),
@@ -269,30 +272,36 @@ def shown(value) -> str:
 
 
 def events(run_dir: Path) -> pd.DataFrame:
-    """Topology changes, at the end of the last window before them: from there on, the twin runs the new one."""
-    rows = []
-    for before, after in pairwise(windows(run_dir)):
-        old, new = settings(before), settings(after)
-        changes = [
-            f"{name} {shown(old[key])} to {shown(new[key])}"
-            for key, name in SETTINGS.items()
-            if old[key] != new[key]
-        ]
-        if changes:
-            rows.append({"time": end_time(before), "text": "; ".join(changes)})
-    return pd.DataFrame(rows, columns=["time", "text"])
+    """Topology changes, at the end of the last window before them (from there on, the twin runs the new one), and
+    who made them: r is the calibrator's (automatic), the rest the operator's, from the control panel (manual)."""
+    rows = [
+        {
+            "time": end_time(before),
+            "text": f"{name} {shown(old[key])} to {shown(new[key])}",
+            "by": "Automatic" if key == "calibration_factor" else "Manual",
+        }
+        for before, after in pairwise(windows(run_dir))
+        for old, new in [(settings(before), settings(after))]
+        for key, name in SETTINGS.items()
+        if old[key] != new[key]
+    ]
+    return pd.DataFrame(rows, columns=["time", "text", "by"])
 
 
 def accuracy(run_dir: Path, power: pd.DataFrame, minutes: int = 60) -> pd.DataFrame:
     """Per period of `minutes`: the MAPE [%] of OpenDT's power vs. the measured power, the mean error [kW] (above 0,
-    OpenDT predicts more), and the r the twin ran with by then."""
+    OpenDT predicts more), the error [%] of the energy so far, and the r the twin ran with by then."""
     period = f"{minutes}min"
+    by_period = power["timestamp"].dt.floor(period)
     error = power["simulated_power"] - power["actual_power"]
     per_period = (
         pd.DataFrame({"mape": error.abs() / power["actual_power"] * 100, "error_kw": error / 1000})
-        .groupby(power["timestamp"].dt.floor(period))
+        .groupby(by_period)
         .mean()
     )
+    # the samples are evenly spaced, so their sums stand for the energy
+    so_far = power.groupby(by_period)[["simulated_power", "actual_power"]].sum().cumsum()
+    per_period["energy_error_pct"] = (so_far["simulated_power"] / so_far["actual_power"] - 1) * 100
     r = pd.Series({end_time(w): settings(w)["calibration_factor"] for w in windows(run_dir)})
     per_period["r"] = r.resample(period).last().reindex(per_period.index).ffill()
     return per_period.reset_index(names="timestamp")

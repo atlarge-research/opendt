@@ -316,7 +316,7 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "if (document.fullscreenElement) {\n  document.exitFullscreen();\n  context.grafana.locationService.partial({ kiosk: null });\n} else {\n  document.documentElement.requestFullscreen();\n  context.grafana.locationService.partial({ kiosk: true });\n}",
+                                    "code": "const bar = ['kiosk'];\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial(Object.fromEntries(bar.map((key) => [key, on || null])));",
                                     "confirm": false
                                 },
                                 "confirmModal": {
@@ -420,17 +420,26 @@
                                 "reduceOptions": {
                                     "fields": "/.*/"
                                 },
-                                "colorMode": "none",
+                                "colorMode": "background_solid",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
-                                "orientation": "horizontal",
+                                "orientation": "auto",
+                                "minVizWidth": 100,
+                                "minVizHeight": 60,
+                                "justifyMode": "auto",
+                                "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
                                 }
                             },
                             "fieldConfig": {
-                                "defaults": {},
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#22252b"
+                                    }
+                                },
                                 "overrides": [
                                     {
                                         "matcher": {
@@ -570,15 +579,22 @@
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "vertical",
+                                "minVizWidth": 100,
+                                "minVizHeight": 60,
+                                "justifyMode": "auto",
+                                "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                },
-                                "justifyMode": "center",
-                                "wideLayout": false
+                                }
                             },
                             "fieldConfig": {
-                                "defaults": {},
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#22252b"
+                                    }
+                                },
                                 "overrides": [
                                     {
                                         "matcher": {
@@ -651,12 +667,12 @@
                                                 "computed_columns": [
                                                     {
                                                         "selector": "actual_power/1000",
-                                                        "text": "Ground truth",
+                                                        "text": "Ground truth [kW]",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "simulated_power/1000",
-                                                        "text": "OpenDT",
+                                                        "text": "OpenDT [kW]",
                                                         "type": "number"
                                                     },
                                                     {
@@ -677,8 +693,8 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Ground truth": 0,
-                                                "OpenDT": 1,
+                                                "Ground truth [kW]": 0,
+                                                "OpenDT [kW]": 1,
                                                 "better": 2
                                             },
                                             "excludeByName": {
@@ -710,18 +726,18 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
+                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Power draw [kW]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
-                                    },
-                                    "decimals": 1
+                                    }
                                 },
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Ground truth"
+                                            "options": "Ground truth [kW]"
                                         },
                                         "properties": [
                                             {
@@ -736,7 +752,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "OpenDT"
+                                            "options": "OpenDT [kW]"
                                         },
                                         "properties": [
                                             {
@@ -760,7 +776,7 @@
                                             },
                                             {
                                                 "id": "custom.axisLabel",
-                                                "value": "lower is better ↓"
+                                                "value": "BETTER →"
                                             },
                                             {
                                                 "id": "custom.lineWidth",
@@ -885,6 +901,7 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
+                                    "decimals": 0,
                                     "custom": {
                                         "axisLabel": "Jobs per hour",
                                         "lineWidth": 2,
@@ -1001,15 +1018,22 @@
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "vertical",
+                                "minVizWidth": 100,
+                                "minVizHeight": 60,
+                                "justifyMode": "auto",
+                                "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
                                     "valueSize": 22
-                                },
-                                "justifyMode": "center",
-                                "wideLayout": false
+                                }
                             },
                             "fieldConfig": {
-                                "defaults": {},
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#22252b"
+                                    }
+                                },
                                 "overrides": [
                                     {
                                         "matcher": {
@@ -1195,6 +1219,11 @@
                                                         "selector": "text",
                                                         "text": "Change",
                                                         "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "by",
+                                                        "text": "By",
+                                                        "type": "string"
                                                     }
                                                 ]
                                             }
@@ -1210,7 +1239,8 @@
                                         "options": {
                                             "indexByName": {
                                                 "Time": 0,
-                                                "Change": 1
+                                                "Change": 1,
+                                                "By": 2
                                             }
                                         }
                                     }
@@ -1262,6 +1292,18 @@
                                             {
                                                 "id": "custom.width",
                                                 "value": 110
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "By"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.width",
+                                                "value": 90
                                             }
                                         ]
                                     }
@@ -1441,7 +1483,7 @@
                 "1m",
                 "5m"
             ],
-            "hideTimepicker": false,
+            "hideTimepicker": true,
             "fiscalYearStartMonth": 0
         }
     }

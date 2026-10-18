@@ -31,6 +31,7 @@ def write_window(
     zone_path="/app/workload/carbon_zones/NL.parquet",
     jobs=JOBS,
     scheduler=None,
+    r=4.0,
 ):
     """Window n ends `minutes` after T0; OpenDC output every 150 s, up to one sample past the end."""
     window = run_dir / "simulator" / "opendc" / f"run_{n}"
@@ -47,8 +48,8 @@ def write_window(
             "tasks_completed": 0,
         }
     ).to_parquet(out / "service.parquet")
-    # two hosts, at 20% and 60% CPU; 16 cores at 2,100 MHz each, the busier one demanding 12 of them
-    # and running two jobs
+    # two hosts, at 20% and 60% CPU; 16 cores at 2,100 MHz each, the busier one demanding 12 of them,
+    # running two jobs, and drawing 200 W (the idle one 100 W)
     pd.concat(
         pd.DataFrame(
             {
@@ -59,12 +60,13 @@ def write_window(
                 "cpu_demand": demand,
                 "cpu_utilization": utilization,
                 "tasks_running": running,
+                "power_draw": power,
                 "embodied_carbon": 500.0,
             }
         )
-        for name, utilization, demand, running in [
-            ("H01-1", 0.2, 6300.0, 0),
-            ("H01-2", 0.6, 25200.0, 2),
+        for name, utilization, demand, running, power in [
+            ("H01-1", 0.2, 6300.0, 0, 100.0),
+            ("H01-2", 0.6, 25200.0, 2, 200.0),
         ]
     ).to_parquet(out / "host.parquet")
     # 1 kWh and 100 g CO2 per sample
@@ -92,7 +94,7 @@ def write_window(
                             "power": 300.0,
                             "idlePower": 25.0,
                             "maxPower": 174.0,
-                            "calibrationFactor": 4.0,
+                            "calibrationFactor": r,
                         },
                     }
                 ],
