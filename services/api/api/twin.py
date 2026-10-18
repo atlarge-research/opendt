@@ -10,6 +10,7 @@ from functools import lru_cache
 from itertools import pairwise
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 SERVICE = ("hosts_up", "tasks_pending", "tasks_active", "tasks_completed")
@@ -35,6 +36,10 @@ SETTINGS = {
 PERIODS = {"minute": "min", "hour": "h", "day": "D", "week": "W-MON", "month": "MS", "year": "YS"}
 LOCK = threading.Lock()  # the panels of a dashboard ask at once; a new window is computed once
 GROUPS = 3  # kinds of servers the control panel can mix
+BUCKETS = [
+    f"cpu_{low}_{low + 20}" for low in range(0, 100, 20)
+]  # hosts per CPU utilization bucket [%]
+ON_TIME_MIN = 10  # a job started on time waited at most this long
 
 
 def server(
@@ -95,9 +100,7 @@ def settings(window: Path) -> dict:
     policies = experiment.get("allocationPolicies", [])  # none: OpenDC's default, Mem
     return {
         "hosts": sum(host["count"] for host in hosts),
-        "servers": " + ".join(
-            f"{h['count']:,} {'SURF' if h['name'] == 'H01' else h['name']}" for h in hosts
-        ),
+        "servers": " + ".join(f"{host['count']:,} {label(host)}" for host in hosts),
         # the groups as the control panel's fields kind_1, count_1, ..., kind_3, count_3
         **{
             f"{field}_{i}": value
@@ -108,6 +111,28 @@ def settings(window: Path) -> dict:
         "carbon_zone": next(zone for zone, trace in CARBON_TRACES.items() if trace == path),
         "scheduler": policies[0]["policyName"] if policies else "Mem",
     }
+
+
+def label(host: dict) -> str:
+    return "SURF" if host["name"] == "H01" else host["name"]
+
+
+def specs(host: dict) -> dict:
+    """A kind of server as people read it: cores, GHz, GB, and idle and maximum power [W]."""
+    return {
+        "kind": label(host),
+        "cores": host["cpu"]["coreCount"],
+        "ghz": host["cpu"]["coreSpeed"] / 1000,
+        "memory_gb": host["memory"]["memorySize"] / 1e6,  # SURF's unit: 128 GB is 128,000,000
+        "idle_w": host["cpuPowerModel"]["idlePower"],
+        "max_w": host["cpuPowerModel"]["maxPower"],
+    }
+
+
+def server_groups(run_dir: Path) -> pd.DataFrame:
+    """The server groups the twin runs now, with their specs."""
+    hosts = topology(windows(run_dir)[-1])["clusters"][0]["hosts"]
+    return pd.DataFrame({**specs(host), "count": host["count"]} for host in hosts)
 
 
 def output(window: Path, name: str) -> Path:
@@ -137,9 +162,12 @@ def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -
     hosts = read(window, "host", HOST, start, end)
     hosts["cpu_demand_cores"] = hosts["cpu_demand"] / hosts["cpu_capacity"] * hosts["core_count"]
     hosts["in_use"] = hosts["tasks_running"] > 0
+    hosts["bucket"] = pd.cut(
+        hosts["cpu_utilization"], [0, 0.2, 0.4, 0.6, 0.8, np.inf], right=False, labels=BUCKETS
+    )
     by_time = hosts.groupby("timestamp")
     cpu = by_time["cpu_utilization"]
-    hosts = pd.DataFrame(
+    per_time = pd.DataFrame(
         {
             "hosts_in_use": by_time["in_use"].sum(),
             "cpu_utilization": cpu.mean(),
@@ -148,10 +176,10 @@ def cluster_slice(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -
             "cpu_capacity_cores": by_time["core_count"].sum(),
             "embodied_carbon": by_time["embodied_carbon"].sum(),
         }
-    ).reset_index()
+    ).join(hosts.groupby(["timestamp", "bucket"], observed=False).size().unstack())
     power = read(window, "powerSource", ("energy_usage", "carbon_emission"), start, end)
     service = read(window, "service", SERVICE, start, end)
-    return service.merge(hosts, on="timestamp").merge(power, on="timestamp")
+    return service.merge(per_time.reset_index(), on="timestamp").merge(power, on="timestamp")
 
 
 def cluster(run_dir: Path) -> pd.DataFrame:
@@ -197,11 +225,13 @@ def job_times(window: Path) -> pd.DataFrame:
 def window_scheduling(window: Path, start: pd.Timestamp | None, end: pd.Timestamp) -> dict:
     jobs = job_times(window)
     started = jobs["start"] <= end if start is None else jobs["start"].between(start, end, "right")
-    queue = (jobs["start"] - jobs["submit"])[started].dt.total_seconds() / 60
+    waited = (jobs["start"] - jobs["submit"]).dt.total_seconds() / 60
     return {
         "timestamp": end,
         "completion_h": (jobs["finish"].max() - end).total_seconds() / 3600,
-        "queue_median_min": queue.median(),
+        "queue_median_min": waited[started].median(),
+        # of all the jobs started by the end of the window
+        "started_in_10_min_pct": (waited[jobs["start"] <= end] <= ON_TIME_MIN).mean() * 100,
     }
 
 
@@ -210,6 +240,12 @@ def scheduling(run_dir: Path) -> pd.DataFrame:
     started in the window's own slice."""
     with LOCK:
         return pd.DataFrame([window_scheduling(*s) for s in slices(run_dir)])
+
+
+def arrivals(run_dir: Path) -> pd.DataFrame:
+    """Jobs submitted per hour so far, from the trace."""
+    submitted = job_times(windows(run_dir)[-1]).resample("h", on="submit").size()
+    return submitted.rename_axis("timestamp").rename("jobs").reset_index()
 
 
 def jobs(run_dir: Path) -> pd.DataFrame:

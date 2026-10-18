@@ -1,0 +1,1370 @@
+{
+    "apiVersion": "dashboard.grafana.app/v2beta1",
+    "kind": "Dashboard",
+    "metadata": {
+        "name": "opendt-simple"
+    },
+    "spec": {
+        "title": "OpenDT, simple",
+        "description": "",
+        "tags": [
+            "opendt"
+        ],
+        "cursorSync": "Crosshair",
+        "editable": true,
+        "liveNow": false,
+        "preload": false,
+        "links": [],
+        "annotations": [
+            {
+                "kind": "AnnotationQuery",
+                "spec": {
+                    "name": "Topology changes",
+                    "enable": true,
+                    "hide": false,
+                    "iconColor": "#D55E00",
+                    "query": {
+                        "kind": "DataQuery",
+                        "group": "yesoreyeram-infinity-datasource",
+                        "version": "v0",
+                        "datasource": {
+                            "name": "df5tfgbpfeakgc"
+                        },
+                        "spec": {
+                            "type": "json",
+                            "source": "url",
+                            "parser": "backend",
+                            "format": "table",
+                            "url": "http://api:8000/api/events",
+                            "url_options": {
+                                "method": "GET"
+                            },
+                            "root_selector": "data",
+                            "columns": [
+                                {
+                                    "selector": "time",
+                                    "text": "time",
+                                    "type": "timestamp"
+                                },
+                                {
+                                    "selector": "text",
+                                    "text": "text",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        ],
+        "elements": {
+            "screens-simple": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 1,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "text",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "mode": "markdown",
+                                "content": "[Detailed](/d/opendt-overview?${__url_time_range}) · **Simple** · [Topology](/d/opendt-topology?${__url_time_range})"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "control-simple": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 2,
+                    "title": "Control panel",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "volkovlabs-form-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "initial": {
+                                    "method": "GET",
+                                    "url": "http://localhost:3001/api/status"
+                                },
+                                "update": {
+                                    "method": "PATCH",
+                                    "url": "http://localhost:3001/api/control",
+                                    "payloadMode": "updated",
+                                    "confirm": true,
+                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Control panel', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['Control panel', `The API answered ${response && response.status}`]);\n}"
+                                },
+                                "sync": false,
+                                "elements": [
+                                    {
+                                        "uid": "carbon_zone",
+                                        "id": "carbon_zone",
+                                        "title": "Carbon zone",
+                                        "type": "select",
+                                        "labelWidth": 12,
+                                        "options": [
+                                            {
+                                                "id": "Default",
+                                                "label": "Default (OpenDT's trace)",
+                                                "value": "Default"
+                                            },
+                                            {
+                                                "id": "NL",
+                                                "label": "NL",
+                                                "value": "NL"
+                                            },
+                                            {
+                                                "id": "DE",
+                                                "label": "DE",
+                                                "value": "DE"
+                                            },
+                                            {
+                                                "id": "RO",
+                                                "label": "RO",
+                                                "value": "RO"
+                                            },
+                                            {
+                                                "id": "PL",
+                                                "label": "PL",
+                                                "value": "PL"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "scheduler",
+                                        "id": "scheduler",
+                                        "title": "Scheduler",
+                                        "type": "select",
+                                        "labelWidth": 12,
+                                        "options": [
+                                            {
+                                                "id": "Mem",
+                                                "label": "Mem",
+                                                "value": "Mem"
+                                            },
+                                            {
+                                                "id": "CoreMem",
+                                                "label": "CoreMem",
+                                                "value": "CoreMem"
+                                            },
+                                            {
+                                                "id": "ActiveServers",
+                                                "label": "ActiveServers",
+                                                "value": "ActiveServers"
+                                            },
+                                            {
+                                                "id": "ActiveServersInv",
+                                                "label": "ActiveServersInv",
+                                                "value": "ActiveServersInv"
+                                            },
+                                            {
+                                                "id": "ProvisionedCores",
+                                                "label": "ProvisionedCores",
+                                                "value": "ProvisionedCores"
+                                            },
+                                            {
+                                                "id": "Random",
+                                                "label": "Random",
+                                                "value": "Random"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "speed_factor",
+                                        "id": "speed_factor",
+                                        "title": "Speed",
+                                        "type": "select",
+                                        "labelWidth": 12,
+                                        "options": [
+                                            {
+                                                "id": "1",
+                                                "label": "1x (real time)",
+                                                "value": 1
+                                            },
+                                            {
+                                                "id": "60",
+                                                "label": "60x",
+                                                "value": 60
+                                            },
+                                            {
+                                                "id": "300",
+                                                "label": "300x",
+                                                "value": 300
+                                            },
+                                            {
+                                                "id": "3600",
+                                                "label": "3,600x",
+                                                "value": 3600
+                                            },
+                                            {
+                                                "id": "-1",
+                                                "label": "max",
+                                                "value": -1
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "submit": {
+                                    "text": "Apply"
+                                },
+                                "reset": {
+                                    "text": "Full screen",
+                                    "icon": "monitor",
+                                    "variant": "secondary"
+                                },
+                                "resetAction": {
+                                    "mode": "custom",
+                                    "code": "document.documentElement.requestFullscreen();\ncontext.grafana.locationService.partial({ kiosk: true });",
+                                    "confirm": false
+                                },
+                                "confirmModal": {
+                                    "title": "Change the twin",
+                                    "body": "The twin changes from its next window of operation.",
+                                    "columns": {
+                                        "name": "",
+                                        "oldValue": "Now",
+                                        "newValue": "New"
+                                    },
+                                    "confirm": "Apply"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "status-simple": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 3,
+                    "title": "Twin",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "twin_time",
+                                                        "text": "Twin time",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "hosts",
+                                                        "text": "Servers",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "calibration_factor",
+                                                        "text": "r",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "carbon_zone",
+                                                        "text": "Carbon zone",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "scheduler",
+                                                        "text": "Scheduler",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Twin time": 0,
+                                                "Servers": 1,
+                                                "r": 2,
+                                                "Carbon zone": 3,
+                                                "Scheduler": 4
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "horizontal",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Twin time"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "time:MM-DD HH:mm"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Servers"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "locale"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "r"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "physical": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 4,
+                    "title": "Physical system",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/power?interval_seconds=300",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "actual_power",
+                                                        "text": "Power, measured",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Power, measured": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {},
+                                "colorMode": "none",
+                                "graphMode": "area",
+                                "textMode": "value_and_name",
+                                "orientation": "horizontal",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#009E73"
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Power, measured"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "watt"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "power-simple": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 5,
+                    "title": "Power",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "actual_power",
+                                                        "text": "actual_power",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "simulated_power",
+                                                        "text": "simulated_power",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "actual_power/1000",
+                                                        "text": "Measured",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "simulated_power/1000",
+                                                        "text": "OpenDT",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "0",
+                                                        "text": "better",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Measured": 0,
+                                                "OpenDT": 1,
+                                                "better": 2
+                                            },
+                                            "excludeByName": {
+                                                "actual_power": true,
+                                                "simulated_power": true
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "timeseries",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "legend": {
+                                    "calcs": [
+                                        "lastNotNull"
+                                    ]
+                                },
+                                "tooltip": {
+                                    "mode": "multi"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "min": 0,
+                                    "custom": {
+                                        "axisLabel": "Power [kW]",
+                                        "lineWidth": 2,
+                                        "showPoints": "never"
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Measured"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#999999"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "OpenDT"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#009E73"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "better"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisPlacement",
+                                                "value": "right"
+                                            },
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "lower is better ↓"
+                                            },
+                                            {
+                                                "id": "custom.lineWidth",
+                                                "value": 0
+                                            },
+                                            {
+                                                "id": "custom.axisGridShow",
+                                                "value": false
+                                            },
+                                            {
+                                                "id": "custom.hideFrom",
+                                                "value": {
+                                                    "legend": true,
+                                                    "tooltip": true,
+                                                    "viz": false
+                                                }
+                                            },
+                                            {
+                                                "id": "mappings",
+                                                "value": [
+                                                    {
+                                                        "type": "range",
+                                                        "options": {
+                                                            "from": -1000000000000.0,
+                                                            "to": 1000000000000.0,
+                                                            "result": {
+                                                                "text": " "
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "arrivals": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 6,
+                    "title": "Jobs arriving per hour",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/arrivals",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "jobs",
+                                                        "text": "Jobs",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Jobs": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "timeseries",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "legend": {
+                                    "calcs": [
+                                        "lastNotNull"
+                                    ]
+                                },
+                                "tooltip": {
+                                    "mode": "multi"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "min": 0,
+                                    "custom": {
+                                        "axisLabel": "Jobs per hour",
+                                        "lineWidth": 2,
+                                        "showPoints": "never",
+                                        "drawStyle": "bars",
+                                        "fillOpacity": 80,
+                                        "barAlignment": 1
+                                    },
+                                    "unit": "locale"
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Jobs"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#999999"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "twin": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 7,
+                    "title": "Digital twin",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/scheduling",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "completion_h",
+                                                        "text": "Time to full completion [h]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "started_in_10_min_pct",
+                                                        "text": "Started within 10 min [%]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Time to full completion [h]": 0,
+                                                "Started within 10 min [%]": 1
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {},
+                                "colorMode": "none",
+                                "graphMode": "area",
+                                "textMode": "value_and_name",
+                                "orientation": "horizontal",
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#009E73"
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Time to full completion [h]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "none"
+                                            },
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Started within 10 min [%]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "none"
+                                            },
+                                            {
+                                                "id": "decimals",
+                                                "value": 1
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "heatmap": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 8,
+                    "title": "Hosts per CPU utilization",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_0_20",
+                                                        "text": "0-20%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_20_40",
+                                                        "text": "20-40%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_40_60",
+                                                        "text": "40-60%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_60_80",
+                                                        "text": "60-80%",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cpu_80_100",
+                                                        "text": "80-100%",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "0-20%": 0,
+                                                "20-40%": 1,
+                                                "40-60%": 2,
+                                                "60-80%": 3,
+                                                "80-100%": 4
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "heatmap",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "calculate": false,
+                                "yAxis": {
+                                    "axisLabel": "CPU utilization"
+                                },
+                                "color": {
+                                    "mode": "scheme",
+                                    "scheme": "Greens",
+                                    "steps": 5
+                                },
+                                "cellGap": 1,
+                                "legend": {
+                                    "show": true
+                                },
+                                "tooltip": {
+                                    "mode": "single",
+                                    "yHistogram": false
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "decisions": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 9,
+                    "title": "Decisions",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/events",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "time",
+                                                        "text": "Time",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "text",
+                                                        "text": "Change",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Time": 0,
+                                                "Change": 1
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "kind": "sortBy",
+                                    "spec": {
+                                        "id": "sortBy",
+                                        "options": {
+                                            "sort": [
+                                                {
+                                                    "field": "Time",
+                                                    "desc": true
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "table",
+                        "version": "",
+                        "spec": {
+                            "options": {},
+                            "fieldConfig": {
+                                "defaults": {
+                                    "custom": {
+                                        "minWidth": 70
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Time"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "time:MM-DD HH:mm"
+                                            },
+                                            {
+                                                "id": "custom.width",
+                                                "value": 110
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "layout": {
+            "kind": "RowsLayout",
+            "spec": {
+                "rows": [
+                    {
+                        "kind": "RowsLayoutRow",
+                        "spec": {
+                            "title": "",
+                            "collapse": false,
+                            "layout": {
+                                "kind": "GridLayout",
+                                "spec": {
+                                    "items": [
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 0,
+                                                "width": 6,
+                                                "height": 2,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "screens-simple"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 2,
+                                                "width": 6,
+                                                "height": 11,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "control-simple"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 13,
+                                                "width": 6,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "status-simple"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 0,
+                                                "width": 9,
+                                                "height": 5,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "physical"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 5,
+                                                "width": 9,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "power-simple"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 13,
+                                                "width": 9,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "arrivals"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 15,
+                                                "y": 0,
+                                                "width": 9,
+                                                "height": 5,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "twin"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 15,
+                                                "y": 5,
+                                                "width": 9,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "heatmap"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 15,
+                                                "y": 13,
+                                                "width": 9,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "decisions"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "hideHeader": true
+                        }
+                    }
+                ]
+            }
+        },
+        "variables": [],
+        "timeSettings": {
+            "timezone": "utc",
+            "from": "2022-10-06T22:00:00.000Z",
+            "to": "2022-10-13T22:00:00.000Z",
+            "autoRefresh": "5s",
+            "autoRefreshIntervals": [
+                "5s",
+                "10s",
+                "30s",
+                "1m",
+                "5m"
+            ],
+            "hideTimepicker": false,
+            "fiscalYearStartMonth": 0
+        }
+    }
+}

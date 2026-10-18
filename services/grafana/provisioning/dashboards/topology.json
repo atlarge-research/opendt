@@ -1,0 +1,764 @@
+{
+    "apiVersion": "dashboard.grafana.app/v2beta1",
+    "kind": "Dashboard",
+    "metadata": {
+        "name": "opendt-topology"
+    },
+    "spec": {
+        "title": "OpenDT, topology",
+        "description": "",
+        "tags": [
+            "opendt"
+        ],
+        "cursorSync": "Crosshair",
+        "editable": true,
+        "liveNow": false,
+        "preload": false,
+        "links": [],
+        "annotations": [
+            {
+                "kind": "AnnotationQuery",
+                "spec": {
+                    "name": "Topology changes",
+                    "enable": true,
+                    "hide": false,
+                    "iconColor": "#D55E00",
+                    "query": {
+                        "kind": "DataQuery",
+                        "group": "yesoreyeram-infinity-datasource",
+                        "version": "v0",
+                        "datasource": {
+                            "name": "df5tfgbpfeakgc"
+                        },
+                        "spec": {
+                            "type": "json",
+                            "source": "url",
+                            "parser": "backend",
+                            "format": "table",
+                            "url": "http://api:8000/api/events",
+                            "url_options": {
+                                "method": "GET"
+                            },
+                            "root_selector": "data",
+                            "columns": [
+                                {
+                                    "selector": "time",
+                                    "text": "time",
+                                    "type": "timestamp"
+                                },
+                                {
+                                    "selector": "text",
+                                    "text": "text",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        ],
+        "elements": {
+            "screens-topology": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 1,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "text",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "mode": "markdown",
+                                "content": "[Detailed](/d/opendt-overview?${__url_time_range}) · [Simple](/d/opendt-simple?${__url_time_range}) · **Topology**"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "servers": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 2,
+                    "title": "Servers",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "volkovlabs-form-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "initial": {
+                                    "method": "GET",
+                                    "url": "http://localhost:3001/api/status"
+                                },
+                                "update": {
+                                    "method": "PATCH",
+                                    "url": "http://localhost:3001/api/control",
+                                    "payloadMode": "updated",
+                                    "confirm": true,
+                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['Servers', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['Servers', `The API answered ${response && response.status}`]);\n}"
+                                },
+                                "sync": false,
+                                "elements": [
+                                    {
+                                        "uid": "kind_1",
+                                        "id": "kind_1",
+                                        "title": "Servers 1",
+                                        "type": "select",
+                                        "labelWidth": 12,
+                                        "options": [
+                                            {
+                                                "id": "H01",
+                                                "label": "SURF (16 cores)",
+                                                "value": "H01"
+                                            },
+                                            {
+                                                "id": "EPYC",
+                                                "label": "EPYC (64 cores)",
+                                                "value": "EPYC"
+                                            },
+                                            {
+                                                "id": "Xeon",
+                                                "label": "Xeon (40 cores)",
+                                                "value": "Xeon"
+                                            },
+                                            {
+                                                "id": "Memory",
+                                                "label": "Memory, 1 TiB (48 cores)",
+                                                "value": "Memory"
+                                            },
+                                            {
+                                                "id": "Edge",
+                                                "label": "Edge (8 cores)",
+                                                "value": "Edge"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "count_1",
+                                        "id": "count_1",
+                                        "title": "Count",
+                                        "type": "number",
+                                        "labelWidth": 12,
+                                        "min": 0
+                                    },
+                                    {
+                                        "uid": "kind_2",
+                                        "id": "kind_2",
+                                        "title": "Servers 2",
+                                        "type": "select",
+                                        "labelWidth": 12,
+                                        "options": [
+                                            {
+                                                "id": "H01",
+                                                "label": "SURF (16 cores)",
+                                                "value": "H01"
+                                            },
+                                            {
+                                                "id": "EPYC",
+                                                "label": "EPYC (64 cores)",
+                                                "value": "EPYC"
+                                            },
+                                            {
+                                                "id": "Xeon",
+                                                "label": "Xeon (40 cores)",
+                                                "value": "Xeon"
+                                            },
+                                            {
+                                                "id": "Memory",
+                                                "label": "Memory, 1 TiB (48 cores)",
+                                                "value": "Memory"
+                                            },
+                                            {
+                                                "id": "Edge",
+                                                "label": "Edge (8 cores)",
+                                                "value": "Edge"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uid": "count_2",
+                                        "id": "count_2",
+                                        "title": "Count",
+                                        "type": "number",
+                                        "labelWidth": 12,
+                                        "min": 0
+                                    },
+                                    {
+                                        "uid": "kind_3",
+                                        "id": "kind_3",
+                                        "title": "Servers 3",
+                                        "type": "select",
+                                        "labelWidth": 12,
+                                        "options": [
+                                            {
+                                                "id": "H01",
+                                                "label": "SURF (16 cores)",
+                                                "value": "H01"
+                                            },
+                                            {
+                                                "id": "EPYC",
+                                                "label": "EPYC (64 cores)",
+                                                "value": "EPYC"
+                                            },
+                                            {
+                                                "id": "Xeon",
+                                                "label": "Xeon (40 cores)",
+                                                "value": "Xeon"
+                                            },
+                                            {
+                                                "id": "Memory",
+                                                "label": "Memory, 1 TiB (48 cores)",
+                                                "value": "Memory"
+                                            },
+                                            {
+                                                "id": "Edge",
+                                                "label": "Edge (8 cores)",
+                                                "value": "Edge"
+                                            }
+                                        ],
+                                        "showIf": "return context.panel.elements.find((e) => e.id === 'kind_2').value"
+                                    },
+                                    {
+                                        "uid": "count_3",
+                                        "id": "count_3",
+                                        "title": "Count",
+                                        "type": "number",
+                                        "labelWidth": 12,
+                                        "min": 0,
+                                        "showIf": "return context.panel.elements.find((e) => e.id === 'kind_2').value"
+                                    }
+                                ],
+                                "submit": {
+                                    "text": "Apply"
+                                },
+                                "reset": {
+                                    "text": "Full screen",
+                                    "icon": "monitor",
+                                    "variant": "secondary"
+                                },
+                                "resetAction": {
+                                    "mode": "custom",
+                                    "code": "document.documentElement.requestFullscreen();\ncontext.grafana.locationService.partial({ kiosk: true });",
+                                    "confirm": false
+                                },
+                                "confirmModal": {
+                                    "title": "Change the twin",
+                                    "body": "The twin changes from its next window of operation.",
+                                    "columns": {
+                                        "name": "",
+                                        "oldValue": "Now",
+                                        "newValue": "New"
+                                    },
+                                    "confirm": "Apply"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "groups": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 3,
+                    "title": "Server groups now",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/servers",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "kind",
+                                                        "text": "Kind",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "count",
+                                                        "text": "Servers",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "cores",
+                                                        "text": "Cores",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "ghz",
+                                                        "text": "GHz",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "memory_gb",
+                                                        "text": "Memory [GB]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "idle_w",
+                                                        "text": "Idle [W]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "max_w",
+                                                        "text": "Max [W]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Kind": 0,
+                                                "Servers": 1,
+                                                "Cores": 2,
+                                                "GHz": 3,
+                                                "Memory [GB]": 4,
+                                                "Idle [W]": 5,
+                                                "Max [W]": 6
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "table",
+                        "version": "",
+                        "spec": {
+                            "options": {},
+                            "fieldConfig": {
+                                "defaults": {
+                                    "custom": {
+                                        "minWidth": 70
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Servers"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "locale"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "catalog": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 4,
+                    "title": "Kinds to choose from",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/server_kinds",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "kind",
+                                                        "text": "Kind",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "cores",
+                                                        "text": "Cores",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "ghz",
+                                                        "text": "GHz",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "memory_gb",
+                                                        "text": "Memory [GB]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "idle_w",
+                                                        "text": "Idle [W]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "max_w",
+                                                        "text": "Max [W]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Kind": 0,
+                                                "Cores": 1,
+                                                "GHz": 2,
+                                                "Memory [GB]": 3,
+                                                "Idle [W]": 4,
+                                                "Max [W]": 5
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "table",
+                        "version": "",
+                        "spec": {
+                            "options": {},
+                            "fieldConfig": {
+                                "defaults": {
+                                    "custom": {
+                                        "minWidth": 70
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "hosts-topology": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 5,
+                    "title": "Hosts available vs. in use",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "hosts_up",
+                                                        "text": "Available",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "hosts_in_use",
+                                                        "text": "In use",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Available": 0,
+                                                "In use": 1
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "timeseries",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "legend": {
+                                    "calcs": [
+                                        "lastNotNull"
+                                    ]
+                                },
+                                "tooltip": {
+                                    "mode": "multi"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "min": 0,
+                                    "custom": {
+                                        "axisLabel": "Hosts",
+                                        "lineWidth": 2,
+                                        "showPoints": "never"
+                                    },
+                                    "unit": "locale"
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Available"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#338ec1"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "In use"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#E69F00"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "layout": {
+            "kind": "RowsLayout",
+            "spec": {
+                "rows": [
+                    {
+                        "kind": "RowsLayoutRow",
+                        "spec": {
+                            "title": "",
+                            "collapse": false,
+                            "layout": {
+                                "kind": "GridLayout",
+                                "spec": {
+                                    "items": [
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 0,
+                                                "width": 6,
+                                                "height": 2,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "screens-topology"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 2,
+                                                "width": 6,
+                                                "height": 13,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "servers"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 0,
+                                                "width": 18,
+                                                "height": 5,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "groups"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 5,
+                                                "width": 18,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "catalog"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 13,
+                                                "width": 18,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "hosts-topology"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "hideHeader": true
+                        }
+                    }
+                ]
+            }
+        },
+        "variables": [],
+        "timeSettings": {
+            "timezone": "utc",
+            "from": "2022-10-06T22:00:00.000Z",
+            "to": "2022-10-13T22:00:00.000Z",
+            "autoRefresh": "5s",
+            "autoRefreshIntervals": [
+                "5s",
+                "10s",
+                "30s",
+                "1m",
+                "5m"
+            ],
+            "hideTimepicker": false,
+            "fiscalYearStartMonth": 0
+        }
+    }
+}

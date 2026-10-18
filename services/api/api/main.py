@@ -420,6 +420,27 @@ def get_events():
     return rows(twin.events)
 
 
+@app.get("/api/arrivals")
+def get_arrivals():
+    """Jobs submitted per hour so far."""
+    return rows(twin.arrivals)
+
+
+@app.get("/api/servers")
+def get_servers():
+    """The server groups the twin runs now, with their specs."""
+    return rows(twin.server_groups)
+
+
+@app.get("/api/server_kinds")
+def get_server_kinds():
+    """The kinds of servers the control panel offers, with their specs."""
+    kinds = pd.DataFrame(
+        {"id": name, **twin.specs({"name": name, **spec})} for name, spec in twin.SERVERS.items()
+    )
+    return Response(f'{{"data": {kinds.to_json(orient="records")}}}', media_type="application/json")
+
+
 @app.get("/api/accuracy")
 def get_accuracy():
     """Per hour: the MAPE [%] of OpenDT's power vs. the measured power, and the r the twin ran with."""

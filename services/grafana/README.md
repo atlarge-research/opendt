@@ -7,19 +7,23 @@ Visualization dashboards for OpenDT metrics.
 - **URL:** http://localhost:3000
 - **Authentication:** Disabled (anonymous admin access)
 
-The OpenDT dashboard is the home page.
+Three screens, linked at the top left of each, next to the control panel (carbon zone, scheduler, replay speed,
+and a full-screen button):
 
-## Dashboards
-
-- **OpenDT:** the control panel (hosts, carbon zone, and replay speed of the running twin), the twin's status, and
-  power; then a row each for scheduling (time to full completion, time in queue, jobs, and the jobs not done yet),
-  utilization (CPU of the hosts, demand vs. capacity, hosts in use), energy and sustainability (CO2 vs. carbon
-  intensity, energy, operational vs. embodied CO2), and twin accuracy (r and MAPE of the calibrator). Markers on
-  every graph show the topology changes (hosts, r, carbon zone); the legends show the latest values.
+- **OpenDT** (the home page, detailed): the twin's state, power, CO2 vs. carbon intensity, and hosts; then a row each
+  for scheduling, utilization, energy and sustainability (per period, chosen at the top), and twin accuracy. The
+  Layout row picks the plots to show. Markers on every graph show the topology changes, the legends the latest
+  values, and the right axis whether higher or lower is better.
+- **OpenDT, simple:** the physical system (measured power, jobs arriving) next to the twin (time to full
+  completion, jobs started within 10 minutes, hosts per CPU utilization, decisions).
+- **OpenDT, topology:** the server groups (SURF's node and OpenDC web's host templates), what runs now, and the kinds
+  to choose from.
 - **OpenDT Dashboard** (classic): power and carbon emissions.
 
-The panels query the OpenDT API at `http://api:8000`, from the Grafana server. The control panel sends its requests
-from the browser, to the API's port on the host, `http://localhost:3001` (`GET /api/status`, `PATCH /api/control`).
+The dashboards use Grafana's v2 format and its new layout (public preview in 12.4, enabled in the image), which
+shows or hides each plot. The panels query the OpenDT API at `http://api:8000`, from the Grafana server; the forms
+send their requests from the browser, to the API's port on the host, `http://localhost:3001` (`GET /api/status`,
+`PATCH /api/control`).
 
 ## Image
 

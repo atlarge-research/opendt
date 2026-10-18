@@ -143,6 +143,8 @@ def test_control_rejects_a_speed_the_twin_cannot_use():
         main.get_jobs,
         main.get_events,
         main.get_accuracy,
+        main.get_arrivals,
+        main.get_servers,
         main.get_totals,
     ],
     ids=lambda endpoint: endpoint.__name__,
@@ -177,3 +179,7 @@ def test_control_merges_groups_of_the_same_kind(api):
     main.control(main.Control(kind_2="EPYC", count_2=20, kind_3="EPYC", count_3=5))
     groups = [(host.name, host.count) for host in sent_topology(api).hosts]
     assert groups == [("H01", 2770), ("EPYC", 25)]
+
+
+def test_server_kinds_are_the_ones_the_control_panel_offers():
+    assert [kind["id"] for kind in data(main.get_server_kinds())] == list(twin.SERVERS)

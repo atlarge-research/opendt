@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 from api import twin
-from conftest import write_window
+from conftest import JOBS, write_window
 
 
 def test_windows_are_complete_and_in_order(run_dir):
@@ -53,6 +53,36 @@ def test_scheduling_forecasts_completion_and_queue_time_per_window(run_dir):
     assert scheduling["completion_h"].tolist() == pytest.approx([55 / 60, 3])
     # jobs started in each window's own slice: 1, 2, and 5 (0, 2, 1 min), then 3 (3 min)
     assert scheduling["queue_median_min"].tolist() == [1, 3]
+
+
+def test_share_of_jobs_starting_within_10_minutes(run_dir):
+    write_window(run_dir, 3, 25, hosts=2770, active=[30])
+    # by 22:25, jobs 1, 2, 5, 3 start within 3 minutes, job 4 after 12
+    assert twin.scheduling(run_dir)["started_in_10_min_pct"].tolist() == [100, 100, 80]
+
+
+def test_jobs_arriving_per_hour(run_dir):
+    write_window(run_dir, 3, 70, hosts=2770, active=[30], jobs=[*JOBS, (6, 65, 65, 90)])
+    assert twin.arrivals(run_dir)["jobs"].tolist() == [5, 1]  # submitted 22:00-22:08, then 23:05
+
+
+def test_hosts_per_cpu_utilization_bucket(run_dir):
+    last = twin.cluster(run_dir).iloc[-1]
+    buckets = [f"cpu_{low}_{low + 20}" for low in range(0, 100, 20)]
+    assert last[buckets].tolist() == [0, 1, 0, 1, 0]  # one host at 20%, one at 60%
+
+
+def test_server_groups_with_their_specs(run_dir):
+    [surf] = twin.server_groups(run_dir).to_dict("records")
+    assert surf == {
+        "kind": "SURF",
+        "count": 2770,
+        "cores": 16,
+        "ghz": 2.1,
+        "memory_gb": 128,
+        "idle_w": 25,
+        "max_w": 174,
+    }
 
 
 def test_jobs_left_at_twin_time_longest_first(run_dir):
