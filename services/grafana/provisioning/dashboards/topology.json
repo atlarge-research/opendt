@@ -89,7 +89,7 @@
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "updated",
                                     "confirm": true,
-                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  context.grafana.notifySuccess(['OpenDT', 'Sent to the twin']);\n} else {\n  context.grafana.notifyError(['OpenDT', `The API answered ${response && response.status}`]);\n}"
+                                    "code": "const response = context.panel.response;\nif (response && response.ok) {\n  const sent = Object.fromEntries(context.panel.elements.map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...context.panel.initial, ...sent });\n  context.grafana.notifySuccess(['OpenDT', 'Sent to the twin']);\n} else if (response) {\n  response.json().then(({ detail }) => context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]));\n}"
                                 },
                                 "elementValueChanged": "const { id, value } = context.element;\nconst view = [\"screen\", \"window\", \"period\", \"markers\"];\nif (view.includes(id)) {\n  context.panel.initial[id] = value;  // a view setting: applied at once, not sent to the twin\n  const url = context.grafana.locationService;\n  const range = url.getSearchObject();\n  if (id === 'screen') url.push(`/d/${value}?from=${range.from || '2022-10-06T22:00:00.000Z'}&to=${range.to || '2022-10-13T22:00:00.000Z'}`);\n  if (id === 'period') url.partial({ 'var-period': value });\n  if (id === 'markers') url.partial({ 'var-markers': value });\n  if (id === 'window') {\n    const end = new Date(context.panel.initial.twin_time).getTime();\n    const hours = { day: 24, hours: 6 }[value];\n    url.partial(hours ? { from: end - hours * 3600000, to: end } : {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"});\n  }\n}",
                                 "sync": false,
@@ -334,7 +334,7 @@
                                     {
                                         "uid": "count_1",
                                         "id": "count_1",
-                                        "title": "Count",
+                                        "title": "Count 1",
                                         "type": "number",
                                         "labelWidth": 14,
                                         "min": 0
@@ -376,7 +376,7 @@
                                     {
                                         "uid": "count_2",
                                         "id": "count_2",
-                                        "title": "Count",
+                                        "title": "Count 2",
                                         "type": "number",
                                         "labelWidth": 14,
                                         "min": 0
@@ -419,7 +419,7 @@
                                     {
                                         "uid": "count_3",
                                         "id": "count_3",
-                                        "title": "Count",
+                                        "title": "Count 3",
                                         "type": "number",
                                         "labelWidth": 14,
                                         "min": 0,
@@ -563,24 +563,12 @@
                             "options": {},
                             "fieldConfig": {
                                 "defaults": {
+                                    "unit": "locale",
                                     "custom": {
                                         "minWidth": 70
                                     }
                                 },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Count"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "locale"
-                                            }
-                                        ]
-                                    }
-                                ]
+                                "overrides": []
                             }
                         }
                     }
@@ -685,6 +673,7 @@
                             "options": {},
                             "fieldConfig": {
                                 "defaults": {
+                                    "unit": "locale",
                                     "custom": {
                                         "minWidth": 70
                                     }

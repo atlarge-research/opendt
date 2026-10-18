@@ -102,6 +102,13 @@ def test_control_swaps_a_kind_and_removes_a_group_set_to_zero(api):
     assert (edge.name, edge.count, edge.cpu.coreCount) == ("Edge", 2770, 8)
 
 
+def test_control_rejects_a_kind_without_hosts(api):
+    with pytest.raises(HTTPException) as error:
+        main.control(main.Control(kind_2="EPYC"))
+    assert (error.value.status_code, error.value.detail) == (422, "Hosts 2 need a count")
+    assert not api
+
+
 def test_control_sends_the_speed_to_the_data_source(api):
     main.control(main.Control(speed_factor=300))
     [(topic, message, key)] = api

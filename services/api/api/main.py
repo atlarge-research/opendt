@@ -510,6 +510,8 @@ def servers(hosts: list[dict], change: Control) -> list[dict]:
         kind = getattr(change, f"kind_{i}") or old["name"]
         count = getattr(change, f"count_{i}")
         count = old["count"] if count is None else count
+        if getattr(change, f"kind_{i}") and not count:
+            raise HTTPException(status_code=422, detail=f"Hosts {i} need a count")
         if not kind or not count:
             continue
         host = old
