@@ -16,6 +16,7 @@ from panels import (
     STATUS,
     TIME,
     YELLOW,
+    editable,
     organize,
     override,
     stat,
@@ -423,7 +424,7 @@ decisions = table(
     header=False,  # time, change, and by whom need no header
 )
 
-# the topology screen
+# the topology screen: the host groups, edited in place, with CPUs and GPUs from the lists or custom
 
 SPECS = [
     ("cores", "Cores"),
@@ -432,9 +433,26 @@ SPECS = [
     ("idle_w", "Idle power [W]"),
     ("max_w", "Max power [W]"),
 ]
-groups = table(
-    "Hosts now", f"{API}/api/servers", [("kind", "Kind", "string"), ("count", "Count"), *SPECS]
+groups = editable(
+    "Hosts",
+    f"{API}/api/hosts",
+    [
+        ("kind", "Name", "string"),
+        ("count", "Count", "number"),
+        ("cpu", "CPU", f"{API}/api/components?part=CPU"),
+        *((field, name, "number") for field, name in SPECS),
+        ("gpu", "GPU", f"{API}/api/components?part=GPU"),
+        ("gpus", "GPUs per host", "number"),
+    ],
+    save=f"{API}/api/hosts",
+    delete=f"{API}/api/hosts?id=${{payload.id}}&count=0",
+)
+groups["description"] = (
+    "Edit a row with its pencil, add one with +. A CPU or GPU picked from the list brings its numbers. "
+    "A new row is a copy of the first, without its GPUs. The twin runs the change from its next window."
 )
 catalog = table(
-    "Kinds to choose from", f"{API}/api/server_kinds", [("kind", "Kind", "string"), *SPECS]
+    "CPUs and GPUs to choose from",
+    f"{API}/api/components",
+    [("part", "Part", "string"), ("name", "Name", "string"), *SPECS],
 )

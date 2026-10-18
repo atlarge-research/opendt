@@ -410,8 +410,8 @@
                                         "value": "day"
                                     },
                                     {
-                                        "uid": "count_1",
-                                        "id": "count_1",
+                                        "uid": "hosts",
+                                        "id": "hosts",
                                         "title": "Hosts",
                                         "type": "number",
                                         "labelWidth": 14,

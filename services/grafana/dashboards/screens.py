@@ -1,7 +1,7 @@
 """The screens: each panel and its place, (name, panel, x, y, width, height) on a 24-column grid."""
 
 import steps
-from form import HOSTS, control, group, picker, stepper
+from form import HOSTS, control, picker, stepper
 from layout import auto, custom, dashboard, grid, picked, row, when
 from panels import PERIODS
 from plots import (
@@ -90,15 +90,14 @@ simple = screen(
     ],
 )
 
-groups_control = control("opendt-topology", group(1) + group(2) + group(3), period=False)
 topology = screen(
     "opendt-topology",
     "OpenDT, topology",
     [
-        ("control", groups_control, 0, 0, 6, 25),
-        ("groups", groups, 6, 0, 18, 5),
-        ("catalog", catalog, 6, 5, 18, 8),
-        ("hosts-topology", hosts, 6, 13, 18, 12),
+        ("control", control("opendt-topology", [], period=False), 0, 0, 6, 25),
+        ("groups", groups, 6, 0, 18, 6),
+        ("catalog", catalog, 6, 6, 18, 9),
+        ("hosts-topology", hosts, 6, 15, 18, 10),
     ],
 )
 

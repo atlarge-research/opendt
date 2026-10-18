@@ -239,3 +239,59 @@ def table(title, url, columns, overrides=(), sort=None, header=True):
     if not header:
         panel["options"] = {"showHeader": False}
     return panel
+
+
+def editable(title, url, columns, save, delete, key="id"):
+    """A table edited in place (Business Table): Edit and Delete on each row, Add in the header. A saved row goes
+    to `save` with its cells in the address, an added one too but without `key` (it names a row, sent but not
+    shown), a deleted one to `delete` (`${payload.<column>}` names a cell). Columns are (field, name, editor),
+    the editor "number", "string", or the URL of a list whose names a select offers."""
+
+    def editor(field, kind):
+        if kind in ("number", "string"):
+            return {"type": kind}
+        return {"type": "select", "queryOptions": {"source": field, "value": "name", "label": "name"}}
+
+    def item(field, name, kind, shown=True):
+        edit = {"enabled": shown, "editor": editor(field, kind)}
+        return {
+            "enabled": shown,
+            "field": {"name": field, "source": "A"},
+            "label": name,
+            "type": "auto",
+            "aggregation": "none",
+            "group": False,
+            "edit": {**edit, "permission": {"mode": "", "userRole": []}},
+            "newRowEdit": edit,
+            # wide enough for a list's names and a cell's editor
+            "appearance": {"width": {"auto": True, "min": 60 if kind == "number" else 120}, "wrap": False},
+        }
+
+    def request(address):
+        query = {**target(address, []), "refId": "save", "url_options": {"method": "POST"}}
+        return {"datasource": DS["uid"], "payload": query}
+
+    def cells(fields):
+        return f"{save}?" + "&".join(f"{f}=${{payload.{f}:percentencode}}" for f in fields)
+
+    fields = [c[0] for c in columns]
+    allowed = {"enabled": True, "permission": {"mode": "", "userRole": []}}
+    table = {
+        "name": title,
+        "items": [item(key, "", "number", shown=False), *(item(*c) for c in columns)],
+        "update": request(cells([key, *fields])),
+        "addRow": {**allowed, "request": request(cells(fields))},
+        "deleteRow": {**allowed, "request": request(delete)},
+    }
+    kinds = [(f, f, "number" if e == "number" else "string") for f, _, e in columns]
+    lists = [(f, e) for f, _, e in columns if e not in ("number", "string")]
+    return {
+        "type": "volkovlabs-table-panel",
+        "title": title,
+        "targets": [
+            target(url, [(key, key), *kinds]),
+            *({**target(u, [("name", "name", "string")]), "refId": f} for f, u in lists),
+        ],
+        "fieldConfig": {"defaults": {"unit": "locale"}, "overrides": []},
+        "options": {"tables": [table]},
+    }

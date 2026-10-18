@@ -79,19 +79,6 @@ def test_cpu_buckets(run_dir):
     assert last[buckets].tolist() == [0, 1, 0, 1, 0]  # one host at 20%, one at 60%
 
 
-def test_server_groups(run_dir):
-    [surf] = twin.server_groups(run_dir).to_dict("records")
-    assert surf == {
-        "kind": "SURF-SARA",
-        "count": 2770,
-        "cores": 16,
-        "ghz": 2.1,
-        "memory_gb": 128,
-        "idle_w": 25,
-        "max_w": 174,
-    }
-
-
 def test_jobs_left(run_dir):
     jobs = twin.jobs(run_dir)
     assert jobs["task_id"].tolist() == [3, 1, 4, 2]  # job 5 is done
@@ -144,7 +131,7 @@ def test_status(run_dir):
     status = twin.status(run_dir)
     assert status["twin_time"] == pd.Timestamp("2022-10-06 22:10", tz="UTC")
     # window 2 runs 2,770 hosts
-    assert (status["count_1"], status["calibration_factor"], status["carbon_zone"]) == (
+    assert (status["hosts"], status["calibration_factor"], status["carbon_zone"]) == (
         2770,
         4.0,
         "NL",

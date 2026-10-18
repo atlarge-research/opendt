@@ -8,5 +8,6 @@ ENV GF_PATHS_PLUGINS=/opt/plugins GF_PLUGINS_PREINSTALL_DISABLED=true
 ENV GF_FEATURE_TOGGLES_ENABLE=dashboardNewLayouts,kubernetesDashboards
 USER root
 RUN grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install yesoreyeram-infinity-datasource 3.11.1 \
-    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-form-panel 6.3.5
+    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-form-panel 6.3.5 \
+    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-table-panel 3.6.8
 USER grafana

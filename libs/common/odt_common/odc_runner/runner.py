@@ -147,8 +147,8 @@ class OpenDCRunner:
         logger.debug(f"Created fragments.parquet with {len(all_fragments)} fragments")
 
     def _create_topology_json(self, topology: Topology, output_path: Path) -> None:
-        """Create topology.json file from Topology model."""
-        topology_dict = topology.model_dump(mode="json")
+        """Create topology.json file from Topology model, without nulls: OpenDC rejects them."""
+        topology_dict = topology.model_dump(mode="json", exclude_none=True)
 
         with open(output_path, "w") as f:
             json.dump(topology_dict, f, indent=2)

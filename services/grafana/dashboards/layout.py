@@ -29,7 +29,7 @@ def element(i, panel):
         "spec": {
             "id": i,
             "title": panel["title"],
-            "description": "",
+            "description": panel.get("description", ""),
             "links": [],
             "data": {
                 "kind": "QueryGroup",

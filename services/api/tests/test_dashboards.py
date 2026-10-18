@@ -59,6 +59,14 @@ def queries(board):
                 request = options.get(key, {})
                 if "url" in request:  # not custom code, as the plot picker's
                     yield title, "localhost:3001", request["url"], request["method"]
+        # the requests of a table edited in place, as its queries, from the Grafana server
+        for table in options.get("tables", []):
+            for request in (
+                table["update"],
+                table["addRow"]["request"],
+                table["deleteRow"]["request"],
+            ):
+                targets = [*targets, request["payload"]]
         for t in targets:
             yield title, "api:8000", t["url"], t["url_options"]["method"]
     for target in markers(board):
@@ -81,7 +89,6 @@ def test_graphs_mark_topology_changes(name):
     ("field", "api"),
     [
         ("carbon_zone", list(twin.CARBON_TRACES)),
-        ("kind_1", list(twin.SERVERS)),
         ("scheduler", list(levers.SCHEDULERS)),
     ],
 )
