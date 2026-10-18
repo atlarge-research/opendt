@@ -3,10 +3,15 @@
 import json
 from pathlib import Path
 
-from screens import detailed, simple, topology
+from screens import detailed, simple, topology, tutorial
 
 OUT = Path(__file__).resolve().parents[1] / "provisioning" / "dashboards"
-DASHBOARDS = {"overview.json": detailed, "simple.json": simple, "topology.json": topology}
+DASHBOARDS = {
+    "overview.json": detailed,
+    "simple.json": simple,
+    "topology.json": topology,
+    "tutorial.json": tutorial,
+}
 
 
 def write(out=OUT):

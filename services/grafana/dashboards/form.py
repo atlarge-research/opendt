@@ -10,6 +10,7 @@ SCREENS = [
     ("opendt-overview", "Detailed"),
     ("opendt-simple", "Simple"),
     ("opendt-topology", "Topology"),
+    ("opendt-tutorial", "Tutorial"),
 ]
 VIEW = ["screen", "window", "period", "markers"]  # what the screen shows, never sent to the twin
 ZONES = ["NL", "PL", "DE", "RO"]  # the API's twin.CARBON_TRACES; SURF's twin starts on NL
@@ -150,5 +151,27 @@ def picker(title, plots):
             "elements": [
                 field("plots", "", "checkboxList", labelWidth=1, options=boxes, value=mine)
             ],
+        },
+    }
+
+
+def stepper(last):
+    """Back and Next through the steps of the tutorial, 1 to `last`."""
+    return {
+        "type": "volkovlabs-form-panel",
+        "title": "",
+        "options": {
+            "initial": {"method": "-", "code": script("steps.js", last=last)},
+            "update": {"method": "-", "code": script("step.js", by=1, last=last)},
+            "updateEnabled": "manual",
+            "submit": {"text": "Next", "icon": "arrow-right"},
+            "reset": {"text": "Back", "icon": "arrow-left", "variant": "secondary"},
+            "resetAction": {
+                "mode": "custom",
+                "code": script("step.js", by=-1, last=last),
+                "confirm": False,
+            },
+            "sync": False,
+            "elements": [field("step", "Step", "disabled")],
         },
     }

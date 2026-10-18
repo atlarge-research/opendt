@@ -115,6 +115,11 @@
                                                 "id": "opendt-topology",
                                                 "label": "Topology",
                                                 "value": "opendt-topology"
+                                            },
+                                            {
+                                                "id": "opendt-tutorial",
+                                                "label": "Tutorial",
+                                                "value": "opendt-tutorial"
                                             }
                                         ],
                                         "value": "opendt-overview"

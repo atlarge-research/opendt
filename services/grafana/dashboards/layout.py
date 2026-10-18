@@ -70,14 +70,14 @@ def grid(placed):
     return {"kind": "GridLayout", "spec": {"items": items}}
 
 
-def picked(*names):
-    """Shown while any of these plots is not in `hidden`."""
+def when(variable, operator, *values):
+    """Shown while `variable` matches (operator "equals" or "notEquals") any of the values."""
     rules = [
         {
             "kind": "ConditionalRenderingVariable",
-            "spec": {"variable": "hidden", "operator": "notEquals", "value": n},
+            "spec": {"variable": variable, "operator": operator, "value": v},
         }
-        for n in names
+        for v in values
     ]
     return {
         "kind": "ConditionalRenderingGroup",
@@ -85,25 +85,30 @@ def picked(*names):
     }
 
 
-def auto(names, columns):
-    """An auto grid of equal panels, each shown only while picked."""
+def picked(*names):
+    """Shown while any of these plots is not hidden."""
+    return when("hidden", "notEquals", *names)
 
-    def item(name):
-        return {
+
+def auto(shown, columns):
+    """An auto grid of equal panels, each with the rule that shows it: (name, rule)."""
+    items = [
+        {
             "kind": "AutoGridLayoutItem",
             "spec": {
                 "element": {"kind": "ElementReference", "name": name},
-                "conditionalRendering": picked(name),
+                "conditionalRendering": rule,
             },
         }
-
+        for name, rule in shown
+    ]
     spec = {
         "maxColumnCount": columns,
         "columnWidthMode": "narrow",
         "rowHeightMode": "standard",
         "fillScreen": False,
     }
-    return {"kind": "AutoGridLayout", "spec": {**spec, "items": [item(name) for name in names]}}
+    return {"kind": "AutoGridLayout", "spec": {**spec, "items": items}}
 
 
 def row(title, layout, collapse=False, shown=None):

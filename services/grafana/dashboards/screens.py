@@ -1,7 +1,8 @@
 """The three screens: each panel and its place, (name, panel, x, y, width, height) on a 24-column grid."""
 
-from form import HOSTS, control, group, picker
-from layout import auto, custom, dashboard, grid, picked, row
+import steps
+from form import HOSTS, control, group, picker, stepper
+from layout import auto, custom, dashboard, grid, picked, row, when
 from panels import PERIODS
 from plots import (
     ROWS,
@@ -57,7 +58,9 @@ detailed = screen(
         ),
         # a row shows while one of its plots is not hidden
         *[
-            row(title, auto(list(plots), len(plots)), shown=picked(*plots))
+            row(
+                title, auto([(key, picked(key)) for key in plots], len(plots)), shown=picked(*plots)
+            )
             for title, plots in ROWS.items()
         ],
     ],
@@ -100,5 +103,42 @@ topology = screen(
         ("groups", groups, 6, 0, 18, 5),
         ("catalog", catalog, 6, 5, 18, 8),
         ("hosts-topology", hosts, 6, 13, 18, 8),
+    ],
+)
+
+# the Tutorial screen: the twin's state at the top, then the current step, its question and its plots
+STEPS = [(use_case, step) for use_case, items in steps.STEPS.items() for step in items]
+TEXTS = {
+    f"text-{n}": steps.text(f"Step {n} of {len(STEPS)}: {use_case}", step)
+    for n, (use_case, step) in enumerate(STEPS, 1)
+}
+# each plot once, shown at the steps that name it
+AT = {}
+for n, (_, step) in enumerate(STEPS, 1):
+    for key in step["plots"]:
+        AT.setdefault(key, []).append(str(n))
+tutorial = screen(
+    "opendt-tutorial",
+    "OpenDT, tutorial",
+    [
+        ("control", control("opendt-tutorial", [HOSTS]), 0, 0, 6, 11),
+        ("steps", stepper(len(STEPS)), 0, 11, 6, 3),
+        *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
+        ("decisions", decisions, 6, 6, 18, 8),
+    ],
+    rows=[
+        row(
+            "Step",
+            auto(
+                [(name, when("step", "equals", str(n))) for n, name in enumerate(TEXTS, 1)]
+                + [(f"step-{key}", when("step", "equals", *at)) for key, at in AT.items()],
+                3,
+            ),
+        )
+    ],
+    panels=TEXTS | {f"step-{key}": steps.PLOTS[key] for key in AT},
+    variables=[
+        custom("period", "Interval", PERIODS, current="day"),
+        custom("step", "Step", [str(n) for n in range(1, len(STEPS) + 1)], current="1"),
     ],
 )

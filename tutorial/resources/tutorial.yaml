@@ -1,0 +1,40 @@
+# The steps of the twin's Tutorial screen, per use case: a question of questions.yaml (its solution folded,
+# unless `solution: false`), what to do in the control panel, and the plots to look at, by their names in
+# services/grafana/dashboards/plots.py. After a change, run services/grafana/dashboards/build.py.
+
+Dynamic autoscaling:
+  - question: "1.1"
+    plots: [power, accuracy-now, mape, error]
+  - question: "1.2"
+    plots: [power, hosts]
+  - question: "4.1"
+    do: Hosts 2,770, then Apply
+    plots: [power, hosts, idle-hosts, idle-power]
+  - question: "1.3"
+    plots: [power, idle-hosts, idle-power]
+  - question: "1.4"
+    do: Hosts 138, then Apply; later, Hosts 69
+    plots: [power, queue, jobs, completion]
+  - question: "1.5"
+    do: Hosts 277, then Apply; Time Day
+    solution: false  # the notebook's answer is for one day of the trace
+    plots: [hosts, idle-hosts]
+  - question: "1.6"
+    plots: [hosts, jobs]
+
+Simulation calibration:
+  - question: "2.1"
+    plots: [power, error, energy-error]
+  - question: "4.2"
+    plots: [r, mape]
+  - question: "2.4"
+    plots: [r, mape]
+
+CO₂-aware workload migration:
+  - question: "3.1"
+    do: CO₂ zone RO, then Apply; later, PL and DE
+    plots: [intensity, co2]
+  - question: "3.3"
+    plots: [energy, carbon, energy-now]
+  - question: "3.4"
+    plots: [intensity, carbon]
