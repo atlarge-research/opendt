@@ -9,5 +9,6 @@ ENV GF_FEATURE_TOGGLES_ENABLE=dashboardNewLayouts,kubernetesDashboards
 USER root
 RUN grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install yesoreyeram-infinity-datasource 3.11.1 \
     && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-form-panel 6.3.5 \
-    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-table-panel 3.6.8
+    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-table-panel 3.6.8 \
+    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install marcusolsson-dynamictext-panel 6.3.0
 USER grafana

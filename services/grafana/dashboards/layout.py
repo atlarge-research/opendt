@@ -30,6 +30,7 @@ def element(i, panel):
             "id": i,
             "title": panel["title"],
             "description": panel.get("description", ""),
+            "transparent": panel.get("transparent", False),
             "links": [],
             "data": {
                 "kind": "QueryGroup",
@@ -90,16 +91,16 @@ def picked(*names):
     return when("hidden", "notEquals", *names)
 
 
-def with_data():
-    """Shown while its panel has data."""
-    rule = {"kind": "ConditionalRenderingData", "spec": {"value": True}}
+def all_of(*rules):
+    """Shown while every rule holds, each of one condition."""
+    items = [item for rule in rules for item in rule["spec"]["items"]]
     return {
         "kind": "ConditionalRenderingGroup",
-        "spec": {"visibility": "show", "condition": "and", "items": [rule]},
+        "spec": {"visibility": "show", "condition": "and", "items": items},
     }
 
 
-def auto(shown, columns, height="standard"):
+def auto(shown, columns):
     """An auto grid of equal panels, each with the rule that shows it: (name, rule)."""
     items = [
         {
@@ -114,7 +115,7 @@ def auto(shown, columns, height="standard"):
     spec = {
         "maxColumnCount": columns,
         "columnWidthMode": "narrow",
-        "rowHeightMode": height,
+        "rowHeightMode": "standard",
         "fillScreen": False,
     }
     return {"kind": "AutoGridLayout", "spec": {**spec, "items": items}}

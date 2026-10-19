@@ -3,11 +3,13 @@
 from pathlib import Path
 
 import yaml
+from form import script
 from panels import (
     ACCURACY,
     API,
     BARS,
     BLUE,
+    BROWSER_API,
     CLUSTER,
     CO2,
     GREEN,
@@ -20,7 +22,6 @@ from panels import (
     TIME,
     YELLOW,
     editable,
-    gauge,
     organize,
     override,
     ratio,
@@ -472,12 +473,49 @@ catalog = table(
     [("part", "Part", "string"), ("name", "Name", "string"), *SPECS],
 )
 
-# while the twin starts, at the top of every screen: how far it is, what it does, and a fact from the paper
+# while the twin starts, the whole screen: what it does, a bar that never stands still, and a fact from the paper
 PROGRESS = f"{API}/api/progress"
+CARD = """<div class="opendt-start" data-step="{{step}}" data-steps="{{steps}}">
+  <div class="doing">{{doing}}</div>
+  <div class="bar"><div></div></div>
+  <div class="tip">{{tip}}</div>
+</div>"""
+WAITING = """<div class="opendt-start" data-step="1" data-steps="3">
+  <div class="doing">The services start</div>
+  <div class="bar"><div></div></div>
+</div>"""  # before the API answers
+STYLE = """.opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display: flex; flex-direction: column;
+  justify-content: center; gap: 18px; }
+.opendt-start .doing { color: #ccccdc; font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap; }
+.opendt-start .bar { aspect-ratio: 24 / 1; background: #22252b; border-radius: 999px; overflow: hidden; }
+.opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;
+  background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }
+.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;
+  font-size: 17px; white-space: nowrap; }"""
 STARTING = {
-    "start-progress": gauge("Starting the twin", PROGRESS, "step", "steps"),
-    "start-doing": tile("Now", PROGRESS, "doing", "string"),
-    "start-tip": tile("From the OpenDT paper", PROGRESS, "tip", "string"),
+    "start": {
+        "type": "marcusolsson-dynamictext-panel",
+        "title": "",
+        "transparent": True,
+        "targets": [
+            target(
+                PROGRESS,
+                [
+                    ("step", "step"),
+                    ("steps", "steps"),
+                    *((k, k, "string") for k in ("doing", "tip")),
+                ],
+            )
+        ],
+        "options": {
+            "renderMode": "everyRow",
+            "content": CARD,
+            "defaultContent": WAITING,
+            "styles": STYLE,
+            "afterRender": script("start.js", progress=f"{BROWSER_API}/api/progress"),
+        },
+    },
 }
 
 TILES |= {

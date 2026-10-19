@@ -13,11 +13,10 @@ from form import (
     lever,
     picker,
 )
-from layout import auto, custom, dashboard, grid, picked, query, row, when, with_data
-from panels import PERIODS, target
+from layout import all_of, auto, custom, dashboard, grid, picked, query, row, when
+from panels import PERIODS, STATUS, target
 from plots import (
     BOXES,
-    PROGRESS,
     ROWS,
     STARTING,
     TILES,
@@ -36,9 +35,13 @@ from plots import (
 def screen(uid, title, placed, rows=(), panels=None, variables=()):
     """The levers' bar and the placed panels under it, then the `rows` of the other `panels`."""
     placed = TOP + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
-    top = row("", grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]))
+    top = row(
+        "",
+        grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]),
+        shown=when("twin", "notEquals", ""),
+    )
     panels = {name: panel for name, panel, *_ in placed} | STARTING | (panels or {})
-    return dashboard(uid, title, panels, [STARTUP, top, *rows], [STARTED, *variables])
+    return dashboard(uid, title, panels, [STARTUP, top, *rows], [TWIN, *variables])
 
 
 # the tiles, in one row: the twin's time, power, MAPE, CO₂, hosts, and jobs
@@ -51,13 +54,9 @@ TILE_PLACES = [
     ("jobs-now", 21, 0, 3),
 ]
 # while the twin starts, a row above all: gone once its first window is complete
-STARTUP = row(
-    "",
-    auto([(name, with_data()) for name in STARTING], 3, height="short"),
-    shown=when("starting", "notEquals", ""),
-)
-# the step of the start, empty once the twin's first window is complete
-STARTED = query("starting", target(PROGRESS, [("step", "step")]))
+STARTUP = row("", grid([("start", 0, 0, 24, 28)]), shown=when("twin", "equals", ""))
+# the twin's time, empty until its first window is complete (or while the API does not answer)
+TWIN = query("twin", target(STATUS, [("twin_time", "twin_time", "string")]) | {"root_selector": ""})
 # the levers' bar at the top of every screen: the hosts, the CO₂ zone, the speed, and the calibration
 BAR = 4
 TOP = [
@@ -179,7 +178,7 @@ def slide(value, step, shown):
                 *plots,
             ]
         ),
-        shown=when("step", "equals", value),
+        shown=all_of(when("step", "equals", value), when("twin", "notEquals", "")),
     )
 
 
@@ -195,7 +194,7 @@ tutorial = dashboard(
     | STARTING,
     [STARTUP, *(slide(value, step, shown) for value, step, _, shown in steps.SLIDES)],
     [
-        STARTED,
+        TWIN,
         custom("period", "Interval", PERIODS, current="day"),
         custom("step", "Step", [value for value, *_ in steps.SLIDES], current="1"),
     ],

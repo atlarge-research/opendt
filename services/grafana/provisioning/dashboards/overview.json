@@ -64,6 +64,7 @@
                     "id": 1,
                     "title": "",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -151,6 +152,7 @@
                     "id": 2,
                     "title": "",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -283,6 +285,7 @@
                     "id": 3,
                     "title": "",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -474,6 +477,7 @@
                     "id": 4,
                     "title": "OpenDT",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -698,6 +702,7 @@
                     "id": 5,
                     "title": "Decisions",
                     "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -850,6 +855,7 @@
                     "id": 6,
                     "title": "",
                     "description": "The simulated time the twin has reached, the end of its latest window of operation.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -947,6 +953,7 @@
                     "id": 7,
                     "title": "",
                     "description": "The measured power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1074,6 +1081,7 @@
                     "id": 8,
                     "title": "",
                     "description": "The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes. Red from 10%, the community-accepted error rate.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1183,6 +1191,7 @@
                     "id": 9,
                     "title": "",
                     "description": "The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1291,6 +1300,7 @@
                     "id": 10,
                     "title": "Hosts in use",
                     "description": "Hosts running at least one job, of all the hosts of the twin. An idle host draws power for nothing.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1447,6 +1457,7 @@
                     "id": 11,
                     "title": "Jobs running",
                     "description": "Jobs running, of the jobs submitted and not done yet. Green when all run, orange when some wait.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1603,6 +1614,7 @@
                     "id": 12,
                     "title": "Power draw",
                     "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1828,6 +1840,7 @@
                     "id": 13,
                     "title": "CO₂ emissions vs. carbon intensity",
                     "description": "The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2002,6 +2015,7 @@
                     "id": 14,
                     "title": "Hosts available vs. in use",
                     "description": "The hosts the twin has and the hosts in use, over time.",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2153,12 +2167,13 @@
                     }
                 }
             },
-            "start-progress": {
+            "start": {
                 "kind": "Panel",
                 "spec": {
                     "id": 15,
-                    "title": "Starting the twin",
+                    "title": "",
                     "description": "",
+                    "transparent": true,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2196,197 +2211,15 @@
                                                         "selector": "steps",
                                                         "text": "steps",
                                                         "type": "number"
-                                                    }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "step / steps",
-                                                        "text": "Starting the twin",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "excludeByName": {
-                                                "step": true,
-                                                "steps": true
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "bargauge",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "orientation": "horizontal",
-                                "displayMode": "basic",
-                                "showUnfilled": true
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "unit": "percentunit",
-                                    "min": 0,
-                                    "max": 1,
-                                    "decimals": 0,
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#338ec1"
-                                    }
-                                },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "start-doing": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 16,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/progress",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
+                                                    },
                                                     {
                                                         "selector": "doing",
-                                                        "text": "Now",
+                                                        "text": "doing",
                                                         "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Now": 0
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "stat",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
-                                },
-                                "colorMode": "none",
-                                "graphMode": "none",
-                                "textMode": "value_and_name",
-                                "orientation": "vertical",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "center",
-                                "wideLayout": false,
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
-                                    }
-                                },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "start-tip": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 17,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/progress",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
+                                                    },
                                                     {
                                                         "selector": "tip",
-                                                        "text": "From the OpenDT paper",
+                                                        "text": "tip",
                                                         "type": "string"
                                                     }
                                                 ]
@@ -2395,51 +2228,24 @@
                                     }
                                 }
                             ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "From the OpenDT paper": 0
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
+                            "transformations": [],
                             "queryOptions": {}
                         }
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "stat",
+                        "group": "marcusolsson-dynamictext-panel",
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
-                                },
-                                "colorMode": "none",
-                                "graphMode": "none",
-                                "textMode": "value_and_name",
-                                "orientation": "vertical",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "center",
-                                "wideLayout": false,
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
-                                }
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"opendt-start\" data-step=\"{{step}}\" data-steps=\"{{steps}}\">\n  <div class=\"doing\">{{doing}}</div>\n  <div class=\"bar\"><div></div></div>\n  <div class=\"tip\">{{tip}}</div>\n</div>",
+                                "defaultContent": "<div class=\"opendt-start\" data-step=\"1\" data-steps=\"3\">\n  <div class=\"doing\">The services start</div>\n  <div class=\"bar\"><div></div></div>\n</div>",
+                                "styles": ".opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display: flex; flex-direction: column;\n  justify-content: center; gap: 18px; }\n.opendt-start .doing { color: #ccccdc; font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;\n  white-space: nowrap; }\n.opendt-start .bar { aspect-ratio: 24 / 1; background: #22252b; border-radius: 999px; overflow: hidden; }\n.opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;\n  background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }\n.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;\n  font-size: 17px; white-space: nowrap; }",
+                                "afterRender": "const progress = \"http://localhost:3001/api/progress\";\n// the bar creeps toward the end of its step, so it never stands still; once the twin's first window is done, the\n// page reloads to show the twin (the rows follow a variable read at load)\nconst state = (window.opendtStart ??= { step: 0, since: Date.now() });\nconst card = () => document.querySelector('.opendt-start');\nconst step = Number(card()?.dataset.step || 1);\nif (step !== state.step) Object.assign(state, { step, since: Date.now() });\nstate.bar ??= setInterval(() => {\n  const el = card();\n  if (!el) return;\n  const near = 1 - Math.exp(-(Date.now() - state.since) / 20000); // toward the end of the step, never at it\n  el.querySelector('.bar div').style.width = (100 * (state.step - 1 + 0.9 * near)) / Number(el.dataset.steps) + '%';\n}, 200);\nstate.ready ??= setInterval(async () => {\n  try {\n    const { data } = await (await fetch(progress)).json();\n    if (!data.length) location.reload();\n  } catch {} // the API is not up yet\n}, 3000);\n"
                             },
                             "fieldConfig": {
-                                "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
-                                    }
-                                },
+                                "defaults": {},
                                 "overrides": []
                             }
                         }
@@ -2449,9 +2255,10 @@
             "pick-0": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 16,
                     "title": "Performance",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2532,9 +2339,10 @@
             "pick-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 17,
                     "title": "Utilization",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2615,9 +2423,10 @@
             "pick-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 18,
                     "title": "Sustainability",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2698,9 +2507,10 @@
             "pick-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 19,
                     "title": "Twin accuracy",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2781,9 +2591,10 @@
             "scheduling-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 20,
                     "title": "P1  Performance now",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2994,9 +2805,10 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 21,
                     "title": "P2  Total runtime",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -3174,9 +2986,10 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 22,
                     "title": "P3  Time in queue",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -3354,9 +3167,10 @@
             "jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 23,
                     "title": "P4  Jobs",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -3532,9 +3346,10 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 24,
                     "title": "P5  Jobs waiting or running",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -3691,9 +3506,10 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 25,
                     "title": "U1  Utilization now",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -3863,9 +3679,10 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 26,
                     "title": "U2  CPU utilization of the hosts",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -4075,9 +3892,10 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 27,
                     "title": "U3  CPU demand vs. capacity",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -4232,9 +4050,10 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 28,
                     "title": "U4  Hosts per CPU utilization",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -4374,9 +4193,10 @@
             "idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 29,
                     "title": "U5  Idle hosts",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -4569,9 +4389,10 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 30,
                     "title": "S1  This $period",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -4722,9 +4543,10 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 31,
                     "title": "S2  Energy per $period",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -4906,9 +4728,10 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 32,
                     "title": "S3  CO₂ per $period",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -5118,9 +4941,10 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 33,
                     "title": "S4  Carbon intensity",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -5298,9 +5122,10 @@
             "idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 34,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -5478,9 +5303,10 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 35,
                     "title": "T1  Accuracy now",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -5692,9 +5518,10 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 36,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -5875,9 +5702,10 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 37,
                     "title": "T3  Calibration parameter r",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -6001,9 +5829,10 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 40,
+                    "id": 38,
                     "title": "T4  Power draw error per hour",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -6130,9 +5959,10 @@
             "energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 41,
+                    "id": 39,
                     "title": "T5  Energy error so far",
                     "description": "",
+                    "transparent": false,
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -6264,82 +6094,19 @@
                             "title": "",
                             "collapse": false,
                             "layout": {
-                                "kind": "AutoGridLayout",
+                                "kind": "GridLayout",
                                 "spec": {
-                                    "maxColumnCount": 3,
-                                    "columnWidthMode": "narrow",
-                                    "rowHeightMode": "short",
-                                    "fillScreen": false,
                                     "items": [
                                         {
-                                            "kind": "AutoGridLayoutItem",
+                                            "kind": "GridLayoutItem",
                                             "spec": {
+                                                "x": 0,
+                                                "y": 0,
+                                                "width": 24,
+                                                "height": 28,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "start-progress"
-                                                },
-                                                "conditionalRendering": {
-                                                    "kind": "ConditionalRenderingGroup",
-                                                    "spec": {
-                                                        "visibility": "show",
-                                                        "condition": "and",
-                                                        "items": [
-                                                            {
-                                                                "kind": "ConditionalRenderingData",
-                                                                "spec": {
-                                                                    "value": true
-                                                                }
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "AutoGridLayoutItem",
-                                            "spec": {
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "start-doing"
-                                                },
-                                                "conditionalRendering": {
-                                                    "kind": "ConditionalRenderingGroup",
-                                                    "spec": {
-                                                        "visibility": "show",
-                                                        "condition": "and",
-                                                        "items": [
-                                                            {
-                                                                "kind": "ConditionalRenderingData",
-                                                                "spec": {
-                                                                    "value": true
-                                                                }
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "AutoGridLayoutItem",
-                                            "spec": {
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "start-tip"
-                                                },
-                                                "conditionalRendering": {
-                                                    "kind": "ConditionalRenderingGroup",
-                                                    "spec": {
-                                                        "visibility": "show",
-                                                        "condition": "and",
-                                                        "items": [
-                                                            {
-                                                                "kind": "ConditionalRenderingData",
-                                                                "spec": {
-                                                                    "value": true
-                                                                }
-                                                            }
-                                                        ]
-                                                    }
+                                                    "name": "start"
                                                 }
                                             }
                                         }
@@ -6356,8 +6123,8 @@
                                         {
                                             "kind": "ConditionalRenderingVariable",
                                             "spec": {
-                                                "variable": "starting",
-                                                "operator": "notEquals",
+                                                "variable": "twin",
+                                                "operator": "equals",
                                                 "value": ""
                                             }
                                         }
@@ -6560,7 +6327,24 @@
                                     ]
                                 }
                             },
-                            "hideHeader": true
+                            "hideHeader": true,
+                            "conditionalRendering": {
+                                "kind": "ConditionalRenderingGroup",
+                                "spec": {
+                                    "visibility": "show",
+                                    "condition": "or",
+                                    "items": [
+                                        {
+                                            "kind": "ConditionalRenderingVariable",
+                                            "spec": {
+                                                "variable": "twin",
+                                                "operator": "notEquals",
+                                                "value": ""
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         }
                     },
                     {
@@ -7487,7 +7271,7 @@
             {
                 "kind": "QueryVariable",
                 "spec": {
-                    "name": "starting",
+                    "name": "twin",
                     "current": {
                         "text": "",
                         "value": ""
@@ -7507,16 +7291,16 @@
                                 "source": "url",
                                 "parser": "backend",
                                 "format": "table",
-                                "url": "http://api:8000/api/progress",
+                                "url": "http://api:8000/api/status",
                                 "url_options": {
                                     "method": "GET"
                                 },
-                                "root_selector": "data",
+                                "root_selector": "",
                                 "columns": [
                                     {
-                                        "selector": "step",
-                                        "text": "step",
-                                        "type": "number"
+                                        "selector": "twin_time",
+                                        "text": "twin_time",
+                                        "type": "string"
                                     }
                                 ]
                             }

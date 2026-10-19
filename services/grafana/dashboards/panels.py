@@ -319,29 +319,6 @@ def editable(title, url, columns, save, delete, key="id"):
     }
 
 
-def gauge(title, url, part, whole):
-    """A progress bar: the API's `part` of its `whole`."""
-    return {
-        "type": "bargauge",
-        "title": title,
-        "targets": [target(url, [(part, part), (whole, whole)], [(f"{part} / {whole}", title)])],
-        "transformations": [
-            {"id": "organize", "options": {"excludeByName": {part: True, whole: True}}}
-        ],
-        "fieldConfig": {
-            "defaults": {
-                "unit": "percentunit",
-                "min": 0,
-                "max": 1,
-                "decimals": 0,
-                "color": {"mode": "fixed", "fixedColor": BLUE},
-            },
-            "overrides": [],
-        },
-        "options": {"orientation": "horizontal", "displayMode": "basic", "showUnfilled": True},
-    }
-
-
 def ratio(title, url, part, whole, colors):
     """A share as a percentage with the counts over it (e.g., 90/277); `part` and `whole` are the API's columns,
     or sums of them; its colour from each share of `colors` on ({share: name})."""

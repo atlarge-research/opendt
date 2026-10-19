@@ -22,6 +22,6 @@ def test_ready(run_dir):
     assert startup.progress(run_dir, now=0) == []
 
 
-def test_tips_change(tmp_path):
-    tips = {startup.progress(tmp_path, now=10 * i)[0]["tip"] for i in range(len(startup.TIPS))}
+def test_all_tips(tmp_path):
+    tips = {startup.progress(tmp_path, now=10 * i)[0]["tip"] for i in range(200)}
     assert tips == set(startup.TIPS)
