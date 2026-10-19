@@ -53,19 +53,18 @@ TILES = {
     # of the power draw, the last 5 minutes; 10% is the community-accepted error rate (question 1.1)
     "mape-now": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1, limit=10),
     "co2-now": tile("CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1),
+    # of the hosts available, those in use; of the jobs not done, those running
     "hosts-now": tiles(
         NOW,
-        [("hosts_in_use", "Hosts in use"), ("hosts_up", "hosts_up")],
-        [("hosts_up - hosts_in_use", "Idle hosts")],
-        ["hosts_up"],
-        unit="locale",
-        decimals=0,
+        [("hosts_in_use", "used"), ("hosts_up", "up")],
+        [('used + "/" + up', "Hosts in use")],
+        ["used", "up"],
     ),
     "jobs-now": tiles(
         NOW,
-        [("tasks_pending", "Jobs waiting"), ("tasks_active", "Jobs running")],
-        unit="locale",
-        decimals=0,
+        [("tasks_active", "running"), ("tasks_pending", "waiting")],
+        [('running + "/" + (running + waiting)', "Jobs running")],
+        ["running", "waiting"],
     ),
     # the physical and digital twin apart, in the colours of their lines (Simple, Tutorial)
     "measured-now": tile(

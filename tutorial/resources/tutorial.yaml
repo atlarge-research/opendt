@@ -1,5 +1,5 @@
 # The steps of the twin's Tutorial screen, per use case: a question of questions.yaml (its solution folded), what
-# to do in the control panel, and the plots to look at, by their names in services/grafana/dashboards/plots.py.
+# to change on the twin, and the plots to look at, by their names in services/grafana/dashboards/plots.py.
 # After a change, run services/grafana/dashboards/build.py.
 
 Dynamic autoscaling:

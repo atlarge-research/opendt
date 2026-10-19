@@ -1,7 +1,18 @@
 """The screens: each panel and its place, (name, panel, x, y, width, height) on a 24-column grid."""
 
 import steps
-from form import HOSTS, control, picker
+from form import (
+    CALIBRATION,
+    CALIBRATOR,
+    HOSTS,
+    INFRASTRUCTURE,
+    SCHEDULER,
+    SPEED,
+    ZONE,
+    control,
+    lever,
+    picker,
+)
 from layout import auto, custom, dashboard, grid, picked, row, when
 from panels import PERIODS
 from plots import (
@@ -21,20 +32,29 @@ from plots import (
 
 
 def screen(uid, title, placed, rows=(), panels=None, variables=()):
-    """The placed panels at the top, then the `rows` of the other `panels`."""
+    """The levers' bar and the placed panels under it, then the `rows` of the other `panels`."""
+    placed = TOP + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
     top = row("", grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]))
     panels = {name: panel for name, panel, *_ in placed} | (panels or {})
     return dashboard(uid, title, panels, [top, *rows], variables)
 
 
-# the tiles: the twin's time and power on top, then its CO₂, hosts, and jobs
+# the tiles, in one row: the twin's time, power, MAPE, CO₂, hosts, and jobs
 TILE_PLACES = [
-    ("twin-time", 6, 0, 6),
-    ("power-now", 12, 0, 9),
-    ("mape-now", 21, 0, 3),
-    ("co2-now", 6, 3, 4),
-    ("hosts-now", 10, 3, 7),
-    ("jobs-now", 17, 3, 7),
+    ("twin-time", 6, 0, 4),
+    ("power-now", 10, 0, 5),
+    ("mape-now", 15, 0, 2),
+    ("co2-now", 17, 0, 2),
+    ("hosts-now", 19, 0, 2),
+    ("jobs-now", 21, 0, 3),
+]
+# the levers' bar at the top of every screen: the hosts, the CO₂ zone, the speed, and the calibration
+BAR = 5
+TOP = [
+    ("lever-hosts", lever([HOSTS, INFRASTRUCTURE]), 0, 0, 5, BAR),
+    ("lever-zone", lever([ZONE]), 5, 0, 3, BAR),
+    ("lever-speed", lever([SPEED]), 8, 0, 3, BAR),
+    ("lever-calibration", lever([CALIBRATION, *CALIBRATOR], split=True), 11, 0, 13, BAR),
 ]
 PICKERS = {f"pick-{i}": picker(title, plots) for i, (title, plots) in enumerate(ROWS.items())}
 
@@ -42,12 +62,12 @@ detailed = screen(
     "opendt-overview",
     "OpenDT, detailed",
     [
-        ("control", control("opendt-overview", [HOSTS]), 0, 0, 6, 16),
-        ("decisions", decisions, 0, 16, 6, 5),  # what the markers on the graphs stand for
+        ("control", control("opendt-overview", [SCHEDULER]), 0, 0, 6, 7),
+        ("decisions", decisions, 0, 7, 6, 11),  # what the markers on the graphs stand for
         *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
-        ("power", power, 6, 6, 6, 15),
-        ("co2", co2, 12, 6, 6, 15),
-        ("hosts", hosts, 18, 6, 6, 15),
+        ("power", power, 6, 3, 6, 15),
+        ("co2", co2, 12, 3, 6, 15),
+        ("hosts", hosts, 18, 3, 6, 15),
     ],
     rows=[
         row(
@@ -80,8 +100,8 @@ simple = screen(
     "opendt-simple",
     "OpenDT, simple",
     [
-        ("control", control("opendt-simple", [HOSTS], period=False), 0, 0, 6, 18),
-        ("twin-state", twin_state, 0, 18, 6, 8),
+        ("control", control("opendt-simple", period=False), 0, 0, 6, 6),
+        ("twin-state", twin_state, 0, 6, 6, 14),
         ("physical", TILES["measured-now"], 6, 0, 9, 4),
         ("power-simple", power, 6, 4, 9, 11),
         ("arrivals", arrivals, 6, 15, 9, 11),
@@ -95,7 +115,7 @@ topology = screen(
     "opendt-topology",
     "OpenDT, topology",
     [
-        ("control", control("opendt-topology", [], period=False), 0, 0, 6, 25),
+        ("control", control("opendt-topology", period=False), 0, 0, 6, 6),
         ("groups", groups, 6, 0, 18, 6),
         ("catalog", catalog, 6, 6, 18, 9),
         ("hosts-topology", hosts, 6, 15, 18, 10),
@@ -105,16 +125,16 @@ topology = screen(
 # the Tutorial screen, one step at a time, each a row shown at its step: the twin on the left, its
 # control panel and its state in boxes; the step on the right, its question and its plots
 LEFT = [
-    ("control", 0, 0, 6, 16),
-    ("time-box", 0, 16, 6, 2),
-    ("truth-box", 0, 18, 3, 2),
-    ("opendt-box", 3, 18, 3, 2),
-    ("mape-box", 0, 20, 3, 2),
-    ("co2-box", 3, 20, 3, 2),
+    ("control", 0, 0, 6, 6),
+    ("time-box", 0, 6, 6, 2),
+    ("truth-box", 0, 8, 3, 2),
+    ("opendt-box", 3, 8, 3, 2),
+    ("mape-box", 0, 10, 3, 2),
+    ("co2-box", 3, 10, 3, 2),
 ]
 # the step's height, then its plots, all on a 1440x900 screen in full screen; with its solution, the
 # step is taller and the screen scrolls
-CARD, SOLUTION, PLOTS = 8, 11, 14
+CARD, SOLUTION, PLOTS = 7, 10, 14
 
 
 def split(names, x, y, width, height):
@@ -137,10 +157,18 @@ def stack(names, x, y, width, height):
 def slide(value, step, shown):
     """The row shown while the step variable has this value."""
     card = SOLUTION if shown else CARD
-    plots = split([f"plot-{key}" for key in step["plots"]], 6, card, 18, PLOTS)
+    plots = split([f"plot-{key}" for key in step["plots"]], 6, BAR + card, 18, PLOTS)
+    under = [(name, x, y + BAR, w, h) for name, x, y, w, h in LEFT]
     return row(
         "",
-        grid([*LEFT, (f"step-{value}", 6, 0, 18, card), *plots]),
+        grid(
+            [
+                *((name, x, y, w, h) for name, _, x, y, w, h in TOP),
+                *under,
+                (f"step-{value}", 6, BAR, 18, card),
+                *plots,
+            ]
+        ),
         shown=when("step", "equals", value),
     )
 
@@ -148,7 +176,8 @@ def slide(value, step, shown):
 tutorial = dashboard(
     "opendt-tutorial",
     "OpenDT, tutorial",
-    {"control": control("opendt-tutorial", [HOSTS])}
+    {"control": control("opendt-tutorial")}
+    | {name: panel for name, panel, *_ in TOP}
     | BOXES
     | {f"step-{value}": card for value, _, card, _ in steps.SLIDES}
     | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]},

@@ -6,13 +6,14 @@ from pathlib import Path
 from panels import BROWSER_API, PERIODS, WEEK
 
 JS = Path(__file__).parent / "js"
+STATUS = f"{BROWSER_API}/api/status"
 SCREENS = [
     ("opendt-overview", "Detailed"),
     ("opendt-simple", "Simple"),
     ("opendt-topology", "Topology"),
     ("opendt-tutorial", "Tutorial"),
 ]
-VIEW = ["screen", "window", "period", "markers"]  # what the screen shows, never sent to the twin
+VIEW = ["screen", "window", "period", "markers", "infrastructure"]  # never sent to the twin
 ZONES = ["NL", "PL", "DE", "RO"]  # the API's twin.CARBON_TRACES; SURF's twin starts on NL
 SCHEDULERS = ["Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"]
 SPEEDS = [(1, "1x (real time)"), (60, "60x"), (300, "300x"), (3600, "3,600x"), (-1, "Maximum")]
@@ -36,24 +37,22 @@ def select(key, title, choices, kind="select", **more):
     return field(key, title, kind, options=[option(v, label) for v, label in choices], **more)
 
 
-TWIN_LEVERS = [
-    select(
-        "carbon_zone",
-        "CO₂ zone",
-        [(z, z) for z in ZONES],
-        tooltip="Electricity Maps zones: Netherlands, Poland, Germany, Romania",
-    ),
-    select(
-        "scheduler",
-        "Scheduler",
-        [(s, s) for s in SCHEDULERS],
-        tooltip="OpenDC's placement policy; Mem is OpenDC's default",
-    ),
-    select("speed_factor", "Speed factor", SPEEDS),
-]
+ZONE = select(
+    "carbon_zone",
+    "CO₂ zone",
+    [(z, z) for z in ZONES],
+    tooltip="Electricity Maps zones: Netherlands, Poland, Germany, Romania",
+)
+SCHEDULER = select(
+    "scheduler",
+    "Scheduler",
+    [(s, s) for s in SCHEDULERS],
+    tooltip="OpenDC's placement policy; Mem is OpenDC's default",
+)
+SPEED = select("speed_factor", "Speed", SPEEDS)
+CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
 # the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
-CALIBRATION_LEVERS = [
-    select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio"),
+CALIBRATOR = [
     select("parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 4, 8)]),
     field("calibration_min", "r from", "number", min=0),
     field("calibration_max", "r to", "number", min=0),
@@ -62,12 +61,83 @@ CALIBRATION_LEVERS = [
 ]
 # the first group of hosts: SURF's, until changed on Topology
 HOSTS = field("hosts", "Hosts", "number", min=1)
+# the Topology screen, where the hosts are edited group by group
+INFRASTRUCTURE = {
+    "uid": "infrastructure",
+    "id": "infrastructure",
+    "title": "",
+    "type": "link",
+    "value": "/d/opendt-topology",
+    "linkText": "✎ Infrastructure",
+    "target": "_self",
+}
+CONFIRM = {
+    "title": "Apply",
+    "body": "The view changes at once, the twin from its next window of operation.",
+    "columns": {"name": "", "oldValue": "Now", "newValue": "New"},
+    "confirm": "Apply",
+}
 
 
-def control(screen, own_fields, period=True):
-    """The control panel: what the screen shows, the twin's levers, then the screen's own fields, so the
-    same rows sit in the same places on every screen. Nothing changes before Apply: then the changed levers
-    go to /api/control (from the browser, to the API's port) and the view follows."""
+def form(elements, initial_code, update_code, **options):
+    """A Business Forms panel on the API: its values from /api/status, its changes, once applied and
+    confirmed, to /api/control (from the browser, to the API's port)."""
+    return {
+        "type": "volkovlabs-form-panel",
+        "options": {
+            "initial": {"method": "GET", "url": f"{BROWSER_API}/api/status", "code": initial_code},
+            "update": {
+                "method": "PATCH",
+                "url": f"{BROWSER_API}/api/control",
+                "payloadMode": "custom",
+                "getPayload": script("changed.js", "payload.js", view=VIEW),
+                "confirm": True,
+                "code": update_code,
+            },
+            "sync": False,  # true would reload the values at every refresh, over what is being typed
+            "elements": elements,
+            "confirmModal": CONFIRM,
+            **options,
+        },
+    }
+
+
+def lever(elements, split=False):
+    """Levers in a tile of the top bar: their values now and, once changed, Apply with a pencil; `split`:
+    in two columns."""
+    width = 13 if split else 9  # of the labels; a link has none
+    # no tooltip: a tile has no room for its icon
+    tile = [
+        {k: v for k, v in e.items() if k != "tooltip"}
+        | (
+            {"labelWidth": 1, "width": 20}
+            if e["type"] == "link"
+            else {"labelWidth": width, "width": 11}
+        )
+        for e in elements
+    ]
+    layout = {}
+    if split:
+        half = (len(tile) + 1) // 2
+        tile = [{**e, "section": "left" if i < half else "right"} for i, e in enumerate(tile)]
+        sections = [{"id": side, "name": ""} for side in ("left", "right")]
+        layout = {"layout": {"variant": "split", "sections": sections}}
+    panel = form(
+        tile,
+        "",
+        script("changed.js", "range.js", "applied.js", week=WEEK),
+        submit={"text": "Apply", "icon": "pen"},
+        reset={"variant": "hidden"},
+        buttonGroup={"orientation": "left", "size": "sm"},
+        **layout,
+    )
+    return {**panel, "title": ""}
+
+
+def control(screen, own_fields=(), period=True):
+    """The control panel: what the screen shows, then the screen's own fields, so the same rows sit in the
+    same places on every screen. Nothing changes before Apply: then the changed levers go to the twin and the
+    view follows."""
     view = [
         select("screen", "Screen", SCREENS, value=screen),
         select(
@@ -87,43 +157,15 @@ def control(screen, own_fields, period=True):
             select("period", "Interval", [(p, p) for p in PERIODS], value="day"),
             *own_fields,
         ]
-    return {
-        "type": "volkovlabs-form-panel",
-        "title": "OpenDT",
-        "options": {
-            "initial": {
-                "method": "GET",
-                "url": f"{BROWSER_API}/api/status",
-                "code": script(
-                    "range.js",
-                    "initial.js",
-                    "follow.js",
-                    start=start,
-                    week=WEEK,
-                    status=f"{BROWSER_API}/api/status",
-                ),
-            },
-            "update": {
-                "method": "PATCH",
-                "url": f"{BROWSER_API}/api/control",
-                "payloadMode": "custom",
-                "getPayload": script("changed.js", "payload.js", view=VIEW),
-                "confirm": True,
-                "code": script("changed.js", "range.js", "applied.js", week=WEEK),
-            },
-            "sync": False,  # true would reload the values at every refresh, over what is being typed
-            "elements": view + TWIN_LEVERS + CALIBRATION_LEVERS + own_fields,
-            "submit": {"text": "Apply"},
-            "reset": {"text": "Full screen", "icon": "monitor", "variant": "secondary"},
-            "resetAction": {"mode": "custom", "code": script("full_screen.js"), "confirm": False},
-            "confirmModal": {
-                "title": "Apply",
-                "body": "The view changes at once, the twin from its next window of operation.",
-                "columns": {"name": "", "oldValue": "Now", "newValue": "New"},
-                "confirm": "Apply",
-            },
-        },
-    }
+    panel = form(
+        [*view, *own_fields],
+        script("range.js", "initial.js", "follow.js", start=start, week=WEEK, status=STATUS),
+        script("changed.js", "range.js", "applied.js", week=WEEK),
+        submit={"text": "Apply"},
+        reset={"text": "Full screen", "icon": "monitor", "variant": "secondary"},
+        resetAction={"mode": "custom", "code": script("full_screen.js"), "confirm": False},
+    )
+    return {**panel, "title": "OpenDT"}
 
 
 def picker(title, plots):

@@ -62,7 +62,7 @@ def note(color, text):
 
 
 def card(n, shown=False):
-    """Step n as text: the steps, its question, and what to do in the control panel (`shown`: its
+    """Step n as text: the steps, its question, and the levers to change (`shown`: its
     solution instead); at the bottom, a button to show or fold the solution, then Back and Next."""
     _, step = ORDER[n - 1]
     q, question = step["question"], QUESTIONS[step["question"]]
@@ -75,7 +75,7 @@ def card(n, shown=False):
         solution = escape(question["solution"].strip())
         lines.append(note(GREEN, f"<strong>Solution {q}:</strong> {solution}"))
     elif "do" in step:
-        lines.append(note(BLUE, f"<strong>In the control panel:</strong> {escape(step['do'])}."))
+        lines.append(note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}."))
     left = []
     if "solution" in question:
         left = [button(n, "Hide solution") if shown else button(f"{n}s", "Solution")]
