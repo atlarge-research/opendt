@@ -185,7 +185,7 @@
                                         "uid": "carbon_zone",
                                         "id": "carbon_zone",
                                         "title": "CO₂ zone",
-                                        "type": "select",
+                                        "type": "radio",
                                         "labelWidth": 9,
                                         "options": [
                                             {
@@ -405,7 +405,7 @@
                                         "uid": "parallel_simulations",
                                         "id": "parallel_simulations",
                                         "title": "Parallel runs",
-                                        "type": "select",
+                                        "type": "radio",
                                         "labelWidth": 13,
                                         "options": [
                                             {
@@ -436,37 +436,40 @@
                                         "uid": "calibration_min",
                                         "id": "calibration_min",
                                         "title": "r from",
-                                        "type": "number",
+                                        "type": "slider",
                                         "labelWidth": 13,
-                                        "min": 0,
-                                        "width": 11,
+                                        "min": 0.5,
+                                        "max": 20,
+                                        "step": 0.5,
                                         "section": "left"
                                     },
                                     {
                                         "uid": "calibration_max",
                                         "id": "calibration_max",
                                         "title": "r to",
-                                        "type": "number",
+                                        "type": "slider",
                                         "labelWidth": 13,
-                                        "min": 0,
-                                        "width": 11,
+                                        "min": 0.5,
+                                        "max": 20,
+                                        "step": 0.5,
                                         "section": "right"
                                     },
                                     {
                                         "uid": "calibration_points",
                                         "id": "calibration_points",
                                         "title": "Values of r",
-                                        "type": "number",
+                                        "type": "slider",
                                         "labelWidth": 13,
                                         "min": 2,
-                                        "width": 11,
+                                        "max": 20,
+                                        "step": 1,
                                         "section": "right"
                                     },
                                     {
                                         "uid": "mape_window",
                                         "id": "mape_window",
                                         "title": "MAPE window",
-                                        "type": "select",
+                                        "type": "radio",
                                         "labelWidth": 13,
                                         "options": [
                                             {
@@ -1613,7 +1616,7 @@
                                             "spec": {
                                                 "x": 0,
                                                 "y": 0,
-                                                "width": 5,
+                                                "width": 4,
                                                 "height": 5,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -1624,9 +1627,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 5,
+                                                "x": 4,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 5,
                                                 "height": 5,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -1637,7 +1640,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 8,
+                                                "x": 9,
                                                 "y": 0,
                                                 "width": 3,
                                                 "height": 5,
@@ -1650,9 +1653,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 12,
                                                 "y": 0,
-                                                "width": 13,
+                                                "width": 12,
                                                 "height": 5,
                                                 "element": {
                                                     "kind": "ElementReference",

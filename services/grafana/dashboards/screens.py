@@ -51,10 +51,10 @@ TILE_PLACES = [
 # the levers' bar at the top of every screen: the hosts, the CO₂ zone, the speed, and the calibration
 BAR = 5
 TOP = [
-    ("lever-hosts", lever([HOSTS, INFRASTRUCTURE]), 0, 0, 5, BAR),
-    ("lever-zone", lever([ZONE]), 5, 0, 3, BAR),
-    ("lever-speed", lever([SPEED]), 8, 0, 3, BAR),
-    ("lever-calibration", lever([CALIBRATION, *CALIBRATOR], split=True), 11, 0, 13, BAR),
+    ("lever-hosts", lever([HOSTS, INFRASTRUCTURE]), 0, 0, 4, BAR),
+    ("lever-zone", lever([ZONE]), 4, 0, 5, BAR),
+    ("lever-speed", lever([SPEED]), 9, 0, 3, BAR),
+    ("lever-calibration", lever([CALIBRATION, *CALIBRATOR], split=True), 12, 0, 12, BAR),
 ]
 PICKERS = {f"pick-{i}": picker(title, plots) for i, (title, plots) in enumerate(ROWS.items())}
 
