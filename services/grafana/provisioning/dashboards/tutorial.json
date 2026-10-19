@@ -118,7 +118,7 @@
                                 "content": "<div class=\"view\"><div style=\"gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"36\">OpenDT<span style=\"margin-left: auto; font-size: 14px; font-weight: 400\" data-time=\"{{twin_time}}\"></span></div><div><a data-href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Detailed</a><a data-href=\"/d/opendt-simple?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Simple</a><a data-href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Topology</a><a data-href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap; background: #3d71d9; color: white\">Tutorial</a></div><div><a data-var=\"window\" data-value=\"week\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Week</a><a data-var=\"window\" data-value=\"day\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Day</a><a data-var=\"window\" data-value=\"hours\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">6 h</a><small>Decisions</small><a data-var=\"markers\" data-value=\"on\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">On</a><a data-var=\"markers\" data-value=\"off\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Off</a><small>Interval</small><select data-var=\"period\"><option>minute</option><option>hour</option><option>day</option><option>week</option><option>month</option><option>year</option></select></div></div>",
                                 "defaultContent": "<div class=\"view\"><div style=\"gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"36\">OpenDT<span style=\"margin-left: auto; font-size: 14px; font-weight: 400\" data-time=\"\"></span></div><div><a data-href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Detailed</a><a data-href=\"/d/opendt-simple?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Simple</a><a data-href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Topology</a><a data-href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap; background: #3d71d9; color: white\">Tutorial</a></div><div><a data-var=\"window\" data-value=\"week\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Week</a><a data-var=\"window\" data-value=\"day\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Day</a><a data-var=\"window\" data-value=\"hours\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">6 h</a><small>Decisions</small><a data-var=\"markers\" data-value=\"on\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">On</a><a data-var=\"markers\" data-value=\"off\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap\">Off</a><small>Interval</small><select data-var=\"period\"><option>minute</option><option>hour</option><option>day</option><option>week</option><option>month</option><option>year</option></select></div></div>",
                                 "styles": ".view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }\n.view div { display: flex; align-items: center; gap: 4px; }\n.view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }\n.view .on { background: #3d71d9; color: white !important; }\n.view select { height: 26px; padding: 0 6px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; }",
-                                "afterRender": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the links as Grafana fills them in now (the time, the markers, ...), again at every refresh\ncontext.element.querySelectorAll('[data-href]').forEach((a) => (a.href = context.grafana.replaceVariables(a.dataset.href)));\n// no \"Powered by Grafana\" under the screen\ndocument.querySelector('[data-testid=\"public-dashboard-footer\"]')?.style.setProperty('display', 'none');\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view: Week, Day, or 6 h, the markers, and the interval show at once on a click, kept in the address; Day and\n// 6 h follow the twin, to its last hours, at every refresh; always Grafana's kiosk mode (no menus, no bars)\nconst address = context.grafana.locationService;\nconst time = context.element.querySelector('[data-time]');\nconst twin = time.dataset.time;\ntime.textContent = twin.slice(0, 16).replace('T', ' ');\nconst shown = (key) => context.grafana.replaceVariables('$' + key);\ncontext.element.querySelectorAll('[data-var]').forEach((choice) => {\n  const { var: key, value } = choice.dataset;\n  if (choice.tagName === 'SELECT') {\n    choice.value = shown(key);\n    choice.onchange = () => address.partial({ ['var-' + key]: choice.value });\n  } else {\n    choice.classList.toggle('on', shown(key) === value);\n    choice.onclick = () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) });\n  }\n});\nif (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);\nconst { from = week.from, to = week.to } = address.getSearchObject();\nconst end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\nif (twin && shown('window') !== 'week' && (Date.parse(twin) > end || from === week.from)) {\n  address.partial(range(shown('window'), twin), true);\n}\n"
+                                "afterRender": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the links as Grafana fills them in now (the time, the markers, ...), again at every refresh\ncontext.element.querySelectorAll('[data-href]').forEach((a) => (a.href = context.grafana.replaceVariables(a.dataset.href)));\n// none of Grafana's own: no \"Powered by Grafana\" under the screen, no menus over the panels\nconst grafana = ['[data-testid=\"public-dashboard-footer\"]', '[data-testid=\"hover-header-container\"]', 'button[aria-label^=\"Menu for panel\"]'];\nif (!document.getElementById('opendt-grafana')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-grafana\">' + grafana.join(', ') + ' { display: none !important; }</style>');\n}\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view: Week, Day, or 6 h, the markers, and the interval show at once on a click, kept in the address; Day and\n// 6 h follow the twin, to its last hours, at every refresh; always Grafana's kiosk mode (no menus, no bars)\nconst address = context.grafana.locationService;\nconst time = context.element.querySelector('[data-time]');\nconst twin = time.dataset.time;\ntime.textContent = twin.slice(0, 16).replace('T', ' ');\nconst shown = (key) => context.grafana.replaceVariables('$' + key);\ncontext.element.querySelectorAll('[data-var]').forEach((choice) => {\n  const { var: key, value } = choice.dataset;\n  if (choice.tagName === 'SELECT') {\n    choice.value = shown(key);\n    choice.onchange = () => address.partial({ ['var-' + key]: choice.value });\n  } else {\n    choice.classList.toggle('on', shown(key) === value);\n    choice.onclick = () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) });\n  }\n});\nif (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);\nconst { from = week.from, to = week.to } = address.getSearchObject();\nconst end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\nif (twin && shown('window') !== 'week' && (Date.parse(twin) > end || from === week.from)) {\n  address.partial(range(shown('window'), twin), true);\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -128,7 +128,7 @@
                     }
                 }
             },
-            "datacenter": {
+            "lever-datacenter": {
                 "kind": "Panel",
                 "spec": {
                     "id": 2,
@@ -203,7 +203,7 @@
                     }
                 }
             },
-            "grid": {
+            "lever-grid": {
                 "kind": "Panel",
                 "spec": {
                     "id": 3,
@@ -273,7 +273,7 @@
                     }
                 }
             },
-            "twin": {
+            "lever-twin": {
                 "kind": "Panel",
                 "spec": {
                     "id": 4,
@@ -348,7 +348,7 @@
                     }
                 }
             },
-            "calibrator": {
+            "lever-calibrator": {
                 "kind": "Panel",
                 "spec": {
                     "id": 5,
@@ -4705,7 +4705,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -4718,7 +4718,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -4731,7 +4731,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -4744,7 +4744,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -4953,7 +4953,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -4966,7 +4966,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -4979,7 +4979,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -4992,7 +4992,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -5175,7 +5175,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -5188,7 +5188,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -5201,7 +5201,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -5214,7 +5214,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -5423,7 +5423,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -5436,7 +5436,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -5449,7 +5449,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -5462,7 +5462,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -5658,7 +5658,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -5671,7 +5671,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -5684,7 +5684,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -5697,7 +5697,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -5906,7 +5906,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -5919,7 +5919,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -5932,7 +5932,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -5945,7 +5945,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -6128,7 +6128,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -6141,7 +6141,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -6154,7 +6154,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -6167,7 +6167,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -6363,7 +6363,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -6376,7 +6376,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -6389,7 +6389,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -6402,7 +6402,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -6585,7 +6585,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -6598,7 +6598,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -6611,7 +6611,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -6624,7 +6624,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -6807,7 +6807,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -6820,7 +6820,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -6833,7 +6833,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -6846,7 +6846,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -7029,7 +7029,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -7042,7 +7042,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -7055,7 +7055,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -7068,7 +7068,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },
@@ -7264,7 +7264,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "datacenter"
+                                                    "name": "lever-datacenter"
                                                 }
                                             }
                                         },
@@ -7277,7 +7277,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "grid"
+                                                    "name": "lever-grid"
                                                 }
                                             }
                                         },
@@ -7290,7 +7290,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "twin"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
@@ -7303,7 +7303,7 @@
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "calibrator"
+                                                    "name": "lever-calibrator"
                                                 }
                                             }
                                         },

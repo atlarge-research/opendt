@@ -56,14 +56,14 @@ TWIN = query("twin", target(STATUS, [("twin_time", "twin_time", "string")]) | {"
 # the top of every screen: the view, then the levers by category
 BAR = 4
 LEVERS = {
-    "datacenter": group(
+    "lever-datacenter": group(
         "Datacenter",
         [("Hosts", [HOSTS]), ("Scheduler", [SCHEDULER])],
         link=("Infrastructure →", "/d/opendt-topology?kiosk"),
     ),
-    "grid": group("Grid", [("CO₂ zone", [ZONE])]),
-    "twin": group("Twin", [("Speed", [SPEED]), ("Calibration", [CALIBRATION])]),
-    "calibrator": group(
+    "lever-grid": group("Grid", [("CO₂ zone", [ZONE])]),
+    "lever-twin": group("Twin", [("Speed", [SPEED]), ("Calibration", [CALIBRATION])]),
+    "lever-calibrator": group(
         "Self-Calibrator",
         [
             ("Parallel runs", [PARALLEL]),
@@ -92,8 +92,8 @@ detailed = screen(
     "OpenDT, detailed",
     [
         # the top third: what the screen shows and the decisions, the twin now; then the plots
-        ("decisions", decisions, 0, 0, 8, 4),  # what the markers on the graphs stand for
-        *[(name, GROUPS[name], 8 + 4 * i, 0, 4, 4) for i, name in enumerate(GROUPS)],
+        ("decisions", decisions, 0, 0, 8, 5),  # what the markers on the graphs stand for
+        *[(name, GROUPS[name], 8 + 4 * i, 0, 4, 5) for i, name in enumerate(GROUPS)],
     ],
     rows=[
         # a row shows while one of its plots is not hidden

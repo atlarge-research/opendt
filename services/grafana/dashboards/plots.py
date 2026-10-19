@@ -538,7 +538,13 @@ def numbers(title, url, columns, computed=(), hide=(), more=(), overrides=(), de
     """The numbers of a category in one box, each its name over its value; coloured by `overrides`."""
     panel = stat(title, url, columns, overrides, computed, hide=hide, more=more, decimals=decimals)
     panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = INK
-    panel["options"] |= {"colorMode": "value", "justifyMode": "center"}
+    # two by two, also on a 1440-pixel screen
+    panel["options"] |= {
+        "colorMode": "value",
+        "justifyMode": "center",
+        "minVizWidth": 105,
+        "minVizHeight": 48,
+    }
     return panel
 
 

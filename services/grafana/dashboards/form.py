@@ -173,7 +173,7 @@ def brand(uid, plots=(), period=True):
         "</span></div>"
     )
     html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'
-    code = script("links.js", "footer.js", "range.js", "view.js", week=WEEK)
+    code = script("links.js", "grafana.js", "range.js", "view.js", week=WEEK)
     return {
         "type": "marcusolsson-dynamictext-panel",
         "title": "",
