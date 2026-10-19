@@ -1,5 +1,6 @@
 """What each plot shows, one definition per plot, from the API's endpoints."""
 
+import re
 from pathlib import Path
 
 import yaml
@@ -12,8 +13,10 @@ from panels import (
     BROWSER_API,
     CLUSTER,
     CO2,
+    COLORS,
     GREEN,
     GREY,
+    INK,
     ORANGE,
     POWER,
     RANGE,
@@ -75,15 +78,6 @@ TILES = {
         ["actual_power", "simulated_power"],
         decimals=1,
     ),
-    # the second row of the detailed screen: the jobs, the hosts, the period so far, and the calibration
-    "runtime-now": tile("Total runtime [h]", SCHEDULING, "completion_h", decimals=1),
-    "queue-now": tile("Queue time [min]", SCHEDULING, "queue_median_min", decimals=1),
-    "finished-now": tile("Jobs finished", NOW, "tasks_completed", unit="locale", decimals=0),
-    "cpu-now": tile("CPU utilization", NOW, "cpu_utilization", unit="percentunit", decimals=1),
-    "energy-sum": tile("Energy [kWh]", TOTALS, "energy_kwh", unit="locale", decimals=0),
-    "co2-sum": tile("CO₂ [kg]", TOTALS, "co2_kg", unit="locale", decimals=0),
-    "r-now": tile("Calibration r", ACCURACY, "r", decimals=1),
-    "energy-error-now": tile("Energy error [%]", ACCURACY, "energy_error_pct", decimals=1),
 }
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {
@@ -538,8 +532,82 @@ TILES |= {
     name: ratio(tile["title"], NOW, tile["part"], tile["whole"], tile["colors"])
     for name, tile in CONFIG["ratios"].items()
 }
+
+
+def numbers(title, url, columns, computed=(), hide=(), more=(), overrides=(), decimals=1):
+    """The numbers of a category in one box, each its name over its value; coloured by `overrides`."""
+    panel = stat(title, url, columns, overrides, computed, hide=hide, more=more, decimals=decimals)
+    panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = INK
+    panel["options"] |= {"colorMode": "value", "justifyMode": "center"}
+    return panel
+
+
+def colored(name, colors, **props):
+    """A number in the colour of each value of `colors` on ({value: name})."""
+    steps = [{"value": v or None, "color": COLORS[c]} for v, c in sorted(colors.items())]
+    thresholds = {"mode": "absolute", "steps": steps}
+    return override(name, color={"mode": "thresholds"}, thresholds=thresholds, **props)
+
+
+# the top of the detailed screen: the twin's numbers now, by category, as the rows under it
+SHARES = CONFIG["ratios"].values()
+COUNTS = sorted({c for r in SHARES for c in re.findall(r"[a-z_]+", f"{r['part']} {r['whole']}")})
+GROUPS = {
+    "power-group": numbers(
+        "Power [kW]",
+        POWER,
+        [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
+        [
+            ("actual_power/1000", "Ground truth"),
+            ("simulated_power/1000", "OpenDT"),
+            ("(simulated_power - actual_power)/1000", "Gap"),
+        ],
+        ["actual_power", "simulated_power"],
+        overrides=[  # in the colours of their lines
+            override("Ground truth", color={"mode": "fixed", "fixedColor": GREY}),
+            override("OpenDT", color={"mode": "fixed", "fixedColor": GREEN}),
+        ],
+    ),
+    "jobs-group": numbers(
+        "Jobs and hosts",
+        NOW,
+        [(c, c) for c in COUNTS],
+        [(f"({r['part']}) / ({r['whole']})", r["title"]) for r in SHARES],
+        COUNTS,
+        [
+            target(
+                NOW, [("tasks_completed", "Jobs finished"), ("cpu_utilization", "CPU utilization")]
+            )
+        ],
+        [colored(r["title"], r["colors"], unit="percentunit", decimals=0) for r in SHARES]
+        + [override("Jobs finished", unit="locale", decimals=0)]
+        + [override("CPU utilization", unit="percentunit")],
+    ),
+    "sustainability-group": numbers(
+        "Sustainability",
+        CO2,
+        [("carbon_emission", "carbon_emission"), ("carbon_intensity", "carbon_intensity")],
+        [("carbon_emission/1000", "CO₂ [kg/h]"), ("carbon_intensity", "Intensity [gCO₂/kWh]")],
+        ["carbon_emission", "carbon_intensity"],
+        [target(TOTALS, [("energy_kwh", "Energy [kWh]"), ("co2_kg", "CO₂ [kg]")])],
+        units("locale", "Intensity [gCO₂/kWh]", "Energy [kWh]", "CO₂ [kg]", decimals=0),
+    ),
+    # 10% is the community-accepted error rate (question 1.1)
+    "accuracy-group": numbers(
+        "Accuracy",
+        f"{ACCURACY}?minutes=5",
+        [("mape", "MAPE, 5 min [%]")],
+        more=[
+            target(
+                ACCURACY,
+                [("mape", "MAPE, 1 h [%]"), ("energy_error_pct", "Energy error [%]"), ("r", "r")],
+            )
+        ],
+        overrides=[colored(f"MAPE, {t} [%]", {0: "green", 10: "red"}) for t in ("5 min", "1 h")],
+    ),
+}
 # the (i) of each panel, by its name
-PANELS = {"power": power, "co2": co2, "hosts": hosts, "decisions": decisions, **TILES}
+PANELS = {"power": power, "co2": co2, "hosts": hosts, "decisions": decisions, **TILES, **GROUPS}
 INFO = CONFIG["info"] | {name: tile["info"] for name, tile in CONFIG["ratios"].items()}
 for name, text in INFO.items():
     PANELS[name]["description"] = text

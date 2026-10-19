@@ -1,8 +1,8 @@
 // a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the
 // changes to the twin. Over the screen, the open box outlives the screen's refreshes
 const box = context.element.querySelector('.lever');
+const rows = [...box.querySelectorAll('[data-name]')];
 const levers = [...box.querySelectorAll('[data-key]')];
-const { name } = box.dataset;
 // a choice by its label, a number with its thousands separators
 const label = ({ dataset: { choices, labels } }, value) =>
   choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');
@@ -10,6 +10,10 @@ levers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)
 if (!document.getElementById('opendt-lever')) {
   document.head.insertAdjacentHTML('beforeend', '<style id="opendt-lever">' + style + '</style>');
 }
+// a lever's choices as buttons, or its number
+const edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices
+  ? choices.split(',').map((c, i) => '<button class="choice' + (c === draft[key] ? ' on' : '') + '" data-key="' + key + '" value="' + c + '">' + labels.split('|')[i] + '</button>').join('')
+  : '<input type="number" data-key="' + key + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + draft[key] + '">';
 const open = () => {
   document.querySelector('.opendt-lever')?.remove();
   const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));
@@ -18,25 +22,26 @@ const open = () => {
   big.className = 'opendt-lever';
   big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';
   big.innerHTML =
-    '<small>' + name + '</small>' +
-    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices
-      ? choices.split(',').map((c, i) => '<button class="choice' + (c === draft[key] ? ' on' : '') + '" data-key="' + key + '" value="' + c + '">' + labels.split('|')[i] + '</button>').join('')
-      : '<input type="number" data-key="' + key + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + draft[key] + '">'
-    ).join('<small>to</small>') +
+    rows.map((row) => '<small>' + row.dataset.name + '</small><div>' + [...row.querySelectorAll('[data-key]')].map((l) => edit(l, draft)).join('to') + '</div>').join('') +
     '<div><button class="apply">Apply</button><button class="cancel">Cancel</button></div>';
   big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);
   big.onclick = async ({ target }) => {
+    const { key } = target.dataset;
     if (target.classList.contains('choice')) {
-      draft[target.dataset.key] = target.value;
-      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));
+      draft[key] = target.value;
+      big.querySelectorAll('.choice[data-key="' + key + '"]').forEach((c) => c.classList.toggle('on', c === target));
     }
     if (target.className === 'cancel') big.remove();
     if (target.className !== 'apply') return;
-    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);
+    const changed = levers.filter(({ dataset }) => draft[dataset.key] !== dataset.value);
     if (!changed.length) return big.remove();
-    const was = levers.map((l) => label(l, l.dataset.value)).join('-');
-    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');
-    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;
+    // e.g., Hosts: 277 to 300; Range of r: 3-9 to 3-10
+    const text = rows.filter((row) => changed.some((l) => row.contains(l))).map((row) => {
+      const mine = [...row.querySelectorAll('[data-key]')];
+      const values = (value) => mine.map((l) => label(l, value(l))).join('-');
+      return row.dataset.name + ': ' + values((l) => l.dataset.value) + ' to ' + values((l) => draft[l.dataset.key]);
+    });
+    if (!confirm(text.join('; ') + '? The twin follows from its next window.')) return;
     const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));
     const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
     if (response.ok) {

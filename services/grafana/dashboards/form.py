@@ -1,4 +1,5 @@
-"""The control panel of every screen and the plot picker: Business Forms panels, their code in js/."""
+"""The top of every screen: the view (the logo, the screens, and what they show), then the twin's levers by
+category; Business Text panels, their code in js/."""
 
 import json
 from pathlib import Path
@@ -6,7 +7,6 @@ from pathlib import Path
 from panels import BROWSER_API, PERIODS, STATUS, WEEK, target
 
 JS = Path(__file__).parent / "js"
-BROWSER_STATUS = f"{BROWSER_API}/api/status"
 SCREENS = [
     ("opendt-overview", "Detailed"),
     ("opendt-simple", "Simple"),
@@ -67,54 +67,25 @@ MAPE_WINDOW = select(
 HOSTS = field("hosts", "Hosts", "number", min=1)
 
 
-def control(period=True):
-    """The control panel: what the screen shows, in the same rows on every screen; a change shows at once. Its
-    values come from the address, the twin's time from the API (from the browser, to the API's port)."""
-    view = [
-        select(
-            "window",
-            "Period",
-            [("week", "Week"), ("day", "Day"), ("hours", "6 h")],
-            "radio",
-            value="week",
-        ),
-        # the markers on the graphs
-        select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
-    ]
-    if period:
-        view.append(select("period", "Interval", [(p, p) for p in PERIODS], value="day"))
-    initial = script("range.js", "initial.js", "follow.js", "retry.js", week=WEEK, status=STATUS)
-    return {
-        "type": "volkovlabs-form-panel",
-        "title": "",
-        "options": {
-            "initial": {"method": "GET", "url": BROWSER_STATUS, "code": initial},
-            "update": {"method": "-"},
-            "updateEnabled": "disabled",  # no buttons
-            "elementValueChanged": script("range.js", "view.js", week=WEEK),
-            "sync": False,  # true would reload the values at every refresh
-            "elements": view,
-        },
-    }
-
-
-BOX = """.lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 4px; cursor: pointer; container-type: inline-size; }
-.lever small { font-size: 12px; white-space: nowrap; }
-.lever b { font-size: min(24px, 18cqw); font-weight: 500; white-space: nowrap; }
+BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  padding: 0 8px; cursor: pointer; }
+.lever > small { text-align: center; margin-bottom: 4px; }
+.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }
+.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0; }
+.lever b { font-size: 16px; font-weight: 500; white-space: nowrap; }
 .lever i { font-style: normal; }
-.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }
+.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; text-align: center; }
 .lever:hover a { color: #6e9fff; }"""
 # a box, once clicked: larger, over the screen, with what its levers take
 OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;
   padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;
-  font-size: 14px; text-align: center; }
-.opendt-lever small { font-size: 12px; }
-.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;
+  font-size: 14px; }
+.opendt-lever small { font-size: 12px; color: #8e8e8e; margin-top: 4px; }
+.opendt-lever div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: #111217; color: #ccccdc;
   border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }
-.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }
-.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }
-.opendt-lever div button { flex: 1; }"""
+.opendt-lever input { width: 4em; }
+.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }"""
 
 
 def value(element):
@@ -130,35 +101,31 @@ def value(element):
     return "<i" + "".join(f' data-{k}="{v}"' for k, v in data.items()) + f">{{{{{key}}}}}</i>"
 
 
-def box(*elements, title=None, link=None):
-    """Levers in a box, as values of the twin's: their values now (two: from-to); a click opens the box larger,
-    with what they take, and Apply, once confirmed, sends them to the twin (from the browser, to the API's port);
-    `link`: (text, address)."""
-    title = title or elements[0]["title"]
-    more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
-    content = (
-        f'<div class="lever" data-name="{title}"><small>{title} <a>✎</a></small>'
-        f"<b>{'-'.join(map(value, elements))}</b>{more}</div>"
+def group(title, levers, link=None):
+    """Levers of a category in a box, as values of the twin's: each its name and its value now (two: from-to); a
+    click opens the box larger, with what they take, and Apply, once confirmed, sends the changes to the twin (from
+    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address)."""
+    lines = "".join(
+        f'<p data-name="{name}"><small>{name}</small><b>{"-".join(map(value, elements))}</b></p>'
+        for name, elements in levers
     )
+    more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
+    keys = [e["id"] for _, elements in levers for e in elements]
     return {
         "type": "marcusolsson-dynamictext-panel",
         "title": "",
-        "targets": [
-            target(STATUS, [(e["id"], e["id"], "string") for e in elements]) | {"root_selector": ""}
-        ],
+        "targets": [target(STATUS, [(k, k, "string") for k in keys]) | {"root_selector": ""}],
         "options": {
             "renderMode": "everyRow",
-            "content": content,
-            "defaultContent": f'<div class="lever"><small>{title}</small><b>…</b></div>',
+            "content": f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}</div>',
+            "defaultContent": f'<div class="lever"><small>{title}</small></div>',
             "styles": BOX,
             "afterRender": script("box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
         },
     }
 
 
-TAB = "padding: 2px 8px; border-radius: 2px; color: #ccccdc"
-
-
+TAB = "padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap"
 # the window of the plots shown, over the screen
 DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;
   justify-content: center; background: rgba(0, 0, 0, 0.6); }
@@ -168,11 +135,25 @@ DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: f
 .opendt-plots label { display: flex; gap: 8px; margin-top: 10px; cursor: pointer; }
 .opendt-plots button { float: right; background: #3d71d9; color: white; border: 0; border-radius: 2px;
   padding: 6px 16px; cursor: pointer; }"""
+VIEW = """.view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.view div { display: flex; align-items: center; gap: 4px; }
+.view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }
+.view .on { background: #3d71d9; color: white !important; }
+.view select { height: 26px; padding: 0 6px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;
+  border-radius: 2px; }"""
 
 
-def brand(uid, plots=()):
-    """The logo and the name, and the screens: a click on one shows it, with the same time and markers;
-    `plots`: (row, [(key, title)]) to show or hide, in a window that ☰ Plots opens."""
+def choose(key, choices):
+    """A setting of the view as buttons; the one shown in blue."""
+    return "".join(
+        f'<a data-var="{key}" data-value="{v}" style="{TAB}">{label}</a>' for v, label in choices
+    )
+
+
+def brand(uid, plots=(), period=True):
+    """The view: the logo, the twin's time, and the screens (a click on one shows it, with the same time and
+    markers); then the time shown, the markers, and the interval (`period`), at once on a click; `plots`: (row,
+    [(key, title)]) to show or hide, in a window that ☰ Plots opens."""
     tabs = "".join(
         f'<a data-href="/d/{key}?${{__url_time_range}}&${{markers:queryparam}}&kiosk" style="{TAB}'
         + ('; background: #3d71d9; color: white">' if key == uid else '">')
@@ -180,20 +161,28 @@ def brand(uid, plots=()):
         for key, name in SCREENS
     )
     if plots:
-        tabs += f'<a class="plots" style="{TAB}; margin-left: auto; cursor: pointer">☰ Plots</a>'
-    html = (
-        '<div style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600">'
-        '<img src="/public/img/opendt.png" height="40">OpenDT</div>'
-        f'<div style="display: flex; gap: 4px; margin-top: 10px; font-size: 14px">{tabs}</div>'
+        tabs += f'<a class="plots" style="{TAB}; margin-left: auto">☰ Plots</a>'
+    view = choose("window", [("week", "Week"), ("day", "Day"), ("hours", "6 h")])
+    view += "<small>Decisions</small>" + choose("markers", [("on", "On"), ("off", "Off")])
+    if period:
+        options = "".join(f"<option>{p}</option>" for p in PERIODS)
+        view += f'<small>Interval</small><select data-var="period">{options}</select>'
+    logo = (
+        '<div style="gap: 12px; font-size: 22px; font-weight: 600"><img src="/public/img/opendt.png" height="36">'
+        'OpenDT<span style="margin-left: auto; font-size: 14px; font-weight: 400" data-time="{{twin_time}}">'
+        "</span></div>"
     )
+    html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'
+    code = script("links.js", "footer.js", "range.js", "view.js", week=WEEK)
     return {
         "type": "marcusolsson-dynamictext-panel",
         "title": "",
+        "targets": [target(STATUS, [("twin_time", "twin_time", "string")]) | {"root_selector": ""}],
         "options": {
-            "renderMode": "allRows",  # once, with or without data
+            "renderMode": "everyRow",
             "content": html,
-            "defaultContent": html,
-            "afterRender": script("links.js", "footer.js")
-            + (script("plots.js", plots=plots, style=DIALOG) if plots else ""),
+            "defaultContent": html.replace("{{twin_time}}", ""),
+            "styles": VIEW,
+            "afterRender": code + (script("plots.js", plots=plots, style=DIALOG) if plots else ""),
         },
     }

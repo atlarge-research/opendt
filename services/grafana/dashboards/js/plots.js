@@ -1,7 +1,6 @@
 // ☰ Plots opens the plots of the screen, ticked while shown; a tick shows or hides one at once. The address keeps
 // the hidden plots, so a plot added later shows, even with an old address
-const address = context.grafana.locationService;
-const hidden = () => [].concat(address.getSearchObject()['var-hidden'] ?? 'none');
+const hidden = () => [].concat(context.grafana.locationService.getSearchObject()['var-hidden'] ?? 'none');
 if (!document.getElementById('opendt-plots')) {
   document.head.insertAdjacentHTML('beforeend', '<style id="opendt-plots">' + style + '</style>');
 }
@@ -16,7 +15,7 @@ context.element.onclick = ({ target }) => {
     '</section><button>Close</button></div>';
   dialog.onchange = ({ target }) => {
     const others = hidden().filter((key) => key !== target.value);
-    address.partial({ 'var-hidden': target.checked ? others : [...others, target.value] }, true);
+    context.grafana.locationService.partial({ 'var-hidden': target.checked ? others : [...others, target.value] }, true);
   };
   dialog.onclick = ({ target }) => {
     if (target === dialog || target.tagName === 'BUTTON') dialog.remove();

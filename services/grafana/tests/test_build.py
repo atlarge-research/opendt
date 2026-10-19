@@ -55,7 +55,7 @@ def test_one_step_at_a_time():
     assert step["query"].split(",") == list(rows)  # a row for each value of the step
     for n, (_, s) in enumerate(steps.ORDER, 1):
         names = [i["spec"]["element"]["name"] for i in rows[str(n)]["layout"]["spec"]["items"]]
-        assert {"control", f"step-{n}", *screens.BOXES} <= set(names)
+        assert {"brand", f"step-{n}", *screens.BOXES} <= set(names)
         plots = [name.removeprefix("plot-") for name in names if name.startswith("plot-")]
         assert plots == s["plots"]
 
@@ -95,10 +95,8 @@ def test_split():
 def test_tutorial_starts_on_day():
     def window(board):
         [time] = [v["spec"] for v in board["spec"]["variables"] if v["spec"]["name"] == "window"]
-        code = board["spec"]["elements"]["control"]["spec"]["vizConfig"]["spec"]["options"][
-            "initial"
-        ]
-        assert "'${window}'" in code["code"]  # the control panel takes it from the address
+        view = board["spec"]["elements"]["brand"]["spec"]["vizConfig"]["spec"]["options"]
+        assert 'data-var="window"' in view["content"]  # the view shows it, from the address
         return time["current"]["value"]
 
     assert window(screens.tutorial) == "day"
