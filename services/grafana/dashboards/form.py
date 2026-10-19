@@ -13,7 +13,7 @@ SCREENS = [
     ("opendt-topology", "Topology"),
     ("opendt-tutorial", "Tutorial"),
 ]
-VIEW = ["screen", "window", "period", "markers"]  # what the screen shows, never sent to the twin
+VIEW = ["window", "period", "markers"]  # what the screen shows, never sent to the twin
 ZONES = ["NL", "PL", "DE", "RO"]  # the API's twin.CARBON_TRACES; SURF's twin starts on NL
 SCHEDULERS = ["Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"]
 SPEEDS = [(1, "1x (real time)"), (60, "60x"), (300, "300x"), (3600, "3,600x"), (-1, "Maximum")]
@@ -55,13 +55,15 @@ SCHEDULER = select(
 SPEED = select("speed_factor", "Speed", SPEEDS, width=14)  # wide enough for Maximum
 CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
 # the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
-CALIBRATOR = [
-    select("parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 4, 8)], "radio"),
-    field("calibration_min", "r from", "slider", min=0.5, max=20, step=0.5),
-    field("calibration_max", "r to", "slider", min=0.5, max=20, step=0.5),
-    field("calibration_points", "Values of r", "slider", min=2, max=20, step=1),
-    select("mape_window", "MAPE window", [(60, "1 h"), (360, "6 h"), (1440, "24 h")], "radio"),
-]
+PARALLEL = select(
+    "parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 4, 8)], "radio"
+)
+R_FROM = field("calibration_min", "r from", "slider", min=0.5, max=20, step=0.5)
+R_TO = field("calibration_max", "r to", "slider", min=0.5, max=20, step=0.5)
+R_VALUES = field("calibration_points", "Values of r", "slider", min=2, max=20, step=1)
+MAPE_WINDOW = select(
+    "mape_window", "MAPE window", [(60, "1 h"), (360, "6 h"), (1440, "24 h")], "radio"
+)
 # the first group of hosts: SURF's, until changed on Topology
 HOSTS = field("hosts", "Hosts", "number", min=1)
 CONFIRM = {
@@ -95,43 +97,11 @@ def form(elements, initial_code, update_code, **options):
     }
 
 
-def fit(element, width):
-    """An element in a tile: no tooltip (no room for its icon), a slider as wide as it takes."""
-    fitted = {k: v for k, v in element.items() if k != "tooltip"}
-    if element["type"] == "slider":
-        return fitted | {"labelWidth": width}
-    return {"width": 11} | fitted | {"labelWidth": width}
-
-
-def lever(elements, split=False):
-    """Levers in a tile of the top bar: their values now and, once changed, Apply with a pencil; `split`:
-    in two columns."""
-    width = 13 if split else 9  # of the labels
-    tile = [fit(e, width) for e in elements]
-    layout = {}
-    if split:
-        half = (len(tile) + 1) // 2
-        tile = [{**e, "section": "left" if i < half else "right"} for i, e in enumerate(tile)]
-        sections = [{"id": side, "name": ""} for side in ("left", "right")]
-        layout = {"layout": {"variant": "split", "sections": sections}}
-    panel = form(
-        tile,
-        script("retry.js"),
-        script("changed.js", "range.js", "applied.js", week=WEEK),
-        submit={"text": "Apply", "icon": "pen"},
-        reset={"variant": "hidden"},
-        buttonGroup={"orientation": "left", "size": "sm"},
-        **layout,
-    )
-    return {**panel, "title": ""}
-
-
-def control(screen, own_fields=(), period=True):
+def control(own_fields=(), period=True):
     """The control panel: what the screen shows, then the screen's own fields, so the same rows sit in the
     same places on every screen. Nothing changes before Apply: then the changed levers go to the twin and the
     view follows."""
     view = [
-        select("screen", "Screen", SCREENS, value=screen),
         select(
             "window",
             "Period",
@@ -143,8 +113,6 @@ def control(screen, own_fields=(), period=True):
         # the markers on the graphs
         select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
     ]
-    # the time, the interval, and the markers come from the address
-    start = {"screen": screen}
     if period:
         own_fields = [
             select("period", "Interval", [(p, p) for p in PERIODS], value="day"),
@@ -152,9 +120,7 @@ def control(screen, own_fields=(), period=True):
         ]
     panel = form(
         [*view, *own_fields],
-        script(
-            "range.js", "initial.js", "follow.js", "retry.js", start=start, week=WEEK, status=STATUS
-        ),
+        script("range.js", "initial.js", "follow.js", "retry.js", week=WEEK, status=STATUS),
         script("changed.js", "range.js", "applied.js", week=WEEK),
         submit={"text": "Apply"},
         reset={"text": "Full screen", "icon": "monitor", "variant": "secondary"},
@@ -187,27 +153,43 @@ BOX = """.lever { min-height: 80px; height: 100%; display: flex; flex-direction:
   justify-content: center; gap: 4px; }
 .lever small { font-size: 12px; }
 .lever b { font-size: 24px; font-weight: 500; }
+.lever i { font-style: normal; }
 .lever span { display: flex; gap: 12px; font-size: 12px; }
 .lever a { color: #6e9fff; cursor: pointer; }
 .lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;
-  border-radius: 2px; padding: 2px 6px; width: 7em; }"""
+  border-radius: 2px; padding: 2px 6px; width: 7em; }
+.lever input { width: 4.5em; }"""
 
 
-def box(element, link=None):
-    """A lever in a box, as a value of the twin's: its value now; ✎ Change edits it in place, and Apply, once
-    confirmed, sends it to the twin (from the browser, to the API's port); `link`: (text, address)."""
-    key, title = element["id"], element["title"]
-    choices = ",".join(str(o["value"]) for o in element.get("options", []))
-    data = f' data-choices="{choices}"' if choices else ""
+def value(element):
+    """A lever's value in a box, and what it takes: one of its choices, or a number."""
+    key = element["id"]
+    data = {"key": key, "value": f"{{{{{key}}}}}"}
+    if "options" in element:
+        values = [o["value"] for o in element["options"]]
+        data["choices"] = ",".join(v if isinstance(v, str) else json.dumps(v) for v in values)
+        data["labels"] = ",".join(o["label"] for o in element["options"])
+    else:
+        data |= {k: element[k] for k in ("min", "max", "step") if k in element}
+    return "<i" + "".join(f' data-{k}="{v}"' for k, v in data.items()) + f">{{{{{key}}}}}</i>"
+
+
+def box(*elements, title=None, link=None):
+    """Levers in a box, as values of the twin's: their values now (two: from-to); ✎ Change edits them in place,
+    and Apply, once confirmed, sends them to the twin (from the browser, to the API's port); `link`: (text,
+    address)."""
+    title = title or elements[0]["title"]
     more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
     content = (
-        f'<div class="lever" data-key="{key}" data-name="{title}" data-value="{{{{{key}}}}}"{data}>'
-        f'<small>{title}</small><b>{{{{{key}}}}}</b><span><a class="edit">✎ Change</a>{more}</span></div>'
+        f'<div class="lever" data-name="{title}"><small>{title}</small><b>{"-".join(map(value, elements))}</b>'
+        f'<span><a class="edit">✎ Change</a>{more}</span></div>'
     )
     return {
         "type": "marcusolsson-dynamictext-panel",
         "title": "",
-        "targets": [target(STATUS, [(key, key, "string")]) | {"root_selector": ""}],
+        "targets": [
+            target(STATUS, [(e["id"], e["id"], "string") for e in elements]) | {"root_selector": ""}
+        ],
         "options": {
             "renderMode": "everyRow",
             "content": content,
@@ -218,13 +200,24 @@ def box(element, link=None):
     }
 
 
-# the logo and the name, over the control panel
-BRAND = {
-    "type": "text",
-    "title": "",
-    "options": {
-        "mode": "html",
-        "content": '<div style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600">'
-        '<img src="/public/img/opendt.png" height="40">OpenDT</div>',
-    },
-}
+TAB = "padding: 2px 8px; border-radius: 2px; color: #ccccdc"
+
+
+def brand(uid):
+    """The logo and the name, and the screens: a click on one shows it, with the same time and markers."""
+    tabs = "".join(
+        f'<a href="/d/{key}?${{__url_time_range}}&${{markers:queryparam}}&kiosk" style="{TAB}'
+        + ('; background: #3d71d9; color: white">' if key == uid else '">')
+        + f"{name}</a>"
+        for key, name in SCREENS
+    )
+    return {
+        "type": "text",
+        "title": "",
+        "options": {
+            "mode": "html",
+            "content": '<div style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600">'
+            '<img src="/public/img/opendt.png" height="40">OpenDT</div>'
+            f'<div style="display: flex; gap: 4px; margin-top: 10px; font-size: 14px">{tabs}</div>',
+        },
+    }

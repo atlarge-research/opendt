@@ -11,13 +11,7 @@ if (response && response.ok) {
   if (sent.window) {
     Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));
   }
-  if (sent.screen) {
-    // not ${markers}: Grafana would put its own variable there
-    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };
-    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);
-  } else {
-    address.partial(view);
-  }
+  address.partial(view);
   context.grafana.notifySuccess(['OpenDT', 'Applied']);
 } else if (response) {
   response.json().then(({ detail }) => {

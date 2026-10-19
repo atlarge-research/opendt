@@ -58,10 +58,43 @@
             }
         ],
         "elements": {
-            "lever-hosts": {
+            "brand": {
                 "kind": "Panel",
                 "spec": {
                     "id": 1,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "text",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "mode": "html",
+                                "content": "<div style=\"display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"40\">OpenDT</div><div style=\"display: flex; gap: 4px; margin-top: 10px; font-size: 14px\"><a href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Detailed</a><a href=\"/d/opendt-simple?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; background: #3d71d9; color: white\">Simple</a><a href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Topology</a><a href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Tutorial</a></div>"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-hosts": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 2,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -115,10 +148,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-key=\"hosts\" data-name=\"Hosts\" data-value=\"{{hosts}}\"><small>Hosts</small><b>{{hosts}}</b><span><a class=\"edit\">✎ Change</a><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Hosts\"><small>Hosts</small><b><i data-key=\"hosts\" data-value=\"{{hosts}}\" data-min=\"1\">{{hosts}}</i></b><span><a class=\"edit\">✎ Change</a><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></span></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Hosts</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -131,7 +164,7 @@
             "lever-zone": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 2,
+                    "id": 3,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -185,10 +218,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-key=\"carbon_zone\" data-name=\"CO₂ zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\"><small>CO₂ zone</small><b>{{carbon_zone}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"CO₂ zone\"><small>CO₂ zone</small><b><i data-key=\"carbon_zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\" data-labels=\"NL,PL,DE,RO\">{{carbon_zone}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
                                 "defaultContent": "<div class=\"lever\"><small>CO₂ zone</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -201,7 +234,7 @@
             "lever-scheduler": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
+                    "id": 4,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -255,10 +288,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-key=\"scheduler\" data-name=\"Scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\"><small>Scheduler</small><b>{{scheduler}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Scheduler\"><small>Scheduler</small><b><i data-key=\"scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\" data-labels=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\">{{scheduler}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Scheduler</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -271,7 +304,7 @@
             "lever-calibration": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
+                    "id": 5,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -279,178 +312,341 @@
                     "data": {
                         "kind": "QueryGroup",
                         "spec": {
-                            "queries": [],
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "calibration",
+                                                        "text": "calibration",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
                             "transformations": [],
                             "queryOptions": {}
                         }
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
+                        "group": "marcusolsson-dynamictext-panel",
                         "version": "",
                         "spec": {
                             "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
-                                    {
-                                        "width": 11,
-                                        "uid": "calibration",
-                                        "id": "calibration",
-                                        "title": "Calibration",
-                                        "type": "radio",
-                                        "labelWidth": 13,
-                                        "options": [
-                                            {
-                                                "id": "True",
-                                                "label": "On",
-                                                "value": true
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Calibration\"><small>Calibration</small><b><i data-key=\"calibration\" data-value=\"{{calibration}}\" data-choices=\"true,false\" data-labels=\"On,Off\">{{calibration}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Calibration</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-parallel": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 6,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
                                             },
-                                            {
-                                                "id": "False",
-                                                "label": "Off",
-                                                "value": false
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "parallel_simulations",
+                                                        "text": "parallel_simulations",
+                                                        "type": "string"
+                                                    }
+                                                ]
                                             }
-                                        ],
-                                        "section": "left"
-                                    },
-                                    {
-                                        "width": 11,
-                                        "uid": "parallel_simulations",
-                                        "id": "parallel_simulations",
-                                        "title": "Parallel runs",
-                                        "type": "radio",
-                                        "labelWidth": 13,
-                                        "options": [
-                                            {
-                                                "id": "1",
-                                                "label": "1",
-                                                "value": 1
-                                            },
-                                            {
-                                                "id": "2",
-                                                "label": "2",
-                                                "value": 2
-                                            },
-                                            {
-                                                "id": "4",
-                                                "label": "4",
-                                                "value": 4
-                                            },
-                                            {
-                                                "id": "8",
-                                                "label": "8",
-                                                "value": 8
-                                            }
-                                        ],
-                                        "section": "left"
-                                    },
-                                    {
-                                        "uid": "calibration_min",
-                                        "id": "calibration_min",
-                                        "title": "r from",
-                                        "type": "slider",
-                                        "labelWidth": 13,
-                                        "min": 0.5,
-                                        "max": 20,
-                                        "step": 0.5,
-                                        "section": "left"
-                                    },
-                                    {
-                                        "uid": "calibration_max",
-                                        "id": "calibration_max",
-                                        "title": "r to",
-                                        "type": "slider",
-                                        "labelWidth": 13,
-                                        "min": 0.5,
-                                        "max": 20,
-                                        "step": 0.5,
-                                        "section": "right"
-                                    },
-                                    {
-                                        "uid": "calibration_points",
-                                        "id": "calibration_points",
-                                        "title": "Values of r",
-                                        "type": "slider",
-                                        "labelWidth": 13,
-                                        "min": 2,
-                                        "max": 20,
-                                        "step": 1,
-                                        "section": "right"
-                                    },
-                                    {
-                                        "width": 11,
-                                        "uid": "mape_window",
-                                        "id": "mape_window",
-                                        "title": "MAPE window",
-                                        "type": "radio",
-                                        "labelWidth": 13,
-                                        "options": [
-                                            {
-                                                "id": "60",
-                                                "label": "1 h",
-                                                "value": 60
-                                            },
-                                            {
-                                                "id": "360",
-                                                "label": "6 h",
-                                                "value": 360
-                                            },
-                                            {
-                                                "id": "1440",
-                                                "label": "24 h",
-                                                "value": 1440
-                                            }
-                                        ],
-                                        "section": "right"
-                                    }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
-                                    },
-                                    "confirm": "Apply"
-                                },
-                                "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
-                                },
-                                "reset": {
-                                    "variant": "hidden"
-                                },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
-                                },
-                                "layout": {
-                                    "variant": "split",
-                                    "sections": [
-                                        {
-                                            "id": "left",
-                                            "name": ""
-                                        },
-                                        {
-                                            "id": "right",
-                                            "name": ""
                                         }
-                                    ]
+                                    }
                                 }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Parallel runs\"><small>Parallel runs</small><b><i data-key=\"parallel_simulations\" data-value=\"{{parallel_simulations}}\" data-choices=\"1,2,4,8\" data-labels=\"1,2,4,8\">{{parallel_simulations}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Parallel runs</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-r": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 7,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "calibration_min",
+                                                        "text": "calibration_min",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "calibration_max",
+                                                        "text": "calibration_max",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Range of r\"><small>Range of r</small><b><i data-key=\"calibration_min\" data-value=\"{{calibration_min}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_min}}</i>-<i data-key=\"calibration_max\" data-value=\"{{calibration_max}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_max}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Range of r</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-values": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 8,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "calibration_points",
+                                                        "text": "calibration_points",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Values of r\"><small>Values of r</small><b><i data-key=\"calibration_points\" data-value=\"{{calibration_points}}\" data-min=\"2\" data-max=\"20\" data-step=\"1\">{{calibration_points}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Values of r</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-mape": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 9,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "mape_window",
+                                                        "text": "mape_window",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"MAPE window\"><small>MAPE window</small><b><i data-key=\"mape_window\" data-value=\"{{mape_window}}\" data-choices=\"60,360,1440\" data-labels=\"1 h,6 h,24 h\">{{mape_window}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>MAPE window</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -463,7 +659,7 @@
             "control": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
+                    "id": 10,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -485,48 +681,18 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const start = {\"screen\": \"opendt-simple\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://api:8000/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://api:8000/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// always Grafana's kiosk mode: no menus, no bars\nconst address = context.grafana.locationService;\nif (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
+                                    "getPayload": "const view = [\"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  address.partial(view);\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
                                 "sync": false,
                                 "elements": [
-                                    {
-                                        "uid": "screen",
-                                        "id": "screen",
-                                        "title": "Screen",
-                                        "type": "select",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "opendt-overview",
-                                                "label": "Detailed",
-                                                "value": "opendt-overview"
-                                            },
-                                            {
-                                                "id": "opendt-simple",
-                                                "label": "Simple",
-                                                "value": "opendt-simple"
-                                            },
-                                            {
-                                                "id": "opendt-topology",
-                                                "label": "Topology",
-                                                "value": "opendt-topology"
-                                            },
-                                            {
-                                                "id": "opendt-tutorial",
-                                                "label": "Tutorial",
-                                                "value": "opendt-tutorial"
-                                            }
-                                        ],
-                                        "value": "opendt-simple"
-                                    },
                                     {
                                         "uid": "window",
                                         "id": "window",
@@ -628,7 +794,7 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "// Grafana's kiosk mode (no menus, no bars; Esc leaves it) in the browser's full screen, like a game\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial({ kiosk: on || null });\n",
+                                    "code": "// the browser's full screen, like a game; Grafana's kiosk mode (no menus, no bars) is on anyway\ndocument.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();\n",
                                     "confirm": false
                                 }
                             },
@@ -643,7 +809,7 @@
             "twin-state": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 11,
                     "title": "Twin state",
                     "description": "",
                     "transparent": false,
@@ -770,7 +936,7 @@
             "physical": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 12,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -879,7 +1045,7 @@
             "power-simple": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 13,
                     "title": "Power draw",
                     "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
                     "transparent": false,
@@ -1105,7 +1271,7 @@
             "arrivals": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 14,
                     "title": "Jobs arriving per hour",
                     "description": "",
                     "transparent": false,
@@ -1235,7 +1401,7 @@
             "twin": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 15,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1344,7 +1510,7 @@
             "heatmap": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 16,
                     "title": "Hosts per CPU utilization",
                     "description": "",
                     "transparent": false,
@@ -1487,7 +1653,7 @@
             "decisions": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 17,
                     "title": "Decisions",
                     "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
                     "transparent": false,
@@ -1640,7 +1806,7 @@
             "start": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 18,
                     "title": "",
                     "description": "",
                     "transparent": true,
@@ -1786,7 +1952,20 @@
                                             "spec": {
                                                 "x": 0,
                                                 "y": 0,
-                                                "width": 4,
+                                                "width": 6,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "brand"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 0,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -1797,9 +1976,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 4,
+                                                "x": 9,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -1810,9 +1989,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 7,
+                                                "x": 11,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -1823,13 +2002,65 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 10,
+                                                "x": 13,
                                                 "y": 0,
-                                                "width": 14,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "lever-calibration"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 15,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-parallel"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 17,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-r"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 20,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-values"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 22,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-mape"
                                                 }
                                             }
                                         },

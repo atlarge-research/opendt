@@ -81,7 +81,572 @@
                         "spec": {
                             "options": {
                                 "mode": "html",
-                                "content": "<div style=\"display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"40\">OpenDT</div>"
+                                "content": "<div style=\"display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"40\">OpenDT</div><div style=\"display: flex; gap: 4px; margin-top: 10px; font-size: 14px\"><a href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; background: #3d71d9; color: white\">Detailed</a><a href=\"/d/opendt-simple?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Simple</a><a href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Topology</a><a href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Tutorial</a></div>"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-hosts": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 2,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "hosts",
+                                                        "text": "hosts",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Hosts\"><small>Hosts</small><b><i data-key=\"hosts\" data-value=\"{{hosts}}\" data-min=\"1\">{{hosts}}</i></b><span><a class=\"edit\">✎ Change</a><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Hosts</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-zone": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 3,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "carbon_zone",
+                                                        "text": "carbon_zone",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"CO₂ zone\"><small>CO₂ zone</small><b><i data-key=\"carbon_zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\" data-labels=\"NL,PL,DE,RO\">{{carbon_zone}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>CO₂ zone</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-scheduler": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 4,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "scheduler",
+                                                        "text": "scheduler",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Scheduler\"><small>Scheduler</small><b><i data-key=\"scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\" data-labels=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\">{{scheduler}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Scheduler</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-calibration": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 5,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "calibration",
+                                                        "text": "calibration",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Calibration\"><small>Calibration</small><b><i data-key=\"calibration\" data-value=\"{{calibration}}\" data-choices=\"true,false\" data-labels=\"On,Off\">{{calibration}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Calibration</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-parallel": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 6,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "parallel_simulations",
+                                                        "text": "parallel_simulations",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Parallel runs\"><small>Parallel runs</small><b><i data-key=\"parallel_simulations\" data-value=\"{{parallel_simulations}}\" data-choices=\"1,2,4,8\" data-labels=\"1,2,4,8\">{{parallel_simulations}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Parallel runs</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-r": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 7,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "calibration_min",
+                                                        "text": "calibration_min",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "calibration_max",
+                                                        "text": "calibration_max",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Range of r\"><small>Range of r</small><b><i data-key=\"calibration_min\" data-value=\"{{calibration_min}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_min}}</i>-<i data-key=\"calibration_max\" data-value=\"{{calibration_max}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_max}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Range of r</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-values": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 8,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "calibration_points",
+                                                        "text": "calibration_points",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Values of r\"><small>Values of r</small><b><i data-key=\"calibration_points\" data-value=\"{{calibration_points}}\" data-min=\"2\" data-max=\"20\" data-step=\"1\">{{calibration_points}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Values of r</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-mape": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 9,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "mape_window",
+                                                        "text": "mape_window",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"MAPE window\"><small>MAPE window</small><b><i data-key=\"mape_window\" data-value=\"{{mape_window}}\" data-choices=\"60,360,1440\" data-labels=\"1 h,6 h,24 h\">{{mape_window}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>MAPE window</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -94,7 +659,7 @@
             "control": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 2,
+                    "id": 10,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -116,48 +681,18 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const start = {\"screen\": \"opendt-overview\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://api:8000/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://api:8000/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// always Grafana's kiosk mode: no menus, no bars\nconst address = context.grafana.locationService;\nif (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
+                                    "getPayload": "const view = [\"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  address.partial(view);\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
                                 "sync": false,
                                 "elements": [
-                                    {
-                                        "uid": "screen",
-                                        "id": "screen",
-                                        "title": "Screen",
-                                        "type": "select",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "opendt-overview",
-                                                "label": "Detailed",
-                                                "value": "opendt-overview"
-                                            },
-                                            {
-                                                "id": "opendt-simple",
-                                                "label": "Simple",
-                                                "value": "opendt-simple"
-                                            },
-                                            {
-                                                "id": "opendt-topology",
-                                                "label": "Topology",
-                                                "value": "opendt-topology"
-                                            },
-                                            {
-                                                "id": "opendt-tutorial",
-                                                "label": "Tutorial",
-                                                "value": "opendt-tutorial"
-                                            }
-                                        ],
-                                        "value": "opendt-overview"
-                                    },
                                     {
                                         "uid": "window",
                                         "id": "window",
@@ -299,7 +834,7 @@
                                 },
                                 "resetAction": {
                                     "mode": "custom",
-                                    "code": "// Grafana's kiosk mode (no menus, no bars; Esc leaves it) in the browser's full screen, like a game\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial({ kiosk: on || null });\n",
+                                    "code": "// the browser's full screen, like a game; Grafana's kiosk mode (no menus, no bars) is on anyway\ndocument.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();\n",
                                     "confirm": false
                                 }
                             },
@@ -311,12 +846,12 @@
                     }
                 }
             },
-            "lever-hosts": {
+            "decisions": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
-                    "title": "",
-                    "description": "",
+                    "id": 11,
+                    "title": "Decisions",
+                    "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -340,15 +875,25 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/status",
+                                                "url": "http://api:8000/api/events?markers=on",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
-                                                "root_selector": "",
+                                                "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "hosts",
-                                                        "text": "hosts",
+                                                        "selector": "time",
+                                                        "text": "Time",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "text",
+                                                        "text": "Change",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "by",
+                                                        "text": "By",
                                                         "type": "string"
                                                     }
                                                 ]
@@ -357,357 +902,98 @@
                                     }
                                 }
                             ],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "marcusolsson-dynamictext-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-key=\"hosts\" data-name=\"Hosts\" data-value=\"{{hosts}}\"><small>Hosts</small><b>{{hosts}}</b><span><a class=\"edit\">✎ Change</a><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></span></div>",
-                                "defaultContent": "<div class=\"lever\"><small>Hosts</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "lever-zone": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 4,
-                    "title": "",
-                    "description": "",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
+                            "transformations": [
                                 {
-                                    "kind": "PanelQuery",
+                                    "kind": "organize",
                                     "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/status",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "",
-                                                "columns": [
-                                                    {
-                                                        "selector": "carbon_zone",
-                                                        "text": "carbon_zone",
-                                                        "type": "string"
-                                                    }
-                                                ]
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Time": 0,
+                                                "Change": 1,
+                                                "By": 2
                                             }
                                         }
                                     }
-                                }
-                            ],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "marcusolsson-dynamictext-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-key=\"carbon_zone\" data-name=\"CO₂ zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\"><small>CO₂ zone</small><b>{{carbon_zone}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
-                                "defaultContent": "<div class=\"lever\"><small>CO₂ zone</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "lever-scheduler": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 5,
-                    "title": "",
-                    "description": "",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
+                                },
                                 {
-                                    "kind": "PanelQuery",
+                                    "kind": "sortBy",
                                     "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/status",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "",
-                                                "columns": [
-                                                    {
-                                                        "selector": "scheduler",
-                                                        "text": "scheduler",
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
+                                        "id": "sortBy",
+                                        "options": {
+                                            "sort": [
+                                                {
+                                                    "field": "Time",
+                                                    "desc": true
+                                                }
+                                            ]
                                         }
                                     }
                                 }
                             ],
-                            "transformations": [],
                             "queryOptions": {}
                         }
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "marcusolsson-dynamictext-panel",
+                        "group": "table",
                         "version": "",
                         "spec": {
                             "options": {
-                                "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-key=\"scheduler\" data-name=\"Scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\"><small>Scheduler</small><b>{{scheduler}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
-                                "defaultContent": "<div class=\"lever\"><small>Scheduler</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
+                                "showHeader": false
                             },
                             "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "lever-calibration": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 6,
-                    "title": "",
-                    "description": "",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
-                                    {
-                                        "width": 11,
-                                        "uid": "calibration",
-                                        "id": "calibration",
-                                        "title": "Calibration",
-                                        "type": "radio",
-                                        "labelWidth": 13,
-                                        "options": [
-                                            {
-                                                "id": "True",
-                                                "label": "On",
-                                                "value": true
-                                            },
-                                            {
-                                                "id": "False",
-                                                "label": "Off",
-                                                "value": false
-                                            }
-                                        ],
-                                        "section": "left"
-                                    },
-                                    {
-                                        "width": 11,
-                                        "uid": "parallel_simulations",
-                                        "id": "parallel_simulations",
-                                        "title": "Parallel runs",
-                                        "type": "radio",
-                                        "labelWidth": 13,
-                                        "options": [
-                                            {
-                                                "id": "1",
-                                                "label": "1",
-                                                "value": 1
-                                            },
-                                            {
-                                                "id": "2",
-                                                "label": "2",
-                                                "value": 2
-                                            },
-                                            {
-                                                "id": "4",
-                                                "label": "4",
-                                                "value": 4
-                                            },
-                                            {
-                                                "id": "8",
-                                                "label": "8",
-                                                "value": 8
-                                            }
-                                        ],
-                                        "section": "left"
-                                    },
-                                    {
-                                        "uid": "calibration_min",
-                                        "id": "calibration_min",
-                                        "title": "r from",
-                                        "type": "slider",
-                                        "labelWidth": 13,
-                                        "min": 0.5,
-                                        "max": 20,
-                                        "step": 0.5,
-                                        "section": "left"
-                                    },
-                                    {
-                                        "uid": "calibration_max",
-                                        "id": "calibration_max",
-                                        "title": "r to",
-                                        "type": "slider",
-                                        "labelWidth": 13,
-                                        "min": 0.5,
-                                        "max": 20,
-                                        "step": 0.5,
-                                        "section": "right"
-                                    },
-                                    {
-                                        "uid": "calibration_points",
-                                        "id": "calibration_points",
-                                        "title": "Values of r",
-                                        "type": "slider",
-                                        "labelWidth": 13,
-                                        "min": 2,
-                                        "max": 20,
-                                        "step": 1,
-                                        "section": "right"
-                                    },
-                                    {
-                                        "width": 11,
-                                        "uid": "mape_window",
-                                        "id": "mape_window",
-                                        "title": "MAPE window",
-                                        "type": "radio",
-                                        "labelWidth": 13,
-                                        "options": [
-                                            {
-                                                "id": "60",
-                                                "label": "1 h",
-                                                "value": 60
-                                            },
-                                            {
-                                                "id": "360",
-                                                "label": "6 h",
-                                                "value": 360
-                                            },
-                                            {
-                                                "id": "1440",
-                                                "label": "24 h",
-                                                "value": 1440
-                                            }
-                                        ],
-                                        "section": "right"
+                                "defaults": {
+                                    "unit": "locale",
+                                    "custom": {
+                                        "minWidth": 70
                                     }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
-                                    },
-                                    "confirm": "Apply"
                                 },
-                                "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
-                                },
-                                "reset": {
-                                    "variant": "hidden"
-                                },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
-                                },
-                                "layout": {
-                                    "variant": "split",
-                                    "sections": [
-                                        {
-                                            "id": "left",
-                                            "name": ""
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Time"
                                         },
-                                        {
-                                            "id": "right",
-                                            "name": ""
-                                        }
-                                    ]
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "time:MM-DD HH:mm"
+                                            },
+                                            {
+                                                "id": "custom.width",
+                                                "value": 95
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Change"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.cellOptions",
+                                                "value": {
+                                                    "type": "auto",
+                                                    "wrapText": true
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "By"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.width",
+                                                "value": 80
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -716,7 +1002,7 @@
             "twin-time": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 12,
                     "title": "",
                     "description": "The simulated time the twin has reached, the end of its latest window of operation.",
                     "transparent": false,
@@ -814,7 +1100,7 @@
             "measured-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 13,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -923,7 +1209,7 @@
             "opendt-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 14,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1032,7 +1318,7 @@
             "gap-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 15,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1148,7 +1434,7 @@
             "mape-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 16,
                     "title": "",
                     "description": "The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes. Red from 10%, the community-accepted error rate.",
                     "transparent": false,
@@ -1258,7 +1544,7 @@
             "co2-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 17,
                     "title": "",
                     "description": "The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.",
                     "transparent": false,
@@ -1367,7 +1653,7 @@
             "hosts-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 18,
                     "title": "Hosts in use",
                     "description": "Hosts running at least one job, of all the hosts of the twin. An idle host draws power for nothing.",
                     "transparent": false,
@@ -1524,7 +1810,7 @@
             "jobs-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 19,
                     "title": "Jobs running",
                     "description": "Jobs running, of the jobs submitted and not done yet. Green when all run, orange when some wait.",
                     "transparent": false,
@@ -1672,803 +1958,6 @@
                                         ]
                                     }
                                 },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "decisions": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 15,
-                    "title": "Decisions",
-                    "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/events?markers=on",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "time",
-                                                        "text": "Time",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "text",
-                                                        "text": "Change",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "by",
-                                                        "text": "By",
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Time": 0,
-                                                "Change": 1,
-                                                "By": 2
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "kind": "sortBy",
-                                    "spec": {
-                                        "id": "sortBy",
-                                        "options": {
-                                            "sort": [
-                                                {
-                                                    "field": "Time",
-                                                    "desc": true
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "table",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "showHeader": false
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "unit": "locale",
-                                    "custom": {
-                                        "minWidth": 70
-                                    }
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Time"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "time:MM-DD HH:mm"
-                                            },
-                                            {
-                                                "id": "custom.width",
-                                                "value": 95
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Change"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.cellOptions",
-                                                "value": {
-                                                    "type": "auto",
-                                                    "wrapText": true
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "By"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.width",
-                                                "value": 80
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            "power": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 16,
-                    "title": "Power draw",
-                    "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/power?interval_seconds=60",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "actual_power",
-                                                        "text": "actual_power",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "simulated_power",
-                                                        "text": "simulated_power",
-                                                        "type": "number"
-                                                    }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "actual_power/1000",
-                                                        "text": "Ground truth [kW]",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "simulated_power/1000",
-                                                        "text": "OpenDT [kW]",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Ground truth [kW]": 0,
-                                                "OpenDT [kW]": 1,
-                                                "better": 2
-                                            },
-                                            "excludeByName": {
-                                                "actual_power": true,
-                                                "simulated_power": true
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "timeseries",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
-                                },
-                                "tooltip": {
-                                    "mode": "multi"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "min": 0,
-                                    "decimals": 1,
-                                    "custom": {
-                                        "axisLabel": "Power draw [kW]",
-                                        "lineWidth": 2,
-                                        "showPoints": "never"
-                                    }
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Ground truth [kW]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#999999"
-                                                }
-                                            },
-                                            {
-                                                "id": "custom.lineStyle",
-                                                "value": {
-                                                    "fill": "dash",
-                                                    "dash": [
-                                                        8,
-                                                        4
-                                                    ]
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "OpenDT [kW]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#009E73"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "timestamp"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "Simulated time [UTC]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            "co2": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 17,
-                    "title": "CO₂ emissions vs. carbon intensity",
-                    "description": "The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/co2_emission?interval_seconds=60",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "carbon_emission",
-                                                        "text": "carbon_emission",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "carbon_intensity",
-                                                        "text": "Carbon intensity [gCO₂/kWh]",
-                                                        "type": "number"
-                                                    }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "carbon_emission/1000",
-                                                        "text": "CO₂ emissions [kg/h]",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "CO₂ emissions [kg/h]": 0,
-                                                "Carbon intensity [gCO₂/kWh]": 1
-                                            },
-                                            "excludeByName": {
-                                                "carbon_emission": true
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "timeseries",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
-                                },
-                                "tooltip": {
-                                    "mode": "multi"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "min": 0,
-                                    "decimals": 1,
-                                    "custom": {
-                                        "axisLabel": "CO₂ emissions [kg/h]",
-                                        "lineWidth": 2,
-                                        "showPoints": "never"
-                                    }
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CO₂ emissions [kg/h]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Carbon intensity [gCO₂/kWh]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#338ec1"
-                                                }
-                                            },
-                                            {
-                                                "id": "custom.lineStyle",
-                                                "value": {
-                                                    "fill": "dash",
-                                                    "dash": [
-                                                        8,
-                                                        4
-                                                    ]
-                                                }
-                                            },
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "Carbon intensity [gCO₂/kWh]"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "timestamp"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "Simulated time [UTC]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            "hosts": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 18,
-                    "title": "Hosts available vs. in use",
-                    "description": "The hosts the twin has and the hosts in use, over time.",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "hosts_up",
-                                                        "text": "Available",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "hosts_in_use",
-                                                        "text": "In use",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Available": 0,
-                                                "In use": 1
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "timeseries",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
-                                },
-                                "tooltip": {
-                                    "mode": "multi"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "min": 0,
-                                    "decimals": 0,
-                                    "custom": {
-                                        "axisLabel": "Hosts",
-                                        "lineWidth": 2,
-                                        "showPoints": "never"
-                                    },
-                                    "unit": "locale"
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Available"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#338ec1"
-                                                }
-                                            },
-                                            {
-                                                "id": "custom.lineStyle",
-                                                "value": {
-                                                    "fill": "dash",
-                                                    "dash": [
-                                                        8,
-                                                        4
-                                                    ]
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "In use"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#009E73"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "timestamp"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "Simulated time [UTC]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            "start": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 19,
-                    "title": "",
-                    "description": "",
-                    "transparent": true,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/progress",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "step",
-                                                        "text": "step",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "steps",
-                                                        "text": "steps",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "doing",
-                                                        "text": "doing",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "tip",
-                                                        "text": "tip",
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "marcusolsson-dynamictext-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "renderMode": "everyRow",
-                                "content": "<div class=\"opendt-start\" data-step=\"{{step}}\" data-steps=\"{{steps}}\">\n  <div class=\"doing\">{{doing}}</div>\n  <div class=\"bar\"><div></div></div>\n  <div class=\"tip\">{{tip}}</div>\n</div>",
-                                "defaultContent": "<div class=\"opendt-start\" data-step=\"1\" data-steps=\"3\">\n  <div class=\"doing\">The services start</div>\n  <div class=\"bar\"><div></div></div>\n</div>",
-                                "styles": ".opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display: flex; flex-direction: column;\n  justify-content: center; gap: 18px; }\n.opendt-start .doing { color: #ccccdc; font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;\n  white-space: nowrap; }\n.opendt-start .bar { aspect-ratio: 24 / 1; background: #22252b; border-radius: 999px; overflow: hidden; }\n.opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;\n  background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }\n.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;\n  font-size: 17px; white-space: nowrap; }",
-                                "afterRender": "const progress = \"http://localhost:3001/api/progress\";\n// the bar creeps toward the end of its step, so it never stands still; once the twin's first window is done, the\n// page reloads to show the twin (the rows follow a variable read at load)\nconst state = (window.opendtStart ??= { step: 0, since: Date.now() });\nconst card = () => document.querySelector('.opendt-start');\nconst step = Number(card()?.dataset.step || 1);\nif (step !== state.step) Object.assign(state, { step, since: Date.now() });\nstate.bar ??= setInterval(() => {\n  const el = card();\n  if (!el) return;\n  const near = 1 - Math.exp(-(Date.now() - state.since) / 20000); // toward the end of the step, never at it\n  el.querySelector('.bar div').style.width = (100 * (state.step - 1 + 0.9 * near)) / Number(el.dataset.steps) + '%';\n}, 200);\nstate.ready ??= setInterval(async () => {\n  try {\n    const { data } = await (await fetch(progress)).json();\n    if (!data.length) location.reload();\n  } catch {} // the API is not up yet\n}, 3000);\n"
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
                                 "overrides": []
                             }
                         }
@@ -2811,10 +2300,95 @@
                     }
                 }
             },
-            "scheduling-now": {
+            "start": {
                 "kind": "Panel",
                 "spec": {
                     "id": 24,
+                    "title": "",
+                    "description": "",
+                    "transparent": true,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/progress",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "step",
+                                                        "text": "step",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "steps",
+                                                        "text": "steps",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "doing",
+                                                        "text": "doing",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "tip",
+                                                        "text": "tip",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"opendt-start\" data-step=\"{{step}}\" data-steps=\"{{steps}}\">\n  <div class=\"doing\">{{doing}}</div>\n  <div class=\"bar\"><div></div></div>\n  <div class=\"tip\">{{tip}}</div>\n</div>",
+                                "defaultContent": "<div class=\"opendt-start\" data-step=\"1\" data-steps=\"3\">\n  <div class=\"doing\">The services start</div>\n  <div class=\"bar\"><div></div></div>\n</div>",
+                                "styles": ".opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display: flex; flex-direction: column;\n  justify-content: center; gap: 18px; }\n.opendt-start .doing { color: #ccccdc; font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;\n  white-space: nowrap; }\n.opendt-start .bar { aspect-ratio: 24 / 1; background: #22252b; border-radius: 999px; overflow: hidden; }\n.opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;\n  background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }\n.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;\n  font-size: 17px; white-space: nowrap; }",
+                                "afterRender": "const progress = \"http://localhost:3001/api/progress\";\n// the bar creeps toward the end of its step, so it never stands still; once the twin's first window is done, the\n// page reloads to show the twin (the rows follow a variable read at load)\nconst state = (window.opendtStart ??= { step: 0, since: Date.now() });\nconst card = () => document.querySelector('.opendt-start');\nconst step = Number(card()?.dataset.step || 1);\nif (step !== state.step) Object.assign(state, { step, since: Date.now() });\nstate.bar ??= setInterval(() => {\n  const el = card();\n  if (!el) return;\n  const near = 1 - Math.exp(-(Date.now() - state.since) / 20000); // toward the end of the step, never at it\n  el.querySelector('.bar div').style.width = (100 * (state.step - 1 + 0.9 * near)) / Number(el.dataset.steps) + '%';\n}, 200);\nstate.ready ??= setInterval(async () => {\n  try {\n    const { data } = await (await fetch(progress)).json();\n    if (!data.length) location.reload();\n  } catch {} // the API is not up yet\n}, 3000);\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "scheduling-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 25,
                     "title": "P1  Performance now",
                     "description": "",
                     "transparent": false,
@@ -3028,7 +2602,7 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 26,
                     "title": "P2  Total runtime",
                     "description": "",
                     "transparent": false,
@@ -3209,7 +2783,7 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 27,
                     "title": "P3  Time in queue",
                     "description": "",
                     "transparent": false,
@@ -3390,7 +2964,7 @@
             "jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 28,
                     "title": "P4  Jobs",
                     "description": "",
                     "transparent": false,
@@ -3569,7 +3143,7 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 29,
                     "title": "P5  Jobs waiting or running",
                     "description": "",
                     "transparent": false,
@@ -3729,7 +3303,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 30,
                     "title": "U1  Utilization now",
                     "description": "",
                     "transparent": false,
@@ -3902,7 +3476,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 31,
                     "title": "U2  CPU utilization of the hosts",
                     "description": "",
                     "transparent": false,
@@ -4115,7 +3689,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 32,
                     "title": "U3  CPU demand vs. capacity",
                     "description": "",
                     "transparent": false,
@@ -4273,7 +3847,7 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 33,
                     "title": "U4  Hosts per CPU utilization",
                     "description": "",
                     "transparent": false,
@@ -4416,7 +3990,7 @@
             "idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 34,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "transparent": false,
@@ -4612,7 +4186,7 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 35,
                     "title": "S1  This $period",
                     "description": "",
                     "transparent": false,
@@ -4766,7 +4340,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 36,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "transparent": false,
@@ -4951,7 +4525,7 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 37,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "transparent": false,
@@ -5164,7 +4738,7 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 38,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "transparent": false,
@@ -5345,7 +4919,7 @@
             "idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 39,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "transparent": false,
@@ -5526,7 +5100,7 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 40,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "transparent": false,
@@ -5741,7 +5315,7 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 40,
+                    "id": 41,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "transparent": false,
@@ -5925,7 +5499,7 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 41,
+                    "id": 42,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "transparent": false,
@@ -6052,7 +5626,7 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 42,
+                    "id": 43,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "transparent": false,
@@ -6182,7 +5756,7 @@
             "energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 43,
+                    "id": 44,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "transparent": false,
@@ -6371,23 +5945,10 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 6,
-                                                "height": 2,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "brand"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 2,
-                                                "width": 6,
-                                                "height": 8,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "control"
                                                 }
                                             }
                                         },
@@ -6435,11 +5996,89 @@
                                             "spec": {
                                                 "x": 13,
                                                 "y": 0,
-                                                "width": 11,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "lever-calibration"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 15,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-parallel"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 17,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-r"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 20,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-values"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 22,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-mape"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 4,
+                                                "width": 6,
+                                                "height": 6,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "control"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 10,
+                                                "width": 6,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "decisions"
                                                 }
                                             }
                                         },
@@ -6552,50 +6191,50 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 7,
-                                                "width": 18,
-                                                "height": 3,
+                                                "width": 5,
+                                                "height": 7,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "decisions"
+                                                    "name": "pick-0"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 0,
-                                                "y": 10,
-                                                "width": 8,
-                                                "height": 10,
+                                                "x": 11,
+                                                "y": 7,
+                                                "width": 4,
+                                                "height": 7,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "power"
+                                                    "name": "pick-1"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 8,
-                                                "y": 10,
-                                                "width": 8,
-                                                "height": 10,
+                                                "x": 15,
+                                                "y": 7,
+                                                "width": 5,
+                                                "height": 7,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "co2"
+                                                    "name": "pick-2"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 16,
-                                                "y": 10,
-                                                "width": 8,
-                                                "height": 10,
+                                                "x": 20,
+                                                "y": 7,
+                                                "width": 4,
+                                                "height": 7,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "hosts"
+                                                    "name": "pick-3"
                                                 }
                                             }
                                         }
@@ -6615,72 +6254,6 @@
                                                 "variable": "twin",
                                                 "operator": "notEquals",
                                                 "value": ""
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "kind": "RowsLayoutRow",
-                        "spec": {
-                            "title": "Plots",
-                            "collapse": true,
-                            "layout": {
-                                "kind": "GridLayout",
-                                "spec": {
-                                    "items": [
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 0,
-                                                "width": 6,
-                                                "height": 7,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "pick-0"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 6,
-                                                "y": 0,
-                                                "width": 6,
-                                                "height": 7,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "pick-1"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 12,
-                                                "y": 0,
-                                                "width": 6,
-                                                "height": 7,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "pick-2"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 18,
-                                                "y": 0,
-                                                "width": 6,
-                                                "height": 7,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "pick-3"
-                                                }
                                             }
                                         }
                                     ]

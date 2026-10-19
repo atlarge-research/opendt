@@ -2,15 +2,18 @@
 
 import steps
 from form import (
-    BRAND,
     CALIBRATION,
-    CALIBRATOR,
     HOSTS,
+    MAPE_WINDOW,
+    PARALLEL,
+    R_FROM,
+    R_TO,
+    R_VALUES,
     SCHEDULER,
     ZONE,
     box,
+    brand,
     control,
-    lever,
     picker,
 )
 from layout import all_of, auto, custom, dashboard, grid, picked, query, row, when
@@ -22,7 +25,6 @@ from plots import (
     TILES,
     arrivals,
     catalog,
-    co2,
     decisions,
     groups,
     heatmap,
@@ -32,18 +34,17 @@ from plots import (
 )
 
 
-def screen(uid, title, placed, rows=(), panels=None, variables=(), bar=True):
-    """The levers' bar (unless the screen places them itself) and the placed panels under it, then the `rows` of
-    the other `panels`."""
-    if bar:
-        placed = TOP + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
-    top = row(
+def screen(uid, title, placed, rows=(), panels=None, variables=()):
+    """The logo, the screens, and the levers on top, the placed panels under them, then the `rows` of the other
+    `panels`."""
+    placed = top(uid) + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
+    first = row(
         "",
         grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]),
         shown=when("twin", "notEquals", ""),
     )
     panels = {name: panel for name, panel, *_ in placed} | STARTING | (panels or {})
-    return dashboard(uid, title, panels, [STARTUP, top, *rows], [TWIN, *variables])
+    return dashboard(uid, title, panels, [STARTUP, first, *rows], [TWIN, *variables])
 
 
 # the tiles, in one row: the twin's time, power, MAPE, CO₂, hosts, and jobs
@@ -61,61 +62,62 @@ TILE_PLACES = [
 STARTUP = row("", grid([("start", 0, 0, 24, 28)]), shown=when("twin", "equals", ""))
 # the twin's time, empty until its first window is complete (or while the API does not answer)
 TWIN = query("twin", target(STATUS, [("twin_time", "twin_time", "string")]) | {"root_selector": ""})
-# the levers' bar at the top of every screen: the hosts, the CO₂ zone, the speed, and the calibration
+# the top of every screen: the logo and the screens, then the levers, each in its box
 BAR = 4
 LEVERS = {
-    "lever-hosts": box(HOSTS, ("Infrastructure →", "/d/opendt-topology?kiosk")),
+    "lever-hosts": box(HOSTS, link=("Infrastructure →", "/d/opendt-topology?kiosk")),
     "lever-zone": box(ZONE),
     "lever-scheduler": box(SCHEDULER),
-    "lever-calibration": lever([CALIBRATION, *CALIBRATOR], split=True),
+    "lever-calibration": box(CALIBRATION),
+    "lever-parallel": box(PARALLEL),
+    "lever-r": box(R_FROM, R_TO, title="Range of r"),
+    "lever-values": box(R_VALUES),
+    "lever-mape": box(MAPE_WINDOW),
 }
-TOP = [
-    (name, LEVERS[name], x, 0, w, BAR)
-    for name, x, w in [
-        ("lever-hosts", 0, 4),
-        ("lever-zone", 4, 3),
-        ("lever-scheduler", 7, 3),
-        ("lever-calibration", 10, 14),
-    ]
+# their places, right of the logo
+LEVER_PLACES = [
+    ("lever-hosts", 6, 3),
+    ("lever-zone", 9, 2),
+    ("lever-scheduler", 11, 2),
+    ("lever-calibration", 13, 2),
+    ("lever-parallel", 15, 2),
+    ("lever-r", 17, 3),
+    ("lever-values", 20, 2),
+    ("lever-mape", 22, 2),
 ]
+
+
+def top(uid):
+    levers = [(name, LEVERS[name], x, 0, w, BAR) for name, x, w in LEVER_PLACES]
+    return [("brand", brand(uid), 0, 0, 6, BAR), *levers]
+
+
 PICKERS = {f"pick-{i}": picker(title, plots) for i, (title, plots) in enumerate(ROWS.items())}
 
 detailed = screen(
     "opendt-overview",
     "OpenDT, detailed",
     [
-        # the top third: what the screen shows, the levers, the twin now, and the decisions; then the plots
-        ("brand", BRAND, 0, 0, 6, 2),
-        ("control", control("opendt-overview"), 0, 2, 6, 8),
+        # the top third: what the screen shows and the decisions; the twin now and the plots shown; then the plots
+        ("control", control(), 0, 0, 6, 6),
+        ("decisions", decisions, 0, 6, 6, 4),  # what the markers on the graphs stand for
+        *[(name, TILES[name], x, 0, w, 3) for name, x, w in TILE_PLACES],
         *[
-            (name, LEVERS[name], x, 0, w, 4)
+            (name, PICKERS[name], x, 3, w, 7)
             for name, x, w in [
-                ("lever-hosts", 6, 3),
-                ("lever-zone", 9, 2),
-                ("lever-scheduler", 11, 2),
-                ("lever-calibration", 13, 11),
+                ("pick-0", 6, 5),
+                ("pick-1", 11, 4),
+                ("pick-2", 15, 5),
+                ("pick-3", 20, 4),
             ]
         ],
-        *[(name, TILES[name], x, 4, w, 3) for name, x, w in TILE_PLACES],
-        ("decisions", decisions, 6, 7, 18, 3),  # what the markers on the graphs stand for
-        ("power", power, 0, 10, 8, 10),
-        ("co2", co2, 8, 10, 8, 10),
-        ("hosts", hosts, 16, 10, 8, 10),
     ],
-    bar=False,
     rows=[
-        row(
-            "Plots", grid([(name, 6 * i, 0, 6, 7) for i, name in enumerate(PICKERS)]), collapse=True
-        ),
         # a row shows while one of its plots is not hidden
-        *[
-            row(
-                title, auto([(key, picked(key)) for key in plots], len(plots)), shown=picked(*plots)
-            )
-            for title, plots in ROWS.items()
-        ],
+        row(title, auto([(key, picked(key)) for key in plots], len(plots)), shown=picked(*plots))
+        for title, plots in ROWS.items()
     ],
-    panels=PICKERS | {key: plot for plots in ROWS.values() for key, plot in plots.items()},
+    panels={key: plot for plots in ROWS.values() for key, plot in plots.items()},
     variables=[
         custom("period", "Interval", PERIODS, current="day"),
         # the hidden plots; "none", so the list is never empty
@@ -134,7 +136,7 @@ simple = screen(
     "opendt-simple",
     "OpenDT, simple",
     [
-        ("control", control("opendt-simple", period=False), 0, 0, 6, 6),
+        ("control", control(period=False), 0, 0, 6, 6),
         ("twin-state", twin_state, 0, 6, 6, 14),
         ("physical", TILES["measured-now"], 6, 0, 9, 4),
         ("power-simple", power, 6, 4, 9, 11),
@@ -149,7 +151,7 @@ topology = screen(
     "opendt-topology",
     "OpenDT, topology",
     [
-        ("control", control("opendt-topology", period=False), 0, 0, 6, 6),
+        ("control", control(period=False), 0, 0, 6, 6),
         ("groups", groups, 6, 0, 18, 6),
         ("catalog", catalog, 6, 6, 18, 9),
         ("hosts-topology", hosts, 6, 15, 18, 10),
@@ -198,7 +200,7 @@ def slide(value, step, shown):
         "",
         grid(
             [
-                *((name, x, y, w, h) for name, _, x, y, w, h in TOP),
+                *((name, x, y, w, h) for name, _, x, y, w, h in top("opendt-tutorial")),
                 *under,
                 (f"step-{value}", 6, BAR, 18, card),
                 *plots,
@@ -211,8 +213,8 @@ def slide(value, step, shown):
 tutorial = dashboard(
     "opendt-tutorial",
     "OpenDT, tutorial",
-    {"control": control("opendt-tutorial")}
-    | {name: panel for name, panel, *_ in TOP}
+    {"control": control()}
+    | {name: panel for name, panel, *_ in top("opendt-tutorial")}
     | BOXES
     | {"decisions": decisions}
     | {f"step-{value}": card for value, _, card, _ in steps.SLIDES}

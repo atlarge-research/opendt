@@ -1,4 +1,2 @@
-// Grafana's kiosk mode (no menus, no bars; Esc leaves it) in the browser's full screen, like a game
-const on = !document.fullscreenElement;
-on ? document.documentElement.requestFullscreen() : document.exitFullscreen();
-context.grafana.locationService.partial({ kiosk: on || null });
+// the browser's full screen, like a game; Grafana's kiosk mode (no menus, no bars) is on anyway
+document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
