@@ -82,7 +82,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": ""
+                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -95,13 +95,13 @@
                                 "sync": false,
                                 "elements": [
                                     {
+                                        "width": 11,
                                         "uid": "hosts",
                                         "id": "hosts",
                                         "title": "Hosts",
                                         "type": "number",
                                         "labelWidth": 9,
-                                        "min": 1,
-                                        "width": 11
+                                        "min": 1
                                     },
                                     {
                                         "uid": "infrastructure",
@@ -145,7 +145,7 @@
                     }
                 }
             },
-            "lever-zone": {
+            "lever-twin": {
                 "kind": "Panel",
                 "spec": {
                     "id": 2,
@@ -169,7 +169,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": ""
+                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -182,6 +182,7 @@
                                 "sync": false,
                                 "elements": [
                                     {
+                                        "width": 11,
                                         "uid": "carbon_zone",
                                         "id": "carbon_zone",
                                         "title": "CO₂ zone",
@@ -208,77 +209,10 @@
                                                 "label": "RO",
                                                 "value": "RO"
                                             }
-                                        ],
-                                        "width": 11
-                                    }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
+                                        ]
                                     },
-                                    "confirm": "Apply"
-                                },
-                                "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
-                                },
-                                "reset": {
-                                    "variant": "hidden"
-                                },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "lever-speed": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 3,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": ""
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
                                     {
+                                        "width": 14,
                                         "uid": "speed_factor",
                                         "id": "speed_factor",
                                         "title": "Speed",
@@ -310,8 +244,7 @@
                                                 "label": "Maximum",
                                                 "value": -1
                                             }
-                                        ],
-                                        "width": 11
+                                        ]
                                     }
                                 ],
                                 "confirmModal": {
@@ -347,7 +280,7 @@
             "lever-calibration": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
+                    "id": 3,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -368,7 +301,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": ""
+                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -381,6 +314,7 @@
                                 "sync": false,
                                 "elements": [
                                     {
+                                        "width": 11,
                                         "uid": "calibration",
                                         "id": "calibration",
                                         "title": "Calibration",
@@ -398,10 +332,10 @@
                                                 "value": false
                                             }
                                         ],
-                                        "width": 11,
                                         "section": "left"
                                     },
                                     {
+                                        "width": 11,
                                         "uid": "parallel_simulations",
                                         "id": "parallel_simulations",
                                         "title": "Parallel runs",
@@ -429,7 +363,6 @@
                                                 "value": 8
                                             }
                                         ],
-                                        "width": 11,
                                         "section": "left"
                                     },
                                     {
@@ -466,6 +399,7 @@
                                         "section": "right"
                                     },
                                     {
+                                        "width": 11,
                                         "uid": "mape_window",
                                         "id": "mape_window",
                                         "title": "MAPE window",
@@ -488,7 +422,6 @@
                                                 "value": 1440
                                             }
                                         ],
-                                        "width": 11,
                                         "section": "right"
                                     }
                                 ],
@@ -538,7 +471,7 @@
             "control": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
+                    "id": 4,
                     "title": "OpenDT",
                     "description": "",
                     "links": [],
@@ -559,7 +492,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const start = {\"screen\": \"opendt-simple\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://localhost:3001/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n"
+                                    "code": "const start = {\"screen\": \"opendt-simple\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://localhost:3001/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -682,7 +615,7 @@
             "twin-state": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 5,
                     "title": "Twin state",
                     "description": "",
                     "links": [],
@@ -808,7 +741,7 @@
             "physical": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 6,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -916,9 +849,9 @@
             "power-simple": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 7,
                     "title": "Power draw",
-                    "description": "",
+                    "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1141,7 +1074,7 @@
             "arrivals": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 8,
                     "title": "Jobs arriving per hour",
                     "description": "",
                     "links": [],
@@ -1270,7 +1203,7 @@
             "twin": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 9,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1378,7 +1311,7 @@
             "heatmap": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 10,
                     "title": "Hosts per CPU utilization",
                     "description": "",
                     "links": [],
@@ -1520,9 +1453,9 @@
             "decisions": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 11,
                     "title": "Decisions",
-                    "description": "",
+                    "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1672,7 +1605,7 @@
             "start-progress": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 12,
                     "title": "Starting the twin",
                     "description": "",
                     "links": [],
@@ -1773,7 +1706,7 @@
             "start-doing": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 13,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -1869,7 +1802,7 @@
             "start-tip": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 15,
+                    "id": 14,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -2055,7 +1988,24 @@
                                     ]
                                 }
                             },
-                            "hideHeader": true
+                            "hideHeader": true,
+                            "conditionalRendering": {
+                                "kind": "ConditionalRenderingGroup",
+                                "spec": {
+                                    "visibility": "show",
+                                    "condition": "or",
+                                    "items": [
+                                        {
+                                            "kind": "ConditionalRenderingVariable",
+                                            "spec": {
+                                                "variable": "starting",
+                                                "operator": "notEquals",
+                                                "value": ""
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         }
                     },
                     {
@@ -2073,7 +2023,7 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 4,
-                                                "height": 5,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "lever-hosts"
@@ -2085,34 +2035,21 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 5,
-                                                "height": 5,
+                                                "width": 6,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-zone"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 10,
                                                 "y": 0,
-                                                "width": 3,
-                                                "height": 5,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "lever-speed"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 12,
-                                                "y": 0,
-                                                "width": 12,
-                                                "height": 5,
+                                                "width": 14,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "lever-calibration"
@@ -2123,7 +2060,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 0,
-                                                "y": 5,
+                                                "y": 4,
                                                 "width": 6,
                                                 "height": 6,
                                                 "element": {
@@ -2136,7 +2073,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 0,
-                                                "y": 11,
+                                                "y": 10,
                                                 "width": 6,
                                                 "height": 14,
                                                 "element": {
@@ -2149,7 +2086,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 6,
-                                                "y": 5,
+                                                "y": 4,
                                                 "width": 9,
                                                 "height": 4,
                                                 "element": {
@@ -2162,7 +2099,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 6,
-                                                "y": 9,
+                                                "y": 8,
                                                 "width": 9,
                                                 "height": 11,
                                                 "element": {
@@ -2175,7 +2112,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 6,
-                                                "y": 20,
+                                                "y": 19,
                                                 "width": 9,
                                                 "height": 11,
                                                 "element": {
@@ -2188,7 +2125,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 15,
-                                                "y": 5,
+                                                "y": 4,
                                                 "width": 9,
                                                 "height": 4,
                                                 "element": {
@@ -2201,7 +2138,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 15,
-                                                "y": 9,
+                                                "y": 8,
                                                 "width": 9,
                                                 "height": 11,
                                                 "element": {
@@ -2214,7 +2151,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 15,
-                                                "y": 20,
+                                                "y": 19,
                                                 "width": 9,
                                                 "height": 11,
                                                 "element": {
@@ -2294,6 +2231,55 @@
                     "allowCustomValue": false,
                     "hide": "hideVariable",
                     "skipUrlSync": false
+                }
+            },
+            {
+                "kind": "QueryVariable",
+                "spec": {
+                    "name": "starting",
+                    "current": {
+                        "text": "",
+                        "value": ""
+                    },
+                    "query": {
+                        "kind": "DataQuery",
+                        "group": "yesoreyeram-infinity-datasource",
+                        "version": "v0",
+                        "datasource": {
+                            "name": "df5tfgbpfeakgc"
+                        },
+                        "spec": {
+                            "queryType": "infinity",
+                            "infinityQuery": {
+                                "refId": "A",
+                                "type": "json",
+                                "source": "url",
+                                "parser": "backend",
+                                "format": "table",
+                                "url": "http://api:8000/api/progress",
+                                "url_options": {
+                                    "method": "GET"
+                                },
+                                "root_selector": "data",
+                                "columns": [
+                                    {
+                                        "selector": "step",
+                                        "text": "step",
+                                        "type": "number"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "refresh": "onTimeRangeChanged",
+                    "regex": "",
+                    "sort": "disabled",
+                    "options": [],
+                    "multi": false,
+                    "includeAll": false,
+                    "allowCustomValue": false,
+                    "hide": "hideVariable",
+                    "skipUrlSync": true
                 }
             }
         ],

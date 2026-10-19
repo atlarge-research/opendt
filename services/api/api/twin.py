@@ -80,12 +80,14 @@ def settings(window: Path) -> dict:
         "servers": " + ".join(summary(host) for host in hosts),
         "hosts": hosts[0]["count"],  # of the first group, the control panel's Hosts
         "calibration_factor": hosts[0]["cpuPowerModel"]["calibrationFactor"],
-        # another trace (e.g., of an older run) by its file name
-        "carbon_zone": next(
-            (zone for zone, trace in CARBON_TRACES.items() if trace == path), Path(path).stem
-        ),
+        "carbon_zone": zone(path),
         "scheduler": policies[0]["policyName"] if policies else "Mem",
     }
+
+
+def zone(path: str) -> str:
+    """The CO2 zone of a carbon trace; another trace (e.g., of an older run) by its file name."""
+    return next((zone for zone, trace in CARBON_TRACES.items() if trace == path), Path(path).stem)
 
 
 def output(window: Path, name: str) -> Path:

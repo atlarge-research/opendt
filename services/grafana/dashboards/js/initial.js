@@ -5,6 +5,6 @@ context.panel.setInitial({ ...context.panel.initial, ...view });
 // a screen that starts on Day or 6 h shows the week until the twin's time is known
 const address = context.grafana.locationService;
 const { from = week.from, to = week.to } = address.getSearchObject();
-if (view.window !== 'week' && from === week.from && to === week.to) {
+if (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {
   address.partial(range(view.window, context.panel.initial.twin_time), true);
 }

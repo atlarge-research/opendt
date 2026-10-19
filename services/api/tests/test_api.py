@@ -1,6 +1,7 @@
 """The dashboard endpoints: the twin's status, the cluster over time, and the control panel."""
 
 import json
+from pathlib import Path
 
 import pytest
 from api import hosts, levers, main, twin
@@ -9,6 +10,8 @@ from fastapi import HTTPException
 from odt_common import AppConfig
 from odt_common.config import DynamicConfigEvent
 from odt_common.models import Topology
+
+REPO = Path(__file__).resolve().parents[3]
 
 
 @pytest.fixture
@@ -220,3 +223,13 @@ def test_no_queue_time_without_starts(api, run_dir):
 
 def test_swagger_example_r():
     assert main.DEFAULT_TOPOLOGY.clusters[0].hosts[0].cpuPowerModel.calibrationFactor == 4.0
+
+
+def test_status_at_start(api, tmp_path, monkeypatch):
+    # before the first window: what is configured, so the control panel has values; then it asks again
+    monkeypatch.setenv("DATA_DIR", str(tmp_path / "no_run_yet"))
+    monkeypatch.setenv(
+        "WORKLOAD_DIR", str(REPO / "workload" / "SURF")
+    )  # its topology: the twin's at start
+    status = {"speed_factor": -1, "calibration": False, "hosts": 277, "carbon_zone": "NL"}
+    assert main.get_status() == status

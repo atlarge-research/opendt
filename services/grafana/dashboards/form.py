@@ -52,7 +52,7 @@ SCHEDULER = select(
     [(s, s) for s in SCHEDULERS],
     tooltip="OpenDC's placement policy; Mem is OpenDC's default",
 )
-SPEED = select("speed_factor", "Speed", SPEEDS)
+SPEED = select("speed_factor", "Speed", SPEEDS, width=14)  # wide enough for Maximum
 CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
 # the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
 CALIBRATOR = [
@@ -113,7 +113,7 @@ def fit(element, width):
         return fitted | {"labelWidth": 1, "width": 20}
     if element["type"] == "slider":
         return fitted | {"labelWidth": width}
-    return fitted | {"labelWidth": width, "width": 11}
+    return {"width": 11} | fitted | {"labelWidth": width}
 
 
 def lever(elements, split=False):
@@ -129,7 +129,7 @@ def lever(elements, split=False):
         layout = {"layout": {"variant": "split", "sections": sections}}
     panel = form(
         tile,
-        "",
+        script("retry.js"),
         script("changed.js", "range.js", "applied.js", week=WEEK),
         submit={"text": "Apply", "icon": "pen"},
         reset={"variant": "hidden"},
@@ -164,7 +164,9 @@ def control(screen, own_fields=(), period=True):
         ]
     panel = form(
         [*view, *own_fields],
-        script("range.js", "initial.js", "follow.js", start=start, week=WEEK, status=STATUS),
+        script(
+            "range.js", "initial.js", "follow.js", "retry.js", start=start, week=WEEK, status=STATUS
+        ),
         script("changed.js", "range.js", "applied.js", week=WEEK),
         submit={"text": "Apply"},
         reset={"text": "Full screen", "icon": "monitor", "variant": "secondary"},

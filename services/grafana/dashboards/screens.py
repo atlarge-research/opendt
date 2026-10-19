@@ -13,10 +13,11 @@ from form import (
     lever,
     picker,
 )
-from layout import auto, custom, dashboard, grid, picked, row, when, with_data
-from panels import PERIODS
+from layout import auto, custom, dashboard, grid, picked, query, row, when, with_data
+from panels import PERIODS, target
 from plots import (
     BOXES,
+    PROGRESS,
     ROWS,
     STARTING,
     TILES,
@@ -37,27 +38,32 @@ def screen(uid, title, placed, rows=(), panels=None, variables=()):
     placed = TOP + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
     top = row("", grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]))
     panels = {name: panel for name, panel, *_ in placed} | STARTING | (panels or {})
-    return dashboard(uid, title, panels, [STARTUP, top, *rows], variables)
+    return dashboard(uid, title, panels, [STARTUP, top, *rows], [STARTED, *variables])
 
 
 # the tiles, in one row: the twin's time, power, MAPE, CO₂, hosts, and jobs
 TILE_PLACES = [
-    ("twin-time", 6, 0, 4),
-    ("power-now", 10, 0, 5),
-    ("mape-now", 15, 0, 2),
-    ("co2-now", 17, 0, 2),
-    ("hosts-now", 19, 0, 2),
+    ("twin-time", 6, 0, 3),
+    ("power-now", 9, 0, 5),
+    ("mape-now", 14, 0, 2),
+    ("co2-now", 16, 0, 2),
+    ("hosts-now", 18, 0, 3),
     ("jobs-now", 21, 0, 3),
 ]
 # while the twin starts, a row above all: gone once its first window is complete
-STARTUP = row("", auto([(name, with_data()) for name in STARTING], 3, height="short"))
+STARTUP = row(
+    "",
+    auto([(name, with_data()) for name in STARTING], 3, height="short"),
+    shown=when("starting", "notEquals", ""),
+)
+# the step of the start, empty once the twin's first window is complete
+STARTED = query("starting", target(PROGRESS, [("step", "step")]))
 # the levers' bar at the top of every screen: the hosts, the CO₂ zone, the speed, and the calibration
-BAR = 5
+BAR = 4
 TOP = [
     ("lever-hosts", lever([HOSTS, INFRASTRUCTURE]), 0, 0, 4, BAR),
-    ("lever-zone", lever([ZONE]), 4, 0, 5, BAR),
-    ("lever-speed", lever([SPEED]), 9, 0, 3, BAR),
-    ("lever-calibration", lever([CALIBRATION, *CALIBRATOR], split=True), 12, 0, 12, BAR),
+    ("lever-twin", lever([ZONE, SPEED]), 4, 0, 6, BAR),
+    ("lever-calibration", lever([CALIBRATION, *CALIBRATOR], split=True), 10, 0, 14, BAR),
 ]
 PICKERS = {f"pick-{i}": picker(title, plots) for i, (title, plots) in enumerate(ROWS.items())}
 
@@ -66,11 +72,11 @@ detailed = screen(
     "OpenDT, detailed",
     [
         ("control", control("opendt-overview", [SCHEDULER]), 0, 0, 6, 7),
-        ("decisions", decisions, 0, 7, 6, 11),  # what the markers on the graphs stand for
+        ("decisions", decisions, 0, 7, 6, 6),  # what the markers on the graphs stand for
         *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
-        ("power", power, 6, 3, 6, 15),
-        ("co2", co2, 12, 3, 6, 15),
-        ("hosts", hosts, 18, 3, 6, 15),
+        ("power", power, 6, 3, 6, 10),
+        ("co2", co2, 12, 3, 6, 10),
+        ("hosts", hosts, 18, 3, 6, 10),
     ],
     rows=[
         row(
@@ -134,6 +140,7 @@ LEFT = [
     ("opendt-box", 3, 8, 3, 2),
     ("mape-box", 0, 10, 3, 2),
     ("co2-box", 3, 10, 3, 2),
+    ("decisions", 0, 12, 6, 9),  # what the markers on the step's graphs stand for
 ]
 # the step's height, then its plots, all on a 1440x900 screen in full screen; with its solution, the
 # step is taller and the screen scrolls
@@ -182,11 +189,13 @@ tutorial = dashboard(
     {"control": control("opendt-tutorial")}
     | {name: panel for name, panel, *_ in TOP}
     | BOXES
+    | {"decisions": decisions}
     | {f"step-{value}": card for value, _, card, _ in steps.SLIDES}
     | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]}
     | STARTING,
     [STARTUP, *(slide(value, step, shown) for value, step, _, shown in steps.SLIDES)],
     [
+        STARTED,
         custom("period", "Interval", PERIODS, current="day"),
         custom("step", "Step", [value for value, *_ in steps.SLIDES], current="1"),
     ],

@@ -1,5 +1,6 @@
 """OpenDT API - FastAPI Application for datacenter simulation data."""
 
+import json
 import logging
 import os
 import time
@@ -212,7 +213,14 @@ def get_status():
             "calibration_points": calibrator.linspace_points,
             "mape_window": calibrator.mape_window_minutes,
         }
-    status = twin.status(twin_run())
+    if not twin.windows(run_dir()):  # starting: what is configured, and the workload's topology
+        cluster = json.loads(workload().topology_file.read_text())["clusters"][0]
+        start = {
+            "hosts": cluster["hosts"][0]["count"],
+            "carbon_zone": twin.zone(cluster["powerSource"]["carbonTracePath"]),
+        }
+        return {**configured, **start, **app.state.settings}
+    status = twin.status(run_dir())
     return {
         **configured,
         **app.state.settings,

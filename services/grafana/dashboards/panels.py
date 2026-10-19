@@ -16,6 +16,7 @@ WEEK = {"from": "2022-10-06T22:00:00.000Z", "to": "2022-10-13T22:00:00.000Z"}  #
 # (OpenDT, work done), blue neutral, yellow a warning, orange bad-ish, red bad
 GREY, GREEN, BLUE = "#999999", "#009E73", "#338ec1"
 YELLOW, ORANGE, RED = "#F0E442", "#E69F00", "#D55E00"
+COLORS = {"red": RED, "orange": ORANGE, "yellow": YELLOW, "green": GREEN, "blue": BLUE}
 MARKERS = "rgba(255, 255, 255, 0.35)"  # light, so the data stays in front
 BOX = "#22252b"  # Grafana's dark secondary background: a box in a panel
 # Grafana's dark theme: text, text of less weight, lines, and the text of most weight
@@ -339,3 +340,25 @@ def gauge(title, url, part, whole):
         },
         "options": {"orientation": "horizontal", "displayMode": "basic", "showUnfilled": True},
     }
+
+
+def ratio(title, url, part, whole, colors):
+    """A share as a percentage with the counts over it (e.g., 90/277); `part` and `whole` are the API's columns,
+    or sums of them; its colour from each share of `colors` on ({share: name})."""
+    names = sorted(set(re.findall(r"[a-z_]+", f"{part} {whole}")))
+    shares = [(f"({part}) / ({whole})", "share"), (f'{part} + "/" + ({whole})', "counts", "string")]
+    panel = stat(title, url, [(n, n) for n in names], computed=shares, hide=names)
+    mappings = [  # the counts name the share
+        {"fieldName": "counts", "handlerKey": "field.name"},
+        {"fieldName": "share", "handlerKey": "field.value"},
+    ]
+    panel["transformations"].append({"id": "rowsToFields", "options": {"mappings": mappings}})
+    steps = [{"value": share or None, "color": COLORS[c]} for share, c in sorted(colors.items())]
+    panel["fieldConfig"]["defaults"] |= {
+        "unit": "percentunit",
+        "decimals": 0,
+        "color": {"mode": "thresholds"},
+        "thresholds": {"mode": "absolute", "steps": steps},
+    }
+    panel["options"]["colorMode"] = "value"
+    return panel

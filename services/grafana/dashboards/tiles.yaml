@@ -1,0 +1,32 @@
+# The tiles that show a share, and the (i) of each panel. Edit, then run python3 services/grafana/dashboards/build.py.
+
+# A share of the twin, from /api/cluster: the part of the whole (columns, or sums of them), as a percentage with the
+# counts over it; its colour from each share on (red, orange, yellow, green, or blue).
+ratios:
+  hosts-now:
+    title: Hosts in use
+    part: hosts_in_use
+    whole: hosts_up
+    colors: {0: red, 0.2: orange, 0.6: green}
+    info: Hosts running at least one job, of all the hosts of the twin. An idle host draws power for nothing.
+  jobs-now:
+    title: Jobs running
+    part: tasks_active
+    whole: tasks_active + tasks_pending
+    colors: {0: red, 0.2: orange, 0.99: green}
+    info: Jobs running, of the jobs submitted and not done yet. Green when all run, orange when some wait.
+
+# The (i) of a panel, shown on hover, by the panel's name in plots.py.
+info:
+  twin-time: The simulated time the twin has reached, the end of its latest window of operation.
+  power-now: The measured power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample.
+  mape-now: >-
+    The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes.
+    Red from 10%, the community-accepted error rate.
+  co2-now: The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.
+  power: The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.
+  co2: The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.
+  hosts: The hosts the twin has and the hosts in use, over time.
+  decisions: >-
+    Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator.
+    The dashed markers on the graphs show the same changes.

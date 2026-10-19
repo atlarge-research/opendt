@@ -1,5 +1,8 @@
 """What each plot shows, one definition per plot, from the API's endpoints."""
 
+from pathlib import Path
+
+import yaml
 from panels import (
     ACCURACY,
     API,
@@ -20,6 +23,7 @@ from panels import (
     gauge,
     organize,
     override,
+    ratio,
     stat,
     table,
     target,
@@ -31,6 +35,8 @@ from panels import (
 
 SCHEDULING, TOTALS = f"{API}/api/scheduling", f"{API}/api/totals?period=$period"
 EVENTS = f"{API}/api/events?markers=on"
+# what tiles.yaml sets: the tiles of a share, and the (i) of each panel
+CONFIG = yaml.safe_load((Path(__file__).parent / "tiles.yaml").read_text())
 NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
 
 # the top of the detailed screen
@@ -54,19 +60,6 @@ TILES = {
     # of the power draw, the last 5 minutes; 10% is the community-accepted error rate (question 1.1)
     "mape-now": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1, limit=10),
     "co2-now": tile("CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1),
-    # of the hosts available, those in use; of the jobs not done, those running
-    "hosts-now": tiles(
-        NOW,
-        [("hosts_in_use", "used"), ("hosts_up", "up")],
-        [('used + "/" + up', "Hosts in use")],
-        ["used", "up"],
-    ),
-    "jobs-now": tiles(
-        NOW,
-        [("tasks_active", "running"), ("tasks_pending", "waiting")],
-        [('running + "/" + (running + waiting)', "Jobs running")],
-        ["running", "waiting"],
-    ),
     # the physical and digital twin apart, in the colours of their lines (Simple, Tutorial)
     "measured-now": tile(
         "Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1, color=GREY
@@ -486,3 +479,13 @@ STARTING = {
     "start-doing": tile("Now", PROGRESS, "doing", "string"),
     "start-tip": tile("From the OpenDT paper", PROGRESS, "tip", "string"),
 }
+
+TILES |= {
+    name: ratio(tile["title"], NOW, tile["part"], tile["whole"], tile["colors"])
+    for name, tile in CONFIG["ratios"].items()
+}
+# the (i) of each panel, by its name
+PANELS = {"power": power, "co2": co2, "hosts": hosts, "decisions": decisions, **TILES}
+INFO = CONFIG["info"] | {name: tile["info"] for name, tile in CONFIG["ratios"].items()}
+for name, text in INFO.items():
+    PANELS[name]["description"] = text

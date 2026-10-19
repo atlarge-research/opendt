@@ -56,8 +56,7 @@ def test_one_step_at_a_time():
     [step] = [v["spec"] for v in spec["variables"] if v["spec"]["name"] == "step"]
     rows = {
         r["spec"]["conditionalRendering"]["spec"]["items"][0]["spec"]["value"]: r["spec"]
-        for r in spec["layout"]["spec"]["rows"]
-        if "conditionalRendering" in r["spec"]
+        for r in spec["layout"]["spec"]["rows"][1:]  # after the start's
     }
     assert step["query"].split(",") == list(rows)  # a row for each value of the step
     for n, (_, s) in enumerate(steps.ORDER, 1):

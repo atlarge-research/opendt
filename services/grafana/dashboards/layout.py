@@ -129,6 +129,28 @@ def row(title, layout, collapse=False, shown=None):
     return {"kind": "RowsLayoutRow", "spec": spec}
 
 
+def query(name, target):
+    """A hidden variable of a query's first column, asked again at every refresh of the screen."""
+    return {
+        "kind": "QueryVariable",
+        "spec": {
+            "name": name,
+            "current": {"text": "", "value": ""},
+            # Infinity's own form for a variable's query
+            "query": data_query({"queryType": "infinity", "infinityQuery": target}),
+            "refresh": "onTimeRangeChanged",
+            "regex": "",
+            "sort": "disabled",
+            "options": [],
+            "multi": False,
+            "includeAll": False,
+            "allowCustomValue": False,
+            "hide": "hideVariable",
+            "skipUrlSync": True,
+        },
+    }
+
+
 def custom(name, label, values, multi=False, current=None):
     """A variable the control panel sets; hidden from Grafana's own bar."""
     current = current or (values if multi else values[0])

@@ -82,7 +82,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": ""
+                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -95,13 +95,13 @@
                                 "sync": false,
                                 "elements": [
                                     {
+                                        "width": 11,
                                         "uid": "hosts",
                                         "id": "hosts",
                                         "title": "Hosts",
                                         "type": "number",
                                         "labelWidth": 9,
-                                        "min": 1,
-                                        "width": 11
+                                        "min": 1
                                     },
                                     {
                                         "uid": "infrastructure",
@@ -145,7 +145,7 @@
                     }
                 }
             },
-            "lever-zone": {
+            "lever-twin": {
                 "kind": "Panel",
                 "spec": {
                     "id": 2,
@@ -169,7 +169,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": ""
+                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -182,6 +182,7 @@
                                 "sync": false,
                                 "elements": [
                                     {
+                                        "width": 11,
                                         "uid": "carbon_zone",
                                         "id": "carbon_zone",
                                         "title": "CO₂ zone",
@@ -208,77 +209,10 @@
                                                 "label": "RO",
                                                 "value": "RO"
                                             }
-                                        ],
-                                        "width": 11
-                                    }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
+                                        ]
                                     },
-                                    "confirm": "Apply"
-                                },
-                                "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
-                                },
-                                "reset": {
-                                    "variant": "hidden"
-                                },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "lever-speed": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 3,
-                    "title": "",
-                    "description": "",
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": ""
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
                                     {
+                                        "width": 14,
                                         "uid": "speed_factor",
                                         "id": "speed_factor",
                                         "title": "Speed",
@@ -310,8 +244,7 @@
                                                 "label": "Maximum",
                                                 "value": -1
                                             }
-                                        ],
-                                        "width": 11
+                                        ]
                                     }
                                 ],
                                 "confirmModal": {
@@ -347,7 +280,7 @@
             "lever-calibration": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
+                    "id": 3,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -368,7 +301,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": ""
+                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -381,6 +314,7 @@
                                 "sync": false,
                                 "elements": [
                                     {
+                                        "width": 11,
                                         "uid": "calibration",
                                         "id": "calibration",
                                         "title": "Calibration",
@@ -398,10 +332,10 @@
                                                 "value": false
                                             }
                                         ],
-                                        "width": 11,
                                         "section": "left"
                                     },
                                     {
+                                        "width": 11,
                                         "uid": "parallel_simulations",
                                         "id": "parallel_simulations",
                                         "title": "Parallel runs",
@@ -429,7 +363,6 @@
                                                 "value": 8
                                             }
                                         ],
-                                        "width": 11,
                                         "section": "left"
                                     },
                                     {
@@ -466,6 +399,7 @@
                                         "section": "right"
                                     },
                                     {
+                                        "width": 11,
                                         "uid": "mape_window",
                                         "id": "mape_window",
                                         "title": "MAPE window",
@@ -488,7 +422,6 @@
                                                 "value": 1440
                                             }
                                         ],
-                                        "width": 11,
                                         "section": "right"
                                     }
                                 ],
@@ -538,7 +471,7 @@
             "control": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
+                    "id": 4,
                     "title": "OpenDT",
                     "description": "",
                     "links": [],
@@ -559,7 +492,7 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const start = {\"screen\": \"opendt-overview\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://localhost:3001/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n"
+                                    "code": "const start = {\"screen\": \"opendt-overview\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://localhost:3001/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
@@ -762,9 +695,9 @@
             "decisions": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 5,
                     "title": "Decisions",
-                    "description": "",
+                    "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -914,9 +847,9 @@
             "twin-time": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 6,
                     "title": "",
-                    "description": "",
+                    "description": "The simulated time the twin has reached, the end of its latest window of operation.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1011,9 +944,9 @@
             "power-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 7,
                     "title": "",
-                    "description": "",
+                    "description": "The measured power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1138,9 +1071,9 @@
             "mape-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 8,
                     "title": "",
-                    "description": "",
+                    "description": "The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes. Red from 10%, the community-accepted error rate.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1247,9 +1180,9 @@
             "co2-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 9,
                     "title": "",
-                    "description": "",
+                    "description": "The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1355,9 +1288,9 @@
             "hosts-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
-                    "title": "",
-                    "description": "",
+                    "id": 10,
+                    "title": "Hosts in use",
+                    "description": "Hosts running at least one job, of all the hosts of the twin. An idle host draws power for nothing.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1388,20 +1321,25 @@
                                                 "columns": [
                                                     {
                                                         "selector": "hosts_in_use",
-                                                        "text": "used",
+                                                        "text": "hosts_in_use",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "hosts_up",
-                                                        "text": "up",
+                                                        "text": "hosts_up",
                                                         "type": "number"
                                                     }
                                                 ],
                                                 "computed_columns": [
                                                     {
-                                                        "selector": "used + \"/\" + up",
-                                                        "text": "Hosts in use",
+                                                        "selector": "(hosts_in_use) / (hosts_up)",
+                                                        "text": "share",
                                                         "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "hosts_in_use + \"/\" + (hosts_up)",
+                                                        "text": "counts",
+                                                        "type": "string"
                                                     }
                                                 ]
                                             }
@@ -1416,14 +1354,33 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "used": 0,
-                                                "up": 1,
-                                                "Hosts in use": 2
+                                                "hosts_in_use": 0,
+                                                "hosts_up": 1,
+                                                "share": 2,
+                                                "counts": 3
                                             },
                                             "excludeByName": {
-                                                "used": true,
-                                                "up": true
+                                                "hosts_in_use": true,
+                                                "hosts_up": true
                                             }
+                                        }
+                                    }
+                                },
+                                {
+                                    "kind": "rowsToFields",
+                                    "spec": {
+                                        "id": "rowsToFields",
+                                        "options": {
+                                            "mappings": [
+                                                {
+                                                    "fieldName": "counts",
+                                                    "handlerKey": "field.name"
+                                                },
+                                                {
+                                                    "fieldName": "share",
+                                                    "handlerKey": "field.value"
+                                                }
+                                            ]
                                         }
                                     }
                                 }
@@ -1440,13 +1397,13 @@
                                 "reduceOptions": {
                                     "fields": "/.*/"
                                 },
-                                "colorMode": "none",
+                                "colorMode": "value",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
-                                "orientation": "vertical",
+                                "orientation": "auto",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "center",
+                                "justifyMode": "auto",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1456,8 +1413,26 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
+                                        "mode": "thresholds"
+                                    },
+                                    "unit": "percentunit",
+                                    "decimals": 0,
+                                    "thresholds": {
+                                        "mode": "absolute",
+                                        "steps": [
+                                            {
+                                                "value": null,
+                                                "color": "#D55E00"
+                                            },
+                                            {
+                                                "value": 0.2,
+                                                "color": "#E69F00"
+                                            },
+                                            {
+                                                "value": 0.6,
+                                                "color": "#009E73"
+                                            }
+                                        ]
                                     }
                                 },
                                 "overrides": []
@@ -1469,9 +1444,9 @@
             "jobs-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
-                    "title": "",
-                    "description": "",
+                    "id": 11,
+                    "title": "Jobs running",
+                    "description": "Jobs running, of the jobs submitted and not done yet. Green when all run, orange when some wait.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1502,20 +1477,25 @@
                                                 "columns": [
                                                     {
                                                         "selector": "tasks_active",
-                                                        "text": "running",
+                                                        "text": "tasks_active",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "tasks_pending",
-                                                        "text": "waiting",
+                                                        "text": "tasks_pending",
                                                         "type": "number"
                                                     }
                                                 ],
                                                 "computed_columns": [
                                                     {
-                                                        "selector": "running + \"/\" + (running + waiting)",
-                                                        "text": "Jobs running",
+                                                        "selector": "(tasks_active) / (tasks_active + tasks_pending)",
+                                                        "text": "share",
                                                         "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "tasks_active + \"/\" + (tasks_active + tasks_pending)",
+                                                        "text": "counts",
+                                                        "type": "string"
                                                     }
                                                 ]
                                             }
@@ -1530,14 +1510,33 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "running": 0,
-                                                "waiting": 1,
-                                                "Jobs running": 2
+                                                "tasks_active": 0,
+                                                "tasks_pending": 1,
+                                                "share": 2,
+                                                "counts": 3
                                             },
                                             "excludeByName": {
-                                                "running": true,
-                                                "waiting": true
+                                                "tasks_active": true,
+                                                "tasks_pending": true
                                             }
+                                        }
+                                    }
+                                },
+                                {
+                                    "kind": "rowsToFields",
+                                    "spec": {
+                                        "id": "rowsToFields",
+                                        "options": {
+                                            "mappings": [
+                                                {
+                                                    "fieldName": "counts",
+                                                    "handlerKey": "field.name"
+                                                },
+                                                {
+                                                    "fieldName": "share",
+                                                    "handlerKey": "field.value"
+                                                }
+                                            ]
                                         }
                                     }
                                 }
@@ -1554,13 +1553,13 @@
                                 "reduceOptions": {
                                     "fields": "/.*/"
                                 },
-                                "colorMode": "none",
+                                "colorMode": "value",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
-                                "orientation": "vertical",
+                                "orientation": "auto",
                                 "minVizWidth": 100,
                                 "minVizHeight": 60,
-                                "justifyMode": "center",
+                                "justifyMode": "auto",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1570,8 +1569,26 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "#22252b"
+                                        "mode": "thresholds"
+                                    },
+                                    "unit": "percentunit",
+                                    "decimals": 0,
+                                    "thresholds": {
+                                        "mode": "absolute",
+                                        "steps": [
+                                            {
+                                                "value": null,
+                                                "color": "#D55E00"
+                                            },
+                                            {
+                                                "value": 0.2,
+                                                "color": "#E69F00"
+                                            },
+                                            {
+                                                "value": 0.99,
+                                                "color": "#009E73"
+                                            }
+                                        ]
                                     }
                                 },
                                 "overrides": []
@@ -1583,9 +1600,9 @@
             "power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 12,
                     "title": "Power draw",
-                    "description": "",
+                    "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1808,9 +1825,9 @@
             "co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 13,
                     "title": "CO₂ emissions vs. carbon intensity",
-                    "description": "",
+                    "description": "The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -1982,9 +1999,9 @@
             "hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 15,
+                    "id": 14,
                     "title": "Hosts available vs. in use",
-                    "description": "",
+                    "description": "The hosts the twin has and the hosts in use, over time.",
                     "links": [],
                     "data": {
                         "kind": "QueryGroup",
@@ -2139,7 +2156,7 @@
             "start-progress": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 16,
+                    "id": 15,
                     "title": "Starting the twin",
                     "description": "",
                     "links": [],
@@ -2240,7 +2257,7 @@
             "start-doing": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
+                    "id": 16,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -2336,7 +2353,7 @@
             "start-tip": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 17,
                     "title": "",
                     "description": "",
                     "links": [],
@@ -2432,7 +2449,7 @@
             "pick-0": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 18,
                     "title": "Performance",
                     "description": "",
                     "links": [],
@@ -2515,7 +2532,7 @@
             "pick-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 19,
                     "title": "Utilization",
                     "description": "",
                     "links": [],
@@ -2598,7 +2615,7 @@
             "pick-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 20,
                     "title": "Sustainability",
                     "description": "",
                     "links": [],
@@ -2681,7 +2698,7 @@
             "pick-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 21,
                     "title": "Twin accuracy",
                     "description": "",
                     "links": [],
@@ -2764,7 +2781,7 @@
             "scheduling-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 22,
                     "title": "P1  Performance now",
                     "description": "",
                     "links": [],
@@ -2977,7 +2994,7 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 23,
                     "title": "P2  Total runtime",
                     "description": "",
                     "links": [],
@@ -3157,7 +3174,7 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 24,
                     "title": "P3  Time in queue",
                     "description": "",
                     "links": [],
@@ -3337,7 +3354,7 @@
             "jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 25,
                     "title": "P4  Jobs",
                     "description": "",
                     "links": [],
@@ -3515,7 +3532,7 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 26,
                     "title": "P5  Jobs waiting or running",
                     "description": "",
                     "links": [],
@@ -3674,7 +3691,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 27,
                     "title": "U1  Utilization now",
                     "description": "",
                     "links": [],
@@ -3846,7 +3863,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 28,
                     "title": "U2  CPU utilization of the hosts",
                     "description": "",
                     "links": [],
@@ -4058,7 +4075,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 29,
                     "title": "U3  CPU demand vs. capacity",
                     "description": "",
                     "links": [],
@@ -4215,7 +4232,7 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 30,
                     "title": "U4  Hosts per CPU utilization",
                     "description": "",
                     "links": [],
@@ -4357,7 +4374,7 @@
             "idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 31,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "links": [],
@@ -4552,7 +4569,7 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 32,
                     "title": "S1  This $period",
                     "description": "",
                     "links": [],
@@ -4705,7 +4722,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 33,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "links": [],
@@ -4889,7 +4906,7 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 34,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "links": [],
@@ -5101,7 +5118,7 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 35,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "links": [],
@@ -5281,7 +5298,7 @@
             "idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 36,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "links": [],
@@ -5461,7 +5478,7 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 37,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "links": [],
@@ -5675,7 +5692,7 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 38,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "links": [],
@@ -5858,7 +5875,7 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 40,
+                    "id": 39,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "links": [],
@@ -5984,7 +6001,7 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 41,
+                    "id": 40,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "links": [],
@@ -6113,7 +6130,7 @@
             "energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 42,
+                    "id": 41,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "links": [],
@@ -6329,7 +6346,24 @@
                                     ]
                                 }
                             },
-                            "hideHeader": true
+                            "hideHeader": true,
+                            "conditionalRendering": {
+                                "kind": "ConditionalRenderingGroup",
+                                "spec": {
+                                    "visibility": "show",
+                                    "condition": "or",
+                                    "items": [
+                                        {
+                                            "kind": "ConditionalRenderingVariable",
+                                            "spec": {
+                                                "variable": "starting",
+                                                "operator": "notEquals",
+                                                "value": ""
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         }
                     },
                     {
@@ -6347,7 +6381,7 @@
                                                 "x": 0,
                                                 "y": 0,
                                                 "width": 4,
-                                                "height": 5,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "lever-hosts"
@@ -6359,34 +6393,21 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 5,
-                                                "height": 5,
+                                                "width": 6,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-zone"
+                                                    "name": "lever-twin"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 10,
                                                 "y": 0,
-                                                "width": 3,
-                                                "height": 5,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "lever-speed"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 12,
-                                                "y": 0,
-                                                "width": 12,
-                                                "height": 5,
+                                                "width": 14,
+                                                "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "lever-calibration"
@@ -6397,7 +6418,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 0,
-                                                "y": 5,
+                                                "y": 4,
                                                 "width": 6,
                                                 "height": 7,
                                                 "element": {
@@ -6410,9 +6431,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 0,
-                                                "y": 12,
+                                                "y": 11,
                                                 "width": 6,
-                                                "height": 11,
+                                                "height": 6,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "decisions"
@@ -6423,8 +6444,8 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 6,
-                                                "y": 5,
-                                                "width": 4,
+                                                "y": 4,
+                                                "width": 3,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6435,8 +6456,8 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 10,
-                                                "y": 5,
+                                                "x": 9,
+                                                "y": 4,
                                                 "width": 5,
                                                 "height": 3,
                                                 "element": {
@@ -6448,8 +6469,8 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
-                                                "y": 5,
+                                                "x": 14,
+                                                "y": 4,
                                                 "width": 2,
                                                 "height": 3,
                                                 "element": {
@@ -6461,8 +6482,8 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
-                                                "y": 5,
+                                                "x": 16,
+                                                "y": 4,
                                                 "width": 2,
                                                 "height": 3,
                                                 "element": {
@@ -6474,9 +6495,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 19,
-                                                "y": 5,
-                                                "width": 2,
+                                                "x": 18,
+                                                "y": 4,
+                                                "width": 3,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6488,7 +6509,7 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 21,
-                                                "y": 5,
+                                                "y": 4,
                                                 "width": 3,
                                                 "height": 3,
                                                 "element": {
@@ -6501,9 +6522,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 6,
-                                                "y": 8,
+                                                "y": 7,
                                                 "width": 6,
-                                                "height": 15,
+                                                "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "power"
@@ -6514,9 +6535,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 12,
-                                                "y": 8,
+                                                "y": 7,
                                                 "width": 6,
-                                                "height": 15,
+                                                "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "co2"
@@ -6527,9 +6548,9 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 18,
-                                                "y": 8,
+                                                "y": 7,
                                                 "width": 6,
-                                                "height": 15,
+                                                "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "hosts"
@@ -7461,6 +7482,55 @@
                     "allowCustomValue": false,
                     "hide": "hideVariable",
                     "skipUrlSync": false
+                }
+            },
+            {
+                "kind": "QueryVariable",
+                "spec": {
+                    "name": "starting",
+                    "current": {
+                        "text": "",
+                        "value": ""
+                    },
+                    "query": {
+                        "kind": "DataQuery",
+                        "group": "yesoreyeram-infinity-datasource",
+                        "version": "v0",
+                        "datasource": {
+                            "name": "df5tfgbpfeakgc"
+                        },
+                        "spec": {
+                            "queryType": "infinity",
+                            "infinityQuery": {
+                                "refId": "A",
+                                "type": "json",
+                                "source": "url",
+                                "parser": "backend",
+                                "format": "table",
+                                "url": "http://api:8000/api/progress",
+                                "url_options": {
+                                    "method": "GET"
+                                },
+                                "root_selector": "data",
+                                "columns": [
+                                    {
+                                        "selector": "step",
+                                        "text": "step",
+                                        "type": "number"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "refresh": "onTimeRangeChanged",
+                    "regex": "",
+                    "sort": "disabled",
+                    "options": [],
+                    "multi": false,
+                    "includeAll": false,
+                    "allowCustomValue": false,
+                    "hide": "hideVariable",
+                    "skipUrlSync": true
                 }
             },
             {
