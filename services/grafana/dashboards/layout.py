@@ -90,7 +90,16 @@ def picked(*names):
     return when("hidden", "notEquals", *names)
 
 
-def auto(shown, columns):
+def with_data():
+    """Shown while its panel has data."""
+    rule = {"kind": "ConditionalRenderingData", "spec": {"value": True}}
+    return {
+        "kind": "ConditionalRenderingGroup",
+        "spec": {"visibility": "show", "condition": "and", "items": [rule]},
+    }
+
+
+def auto(shown, columns, height="standard"):
     """An auto grid of equal panels, each with the rule that shows it: (name, rule)."""
     items = [
         {
@@ -105,7 +114,7 @@ def auto(shown, columns):
     spec = {
         "maxColumnCount": columns,
         "columnWidthMode": "narrow",
-        "rowHeightMode": "standard",
+        "rowHeightMode": height,
         "fillScreen": False,
     }
     return {"kind": "AutoGridLayout", "spec": {**spec, "items": items}}

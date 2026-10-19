@@ -2,6 +2,7 @@
 
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from functools import lru_cache
@@ -26,7 +27,7 @@ from odt_common.models.topology import (
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
 
-from api import hosts, levers, twin
+from api import hosts, levers, startup, twin
 from api.carbon_query import CarbonDataQuery, CarbonDataResponse
 from api.power_query import PowerDataQuery, PowerDataResponse
 
@@ -186,6 +187,12 @@ def publish(topic: str, message: dict, key: str | None = None) -> str:
     name = app.state.config.kafka.topics[topic].name
     send_message(producer=app.state.kafka_producer, topic=name, message=message, key=key)
     return name
+
+
+@app.get("/api/progress")
+def get_progress():
+    """While the twin starts: the step it is at and a tip; nothing once its first window is complete."""
+    return {"data": startup.progress(run_dir(), time.time())}
 
 
 @app.get("/api/status")

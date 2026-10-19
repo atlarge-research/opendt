@@ -17,6 +17,7 @@ from panels import (
     TIME,
     YELLOW,
     editable,
+    gauge,
     organize,
     override,
     stat,
@@ -477,3 +478,11 @@ catalog = table(
     f"{API}/api/components",
     [("part", "Part", "string"), ("name", "Name", "string"), *SPECS],
 )
+
+# while the twin starts, at the top of every screen: how far it is, what it does, and a fact from the paper
+PROGRESS = f"{API}/api/progress"
+STARTING = {
+    "start-progress": gauge("Starting the twin", PROGRESS, "step", "steps"),
+    "start-doing": tile("Now", PROGRESS, "doing", "string"),
+    "start-tip": tile("From the OpenDT paper", PROGRESS, "tip", "string"),
+}

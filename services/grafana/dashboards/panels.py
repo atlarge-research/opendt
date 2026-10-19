@@ -316,3 +316,26 @@ def editable(title, url, columns, save, delete, key="id"):
         "fieldConfig": {"defaults": {"unit": "locale"}, "overrides": []},
         "options": {"tables": [table]},
     }
+
+
+def gauge(title, url, part, whole):
+    """A progress bar: the API's `part` of its `whole`."""
+    return {
+        "type": "bargauge",
+        "title": title,
+        "targets": [target(url, [(part, part), (whole, whole)], [(f"{part} / {whole}", title)])],
+        "transformations": [
+            {"id": "organize", "options": {"excludeByName": {part: True, whole: True}}}
+        ],
+        "fieldConfig": {
+            "defaults": {
+                "unit": "percentunit",
+                "min": 0,
+                "max": 1,
+                "decimals": 0,
+                "color": {"mode": "fixed", "fixedColor": BLUE},
+            },
+            "overrides": [],
+        },
+        "options": {"orientation": "horizontal", "displayMode": "basic", "showUnfilled": True},
+    }

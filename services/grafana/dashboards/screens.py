@@ -13,11 +13,12 @@ from form import (
     lever,
     picker,
 )
-from layout import auto, custom, dashboard, grid, picked, row, when
+from layout import auto, custom, dashboard, grid, picked, row, when, with_data
 from panels import PERIODS
 from plots import (
     BOXES,
     ROWS,
+    STARTING,
     TILES,
     arrivals,
     catalog,
@@ -35,8 +36,8 @@ def screen(uid, title, placed, rows=(), panels=None, variables=()):
     """The levers' bar and the placed panels under it, then the `rows` of the other `panels`."""
     placed = TOP + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
     top = row("", grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]))
-    panels = {name: panel for name, panel, *_ in placed} | (panels or {})
-    return dashboard(uid, title, panels, [top, *rows], variables)
+    panels = {name: panel for name, panel, *_ in placed} | STARTING | (panels or {})
+    return dashboard(uid, title, panels, [STARTUP, top, *rows], variables)
 
 
 # the tiles, in one row: the twin's time, power, MAPE, CO₂, hosts, and jobs
@@ -48,6 +49,8 @@ TILE_PLACES = [
     ("hosts-now", 19, 0, 2),
     ("jobs-now", 21, 0, 3),
 ]
+# while the twin starts, a row above all: gone once its first window is complete
+STARTUP = row("", auto([(name, with_data()) for name in STARTING], 3, height="short"))
 # the levers' bar at the top of every screen: the hosts, the CO₂ zone, the speed, and the calibration
 BAR = 5
 TOP = [
@@ -180,8 +183,9 @@ tutorial = dashboard(
     | {name: panel for name, panel, *_ in TOP}
     | BOXES
     | {f"step-{value}": card for value, _, card, _ in steps.SLIDES}
-    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]},
-    [slide(value, step, shown) for value, step, _, shown in steps.SLIDES],
+    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]}
+    | STARTING,
+    [STARTUP, *(slide(value, step, shown) for value, step, _, shown in steps.SLIDES)],
     [
         custom("period", "Interval", PERIODS, current="day"),
         custom("step", "Step", [value for value, *_ in steps.SLIDES], current="1"),

@@ -2136,10 +2136,303 @@
                     }
                 }
             },
-            "pick-0": {
+            "start-progress": {
                 "kind": "Panel",
                 "spec": {
                     "id": 16,
+                    "title": "Starting the twin",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/progress",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "step",
+                                                        "text": "step",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "steps",
+                                                        "text": "steps",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "step / steps",
+                                                        "text": "Starting the twin",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "excludeByName": {
+                                                "step": true,
+                                                "steps": true
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "bargauge",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "orientation": "horizontal",
+                                "displayMode": "basic",
+                                "showUnfilled": true
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "unit": "percentunit",
+                                    "min": 0,
+                                    "max": 1,
+                                    "decimals": 0,
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#338ec1"
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "start-doing": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 17,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/progress",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "doing",
+                                                        "text": "Now",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Now": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "minVizWidth": 100,
+                                "minVizHeight": 60,
+                                "justifyMode": "center",
+                                "wideLayout": false,
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#22252b"
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "start-tip": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 18,
+                    "title": "",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/progress",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "tip",
+                                                        "text": "From the OpenDT paper",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "From the OpenDT paper": 0
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "none",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "minVizWidth": 100,
+                                "minVizHeight": 60,
+                                "justifyMode": "center",
+                                "wideLayout": false,
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#22252b"
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "pick-0": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 19,
                     "title": "Performance",
                     "description": "",
                     "links": [],
@@ -2222,7 +2515,7 @@
             "pick-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
+                    "id": 20,
                     "title": "Utilization",
                     "description": "",
                     "links": [],
@@ -2305,7 +2598,7 @@
             "pick-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 21,
                     "title": "Sustainability",
                     "description": "",
                     "links": [],
@@ -2388,7 +2681,7 @@
             "pick-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 22,
                     "title": "Twin accuracy",
                     "description": "",
                     "links": [],
@@ -2471,7 +2764,7 @@
             "scheduling-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 23,
                     "title": "P1  Performance now",
                     "description": "",
                     "links": [],
@@ -2684,7 +2977,7 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 24,
                     "title": "P2  Total runtime",
                     "description": "",
                     "links": [],
@@ -2864,7 +3157,7 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 25,
                     "title": "P3  Time in queue",
                     "description": "",
                     "links": [],
@@ -3044,7 +3337,7 @@
             "jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 26,
                     "title": "P4  Jobs",
                     "description": "",
                     "links": [],
@@ -3222,7 +3515,7 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 27,
                     "title": "P5  Jobs waiting or running",
                     "description": "",
                     "links": [],
@@ -3381,7 +3674,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 28,
                     "title": "U1  Utilization now",
                     "description": "",
                     "links": [],
@@ -3553,7 +3846,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 29,
                     "title": "U2  CPU utilization of the hosts",
                     "description": "",
                     "links": [],
@@ -3765,7 +4058,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 30,
                     "title": "U3  CPU demand vs. capacity",
                     "description": "",
                     "links": [],
@@ -3922,7 +4215,7 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 31,
                     "title": "U4  Hosts per CPU utilization",
                     "description": "",
                     "links": [],
@@ -4064,7 +4357,7 @@
             "idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 32,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "links": [],
@@ -4259,7 +4552,7 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 33,
                     "title": "S1  This $period",
                     "description": "",
                     "links": [],
@@ -4412,7 +4705,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 34,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "links": [],
@@ -4596,7 +4889,7 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 35,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "links": [],
@@ -4808,7 +5101,7 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 36,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "links": [],
@@ -4988,7 +5281,7 @@
             "idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 37,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "links": [],
@@ -5168,7 +5461,7 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 38,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "links": [],
@@ -5382,7 +5675,7 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 39,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "links": [],
@@ -5565,7 +5858,7 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 40,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "links": [],
@@ -5691,7 +5984,7 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 41,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "links": [],
@@ -5820,7 +6113,7 @@
             "energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 42,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "links": [],
@@ -5948,6 +6241,97 @@
             "kind": "RowsLayout",
             "spec": {
                 "rows": [
+                    {
+                        "kind": "RowsLayoutRow",
+                        "spec": {
+                            "title": "",
+                            "collapse": false,
+                            "layout": {
+                                "kind": "AutoGridLayout",
+                                "spec": {
+                                    "maxColumnCount": 3,
+                                    "columnWidthMode": "narrow",
+                                    "rowHeightMode": "short",
+                                    "fillScreen": false,
+                                    "items": [
+                                        {
+                                            "kind": "AutoGridLayoutItem",
+                                            "spec": {
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "start-progress"
+                                                },
+                                                "conditionalRendering": {
+                                                    "kind": "ConditionalRenderingGroup",
+                                                    "spec": {
+                                                        "visibility": "show",
+                                                        "condition": "and",
+                                                        "items": [
+                                                            {
+                                                                "kind": "ConditionalRenderingData",
+                                                                "spec": {
+                                                                    "value": true
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "AutoGridLayoutItem",
+                                            "spec": {
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "start-doing"
+                                                },
+                                                "conditionalRendering": {
+                                                    "kind": "ConditionalRenderingGroup",
+                                                    "spec": {
+                                                        "visibility": "show",
+                                                        "condition": "and",
+                                                        "items": [
+                                                            {
+                                                                "kind": "ConditionalRenderingData",
+                                                                "spec": {
+                                                                    "value": true
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "AutoGridLayoutItem",
+                                            "spec": {
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "start-tip"
+                                                },
+                                                "conditionalRendering": {
+                                                    "kind": "ConditionalRenderingGroup",
+                                                    "spec": {
+                                                        "visibility": "show",
+                                                        "condition": "and",
+                                                        "items": [
+                                                            {
+                                                                "kind": "ConditionalRenderingData",
+                                                                "spec": {
+                                                                    "value": true
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "hideHeader": true
+                        }
+                    },
                     {
                         "kind": "RowsLayoutRow",
                         "spec": {

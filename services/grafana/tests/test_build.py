@@ -28,7 +28,7 @@ def test_plots_show_until_hidden():
     items = [
         item["spec"]
         for row in spec["layout"]["spec"]["rows"]
-        if row["spec"]["layout"]["kind"] == "AutoGridLayout"
+        if row["spec"]["layout"]["kind"] == "AutoGridLayout" and row["spec"]["title"]
         for item in row["spec"]["layout"]["spec"]["items"]
     ]
     assert hidden["query"].split(",") == ["none", *pickable]
@@ -57,6 +57,7 @@ def test_one_step_at_a_time():
     rows = {
         r["spec"]["conditionalRendering"]["spec"]["items"][0]["spec"]["value"]: r["spec"]
         for r in spec["layout"]["spec"]["rows"]
+        if "conditionalRendering" in r["spec"]
     }
     assert step["query"].split(",") == list(rows)  # a row for each value of the step
     for n, (_, s) in enumerate(steps.ORDER, 1):
@@ -111,3 +112,11 @@ def test_tutorial_starts_on_day():
 
     assert window(screens.tutorial) == "day"
     assert window(screens.detailed) == window(screens.simple) == "week"
+
+
+def test_starting_first():
+    # while the twin starts, what it does is the first thing on every screen
+    for board in (screens.detailed, screens.simple, screens.topology, screens.tutorial):
+        [first, *_] = board["spec"]["layout"]["spec"]["rows"]
+        items = first["spec"]["layout"]["spec"]["items"]
+        assert [i["spec"]["element"]["name"] for i in items] == list(screens.STARTING)
