@@ -58,7 +58,7 @@
             }
         ],
         "elements": {
-            "lever-hosts": {
+            "brand": {
                 "kind": "Panel",
                 "spec": {
                     "id": 1,
@@ -76,67 +76,12 @@
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
+                        "group": "text",
                         "version": "",
                         "spec": {
                             "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
-                                    {
-                                        "width": 11,
-                                        "uid": "hosts",
-                                        "id": "hosts",
-                                        "title": "Hosts",
-                                        "type": "number",
-                                        "labelWidth": 9,
-                                        "min": 1
-                                    },
-                                    {
-                                        "uid": "infrastructure",
-                                        "id": "infrastructure",
-                                        "title": "",
-                                        "type": "link",
-                                        "value": "/d/opendt-topology",
-                                        "linkText": "✎ Infrastructure",
-                                        "target": "_self",
-                                        "labelWidth": 1,
-                                        "width": 20
-                                    }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
-                                    },
-                                    "confirm": "Apply"
-                                },
-                                "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
-                                },
-                                "reset": {
-                                    "variant": "hidden"
-                                },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
-                                }
+                                "mode": "html",
+                                "content": "<div style=\"display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"40\">OpenDT</div>"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -146,7 +91,7 @@
                     }
                 }
             },
-            "lever-twin": {
+            "control": {
                 "kind": "Panel",
                 "spec": {
                     "id": 2,
@@ -171,55 +116,79 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
+                                    "code": "const start = {\"screen\": \"opendt-overview\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://api:8000/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
+                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
                                 "sync": false,
                                 "elements": [
                                     {
-                                        "width": 11,
-                                        "uid": "carbon_zone",
-                                        "id": "carbon_zone",
-                                        "title": "CO₂ zone",
-                                        "type": "radio",
-                                        "labelWidth": 9,
+                                        "uid": "screen",
+                                        "id": "screen",
+                                        "title": "Screen",
+                                        "type": "select",
+                                        "labelWidth": 14,
                                         "options": [
                                             {
-                                                "id": "NL",
-                                                "label": "NL",
-                                                "value": "NL"
+                                                "id": "opendt-overview",
+                                                "label": "Detailed",
+                                                "value": "opendt-overview"
                                             },
                                             {
-                                                "id": "PL",
-                                                "label": "PL",
-                                                "value": "PL"
+                                                "id": "opendt-simple",
+                                                "label": "Simple",
+                                                "value": "opendt-simple"
                                             },
                                             {
-                                                "id": "DE",
-                                                "label": "DE",
-                                                "value": "DE"
+                                                "id": "opendt-topology",
+                                                "label": "Topology",
+                                                "value": "opendt-topology"
                                             },
                                             {
-                                                "id": "RO",
-                                                "label": "RO",
-                                                "value": "RO"
+                                                "id": "opendt-tutorial",
+                                                "label": "Tutorial",
+                                                "value": "opendt-tutorial"
                                             }
-                                        ]
+                                        ],
+                                        "value": "opendt-overview"
                                     },
                                     {
-                                        "width": 14,
+                                        "uid": "window",
+                                        "id": "window",
+                                        "title": "Period",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "week",
+                                                "label": "Week",
+                                                "value": "week"
+                                            },
+                                            {
+                                                "id": "day",
+                                                "label": "Day",
+                                                "value": "day"
+                                            },
+                                            {
+                                                "id": "hours",
+                                                "label": "6 h",
+                                                "value": "hours"
+                                            }
+                                        ],
+                                        "value": "week"
+                                    },
+                                    {
                                         "uid": "speed_factor",
                                         "id": "speed_factor",
                                         "title": "Speed",
                                         "type": "select",
-                                        "labelWidth": 9,
+                                        "labelWidth": 14,
                                         "options": [
                                             {
                                                 "id": "1",
@@ -246,7 +215,68 @@
                                                 "label": "Maximum",
                                                 "value": -1
                                             }
-                                        ]
+                                        ],
+                                        "width": 14
+                                    },
+                                    {
+                                        "uid": "markers",
+                                        "id": "markers",
+                                        "title": "Decisions",
+                                        "type": "radio",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "on",
+                                                "label": "On",
+                                                "value": "on"
+                                            },
+                                            {
+                                                "id": "off",
+                                                "label": "Off",
+                                                "value": "off"
+                                            }
+                                        ],
+                                        "value": "on"
+                                    },
+                                    {
+                                        "uid": "period",
+                                        "id": "period",
+                                        "title": "Interval",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "minute",
+                                                "label": "minute",
+                                                "value": "minute"
+                                            },
+                                            {
+                                                "id": "hour",
+                                                "label": "hour",
+                                                "value": "hour"
+                                            },
+                                            {
+                                                "id": "day",
+                                                "label": "day",
+                                                "value": "day"
+                                            },
+                                            {
+                                                "id": "week",
+                                                "label": "week",
+                                                "value": "week"
+                                            },
+                                            {
+                                                "id": "month",
+                                                "label": "month",
+                                                "value": "month"
+                                            },
+                                            {
+                                                "id": "year",
+                                                "label": "year",
+                                                "value": "year"
+                                            }
+                                        ],
+                                        "value": "day"
                                     }
                                 ],
                                 "confirmModal": {
@@ -260,16 +290,228 @@
                                     "confirm": "Apply"
                                 },
                                 "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
+                                    "text": "Apply"
                                 },
                                 "reset": {
-                                    "variant": "hidden"
+                                    "text": "Full screen",
+                                    "icon": "monitor",
+                                    "variant": "secondary"
                                 },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
+                                "resetAction": {
+                                    "mode": "custom",
+                                    "code": "// Grafana's kiosk mode (no menus, no bars; Esc leaves it) in the browser's full screen, like a game\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial({ kiosk: on || null });\n",
+                                    "confirm": false
                                 }
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-hosts": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 3,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "hosts",
+                                                        "text": "hosts",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-key=\"hosts\" data-name=\"Hosts\" data-value=\"{{hosts}}\"><small>Hosts</small><b>{{hosts}}</b><span><a class=\"edit\">✎ Change</a><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Hosts</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-zone": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 4,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "carbon_zone",
+                                                        "text": "carbon_zone",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-key=\"carbon_zone\" data-name=\"CO₂ zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\"><small>CO₂ zone</small><b>{{carbon_zone}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>CO₂ zone</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-scheduler": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 5,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "scheduler",
+                                                        "text": "scheduler",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-key=\"scheduler\" data-name=\"Scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\"><small>Scheduler</small><b>{{scheduler}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Scheduler</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -282,7 +524,7 @@
             "lever-calibration": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 3,
+                    "id": 6,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -310,9 +552,9 @@
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
+                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
                                 "sync": false,
                                 "elements": [
@@ -471,388 +713,10 @@
                     }
                 }
             },
-            "control": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 4,
-                    "title": "OpenDT",
-                    "description": "",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": "const start = {\"screen\": \"opendt-overview\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://localhost:3001/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
-                                    {
-                                        "uid": "screen",
-                                        "id": "screen",
-                                        "title": "Screen",
-                                        "type": "select",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "opendt-overview",
-                                                "label": "Detailed",
-                                                "value": "opendt-overview"
-                                            },
-                                            {
-                                                "id": "opendt-simple",
-                                                "label": "Simple",
-                                                "value": "opendt-simple"
-                                            },
-                                            {
-                                                "id": "opendt-topology",
-                                                "label": "Topology",
-                                                "value": "opendt-topology"
-                                            },
-                                            {
-                                                "id": "opendt-tutorial",
-                                                "label": "Tutorial",
-                                                "value": "opendt-tutorial"
-                                            }
-                                        ],
-                                        "value": "opendt-overview"
-                                    },
-                                    {
-                                        "uid": "window",
-                                        "id": "window",
-                                        "title": "Time",
-                                        "type": "radio",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "week",
-                                                "label": "Week",
-                                                "value": "week"
-                                            },
-                                            {
-                                                "id": "day",
-                                                "label": "Day",
-                                                "value": "day"
-                                            },
-                                            {
-                                                "id": "hours",
-                                                "label": "6 h",
-                                                "value": "hours"
-                                            }
-                                        ],
-                                        "value": "week"
-                                    },
-                                    {
-                                        "uid": "markers",
-                                        "id": "markers",
-                                        "title": "Decisions",
-                                        "type": "radio",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "on",
-                                                "label": "On",
-                                                "value": "on"
-                                            },
-                                            {
-                                                "id": "off",
-                                                "label": "Off",
-                                                "value": "off"
-                                            }
-                                        ],
-                                        "value": "on"
-                                    },
-                                    {
-                                        "uid": "period",
-                                        "id": "period",
-                                        "title": "Interval",
-                                        "type": "select",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "minute",
-                                                "label": "minute",
-                                                "value": "minute"
-                                            },
-                                            {
-                                                "id": "hour",
-                                                "label": "hour",
-                                                "value": "hour"
-                                            },
-                                            {
-                                                "id": "day",
-                                                "label": "day",
-                                                "value": "day"
-                                            },
-                                            {
-                                                "id": "week",
-                                                "label": "week",
-                                                "value": "week"
-                                            },
-                                            {
-                                                "id": "month",
-                                                "label": "month",
-                                                "value": "month"
-                                            },
-                                            {
-                                                "id": "year",
-                                                "label": "year",
-                                                "value": "year"
-                                            }
-                                        ],
-                                        "value": "day"
-                                    },
-                                    {
-                                        "uid": "scheduler",
-                                        "id": "scheduler",
-                                        "title": "Scheduler",
-                                        "type": "select",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "Mem",
-                                                "label": "Mem",
-                                                "value": "Mem"
-                                            },
-                                            {
-                                                "id": "CoreMem",
-                                                "label": "CoreMem",
-                                                "value": "CoreMem"
-                                            },
-                                            {
-                                                "id": "ActiveServers",
-                                                "label": "ActiveServers",
-                                                "value": "ActiveServers"
-                                            },
-                                            {
-                                                "id": "ActiveServersInv",
-                                                "label": "ActiveServersInv",
-                                                "value": "ActiveServersInv"
-                                            },
-                                            {
-                                                "id": "ProvisionedCores",
-                                                "label": "ProvisionedCores",
-                                                "value": "ProvisionedCores"
-                                            },
-                                            {
-                                                "id": "Random",
-                                                "label": "Random",
-                                                "value": "Random"
-                                            }
-                                        ],
-                                        "tooltip": "OpenDC's placement policy; Mem is OpenDC's default"
-                                    }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
-                                    },
-                                    "confirm": "Apply"
-                                },
-                                "submit": {
-                                    "text": "Apply"
-                                },
-                                "reset": {
-                                    "text": "Full screen",
-                                    "icon": "monitor",
-                                    "variant": "secondary"
-                                },
-                                "resetAction": {
-                                    "mode": "custom",
-                                    "code": "// Grafana's kiosk mode (no menus, no bars; Esc leaves it) in the browser's full screen, like a game\nconst on = !document.fullscreenElement;\non ? document.documentElement.requestFullscreen() : document.exitFullscreen();\ncontext.grafana.locationService.partial({ kiosk: on || null });\n",
-                                    "confirm": false
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {},
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "decisions": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 5,
-                    "title": "Decisions",
-                    "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/events?markers=on",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "time",
-                                                        "text": "Time",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "text",
-                                                        "text": "Change",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "by",
-                                                        "text": "By",
-                                                        "type": "string"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Time": 0,
-                                                "Change": 1,
-                                                "By": 2
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "kind": "sortBy",
-                                    "spec": {
-                                        "id": "sortBy",
-                                        "options": {
-                                            "sort": [
-                                                {
-                                                    "field": "Time",
-                                                    "desc": true
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "table",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "showHeader": false
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "unit": "locale",
-                                    "custom": {
-                                        "minWidth": 70
-                                    }
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Time"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "time:MM-DD HH:mm"
-                                            },
-                                            {
-                                                "id": "custom.width",
-                                                "value": 95
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Change"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.cellOptions",
-                                                "value": {
-                                                    "type": "auto",
-                                                    "wrapText": true
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "By"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.width",
-                                                "value": 80
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
             "twin-time": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 7,
                     "title": "",
                     "description": "The simulated time the twin has reached, the end of its latest window of operation.",
                     "transparent": false,
@@ -947,12 +811,230 @@
                     }
                 }
             },
-            "power-now": {
+            "measured-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 8,
                     "title": "",
-                    "description": "The measured power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample.",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "actual_power",
+                                                        "text": "actual_power",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "actual_power/1000",
+                                                        "text": "Ground truth [kW]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "actual_power": 0,
+                                                "Ground truth [kW]": 1
+                                            },
+                                            "excludeByName": {
+                                                "actual_power": true
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "value",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "minVizWidth": 100,
+                                "minVizHeight": 60,
+                                "justifyMode": "center",
+                                "wideLayout": false,
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#999999"
+                                    },
+                                    "decimals": 1
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "opendt-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 9,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "simulated_power",
+                                                        "text": "simulated_power",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "simulated_power/1000",
+                                                        "text": "OpenDT [kW]",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "simulated_power": 0,
+                                                "OpenDT [kW]": 1
+                                            },
+                                            "excludeByName": {
+                                                "simulated_power": true
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "stat",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "reduceOptions": {
+                                    "fields": "/.*/"
+                                },
+                                "colorMode": "value",
+                                "graphMode": "none",
+                                "textMode": "value_and_name",
+                                "orientation": "vertical",
+                                "minVizWidth": 100,
+                                "minVizHeight": 60,
+                                "justifyMode": "center",
+                                "wideLayout": false,
+                                "text": {
+                                    "titleSize": 12,
+                                    "valueSize": 22
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "#009E73"
+                                    },
+                                    "decimals": 1
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "gap-now": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 10,
+                    "title": "",
+                    "description": "",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -995,16 +1077,6 @@
                                                 ],
                                                 "computed_columns": [
                                                     {
-                                                        "selector": "actual_power/1000",
-                                                        "text": "Ground truth [kW]",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "simulated_power/1000",
-                                                        "text": "OpenDT [kW]",
-                                                        "type": "number"
-                                                    },
-                                                    {
                                                         "selector": "(simulated_power - actual_power)/1000",
                                                         "text": "Gap [kW]",
                                                         "type": "number"
@@ -1024,9 +1096,7 @@
                                             "indexByName": {
                                                 "actual_power": 0,
                                                 "simulated_power": 1,
-                                                "Ground truth [kW]": 2,
-                                                "OpenDT [kW]": 3,
-                                                "Gap [kW]": 4
+                                                "Gap [kW]": 2
                                             },
                                             "excludeByName": {
                                                 "actual_power": true,
@@ -1078,7 +1148,7 @@
             "mape-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 11,
                     "title": "",
                     "description": "The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes. Red from 10%, the community-accepted error rate.",
                     "transparent": false,
@@ -1188,7 +1258,7 @@
             "co2-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 12,
                     "title": "",
                     "description": "The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.",
                     "transparent": false,
@@ -1297,7 +1367,7 @@
             "hosts-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 13,
                     "title": "Hosts in use",
                     "description": "Hosts running at least one job, of all the hosts of the twin. An idle host draws power for nothing.",
                     "transparent": false,
@@ -1454,7 +1524,7 @@
             "jobs-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 14,
                     "title": "Jobs running",
                     "description": "Jobs running, of the jobs submitted and not done yet. Green when all run, orange when some wait.",
                     "transparent": false,
@@ -1608,10 +1678,163 @@
                     }
                 }
             },
+            "decisions": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 15,
+                    "title": "Decisions",
+                    "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/events?markers=on",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "time",
+                                                        "text": "Time",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "text",
+                                                        "text": "Change",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "by",
+                                                        "text": "By",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Time": 0,
+                                                "Change": 1,
+                                                "By": 2
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "kind": "sortBy",
+                                    "spec": {
+                                        "id": "sortBy",
+                                        "options": {
+                                            "sort": [
+                                                {
+                                                    "field": "Time",
+                                                    "desc": true
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "table",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "showHeader": false
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "unit": "locale",
+                                    "custom": {
+                                        "minWidth": 70
+                                    }
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Time"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "time:MM-DD HH:mm"
+                                            },
+                                            {
+                                                "id": "custom.width",
+                                                "value": 95
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Change"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.cellOptions",
+                                                "value": {
+                                                    "type": "auto",
+                                                    "wrapText": true
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "By"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.width",
+                                                "value": 80
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
             "power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 16,
                     "title": "Power draw",
                     "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
                     "transparent": false,
@@ -1837,7 +2060,7 @@
             "co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 17,
                     "title": "CO₂ emissions vs. carbon intensity",
                     "description": "The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.",
                     "transparent": false,
@@ -2012,7 +2235,7 @@
             "hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 18,
                     "title": "Hosts available vs. in use",
                     "description": "The hosts the twin has and the hosts in use, over time.",
                     "transparent": false,
@@ -2170,7 +2393,7 @@
             "start": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 15,
+                    "id": 19,
                     "title": "",
                     "description": "",
                     "transparent": true,
@@ -2255,7 +2478,7 @@
             "pick-0": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 16,
+                    "id": 20,
                     "title": "Performance",
                     "description": "",
                     "transparent": false,
@@ -2339,7 +2562,7 @@
             "pick-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
+                    "id": 21,
                     "title": "Utilization",
                     "description": "",
                     "transparent": false,
@@ -2423,7 +2646,7 @@
             "pick-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 22,
                     "title": "Sustainability",
                     "description": "",
                     "transparent": false,
@@ -2507,7 +2730,7 @@
             "pick-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 23,
                     "title": "Twin accuracy",
                     "description": "",
                     "transparent": false,
@@ -2591,7 +2814,7 @@
             "scheduling-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 24,
                     "title": "P1  Performance now",
                     "description": "",
                     "transparent": false,
@@ -2805,7 +3028,7 @@
             "completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 25,
                     "title": "P2  Total runtime",
                     "description": "",
                     "transparent": false,
@@ -2986,7 +3209,7 @@
             "queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 26,
                     "title": "P3  Time in queue",
                     "description": "",
                     "transparent": false,
@@ -3167,7 +3390,7 @@
             "jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 27,
                     "title": "P4  Jobs",
                     "description": "",
                     "transparent": false,
@@ -3346,7 +3569,7 @@
             "jobs-left": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 28,
                     "title": "P5  Jobs waiting or running",
                     "description": "",
                     "transparent": false,
@@ -3506,7 +3729,7 @@
             "utilization-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 29,
                     "title": "U1  Utilization now",
                     "description": "",
                     "transparent": false,
@@ -3679,7 +3902,7 @@
             "cpu": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 30,
                     "title": "U2  CPU utilization of the hosts",
                     "description": "",
                     "transparent": false,
@@ -3892,7 +4115,7 @@
             "demand": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 31,
                     "title": "U3  CPU demand vs. capacity",
                     "description": "",
                     "transparent": false,
@@ -4050,7 +4273,7 @@
             "cpu-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 32,
                     "title": "U4  Hosts per CPU utilization",
                     "description": "",
                     "transparent": false,
@@ -4193,7 +4416,7 @@
             "idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 33,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "transparent": false,
@@ -4389,7 +4612,7 @@
             "energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 34,
                     "title": "S1  This $period",
                     "description": "",
                     "transparent": false,
@@ -4543,7 +4766,7 @@
             "energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 35,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "transparent": false,
@@ -4728,7 +4951,7 @@
             "carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 36,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "transparent": false,
@@ -4941,7 +5164,7 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 37,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "transparent": false,
@@ -5122,7 +5345,7 @@
             "idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 38,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "transparent": false,
@@ -5303,7 +5526,7 @@
             "accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 39,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "transparent": false,
@@ -5518,7 +5741,7 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 40,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "transparent": false,
@@ -5702,7 +5925,7 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 41,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "transparent": false,
@@ -5829,7 +6052,7 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 42,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "transparent": false,
@@ -5959,7 +6182,7 @@
             "energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 43,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "transparent": false,
@@ -6147,7 +6370,33 @@
                                             "spec": {
                                                 "x": 0,
                                                 "y": 0,
-                                                "width": 4,
+                                                "width": 6,
+                                                "height": 2,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "brand"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 2,
+                                                "width": 6,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "control"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 6,
+                                                "y": 0,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6158,22 +6407,35 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 4,
+                                                "x": 9,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 10,
+                                                "x": 11,
                                                 "y": 0,
-                                                "width": 14,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 13,
+                                                "y": 0,
+                                                "width": 11,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6184,35 +6446,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 0,
-                                                "y": 4,
-                                                "width": 6,
-                                                "height": 7,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "control"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 11,
-                                                "width": 6,
-                                                "height": 6,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "decisions"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
                                                 "x": 6,
                                                 "y": 4,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6223,13 +6459,39 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 4,
-                                                "width": 5,
+                                                "width": 2,
                                                 "height": 3,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "power-now"
+                                                    "name": "measured-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 10,
+                                                "y": 4,
+                                                "width": 2,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "opendt-now"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 12,
+                                                "y": 4,
+                                                "width": 2,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "gap-now"
                                                 }
                                             }
                                         },
@@ -6290,7 +6552,20 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 7,
-                                                "width": 6,
+                                                "width": 18,
+                                                "height": 3,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "decisions"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 10,
+                                                "width": 8,
                                                 "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6301,9 +6576,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 12,
-                                                "y": 7,
-                                                "width": 6,
+                                                "x": 8,
+                                                "y": 10,
+                                                "width": 8,
                                                 "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6314,9 +6589,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 18,
-                                                "y": 7,
-                                                "width": 6,
+                                                "x": 16,
+                                                "y": 10,
+                                                "width": 8,
                                                 "height": 10,
                                                 "element": {
                                                     "kind": "ElementReference",

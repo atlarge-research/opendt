@@ -3,17 +3,17 @@
 import json
 from pathlib import Path
 
-from panels import BROWSER_API, PERIODS, WEEK
+from panels import BROWSER_API, PERIODS, STATUS, WEEK, target
 
 JS = Path(__file__).parent / "js"
-STATUS = f"{BROWSER_API}/api/status"
+BROWSER_STATUS = f"{BROWSER_API}/api/status"
 SCREENS = [
     ("opendt-overview", "Detailed"),
     ("opendt-simple", "Simple"),
     ("opendt-topology", "Topology"),
     ("opendt-tutorial", "Tutorial"),
 ]
-VIEW = ["screen", "window", "period", "markers", "infrastructure"]  # never sent to the twin
+VIEW = ["screen", "window", "period", "markers"]  # what the screen shows, never sent to the twin
 ZONES = ["NL", "PL", "DE", "RO"]  # the API's twin.CARBON_TRACES; SURF's twin starts on NL
 SCHEDULERS = ["Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"]
 SPEEDS = [(1, "1x (real time)"), (60, "60x"), (300, "300x"), (3600, "3,600x"), (-1, "Maximum")]
@@ -64,16 +64,6 @@ CALIBRATOR = [
 ]
 # the first group of hosts: SURF's, until changed on Topology
 HOSTS = field("hosts", "Hosts", "number", min=1)
-# the Topology screen, where the hosts are edited group by group
-INFRASTRUCTURE = {
-    "uid": "infrastructure",
-    "id": "infrastructure",
-    "title": "",
-    "type": "link",
-    "value": "/d/opendt-topology",
-    "linkText": "✎ Infrastructure",
-    "target": "_self",
-}
 CONFIRM = {
     "title": "Apply",
     "body": "The view changes at once, the twin from its next window of operation.",
@@ -88,7 +78,7 @@ def form(elements, initial_code, update_code, **options):
     return {
         "type": "volkovlabs-form-panel",
         "options": {
-            "initial": {"method": "GET", "url": f"{BROWSER_API}/api/status", "code": initial_code},
+            "initial": {"method": "GET", "url": BROWSER_STATUS, "code": initial_code},
             "update": {
                 "method": "PATCH",
                 "url": f"{BROWSER_API}/api/control",
@@ -106,11 +96,8 @@ def form(elements, initial_code, update_code, **options):
 
 
 def fit(element, width):
-    """An element in a tile: no tooltip (no room for its icon), a link without a label, a slider as wide as
-    it takes."""
+    """An element in a tile: no tooltip (no room for its icon), a slider as wide as it takes."""
     fitted = {k: v for k, v in element.items() if k != "tooltip"}
-    if element["type"] == "link":
-        return fitted | {"labelWidth": 1, "width": 20}
     if element["type"] == "slider":
         return fitted | {"labelWidth": width}
     return {"width": 11} | fitted | {"labelWidth": width}
@@ -147,11 +134,12 @@ def control(screen, own_fields=(), period=True):
         select("screen", "Screen", SCREENS, value=screen),
         select(
             "window",
-            "Time",
+            "Period",
             [("week", "Week"), ("day", "Day"), ("hours", "6 h")],
             "radio",
             value="week",
         ),
+        SPEED,
         # the markers on the graphs
         select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
     ]
@@ -172,7 +160,7 @@ def control(screen, own_fields=(), period=True):
         reset={"text": "Full screen", "icon": "monitor", "variant": "secondary"},
         resetAction={"mode": "custom", "code": script("full_screen.js"), "confirm": False},
     )
-    return {**panel, "title": "OpenDT"}
+    return {**panel, "title": ""}  # under the logo and the name
 
 
 def picker(title, plots):
@@ -193,3 +181,50 @@ def picker(title, plots):
             ],
         },
     }
+
+
+BOX = """.lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px; }
+.lever small { font-size: 12px; }
+.lever b { font-size: 24px; font-weight: 500; }
+.lever span { display: flex; gap: 12px; font-size: 12px; }
+.lever a { color: #6e9fff; cursor: pointer; }
+.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;
+  border-radius: 2px; padding: 2px 6px; width: 7em; }"""
+
+
+def box(element, link=None):
+    """A lever in a box, as a value of the twin's: its value now; ✎ Change edits it in place, and Apply, once
+    confirmed, sends it to the twin (from the browser, to the API's port); `link`: (text, address)."""
+    key, title = element["id"], element["title"]
+    choices = ",".join(str(o["value"]) for o in element.get("options", []))
+    data = f' data-choices="{choices}"' if choices else ""
+    more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
+    content = (
+        f'<div class="lever" data-key="{key}" data-name="{title}" data-value="{{{{{key}}}}}"{data}>'
+        f'<small>{title}</small><b>{{{{{key}}}}}</b><span><a class="edit">✎ Change</a>{more}</span></div>'
+    )
+    return {
+        "type": "marcusolsson-dynamictext-panel",
+        "title": "",
+        "targets": [target(STATUS, [(key, key, "string")]) | {"root_selector": ""}],
+        "options": {
+            "renderMode": "everyRow",
+            "content": content,
+            "defaultContent": f'<div class="lever"><small>{title}</small><b>…</b></div>',
+            "styles": BOX,
+            "afterRender": script("box.js", control=f"{BROWSER_API}/api/control"),
+        },
+    }
+
+
+# the logo and the name, over the control panel
+BRAND = {
+    "type": "text",
+    "title": "",
+    "options": {
+        "mode": "html",
+        "content": '<div style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600">'
+        '<img src="/public/img/opendt.png" height="40">OpenDT</div>',
+    },
+}

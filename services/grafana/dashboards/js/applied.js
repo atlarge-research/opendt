@@ -14,7 +14,7 @@ if (response && response.ok) {
   if (sent.screen) {
     // not ${markers}: Grafana would put its own variable there
     const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };
-    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);
+    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);
   } else {
     address.partial(view);
   }

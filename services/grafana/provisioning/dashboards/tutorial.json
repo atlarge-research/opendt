@@ -62,7 +62,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 1,
-                    "title": "OpenDT",
+                    "title": "",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -83,15 +83,15 @@
                                 "initial": {
                                     "method": "GET",
                                     "url": "http://localhost:3001/api/status",
-                                    "code": "const start = {\"screen\": \"opendt-tutorial\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://localhost:3001/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
+                                    "code": "const start = {\"screen\": \"opendt-tutorial\"};\nconst week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst status = \"http://api:8000/api/status\";\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the view as the address has it, the twin's levers as the API has them\nconst view = { ...start, window: '${window}', period: '${period}', markers: '${markers}' };\ncontext.panel.patchFormValue(view);\ncontext.panel.setInitial({ ...context.panel.initial, ...view });\n// a screen that starts on Day or 6 h shows the week until the twin's time is known\nconst address = context.grafana.locationService;\nconst { from = week.from, to = week.to } = address.getSearchObject();\nif (view.window !== 'week' && from === week.from && to === week.to && context.panel.initial.twin_time) {\n  address.partial(range(view.window, context.panel.initial.twin_time), true);\n}\n// Day and 6 h follow the twin: every 10 s, once its time passes the view's end, the view moves to its last\n// hours; one timer per browser tab, though each screen and step mounts the control panel anew\nglobalThis.followTwin ??= setInterval(async () => {\n  const address = context.grafana.locationService;\n  const { 'var-window': shown = 'week', to } = address.getSearchObject();\n  if (shown === 'week') return;\n  const { twin_time } = await (await fetch(status)).json();\n  const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\n  if (Date.parse(twin_time) > end) address.partial(range(shown, twin_time), true);\n}, 10000);\n// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
                                 },
                                 "update": {
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
+                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
                                 "sync": false,
                                 "elements": [
@@ -128,7 +128,7 @@
                                     {
                                         "uid": "window",
                                         "id": "window",
-                                        "title": "Time",
+                                        "title": "Period",
                                         "type": "radio",
                                         "labelWidth": 14,
                                         "options": [
@@ -149,6 +149,41 @@
                                             }
                                         ],
                                         "value": "week"
+                                    },
+                                    {
+                                        "uid": "speed_factor",
+                                        "id": "speed_factor",
+                                        "title": "Speed",
+                                        "type": "select",
+                                        "labelWidth": 14,
+                                        "options": [
+                                            {
+                                                "id": "1",
+                                                "label": "1x (real time)",
+                                                "value": 1
+                                            },
+                                            {
+                                                "id": "60",
+                                                "label": "60x",
+                                                "value": 60
+                                            },
+                                            {
+                                                "id": "300",
+                                                "label": "300x",
+                                                "value": 300
+                                            },
+                                            {
+                                                "id": "3600",
+                                                "label": "3,600x",
+                                                "value": 3600
+                                            },
+                                            {
+                                                "id": "-1",
+                                                "label": "Maximum",
+                                                "value": -1
+                                            }
+                                        ],
+                                        "width": 14
                                     },
                                     {
                                         "uid": "markers",
@@ -254,74 +289,56 @@
                     "data": {
                         "kind": "QueryGroup",
                         "spec": {
-                            "queries": [],
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "hosts",
+                                                        "text": "hosts",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
                             "transformations": [],
                             "queryOptions": {}
                         }
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
+                        "group": "marcusolsson-dynamictext-panel",
                         "version": "",
                         "spec": {
                             "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
-                                    {
-                                        "width": 11,
-                                        "uid": "hosts",
-                                        "id": "hosts",
-                                        "title": "Hosts",
-                                        "type": "number",
-                                        "labelWidth": 9,
-                                        "min": 1
-                                    },
-                                    {
-                                        "uid": "infrastructure",
-                                        "id": "infrastructure",
-                                        "title": "",
-                                        "type": "link",
-                                        "value": "/d/opendt-topology",
-                                        "linkText": "✎ Infrastructure",
-                                        "target": "_self",
-                                        "labelWidth": 1,
-                                        "width": 20
-                                    }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
-                                    },
-                                    "confirm": "Apply"
-                                },
-                                "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
-                                },
-                                "reset": {
-                                    "variant": "hidden"
-                                },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
-                                }
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-key=\"hosts\" data-name=\"Hosts\" data-value=\"{{hosts}}\"><small>Hosts</small><b>{{hosts}}</b><span><a class=\"edit\">✎ Change</a><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Hosts</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -331,7 +348,7 @@
                     }
                 }
             },
-            "lever-twin": {
+            "lever-zone": {
                 "kind": "Panel",
                 "spec": {
                     "id": 3,
@@ -342,119 +359,126 @@
                     "data": {
                         "kind": "QueryGroup",
                         "spec": {
-                            "queries": [],
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "carbon_zone",
+                                                        "text": "carbon_zone",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
                             "transformations": [],
                             "queryOptions": {}
                         }
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "volkovlabs-form-panel",
+                        "group": "marcusolsson-dynamictext-panel",
                         "version": "",
                         "spec": {
                             "options": {
-                                "initial": {
-                                    "method": "GET",
-                                    "url": "http://localhost:3001/api/status",
-                                    "code": "// while the twin starts, the API has no status yet: ask again in 5 s\nif (!context.panel.initial?.twin_time) setTimeout(() => context.panel.initialRequest(), 5000);\n"
-                                },
-                                "update": {
-                                    "method": "PATCH",
-                                    "url": "http://localhost:3001/api/control",
-                                    "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
-                                    "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
-                                },
-                                "sync": false,
-                                "elements": [
-                                    {
-                                        "width": 11,
-                                        "uid": "carbon_zone",
-                                        "id": "carbon_zone",
-                                        "title": "CO₂ zone",
-                                        "type": "radio",
-                                        "labelWidth": 9,
-                                        "options": [
-                                            {
-                                                "id": "NL",
-                                                "label": "NL",
-                                                "value": "NL"
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-key=\"carbon_zone\" data-name=\"CO₂ zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\"><small>CO₂ zone</small><b>{{carbon_zone}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>CO₂ zone</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-scheduler": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 4,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
                                             },
-                                            {
-                                                "id": "PL",
-                                                "label": "PL",
-                                                "value": "PL"
-                                            },
-                                            {
-                                                "id": "DE",
-                                                "label": "DE",
-                                                "value": "DE"
-                                            },
-                                            {
-                                                "id": "RO",
-                                                "label": "RO",
-                                                "value": "RO"
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "scheduler",
+                                                        "text": "scheduler",
+                                                        "type": "string"
+                                                    }
+                                                ]
                                             }
-                                        ]
-                                    },
-                                    {
-                                        "width": 14,
-                                        "uid": "speed_factor",
-                                        "id": "speed_factor",
-                                        "title": "Speed",
-                                        "type": "select",
-                                        "labelWidth": 9,
-                                        "options": [
-                                            {
-                                                "id": "1",
-                                                "label": "1x (real time)",
-                                                "value": 1
-                                            },
-                                            {
-                                                "id": "60",
-                                                "label": "60x",
-                                                "value": 60
-                                            },
-                                            {
-                                                "id": "300",
-                                                "label": "300x",
-                                                "value": 300
-                                            },
-                                            {
-                                                "id": "3600",
-                                                "label": "3,600x",
-                                                "value": 3600
-                                            },
-                                            {
-                                                "id": "-1",
-                                                "label": "Maximum",
-                                                "value": -1
-                                            }
-                                        ]
+                                        }
                                     }
-                                ],
-                                "confirmModal": {
-                                    "title": "Apply",
-                                    "body": "The view changes at once, the twin from its next window of operation.",
-                                    "columns": {
-                                        "name": "",
-                                        "oldValue": "Now",
-                                        "newValue": "New"
-                                    },
-                                    "confirm": "Apply"
-                                },
-                                "submit": {
-                                    "text": "Apply",
-                                    "icon": "pen"
-                                },
-                                "reset": {
-                                    "variant": "hidden"
-                                },
-                                "buttonGroup": {
-                                    "orientation": "left",
-                                    "size": "sm"
                                 }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-key=\"scheduler\" data-name=\"Scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\"><small>Scheduler</small><b>{{scheduler}}</b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Scheduler</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the change to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst { key, name, value, choices } = box?.dataset ?? {};\nif (key) {\n  const shown = box.querySelector('b');\n  if (!choices) shown.textContent = Number(value).toLocaleString('en');\n  const open = () => {\n    const draft = editing[key];\n    shown.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c) => '<option' + (c === draft ? ' selected' : '') + '>' + c + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"1\" value=\"' + draft + '\">';\n    box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n    const input = shown.querySelector('select, input');\n    input.oninput = () => (editing[key] = input.value);\n    box.querySelector('.cancel').onclick = () => {\n      delete editing[key];\n      context.grafana.refresh();\n    };\n    box.querySelector('.apply').onclick = async () => {\n      if (input.value === value) return box.querySelector('.cancel').click();\n      if (!confirm(name + ': ' + value + ' to ' + input.value + '? The twin follows from its next window.')) return;\n      const change = { [key]: choices ? input.value : Number(input.value) };\n      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n      if (response.ok) {\n        delete editing[key];\n        context.grafana.notifySuccess(['OpenDT', 'Applied']);\n        context.grafana.refresh();\n      } else {\n        const { detail } = await response.json();\n        context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n      }\n    };\n  };\n  if (key in editing) open();\n  else box.querySelector('.edit').onclick = () => {\n    editing[key] = value;\n    open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -467,7 +491,7 @@
             "lever-calibration": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 4,
+                    "id": 5,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -495,9 +519,9 @@
                                     "method": "PATCH",
                                     "url": "http://localhost:3001/api/control",
                                     "payloadMode": "custom",
-                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\", \"infrastructure\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
+                                    "getPayload": "const view = [\"screen\", \"window\", \"period\", \"markers\"];\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// on Apply, the changed levers go to the twin; the view changes once the twin has them (applied.js)\nconst levers = changed(context.panel).filter((e) => !view.includes(e.id));\nreturn Object.fromEntries(levers.map((e) => [e.id, e.value]));\n",
                                     "confirm": true,
-                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
+                                    "code": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\n// the fields whose value differs from the one the panel started with, or applied last\nconst changed = ({ elements, initial }) => elements.filter((e) => e.value !== initial[e.id]);\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\n// the twin has the levers: the form's values are the new baseline (Apply off again), and the view changes;\n// refused: the API's reason\nconst { response, initial } = context.panel;\nif (response && response.ok) {\n  const sent = Object.fromEntries(changed(context.panel).map((e) => [e.id, e.value]));\n  context.panel.setInitial({ ...initial, ...sent });\n  const address = context.grafana.locationService;\n  const view = {};\n  if (sent.period) view['var-period'] = sent.period;\n  if (sent.markers) view['var-markers'] = sent.markers;\n  if (sent.window) {\n    Object.assign(view, { 'var-window': sent.window }, range(sent.window, initial.twin_time));\n  }\n  if (sent.screen) {\n    // not ${markers}: Grafana would put its own variable there\n    const { from = week.from, to = week.to, 'var-markers': shown = 'on' } = { ...address.getSearchObject(), ...view };\n    address.push(`/d/${sent.screen}?from=${from}&to=${to}&var-markers=${shown}&kiosk`);\n  } else {\n    address.partial(view);\n  }\n  context.grafana.notifySuccess(['OpenDT', 'Applied']);\n} else if (response) {\n  response.json().then(({ detail }) => {\n    const reason = typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ');\n    context.grafana.notifyError(['OpenDT', reason]);\n  });\n}\n"
                                 },
                                 "sync": false,
                                 "elements": [
@@ -659,7 +683,7 @@
             "time-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 5,
+                    "id": 6,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -757,7 +781,7 @@
             "truth-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 7,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -866,7 +890,7 @@
             "opendt-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 8,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -975,7 +999,7 @@
             "mape-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 9,
                     "title": "",
                     "description": "The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes. Red from 10%, the community-accepted error rate.",
                     "transparent": false,
@@ -1085,7 +1109,7 @@
             "co2-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 10,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1194,7 +1218,7 @@
             "decisions": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 11,
                     "title": "Decisions",
                     "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
                     "transparent": false,
@@ -1347,7 +1371,7 @@
             "step-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 12,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1380,7 +1404,7 @@
             "step-1s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 13,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1413,7 +1437,7 @@
             "step-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 14,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1446,7 +1470,7 @@
             "step-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 15,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1479,7 +1503,7 @@
             "step-3s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 15,
+                    "id": 16,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1512,7 +1536,7 @@
             "step-4": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 16,
+                    "id": 17,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1545,7 +1569,7 @@
             "step-4s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
+                    "id": 18,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1578,7 +1602,7 @@
             "step-5": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 19,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1611,7 +1635,7 @@
             "step-5s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 20,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1644,7 +1668,7 @@
             "step-6": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 21,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1677,7 +1701,7 @@
             "step-6s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 22,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1710,7 +1734,7 @@
             "step-7": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 23,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1743,7 +1767,7 @@
             "step-7s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 24,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1776,7 +1800,7 @@
             "step-8": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 25,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1809,7 +1833,7 @@
             "step-9": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 26,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1842,7 +1866,7 @@
             "step-9s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 27,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1875,7 +1899,7 @@
             "step-10": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 28,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1908,7 +1932,7 @@
             "step-10s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 29,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1941,7 +1965,7 @@
             "step-11": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 30,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1974,7 +1998,7 @@
             "step-11s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 31,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2007,7 +2031,7 @@
             "step-12": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 32,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2040,7 +2064,7 @@
             "step-12s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 33,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2073,7 +2097,7 @@
             "plot-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 34,
                     "title": "Power draw",
                     "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
                     "transparent": false,
@@ -2299,7 +2323,7 @@
             "plot-accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 35,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "transparent": false,
@@ -2514,7 +2538,7 @@
             "plot-mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 36,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "transparent": false,
@@ -2698,7 +2722,7 @@
             "plot-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 37,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "transparent": false,
@@ -2828,7 +2852,7 @@
             "plot-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 38,
                     "title": "Hosts available vs. in use",
                     "description": "The hosts the twin has and the hosts in use, over time.",
                     "transparent": false,
@@ -2986,7 +3010,7 @@
             "plot-idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 39,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "transparent": false,
@@ -3182,7 +3206,7 @@
             "plot-idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 40,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "transparent": false,
@@ -3363,7 +3387,7 @@
             "plot-queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 40,
+                    "id": 41,
                     "title": "P3  Time in queue",
                     "description": "",
                     "transparent": false,
@@ -3544,7 +3568,7 @@
             "plot-jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 41,
+                    "id": 42,
                     "title": "P4  Jobs",
                     "description": "",
                     "transparent": false,
@@ -3723,7 +3747,7 @@
             "plot-completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 42,
+                    "id": 43,
                     "title": "P2  Total runtime",
                     "description": "",
                     "transparent": false,
@@ -3904,7 +3928,7 @@
             "plot-energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 43,
+                    "id": 44,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "transparent": false,
@@ -4031,7 +4055,7 @@
             "plot-r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 44,
+                    "id": 45,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "transparent": false,
@@ -4158,7 +4182,7 @@
             "plot-intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 45,
+                    "id": 46,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "transparent": false,
@@ -4339,7 +4363,7 @@
             "plot-co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 46,
+                    "id": 47,
                     "title": "CO₂ emissions vs. carbon intensity",
                     "description": "The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.",
                     "transparent": false,
@@ -4514,7 +4538,7 @@
             "plot-energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 47,
+                    "id": 48,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "transparent": false,
@@ -4699,7 +4723,7 @@
             "plot-carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 48,
+                    "id": 49,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "transparent": false,
@@ -4912,7 +4936,7 @@
             "plot-energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 49,
+                    "id": 50,
                     "title": "S1  This $period",
                     "description": "",
                     "transparent": false,
@@ -5066,7 +5090,7 @@
             "start": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 50,
+                    "id": 51,
                     "title": "",
                     "description": "",
                     "transparent": true,
@@ -5225,11 +5249,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -5460,11 +5497,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -5695,11 +5745,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -5904,11 +5967,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -6139,11 +6215,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -6374,11 +6463,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -6596,11 +6698,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -6818,11 +6933,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -7053,11 +7181,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -7288,11 +7429,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -7497,11 +7651,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -7706,11 +7873,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -7928,11 +8108,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -8150,11 +8343,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -8359,11 +8565,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -8568,11 +8787,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -8777,11 +9009,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -8986,11 +9231,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -9195,11 +9453,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -9417,11 +9688,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -9639,11 +9923,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },
@@ -9848,11 +10145,24 @@
                                             "spec": {
                                                 "x": 4,
                                                 "y": 0,
-                                                "width": 6,
+                                                "width": 3,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "lever-twin"
+                                                    "name": "lever-zone"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 7,
+                                                "y": 0,
+                                                "width": 3,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-scheduler"
                                                 }
                                             }
                                         },

@@ -11,4 +11,6 @@ RUN grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install yesoreyeram-inf
     && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-form-panel 6.3.5 \
     && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-table-panel 3.6.8 \
     && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install marcusolsson-dynamictext-panel 6.3.0
+# the logo of the screens' panel
+COPY opendt.png /usr/share/grafana/public/img/opendt.png
 USER grafana

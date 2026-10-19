@@ -2,13 +2,13 @@
 
 import steps
 from form import (
+    BRAND,
     CALIBRATION,
     CALIBRATOR,
     HOSTS,
-    INFRASTRUCTURE,
     SCHEDULER,
-    SPEED,
     ZONE,
+    box,
     control,
     lever,
     picker,
@@ -32,9 +32,11 @@ from plots import (
 )
 
 
-def screen(uid, title, placed, rows=(), panels=None, variables=()):
-    """The levers' bar and the placed panels under it, then the `rows` of the other `panels`."""
-    placed = TOP + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
+def screen(uid, title, placed, rows=(), panels=None, variables=(), bar=True):
+    """The levers' bar (unless the screen places them itself) and the placed panels under it, then the `rows` of
+    the other `panels`."""
+    if bar:
+        placed = TOP + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
     top = row(
         "",
         grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]),
@@ -46,12 +48,14 @@ def screen(uid, title, placed, rows=(), panels=None, variables=()):
 
 # the tiles, in one row: the twin's time, power, MAPE, CO₂, hosts, and jobs
 TILE_PLACES = [
-    ("twin-time", 6, 0, 3),
-    ("power-now", 9, 0, 5),
-    ("mape-now", 14, 0, 2),
-    ("co2-now", 16, 0, 2),
-    ("hosts-now", 18, 0, 3),
-    ("jobs-now", 21, 0, 3),
+    ("twin-time", 6, 2),
+    ("measured-now", 8, 2),
+    ("opendt-now", 10, 2),
+    ("gap-now", 12, 2),
+    ("mape-now", 14, 2),
+    ("co2-now", 16, 2),
+    ("hosts-now", 18, 3),
+    ("jobs-now", 21, 3),
 ]
 # while the twin starts, a row above all: gone once its first window is complete
 STARTUP = row("", grid([("start", 0, 0, 24, 28)]), shown=when("twin", "equals", ""))
@@ -59,10 +63,20 @@ STARTUP = row("", grid([("start", 0, 0, 24, 28)]), shown=when("twin", "equals", 
 TWIN = query("twin", target(STATUS, [("twin_time", "twin_time", "string")]) | {"root_selector": ""})
 # the levers' bar at the top of every screen: the hosts, the CO₂ zone, the speed, and the calibration
 BAR = 4
+LEVERS = {
+    "lever-hosts": box(HOSTS, ("Infrastructure →", "/d/opendt-topology?kiosk")),
+    "lever-zone": box(ZONE),
+    "lever-scheduler": box(SCHEDULER),
+    "lever-calibration": lever([CALIBRATION, *CALIBRATOR], split=True),
+}
 TOP = [
-    ("lever-hosts", lever([HOSTS, INFRASTRUCTURE]), 0, 0, 4, BAR),
-    ("lever-twin", lever([ZONE, SPEED]), 4, 0, 6, BAR),
-    ("lever-calibration", lever([CALIBRATION, *CALIBRATOR], split=True), 10, 0, 14, BAR),
+    (name, LEVERS[name], x, 0, w, BAR)
+    for name, x, w in [
+        ("lever-hosts", 0, 4),
+        ("lever-zone", 4, 3),
+        ("lever-scheduler", 7, 3),
+        ("lever-calibration", 10, 14),
+    ]
 ]
 PICKERS = {f"pick-{i}": picker(title, plots) for i, (title, plots) in enumerate(ROWS.items())}
 
@@ -70,13 +84,25 @@ detailed = screen(
     "opendt-overview",
     "OpenDT, detailed",
     [
-        ("control", control("opendt-overview", [SCHEDULER]), 0, 0, 6, 7),
-        ("decisions", decisions, 0, 7, 6, 6),  # what the markers on the graphs stand for
-        *[(name, TILES[name], x, y, w, 3) for name, x, y, w in TILE_PLACES],
-        ("power", power, 6, 3, 6, 10),
-        ("co2", co2, 12, 3, 6, 10),
-        ("hosts", hosts, 18, 3, 6, 10),
+        # the top third: what the screen shows, the levers, the twin now, and the decisions; then the plots
+        ("brand", BRAND, 0, 0, 6, 2),
+        ("control", control("opendt-overview"), 0, 2, 6, 8),
+        *[
+            (name, LEVERS[name], x, 0, w, 4)
+            for name, x, w in [
+                ("lever-hosts", 6, 3),
+                ("lever-zone", 9, 2),
+                ("lever-scheduler", 11, 2),
+                ("lever-calibration", 13, 11),
+            ]
+        ],
+        *[(name, TILES[name], x, 4, w, 3) for name, x, w in TILE_PLACES],
+        ("decisions", decisions, 6, 7, 18, 3),  # what the markers on the graphs stand for
+        ("power", power, 0, 10, 8, 10),
+        ("co2", co2, 8, 10, 8, 10),
+        ("hosts", hosts, 16, 10, 8, 10),
     ],
+    bar=False,
     rows=[
         row(
             "Plots", grid([(name, 6 * i, 0, 6, 7) for i, name in enumerate(PICKERS)]), collapse=True

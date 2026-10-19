@@ -93,18 +93,27 @@ def test_graphs_mark_topology_changes(name):
     ],
 )
 def test_form_options(field, api):
-    elements = [
-        e
+    # in a form's list, or in a lever's box (its choices)
+    offered = [
+        [o["value"] for o in e["options"]]
         for name in OURS
         for _, kind, options, _ in panels(load(name))
         if kind == "volkovlabs-form-panel"
         for e in options.get("elements", [])
+        if e["id"] == field
+    ] + [
+        choices.split(",")
+        for name in OURS
+        for _, kind, options, _ in panels(load(name))
+        if kind == "marcusolsson-dynamictext-panel"
+        for choices in re.findall(
+            rf'data-key="{field}".*?data-choices="([^"]*)"', options["content"]
+        )
     ]
-    [offered, *same] = [[o["value"] for o in e["options"]] for e in elements if e["id"] == field]
-    assert offered == api and all(other == offered for other in same)
+    assert offered and all(choices == api for choices in offered)
 
 
 def test_home_page():
     compose = (REPO / "docker-compose.yml").read_text()
-    home = re.search(r"GF_USERS_HOME_PAGE=/d/(\S+)", compose).group(1)
+    home = re.search(r"GF_USERS_HOME_PAGE=/d/([\w-]+)", compose).group(1)
     assert home in [load(name)["metadata"]["name"] for name in OURS]

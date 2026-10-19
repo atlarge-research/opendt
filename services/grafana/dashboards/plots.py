@@ -68,6 +68,13 @@ TILES = {
     "opendt-now": tile(
         "OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1, color=GREEN
     ),
+    "gap-now": tiles(
+        POWER,
+        [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
+        [("(simulated_power - actual_power)/1000", "Gap [kW]")],
+        ["actual_power", "simulated_power"],
+        decimals=1,
+    ),
 }
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {
