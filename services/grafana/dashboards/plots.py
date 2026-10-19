@@ -75,6 +75,15 @@ TILES = {
         ["actual_power", "simulated_power"],
         decimals=1,
     ),
+    # the second row of the detailed screen: the jobs, the hosts, the period so far, and the calibration
+    "runtime-now": tile("Total runtime [h]", SCHEDULING, "completion_h", decimals=1),
+    "queue-now": tile("Queue time [min]", SCHEDULING, "queue_median_min", decimals=1),
+    "finished-now": tile("Jobs finished", NOW, "tasks_completed", unit="locale", decimals=0),
+    "cpu-now": tile("CPU utilization", NOW, "cpu_utilization", unit="percentunit", decimals=1),
+    "energy-sum": tile("Energy [kWh]", TOTALS, "energy_kwh", unit="locale", decimals=0),
+    "co2-sum": tile("CO₂ [kg]", TOTALS, "co2_kg", unit="locale", decimals=0),
+    "r-now": tile("Calibration r", ACCURACY, "r", decimals=1),
+    "energy-error-now": tile("Energy error [%]", ACCURACY, "energy_error_pct", decimals=1),
 }
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {

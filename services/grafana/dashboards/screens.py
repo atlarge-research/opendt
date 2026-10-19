@@ -49,16 +49,25 @@ def screen(uid, title, placed, rows=(), panels=None, variables=(), plots=()):
     return dashboard(uid, title, panels, [STARTUP, first, *rows], [TWIN, *variables])
 
 
-# the tiles, in one row: the twin's time, power, MAPE, CO₂, hosts, and jobs
+# the tiles, in two rows: the twin's time, power, MAPE, CO₂, hosts, and jobs, then the rest
 TILE_PLACES = [
-    ("twin-time", 6, 2),
-    ("measured-now", 8, 2),
-    ("opendt-now", 10, 2),
-    ("gap-now", 12, 2),
-    ("mape-now", 14, 2),
-    ("co2-now", 16, 2),
-    ("hosts-now", 18, 3),
-    ("jobs-now", 21, 3),
+    ("twin-time", 6, 0, 2),
+    ("measured-now", 8, 0, 2),
+    ("opendt-now", 10, 0, 2),
+    ("gap-now", 12, 0, 2),
+    ("mape-now", 14, 0, 2),
+    ("co2-now", 16, 0, 2),
+    ("hosts-now", 18, 0, 3),
+    ("jobs-now", 21, 0, 3),
+    # under them: the jobs, the hosts, the interval so far, and the calibration
+    ("runtime-now", 6, 4, 2),
+    ("queue-now", 8, 4, 2),
+    ("finished-now", 10, 4, 2),
+    ("cpu-now", 12, 4, 2),
+    ("energy-sum", 14, 4, 2),
+    ("co2-sum", 16, 4, 2),
+    ("r-now", 18, 4, 3),
+    ("energy-error-now", 21, 4, 3),
 ]
 # while the twin starts, a row above all: gone once its first window is complete
 STARTUP = row("", grid([("start", 0, 0, 24, 28)]), shown=when("twin", "equals", ""))
@@ -96,9 +105,9 @@ detailed = screen(
     "OpenDT, detailed",
     [
         # the top third: what the screen shows and the decisions, the twin now; then the plots
-        ("control", control(), 0, 0, 6, 5),
-        ("decisions", decisions, 0, 5, 6, 4),  # what the markers on the graphs stand for
-        *[(name, TILES[name], x, 0, w, 3) for name, x, w in TILE_PLACES],
+        ("control", control(), 0, 0, 6, 4),
+        ("decisions", decisions, 0, 4, 6, 4),  # what the markers on the graphs stand for
+        *[(name, TILES[name], x, y, w, 4) for name, x, y, w in TILE_PLACES],
     ],
     rows=[
         # a row shows while one of its plots is not hidden

@@ -24,6 +24,14 @@ info:
     The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes.
     Red from 10%, the community-accepted error rate.
   co2-now: The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.
+  runtime-now: The time from the submission to the end of the jobs finished last, the median.
+  queue-now: The time the jobs started last waited for a host, the median.
+  finished-now: The jobs finished since the twin started.
+  cpu-now: The CPU utilization of all the hosts of the twin, busy and idle.
+  energy-sum: The energy OpenDT predicts over the interval (day, week, ...) so far.
+  co2-sum: The CO₂ emitted over the interval so far, the energy times the carbon intensity of the CO₂ zone.
+  r-now: The calibration parameter r of the power model, as the Self-Calibrator picks it (fixed while calibration is off).
+  energy-error-now: The error of OpenDT's energy vs. the ground truth, over the last hour.
   power: The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.
   co2: The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.
   hosts: The hosts the twin has and the hosts in use, over time.

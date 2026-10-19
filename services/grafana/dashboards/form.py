@@ -13,7 +13,6 @@ SCREENS = [
     ("opendt-topology", "Topology"),
     ("opendt-tutorial", "Tutorial"),
 ]
-VIEW = ["window", "period", "markers"]  # what the screen shows, never sent to the twin
 ZONES = ["NL", "PL", "DE", "RO"]  # the API's twin.CARBON_TRACES; SURF's twin starts on NL
 SCHEDULERS = ["Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"]
 SPEEDS = [(1, "Real time"), (60, "60x"), (300, "300x"), (3600, "3,600x"), (-1, "Maximum")]
@@ -66,41 +65,11 @@ MAPE_WINDOW = select(
 )
 # the first group of hosts: SURF's, until changed on Topology
 HOSTS = field("hosts", "Hosts", "number", min=1)
-CONFIRM = {
-    "title": "Apply",
-    "body": "The view changes at once, the twin from its next window of operation.",
-    "columns": {"name": "", "oldValue": "Now", "newValue": "New"},
-    "confirm": "Apply",
-}
 
 
-def form(elements, initial_code, update_code, **options):
-    """A Business Forms panel on the API: its values from /api/status, its changes, once applied and
-    confirmed, to /api/control (from the browser, to the API's port)."""
-    return {
-        "type": "volkovlabs-form-panel",
-        "options": {
-            "initial": {"method": "GET", "url": BROWSER_STATUS, "code": initial_code},
-            "update": {
-                "method": "PATCH",
-                "url": f"{BROWSER_API}/api/control",
-                "payloadMode": "custom",
-                "getPayload": script("changed.js", "payload.js", view=VIEW),
-                "confirm": True,
-                "code": update_code,
-            },
-            "sync": False,  # true would reload the values at every refresh, over what is being typed
-            "elements": elements,
-            "confirmModal": CONFIRM,
-            **options,
-        },
-    }
-
-
-def control(own_fields=(), period=True):
-    """The control panel: what the screen shows, then the screen's own fields, so the same rows sit in the
-    same places on every screen. Nothing changes before Apply: then the changed levers go to the twin and the
-    view follows."""
+def control(period=True):
+    """The control panel: what the screen shows, in the same rows on every screen; a change shows at once. Its
+    values come from the address, the twin's time from the API (from the browser, to the API's port)."""
     view = [
         select(
             "window",
@@ -113,19 +82,20 @@ def control(own_fields=(), period=True):
         select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
     ]
     if period:
-        own_fields = [
-            select("period", "Interval", [(p, p) for p in PERIODS], value="day"),
-            *own_fields,
-        ]
-    panel = form(
-        [*view, *own_fields],
-        script("range.js", "initial.js", "follow.js", "retry.js", week=WEEK, status=STATUS),
-        script("changed.js", "range.js", "applied.js", week=WEEK),
-        submit={"text": "Apply"},
-        reset={"text": "Full screen", "icon": "monitor", "variant": "secondary"},
-        resetAction={"mode": "custom", "code": script("full_screen.js"), "confirm": False},
-    )
-    return {**panel, "title": ""}  # under the logo and the name
+        view.append(select("period", "Interval", [(p, p) for p in PERIODS], value="day"))
+    initial = script("range.js", "initial.js", "follow.js", "retry.js", week=WEEK, status=STATUS)
+    return {
+        "type": "volkovlabs-form-panel",
+        "title": "",
+        "options": {
+            "initial": {"method": "GET", "url": BROWSER_STATUS, "code": initial},
+            "update": {"method": "-"},
+            "updateEnabled": "disabled",  # no buttons
+            "elementValueChanged": script("range.js", "view.js", week=WEEK),
+            "sync": False,  # true would reload the values at every refresh
+            "elements": view,
+        },
+    }
 
 
 BOX = """.lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;
