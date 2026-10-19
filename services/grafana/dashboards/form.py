@@ -129,11 +129,11 @@ def control(own_fields=(), period=True):
 
 
 BOX = """.lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 4px; cursor: pointer; }
-.lever small { font-size: 12px; }
-.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }
+  justify-content: center; gap: 4px; cursor: pointer; container-type: inline-size; }
+.lever small { font-size: 12px; white-space: nowrap; }
+.lever b { font-size: min(24px, 18cqw); font-weight: 500; white-space: nowrap; }
 .lever i { font-style: normal; }
-.lever a { font-size: 12px; color: #8e8e8e; }
+.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }
 .lever:hover a { color: #6e9fff; }"""
 # a box, once clicked: larger, over the screen, with what its levers take
 OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;
@@ -204,7 +204,7 @@ def brand(uid, plots=()):
     """The logo and the name, and the screens: a click on one shows it, with the same time and markers;
     `plots`: (row, [(key, title)]) to show or hide, in a window that ☰ Plots opens."""
     tabs = "".join(
-        f'<a href="/d/{key}?${{__url_time_range}}&${{markers:queryparam}}&kiosk" style="{TAB}'
+        f'<a data-href="/d/{key}?${{__url_time_range}}&${{markers:queryparam}}&kiosk" style="{TAB}'
         + ('; background: #3d71d9; color: white">' if key == uid else '">')
         + f"{name}</a>"
         for key, name in SCREENS
@@ -223,6 +223,7 @@ def brand(uid, plots=()):
             "renderMode": "allRows",  # once, with or without data
             "content": html,
             "defaultContent": html,
-            "afterRender": script("plots.js", plots=plots, style=DIALOG) if plots else "",
+            "afterRender": script("links.js", "footer.js")
+            + (script("plots.js", plots=plots, style=DIALOG) if plots else ""),
         },
     }

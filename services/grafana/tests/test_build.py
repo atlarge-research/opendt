@@ -1,7 +1,6 @@
 """The screens: the provisioned JSON is what dashboards/ writes (change a plot there, run build.py)."""
 
 import re
-from html import escape
 
 import build
 import screens
@@ -55,12 +54,10 @@ def test_one_step_at_a_time():
     }
     assert step["query"].split(",") == list(rows)  # a row for each value of the step
     for n, (_, s) in enumerate(steps.ORDER, 1):
-        shown = [str(n)] + ([f"{n}s"] if "solution" in steps.QUESTIONS[s["question"]] else [])
-        for value in shown:  # the step, and the step with its solution
-            names = [i["spec"]["element"]["name"] for i in rows[value]["layout"]["spec"]["items"]]
-            assert {"control", f"step-{value}", *screens.BOXES} <= set(names)
-            plots = [name.removeprefix("plot-") for name in names if name.startswith("plot-")]
-            assert plots == s["plots"]
+        names = [i["spec"]["element"]["name"] for i in rows[str(n)]["layout"]["spec"]["items"]]
+        assert {"control", f"step-{n}", *screens.BOXES} <= set(names)
+        plots = [name.removeprefix("plot-") for name in names if name.startswith("plot-")]
+        assert plots == s["plots"]
 
 
 def test_card():
@@ -68,12 +65,12 @@ def test_card():
     for n, (_, step) in enumerate(steps.ORDER, 1):
         card = steps.card(n)["options"]["content"]
         linked = {int(i) for i in re.findall(r'var-step=(\d+)"', card)}
-        assert linked == set(range(1, last + 1)) - {n}  # every other step, folded
-        solution = steps.QUESTIONS[step["question"]].get("solution")
-        if solution:
-            first = escape(solution.splitlines()[0])
-            assert first not in card and f'var-step={n}s"' in card
-            assert first in steps.card(n, shown=True)["options"]["content"]
+        assert linked == set(range(1, last + 1)) - {n}  # every other step
+        assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 95  # on one line
+        assert (
+            '<p class="hint" hidden' in card
+        )  # every question has a hint, folded like the solution
+        assert step.get("answer", 1) in range(1, len(step.get("choices", [1])) + 1)
     assert ">Back<" not in steps.card(1)["options"]["content"]
     assert ">Next<" not in steps.card(last)["options"]["content"]
     middle = steps.card(2)["options"]["content"]

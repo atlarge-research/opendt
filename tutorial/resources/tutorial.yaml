@@ -1,38 +1,87 @@
-# The steps of the twin's Tutorial screen, per use case: a question of questions.yaml (its solution folded), what
-# to change on the twin, and the plots to look at, by their names in services/grafana/dashboards/plots.py.
+# The steps of the twin's Tutorial screen, per use case, numbered 1, 2, 3 on the screen: the question (`ask`, on
+# one line), its hint, what to change on the twin, its choices (`answer`: the right one, from 1; none: a guess), and
+# the plots to look at, by their names in services/grafana/dashboards/plots.py. The solution is the notebooks' (of
+# `question` in questions.yaml), unless the step has its own; hint and solution stay folded until asked for.
 # After a change, run services/grafana/dashboards/build.py.
 
 Dynamic autoscaling:
   - question: "1.1"
+    ask: Is OpenDT accurate enough for what-if analysis on SURF?
+    hint: 10% is the community-accepted error rate; see the Real-time MAPE.
     do: Calibration Off (the calibrator would fit r to the ground truth again after each change of hosts)
+    choices: ["Yes, its MAPE stays under 10%", "No, its MAPE goes over 10%"]
+    answer: 1
     plots: [power, accuracy-now, mape, error]
   - question: "1.2"
+    ask: SURF draws about 22 kW with its 277 hosts; how much would it draw with 2,770 hosts?
+    hint: A guess is enough; the next two steps check it.
+    choices: [About 22 kW, About 84 kW, About 220 kW]
     plots: [power, hosts]
   - question: "4.1"
+    ask: After the change, how do OpenDT's power draw and the ground truth move?
+    hint: The change applies from the twin's next window of operation; the ground truth is measured at SURF.
     do: Hosts 2,770, then Apply
+    choices: [Both go up, OpenDT's goes up and the ground truth stays the same, Both stay the same]
+    answer: 2
+    solution: >-
+      From the next window of operation, OpenDT twins 2,770 hosts: the predicted power draw goes up about 4x, while
+      the ground truth stays the same.
     plots: [power, hosts, idle-hosts, idle-power]
   - question: "1.3"
+    ask: How far is the power draw with 2,770 hosts from the guess, and why?
+    hint: Look at the idle hosts and at the power they draw.
+    choices: ["About 10x, as each host runs jobs", "About 4x, as the extra hosts are idle", About the same]
+    answer: 2
     plots: [power, idle-hosts, idle-power]
   - question: "1.4"
+    ask: With 138 and 69 hosts, how much power does SURF save, and what happens to the jobs?
+    hint: An idle host draws 25 W; look at the jobs waiting.
     do: Hosts 138, then Apply; later, Hosts 69
+    choices: ["Much power, and the jobs run as before", "Little power with 138 hosts, and some jobs wait"]
+    answer: 2
     plots: [power, queue, jobs, completion]
   - question: "1.6"
+    ask: Which costs of switching hosts off and on again does this estimate leave out?
+    hint: What does a host do before it can run a job, and who decides to switch it off?
     plots: [hosts, jobs]
 
 Simulation calibration:
   - question: "2.1"
+    ask: OpenDT under-estimates the ground truth; should the Self-Calibrator increase or decrease r?
+    hint: At the same CPU utilization, how does r change the power draw?
     do: Hosts 277 and Calibration On, then Apply
+    choices: [Increase r, Decrease r]
+    answer: 1
     plots: [power, error, energy-error]
   - question: "4.2"
+    ask: Which values of r does the Self-Calibrator pick in the first hours?
+    hint: The Self-Calibrator picks r in the Range of r, on the top bar.
     plots: [r, mape]
   - question: "2.4"
+    ask: Does the best r stay the same, and what does this mean for a twin that runs for weeks?
+    hint: Hardware behavior varies with temperature, aging, and firmware updates.
+    choices: [It stays the same, It changes over time]
+    answer: 2
     plots: [r, mape]
 
 CO₂-aware workload migration:
   - question: "3.1"
+    ask: Which of the four grids has the lowest carbon intensity during the SURF week?
+    hint: Change the CO₂ zone and compare the carbon intensity.
     do: CO₂ zone RO, then Apply; later, PL and DE
+    choices: [NL, PL, DE, RO]
+    answer: 4
     plots: [intensity, co2]
   - question: "3.3"
+    ask: Between the four grids, which numbers change, energy, CO₂, or both?
+    hint: Which of the two depends on the grid?
+    choices: [Energy, CO₂, Both]
+    answer: 2
+    solution: >-
+      The same energy on every grid, since the workload and the hosts are the same; the CO₂ emissions change with
+      the carbon intensity of the grid.
     plots: [energy, carbon, energy-now]
   - question: "3.4"
+    ask: Should SURF migrate its workload to RO, and what else does the human-in-the-loop weigh?
+    hint: Think beyond the carbon intensity of the grid.
     plots: [intensity, carbon]

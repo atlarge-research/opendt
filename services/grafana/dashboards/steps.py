@@ -1,11 +1,12 @@
-"""What each step of the Tutorial screen shows: tutorial/resources/tutorial.yaml, with the questions and
-solutions of the notebooks (questions.yaml)."""
+"""What each step of the Tutorial screen shows: tutorial/resources/tutorial.yaml, with the solutions of the
+notebooks (questions.yaml)."""
 
 from html import escape
 from pathlib import Path
 
 import yaml
-from panels import BLUE, BOX, FAINT, GREEN, INK, LINE, WHITE
+from form import script
+from panels import BLUE, BOX, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW
 from plots import ROWS, TILES, co2, hosts, power
 
 RESOURCES = Path(__file__).resolve().parents[3] / "tutorial" / "resources"
@@ -16,7 +17,7 @@ PLOTS |= {key: plot for plots in ROWS.values() for key, plot in plots.items()}
 # step n is ORDER[n - 1]: (use case, step)
 ORDER = [(use_case, step) for use_case, items in STEPS.items() for step in items]
 
-# this screen as it is (time, full screen, ...), at another step; Grafana fills in ${__url...}
+# this screen as it is (time, full screen, ...), at another step; links.js fills in ${__url...}
 HERE = "${__url.path}${__url.params:exclude:var-step}&var-step="
 CIRCLE = (
     "display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;"
@@ -32,7 +33,7 @@ def circled(n, current):
     """Step n in a circle, as the steps of a figure: filled if current, else a link to step n."""
     if n == current:
         return f'<span style="{CIRCLE};background:{BLUE};color:{WHITE}">{n}</span>'
-    return f'<a href="{HERE}{n}" style="{CIRCLE};border:1px solid {LINE};color:{INK}">{n}</a>'
+    return f'<a data-href="{HERE}{n}" style="{CIRCLE};border:1px solid {LINE};color:{INK}">{n}</a>'
 
 
 def navigator(current):
@@ -50,35 +51,57 @@ def navigator(current):
 
 
 def button(step, label):
-    return f'<a href="{HERE}{step}" style="{BUTTON}">{label}</a>'
+    return f'<a data-href="{HERE}{step}" style="{BUTTON}">{label}</a>'
 
 
-def note(color, text):
-    """A box of text with a rule on its left, in a colour of meaning."""
+def unfolds(name, label):
+    """A button that unfolds the hint or the solution."""
+    return f'<a data-show="{name}" style="{BUTTON};cursor:pointer">{label}</a>'
+
+
+def note(color, text, folded=""):
+    """A box of text with a rule on its left, in a colour of meaning; `folded`: hidden until its button."""
+    hidden = f' class="{folded}" hidden' if folded else ""
     return (
-        f'<p style="font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid {color};'
+        f'<p{hidden} style="font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid {color};'
         f'background:{BOX}">{text}</p>'
     )
 
 
-def card(n, shown=False):
-    """Step n as text: the steps, its question, and the levers to change (`shown`: its
-    solution instead); at the bottom, a button to show or fold the solution, then Back and Next."""
+def choices(options, answer):
+    """The choices of a question; `answer`: the right one, from 1 (none: a guess)."""
+    marks = [
+        "guess" if answer is None else "right" if i == answer else "wrong"
+        for i in range(1, len(options) + 1)
+    ]
+    buttons = "".join(
+        f'<a data-choice="{mark}" style="{BUTTON};cursor:pointer">{escape(option)}</a>'
+        for option, mark in zip(options, marks, strict=True)
+    )
+    return f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">{buttons}</div>'
+
+
+def card(n):
+    """Step n as text: the steps, its question (on one line), what to change, and its choices; under them, its hint
+    and its solution, folded until asked for; at the bottom, Hint and Solution, then Back and Next."""
     _, step = ORDER[n - 1]
-    q, question = step["question"], QUESTIONS[step["question"]]
+    solution = step.get("solution", QUESTIONS[step["question"]].get("solution"))
     lines = [
         navigator(n),
-        f'<p style="font-size:24px;color:{WHITE};margin:12px 0 0;max-width:1100px">'
-        f"<strong>Question {q}:</strong> {escape(question['question'].strip())}</p>",
+        f'<p style="font-size:20px;color:{WHITE};margin:12px 0 0;white-space:nowrap">'
+        f"<strong>Question {n}:</strong> {escape(step['ask'])}</p>",
     ]
-    if shown:
-        solution = escape(question["solution"].strip())
-        lines.append(note(GREEN, f"<strong>Solution {q}:</strong> {solution}"))
-    elif "do" in step:
+    if "do" in step:
         lines.append(note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}."))
-    left = []
-    if "solution" in question:
-        left = [button(n, "Hide solution") if shown else button(f"{n}s", "Solution")]
+    if "choices" in step:
+        lines.append(choices(step["choices"], step.get("answer")))
+    lines.append(note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"))
+    left = [unfolds("hint", "Hint")]
+    if solution:
+        lines.append(
+            note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution")
+        )
+        left.append(unfolds("solution", "Solution"))
     right = [
         button(i, label) for i, label in [(n - 1, "Back"), (n + 1, "Next")] if 1 <= i <= len(ORDER)
     ]
@@ -87,14 +110,20 @@ def card(n, shown=False):
         f'<div style="display:flex;gap:8px;margin-top:auto;padding-top:6px">{"".join(left)}'
         f'<div style="display:flex;gap:8px;margin-left:auto">{"".join(right)}</div></div>'
     )
-    column = "display:flex;flex-direction:column;height:100%"
+    column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
-    return {"type": "text", "title": "", "options": {"mode": "html", "content": content}}
+    colors = {"right": GREEN, "wrong": RED, "guess": BLUE}
+    return {
+        "type": "marcusolsson-dynamictext-panel",
+        "title": "",
+        "options": {
+            "renderMode": "allRows",  # once, with or without data
+            "content": content,
+            "defaultContent": content,
+            "afterRender": script("links.js", "step.js", colors=colors),
+        },
+    }
 
 
-# the values of the step variable: n, step n, and ns, step n with its solution shown
-SLIDES = []  # (value, step, card, shown)
-for n, (_, step) in enumerate(ORDER, 1):
-    SLIDES.append((str(n), step, card(n), False))
-    if "solution" in QUESTIONS[step["question"]]:
-        SLIDES.append((f"{n}s", step, card(n, shown=True), True))
+# the values of the step variable, 1, 2, 3, ...: (value, step, card)
+SLIDES = [(str(n), step, card(n)) for n, (_, step) in enumerate(ORDER, 1)]

@@ -158,9 +158,8 @@ LEFT = [
     ("co2-box", 3, 10, 3, 2),
     ("decisions", 0, 12, 6, 9),  # what the markers on the step's graphs stand for
 ]
-# the step's height, then its plots, all on a 1440x900 screen in full screen; with its solution, the
-# step is taller and the screen scrolls
-CARD, SOLUTION, PLOTS = 7, 10, 14
+# the step's height, then its plots, all on a 1440x900 screen in full screen; its hint and solution scroll in it
+CARD, PLOTS = 8, 13
 
 
 def split(names, x, y, width, height):
@@ -180,10 +179,9 @@ def stack(names, x, y, width, height):
     return [(name, x, tops[i], width, tops[i + 1] - tops[i]) for i, name in enumerate(names)]
 
 
-def slide(value, step, shown):
+def slide(value, step):
     """The row shown while the step variable has this value."""
-    card = SOLUTION if shown else CARD
-    plots = split([f"plot-{key}" for key in step["plots"]], 6, BAR + card, 18, PLOTS)
+    plots = split([f"plot-{key}" for key in step["plots"]], 6, BAR + CARD, 18, PLOTS)
     under = [(name, x, y + BAR, w, h) for name, x, y, w, h in LEFT]
     return row(
         "",
@@ -191,7 +189,7 @@ def slide(value, step, shown):
             [
                 *((name, x, y, w, h) for name, _, x, y, w, h in top("opendt-tutorial")),
                 *under,
-                (f"step-{value}", 6, BAR, 18, card),
+                (f"step-{value}", 6, BAR, 18, CARD),
                 *plots,
             ]
         ),
@@ -206,10 +204,10 @@ tutorial = dashboard(
     | {name: panel for name, panel, *_ in top("opendt-tutorial")}
     | BOXES
     | {"decisions": decisions}
-    | {f"step-{value}": card for value, _, card, _ in steps.SLIDES}
+    | {f"step-{value}": card for value, _, card in steps.SLIDES}
     | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]}
     | STARTING,
-    [STARTUP, *(slide(value, step, shown) for value, step, _, shown in steps.SLIDES)],
+    [STARTUP, *(slide(value, step) for value, step, _ in steps.SLIDES)],
     [
         TWIN,
         custom("period", "Interval", PERIODS, current="day"),
