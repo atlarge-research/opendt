@@ -16,7 +16,7 @@ SCREENS = [
 VIEW = ["window", "period", "markers"]  # what the screen shows, never sent to the twin
 ZONES = ["NL", "PL", "DE", "RO"]  # the API's twin.CARBON_TRACES; SURF's twin starts on NL
 SCHEDULERS = ["Mem", "CoreMem", "ActiveServers", "ActiveServersInv", "ProvisionedCores", "Random"]
-SPEEDS = [(1, "1x (real time)"), (60, "60x"), (300, "300x"), (3600, "3,600x"), (-1, "Maximum")]
+SPEEDS = [(1, "Real time"), (60, "60x"), (300, "300x"), (3600, "3,600x"), (-1, "Maximum")]
 
 
 def script(*names, **consts):
@@ -52,7 +52,7 @@ SCHEDULER = select(
     [(s, s) for s in SCHEDULERS],
     tooltip="OpenDC's placement policy; Mem is OpenDC's default",
 )
-SPEED = select("speed_factor", "Speed", SPEEDS, width=14)  # wide enough for Maximum
+SPEED = select("speed_factor", "Speed", SPEEDS)
 CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
 # the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
 PARALLEL = select(
@@ -109,7 +109,6 @@ def control(own_fields=(), period=True):
             "radio",
             value="week",
         ),
-        SPEED,
         # the markers on the graphs
         select("markers", "Decisions", [("on", "On"), ("off", "Off")], "radio", value="on"),
     ]
@@ -129,36 +128,23 @@ def control(own_fields=(), period=True):
     return {**panel, "title": ""}  # under the logo and the name
 
 
-def picker(title, plots):
-    """The plots of a row, ticked while shown; a change shows or hides a plot at once."""
-    mine = list(plots)
-    boxes = [option(key, plot["title"].replace("$period", "period")) for key, plot in plots.items()]
-    return {
-        "type": "volkovlabs-form-panel",
-        "title": title,
-        "options": {
-            "initial": {"method": "-", "code": script("shown.js", mine=mine)},
-            "update": {"method": "-"},
-            "updateEnabled": "disabled",  # no buttons
-            "elementValueChanged": script("pick.js", mine=mine),
-            "sync": False,
-            "elements": [
-                field("plots", "", "checkboxList", labelWidth=1, options=boxes, value=mine)
-            ],
-        },
-    }
-
-
 BOX = """.lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 4px; }
+  justify-content: center; gap: 4px; cursor: pointer; }
 .lever small { font-size: 12px; }
-.lever b { font-size: 24px; font-weight: 500; }
+.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }
 .lever i { font-style: normal; }
-.lever span { display: flex; gap: 12px; font-size: 12px; }
-.lever a { color: #6e9fff; cursor: pointer; }
-.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;
-  border-radius: 2px; padding: 2px 6px; width: 7em; }
-.lever input { width: 4.5em; }"""
+.lever a { font-size: 12px; color: #8e8e8e; }
+.lever:hover a { color: #6e9fff; }"""
+# a box, once clicked: larger, over the screen, with what its levers take
+OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;
+  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;
+  font-size: 14px; text-align: center; }
+.opendt-lever small { font-size: 12px; }
+.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;
+  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }
+.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }
+.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }
+.opendt-lever div button { flex: 1; }"""
 
 
 def value(element):
@@ -168,21 +154,21 @@ def value(element):
     if "options" in element:
         values = [o["value"] for o in element["options"]]
         data["choices"] = ",".join(v if isinstance(v, str) else json.dumps(v) for v in values)
-        data["labels"] = ",".join(o["label"] for o in element["options"])
+        data["labels"] = "|".join(o["label"] for o in element["options"])  # 3,600x
     else:
         data |= {k: element[k] for k in ("min", "max", "step") if k in element}
     return "<i" + "".join(f' data-{k}="{v}"' for k, v in data.items()) + f">{{{{{key}}}}}</i>"
 
 
 def box(*elements, title=None, link=None):
-    """Levers in a box, as values of the twin's: their values now (two: from-to); ✎ Change edits them in place,
-    and Apply, once confirmed, sends them to the twin (from the browser, to the API's port); `link`: (text,
-    address)."""
+    """Levers in a box, as values of the twin's: their values now (two: from-to); a click opens the box larger,
+    with what they take, and Apply, once confirmed, sends them to the twin (from the browser, to the API's port);
+    `link`: (text, address)."""
     title = title or elements[0]["title"]
     more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
     content = (
-        f'<div class="lever" data-name="{title}"><small>{title}</small><b>{"-".join(map(value, elements))}</b>'
-        f'<span><a class="edit">✎ Change</a>{more}</span></div>'
+        f'<div class="lever" data-name="{title}"><small>{title} <a>✎</a></small>'
+        f"<b>{'-'.join(map(value, elements))}</b>{more}</div>"
     )
     return {
         "type": "marcusolsson-dynamictext-panel",
@@ -195,7 +181,7 @@ def box(*elements, title=None, link=None):
             "content": content,
             "defaultContent": f'<div class="lever"><small>{title}</small><b>…</b></div>',
             "styles": BOX,
-            "afterRender": script("box.js", control=f"{BROWSER_API}/api/control"),
+            "afterRender": script("box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
         },
     }
 
@@ -203,21 +189,40 @@ def box(*elements, title=None, link=None):
 TAB = "padding: 2px 8px; border-radius: 2px; color: #ccccdc"
 
 
-def brand(uid):
-    """The logo and the name, and the screens: a click on one shows it, with the same time and markers."""
+# the window of the plots shown, over the screen
+DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;
+  justify-content: center; background: rgba(0, 0, 0, 0.6); }
+.opendt-plots > div { background: #181b1f; border: 1px solid #2f3238; border-radius: 4px; padding: 24px;
+  color: #ccccdc; font-size: 14px; }
+.opendt-plots section { display: grid; grid-template-columns: repeat(4, auto); gap: 40px; margin: 16px 0 24px; }
+.opendt-plots label { display: flex; gap: 8px; margin-top: 10px; cursor: pointer; }
+.opendt-plots button { float: right; background: #3d71d9; color: white; border: 0; border-radius: 2px;
+  padding: 6px 16px; cursor: pointer; }"""
+
+
+def brand(uid, plots=()):
+    """The logo and the name, and the screens: a click on one shows it, with the same time and markers;
+    `plots`: (row, [(key, title)]) to show or hide, in a window that ☰ Plots opens."""
     tabs = "".join(
         f'<a href="/d/{key}?${{__url_time_range}}&${{markers:queryparam}}&kiosk" style="{TAB}'
         + ('; background: #3d71d9; color: white">' if key == uid else '">')
         + f"{name}</a>"
         for key, name in SCREENS
     )
+    if plots:
+        tabs += f'<a class="plots" style="{TAB}; margin-left: auto; cursor: pointer">☰ Plots</a>'
+    html = (
+        '<div style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600">'
+        '<img src="/public/img/opendt.png" height="40">OpenDT</div>'
+        f'<div style="display: flex; gap: 4px; margin-top: 10px; font-size: 14px">{tabs}</div>'
+    )
     return {
-        "type": "text",
+        "type": "marcusolsson-dynamictext-panel",
         "title": "",
         "options": {
-            "mode": "html",
-            "content": '<div style="display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600">'
-            '<img src="/public/img/opendt.png" height="40">OpenDT</div>'
-            f'<div style="display: flex; gap: 4px; margin-top: 10px; font-size: 14px">{tabs}</div>',
+            "renderMode": "allRows",  # once, with or without data
+            "content": html,
+            "defaultContent": html,
+            "afterRender": script("plots.js", plots=plots, style=DIALOG) if plots else "",
         },
     }

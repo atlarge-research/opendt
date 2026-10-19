@@ -10,11 +10,11 @@ from form import (
     R_TO,
     R_VALUES,
     SCHEDULER,
+    SPEED,
     ZONE,
     box,
     brand,
     control,
-    picker,
 )
 from layout import all_of, auto, custom, dashboard, grid, picked, query, row, when
 from panels import PERIODS, STATUS, target
@@ -34,10 +34,12 @@ from plots import (
 )
 
 
-def screen(uid, title, placed, rows=(), panels=None, variables=()):
+def screen(uid, title, placed, rows=(), panels=None, variables=(), plots=()):
     """The logo, the screens, and the levers on top, the placed panels under them, then the `rows` of the other
-    `panels`."""
-    placed = top(uid) + [(name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed]
+    `panels`; `plots`, to show or hide."""
+    placed = top(uid, plots) + [
+        (name, panel, x, y + BAR, w, h) for name, panel, x, y, w, h in placed
+    ]
     first = row(
         "",
         grid([(name, x, y, w, h) for name, _, x, y, w, h in placed]),
@@ -68,49 +70,35 @@ LEVERS = {
     "lever-hosts": box(HOSTS, link=("Infrastructure →", "/d/opendt-topology?kiosk")),
     "lever-zone": box(ZONE),
     "lever-scheduler": box(SCHEDULER),
+    "lever-speed": box(SPEED),
     "lever-calibration": box(CALIBRATION),
     "lever-parallel": box(PARALLEL),
     "lever-r": box(R_FROM, R_TO, title="Range of r"),
     "lever-values": box(R_VALUES),
     "lever-mape": box(MAPE_WINDOW),
 }
-# their places, right of the logo
-LEVER_PLACES = [
-    ("lever-hosts", 6, 3),
-    ("lever-zone", 9, 2),
-    ("lever-scheduler", 11, 2),
-    ("lever-calibration", 13, 2),
-    ("lever-parallel", 15, 2),
-    ("lever-r", 17, 3),
-    ("lever-values", 20, 2),
-    ("lever-mape", 22, 2),
+
+
+def top(uid, plots=()):
+    """The logo and the screens, then the levers, all as wide."""
+    levers = [(name, LEVERS[name], 6 + 2 * i, 0, 2, BAR) for i, name in enumerate(LEVERS)]
+    return [("brand", brand(uid, plots), 0, 0, 6, BAR), *levers]
+
+
+# the plots of each row, by their titles, to show or hide
+ROW_PLOTS = [
+    (title, [(key, plot["title"].replace("$period", "period")) for key, plot in plots.items()])
+    for title, plots in ROWS.items()
 ]
-
-
-def top(uid):
-    levers = [(name, LEVERS[name], x, 0, w, BAR) for name, x, w in LEVER_PLACES]
-    return [("brand", brand(uid), 0, 0, 6, BAR), *levers]
-
-
-PICKERS = {f"pick-{i}": picker(title, plots) for i, (title, plots) in enumerate(ROWS.items())}
 
 detailed = screen(
     "opendt-overview",
     "OpenDT, detailed",
     [
-        # the top third: what the screen shows and the decisions; the twin now and the plots shown; then the plots
-        ("control", control(), 0, 0, 6, 6),
-        ("decisions", decisions, 0, 6, 6, 4),  # what the markers on the graphs stand for
+        # the top third: what the screen shows and the decisions, the twin now; then the plots
+        ("control", control(), 0, 0, 6, 5),
+        ("decisions", decisions, 0, 5, 6, 4),  # what the markers on the graphs stand for
         *[(name, TILES[name], x, 0, w, 3) for name, x, w in TILE_PLACES],
-        *[
-            (name, PICKERS[name], x, 3, w, 7)
-            for name, x, w in [
-                ("pick-0", 6, 5),
-                ("pick-1", 11, 4),
-                ("pick-2", 15, 5),
-                ("pick-3", 20, 4),
-            ]
-        ],
     ],
     rows=[
         # a row shows while one of its plots is not hidden
@@ -118,6 +106,7 @@ detailed = screen(
         for title, plots in ROWS.items()
     ],
     panels={key: plot for plots in ROWS.values() for key, plot in plots.items()},
+    plots=ROW_PLOTS,
     variables=[
         custom("period", "Interval", PERIODS, current="day"),
         # the hidden plots; "none", so the list is never empty

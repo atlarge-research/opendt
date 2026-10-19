@@ -121,41 +121,6 @@
                                         "value": "week"
                                     },
                                     {
-                                        "uid": "speed_factor",
-                                        "id": "speed_factor",
-                                        "title": "Speed",
-                                        "type": "select",
-                                        "labelWidth": 14,
-                                        "options": [
-                                            {
-                                                "id": "1",
-                                                "label": "1x (real time)",
-                                                "value": 1
-                                            },
-                                            {
-                                                "id": "60",
-                                                "label": "60x",
-                                                "value": 60
-                                            },
-                                            {
-                                                "id": "300",
-                                                "label": "300x",
-                                                "value": 300
-                                            },
-                                            {
-                                                "id": "3600",
-                                                "label": "3,600x",
-                                                "value": 3600
-                                            },
-                                            {
-                                                "id": "-1",
-                                                "label": "Maximum",
-                                                "value": -1
-                                            }
-                                        ],
-                                        "width": 14
-                                    },
-                                    {
                                         "uid": "markers",
                                         "id": "markers",
                                         "title": "Decisions",
@@ -266,12 +231,14 @@
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "text",
+                        "group": "marcusolsson-dynamictext-panel",
                         "version": "",
                         "spec": {
                             "options": {
-                                "mode": "html",
-                                "content": "<div style=\"display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"40\">OpenDT</div><div style=\"display: flex; gap: 4px; margin-top: 10px; font-size: 14px\"><a href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Detailed</a><a href=\"/d/opendt-simple?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Simple</a><a href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Topology</a><a href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; background: #3d71d9; color: white\">Tutorial</a></div>"
+                                "renderMode": "allRows",
+                                "content": "<div style=\"display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"40\">OpenDT</div><div style=\"display: flex; gap: 4px; margin-top: 10px; font-size: 14px\"><a href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Detailed</a><a href=\"/d/opendt-simple?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Simple</a><a href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Topology</a><a href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; background: #3d71d9; color: white\">Tutorial</a></div>",
+                                "defaultContent": "<div style=\"display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"40\">OpenDT</div><div style=\"display: flex; gap: 4px; margin-top: 10px; font-size: 14px\"><a href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Detailed</a><a href=\"/d/opendt-simple?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Simple</a><a href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc\">Topology</a><a href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: #ccccdc; background: #3d71d9; color: white\">Tutorial</a></div>",
+                                "afterRender": ""
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -338,10 +305,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"Hosts\"><small>Hosts</small><b><i data-key=\"hosts\" data-value=\"{{hosts}}\" data-min=\"1\">{{hosts}}</i></b><span><a class=\"edit\">✎ Change</a><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Hosts\"><small>Hosts <a>✎</a></small><b><i data-key=\"hosts\" data-value=\"{{hosts}}\" data-min=\"1\">{{hosts}}</i></b><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Hosts</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -408,10 +375,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"CO₂ zone\"><small>CO₂ zone</small><b><i data-key=\"carbon_zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\" data-labels=\"NL,PL,DE,RO\">{{carbon_zone}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"CO₂ zone\"><small>CO₂ zone <a>✎</a></small><b><i data-key=\"carbon_zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\" data-labels=\"NL|PL|DE|RO\">{{carbon_zone}}</i></b></div>",
                                 "defaultContent": "<div class=\"lever\"><small>CO₂ zone</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -478,10 +445,80 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"Scheduler\"><small>Scheduler</small><b><i data-key=\"scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\" data-labels=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\">{{scheduler}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Scheduler\"><small>Scheduler <a>✎</a></small><b><i data-key=\"scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\" data-labels=\"Mem|CoreMem|ActiveServers|ActiveServersInv|ProvisionedCores|Random\">{{scheduler}}</i></b></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Scheduler</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
+                            },
+                            "fieldConfig": {
+                                "defaults": {},
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "lever-speed": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 6,
+                    "title": "",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/status",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "",
+                                                "columns": [
+                                                    {
+                                                        "selector": "speed_factor",
+                                                        "text": "speed_factor",
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "marcusolsson-dynamictext-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "renderMode": "everyRow",
+                                "content": "<div class=\"lever\" data-name=\"Speed\"><small>Speed <a>✎</a></small><b><i data-key=\"speed_factor\" data-value=\"{{speed_factor}}\" data-choices=\"1,60,300,3600,-1\" data-labels=\"Real time|60x|300x|3,600x|Maximum\">{{speed_factor}}</i></b></div>",
+                                "defaultContent": "<div class=\"lever\"><small>Speed</small><b>…</b></div>",
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -494,7 +531,7 @@
             "lever-calibration": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 6,
+                    "id": 7,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -548,10 +585,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"Calibration\"><small>Calibration</small><b><i data-key=\"calibration\" data-value=\"{{calibration}}\" data-choices=\"true,false\" data-labels=\"On,Off\">{{calibration}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Calibration\"><small>Calibration <a>✎</a></small><b><i data-key=\"calibration\" data-value=\"{{calibration}}\" data-choices=\"true,false\" data-labels=\"On|Off\">{{calibration}}</i></b></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Calibration</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -564,7 +601,7 @@
             "lever-parallel": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 7,
+                    "id": 8,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -618,10 +655,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"Parallel runs\"><small>Parallel runs</small><b><i data-key=\"parallel_simulations\" data-value=\"{{parallel_simulations}}\" data-choices=\"1,2,4,8\" data-labels=\"1,2,4,8\">{{parallel_simulations}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Parallel runs\"><small>Parallel runs <a>✎</a></small><b><i data-key=\"parallel_simulations\" data-value=\"{{parallel_simulations}}\" data-choices=\"1,2,4,8\" data-labels=\"1|2|4|8\">{{parallel_simulations}}</i></b></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Parallel runs</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -634,7 +671,7 @@
             "lever-r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 8,
+                    "id": 9,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -693,10 +730,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"Range of r\"><small>Range of r</small><b><i data-key=\"calibration_min\" data-value=\"{{calibration_min}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_min}}</i>-<i data-key=\"calibration_max\" data-value=\"{{calibration_max}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_max}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Range of r\"><small>Range of r <a>✎</a></small><b><i data-key=\"calibration_min\" data-value=\"{{calibration_min}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_min}}</i>-<i data-key=\"calibration_max\" data-value=\"{{calibration_max}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_max}}</i></b></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Range of r</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -709,7 +746,7 @@
             "lever-values": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 10,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -763,10 +800,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"Values of r\"><small>Values of r</small><b><i data-key=\"calibration_points\" data-value=\"{{calibration_points}}\" data-min=\"2\" data-max=\"20\" data-step=\"1\">{{calibration_points}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"Values of r\"><small>Values of r <a>✎</a></small><b><i data-key=\"calibration_points\" data-value=\"{{calibration_points}}\" data-min=\"2\" data-max=\"20\" data-step=\"1\">{{calibration_points}}</i></b></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Values of r</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -779,7 +816,7 @@
             "lever-mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
+                    "id": 11,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -833,10 +870,10 @@
                         "spec": {
                             "options": {
                                 "renderMode": "everyRow",
-                                "content": "<div class=\"lever\" data-name=\"MAPE window\"><small>MAPE window</small><b><i data-key=\"mape_window\" data-value=\"{{mape_window}}\" data-choices=\"60,360,1440\" data-labels=\"1 h,6 h,24 h\">{{mape_window}}</i></b><span><a class=\"edit\">✎ Change</a></span></div>",
+                                "content": "<div class=\"lever\" data-name=\"MAPE window\"><small>MAPE window <a>✎</a></small><b><i data-key=\"mape_window\" data-value=\"{{mape_window}}\" data-choices=\"60,360,1440\" data-labels=\"1 h|6 h|24 h\">{{mape_window}}</i></b></div>",
                                 "defaultContent": "<div class=\"lever\"><small>MAPE window</small><b>…</b></div>",
-                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; }\n.lever i { font-style: normal; }\n.lever span { display: flex; gap: 12px; font-size: 12px; }\n.lever a { color: #6e9fff; cursor: pointer; }\n.lever select, .lever input { font-size: 16px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;\n  border-radius: 2px; padding: 2px 6px; width: 7em; }\n.lever input { width: 4.5em; }",
-                                "afterRender": "const control = \"http://localhost:3001/api/control\";\n// ✎ Change opens an editor in place; Apply, once confirmed, sends the changes to the twin. The screen's refreshes\n// draw the box anew, so an open editor is kept in window.opendtEditing and opened again\nconst box = context.element.querySelector('.lever');\nconst editing = (window.opendtEditing ??= {});\nconst levers = [...(box?.querySelectorAll('[data-key]') ?? [])];\nconst name = box?.dataset.name;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split(',')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nconst open = () => {\n  const draft = editing[name];\n  levers.forEach((lever) => {\n    const { key, choices, labels, min = '', max = '', step = 'any' } = lever.dataset;\n    lever.innerHTML = choices\n      ? '<select>' + choices.split(',').map((c, i) => '<option value=\"' + c + '\"' + (c === draft[key] ? ' selected' : '') + '>' + labels.split(',')[i] + '</option>').join('') + '</select>'\n      : '<input type=\"number\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\n    const input = lever.firstChild;\n    input.oninput = () => (draft[key] = input.value);\n  });\n  box.querySelector('.edit').outerHTML = '<a class=\"apply\">Apply</a><a class=\"cancel\">Cancel</a>';\n  const cancel = () => {\n    delete editing[name];\n    context.grafana.refresh();\n  };\n  box.querySelector('.cancel').onclick = cancel;\n  box.querySelector('.apply').onclick = async () => {\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return cancel();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      delete editing[name];\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n};\nif (name in editing) open();\nelse if (levers.length) {\n  box.querySelector('.edit').onclick = () => {\n    editing[name] = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n    open();\n  };\n}\n"
+                                "styles": ".lever { min-height: 80px; height: 100%; display: flex; flex-direction: column; align-items: center;\n  justify-content: center; gap: 4px; cursor: pointer; }\n.lever small { font-size: 12px; }\n.lever b { font-size: 24px; font-weight: 500; white-space: nowrap; }\n.lever i { font-style: normal; }\n.lever a { font-size: 12px; color: #8e8e8e; }\n.lever:hover a { color: #6e9fff; }",
+                                "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;\\n  font-size: 14px; text-align: center; }\\n.opendt-lever small { font-size: 12px; }\\n.opendt-lever button, .opendt-lever input { padding: 6px; background: #111217; color: #ccccdc;\\n  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n.opendt-lever div { display: flex; gap: 6px; margin-top: 6px; }\\n.opendt-lever div button { flex: 1; }\";\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst levers = [...box.querySelectorAll('[data-key]')];\nconst { name } = box.dataset;\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');\nlevers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));\nif (!document.getElementById('opendt-lever')) {\n  document.head.insertAdjacentHTML('beforeend', '<style id=\"opendt-lever\">' + style + '</style>');\n}\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    '<small>' + name + '</small>' +\n    levers.map(({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }) => choices\n      ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n      : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">'\n    ).join('<small>to</small>') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    if (target.classList.contains('choice')) {\n      draft[target.dataset.key] = target.value;\n      big.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset: { key, value } }) => draft[key] !== value);\n    if (!changed.length) return big.remove();\n    const was = levers.map((l) => label(l, l.dataset.value)).join('-');\n    const now = levers.map((l) => label(l, draft[l.dataset.key])).join('-');\n    if (!confirm(name + ': ' + was + ' to ' + now + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -849,7 +886,7 @@
             "time-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 11,
+                    "id": 12,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -947,7 +984,7 @@
             "truth-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 12,
+                    "id": 13,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1056,7 +1093,7 @@
             "opendt-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 13,
+                    "id": 14,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1165,7 +1202,7 @@
             "mape-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 14,
+                    "id": 15,
                     "title": "",
                     "description": "The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes. Red from 10%, the community-accepted error rate.",
                     "transparent": false,
@@ -1275,7 +1312,7 @@
             "co2-box": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 15,
+                    "id": 16,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1384,7 +1421,7 @@
             "decisions": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 16,
+                    "id": 17,
                     "title": "Decisions",
                     "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
                     "transparent": false,
@@ -1537,7 +1574,7 @@
             "step-1": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 17,
+                    "id": 18,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1570,7 +1607,7 @@
             "step-1s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 18,
+                    "id": 19,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1603,7 +1640,7 @@
             "step-2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 19,
+                    "id": 20,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1636,7 +1673,7 @@
             "step-3": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 20,
+                    "id": 21,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1669,7 +1706,7 @@
             "step-3s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 21,
+                    "id": 22,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1702,7 +1739,7 @@
             "step-4": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 22,
+                    "id": 23,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1735,7 +1772,7 @@
             "step-4s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 23,
+                    "id": 24,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1768,7 +1805,7 @@
             "step-5": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 24,
+                    "id": 25,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1801,7 +1838,7 @@
             "step-5s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 25,
+                    "id": 26,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1834,7 +1871,7 @@
             "step-6": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
+                    "id": 27,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1867,7 +1904,7 @@
             "step-6s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
+                    "id": 28,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1900,7 +1937,7 @@
             "step-7": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
+                    "id": 29,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1933,7 +1970,7 @@
             "step-7s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
+                    "id": 30,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1966,7 +2003,7 @@
             "step-8": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
+                    "id": 31,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -1999,7 +2036,7 @@
             "step-9": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 32,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2032,7 +2069,7 @@
             "step-9s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 33,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2065,7 +2102,7 @@
             "step-10": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 33,
+                    "id": 34,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2098,7 +2135,7 @@
             "step-10s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 34,
+                    "id": 35,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2131,7 +2168,7 @@
             "step-11": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 35,
+                    "id": 36,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2164,7 +2201,7 @@
             "step-11s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 36,
+                    "id": 37,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2197,7 +2234,7 @@
             "step-12": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 37,
+                    "id": 38,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2230,7 +2267,7 @@
             "step-12s": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 38,
+                    "id": 39,
                     "title": "",
                     "description": "",
                     "transparent": false,
@@ -2263,7 +2300,7 @@
             "plot-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 39,
+                    "id": 40,
                     "title": "Power draw",
                     "description": "The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.",
                     "transparent": false,
@@ -2489,7 +2526,7 @@
             "plot-accuracy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 40,
+                    "id": 41,
                     "title": "T1  Accuracy now",
                     "description": "",
                     "transparent": false,
@@ -2704,7 +2741,7 @@
             "plot-mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 41,
+                    "id": 42,
                     "title": "T2  Power draw MAPE per hour",
                     "description": "",
                     "transparent": false,
@@ -2888,7 +2925,7 @@
             "plot-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 42,
+                    "id": 43,
                     "title": "T4  Power draw error per hour",
                     "description": "",
                     "transparent": false,
@@ -3018,7 +3055,7 @@
             "plot-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 43,
+                    "id": 44,
                     "title": "Hosts available vs. in use",
                     "description": "The hosts the twin has and the hosts in use, over time.",
                     "transparent": false,
@@ -3176,7 +3213,7 @@
             "plot-idle-hosts": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 44,
+                    "id": 45,
                     "title": "U5  Idle hosts",
                     "description": "",
                     "transparent": false,
@@ -3372,7 +3409,7 @@
             "plot-idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 45,
+                    "id": 46,
                     "title": "S5  Power draw of idle hosts",
                     "description": "",
                     "transparent": false,
@@ -3553,7 +3590,7 @@
             "plot-queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 46,
+                    "id": 47,
                     "title": "P3  Time in queue",
                     "description": "",
                     "transparent": false,
@@ -3734,7 +3771,7 @@
             "plot-jobs": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 47,
+                    "id": 48,
                     "title": "P4  Jobs",
                     "description": "",
                     "transparent": false,
@@ -3913,7 +3950,7 @@
             "plot-completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 48,
+                    "id": 49,
                     "title": "P2  Total runtime",
                     "description": "",
                     "transparent": false,
@@ -4094,7 +4131,7 @@
             "plot-energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 49,
+                    "id": 50,
                     "title": "T5  Energy error so far",
                     "description": "",
                     "transparent": false,
@@ -4221,7 +4258,7 @@
             "plot-r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 50,
+                    "id": 51,
                     "title": "T3  Calibration parameter r",
                     "description": "",
                     "transparent": false,
@@ -4348,7 +4385,7 @@
             "plot-intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 51,
+                    "id": 52,
                     "title": "S4  Carbon intensity",
                     "description": "",
                     "transparent": false,
@@ -4529,7 +4566,7 @@
             "plot-co2": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 52,
+                    "id": 53,
                     "title": "CO₂ emissions vs. carbon intensity",
                     "description": "The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.",
                     "transparent": false,
@@ -4704,7 +4741,7 @@
             "plot-energy": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 53,
+                    "id": 54,
                     "title": "S2  Energy per $period",
                     "description": "",
                     "transparent": false,
@@ -4889,7 +4926,7 @@
             "plot-carbon": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 54,
+                    "id": 55,
                     "title": "S3  CO₂ per $period",
                     "description": "",
                     "transparent": false,
@@ -5102,7 +5139,7 @@
             "plot-energy-now": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 55,
+                    "id": 56,
                     "title": "S1  This $period",
                     "description": "",
                     "transparent": false,
@@ -5256,7 +5293,7 @@
             "start": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 56,
+                    "id": 57,
                     "title": "",
                     "description": "",
                     "transparent": true,
@@ -5415,7 +5452,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -5426,7 +5463,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5439,7 +5476,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5452,7 +5489,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5465,7 +5515,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5478,9 +5528,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -5728,7 +5778,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -5739,7 +5789,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5752,7 +5802,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5765,7 +5815,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5778,7 +5841,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -5791,9 +5854,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6041,7 +6104,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6052,7 +6115,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6065,7 +6128,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6078,7 +6141,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6091,7 +6167,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6104,9 +6180,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6328,7 +6404,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6339,7 +6415,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6352,7 +6428,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6365,7 +6441,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6378,7 +6467,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6391,9 +6480,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6641,7 +6730,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6652,7 +6741,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6665,7 +6754,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6678,7 +6767,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6691,7 +6793,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6704,9 +6806,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6954,7 +7056,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -6965,7 +7067,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6978,7 +7080,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -6991,7 +7093,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7004,7 +7119,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7017,9 +7132,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -7254,7 +7369,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -7265,7 +7380,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7278,7 +7393,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7291,7 +7406,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7304,7 +7432,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7317,9 +7445,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -7554,7 +7682,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -7565,7 +7693,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7578,7 +7706,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7591,7 +7719,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7604,7 +7745,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7617,9 +7758,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -7867,7 +8008,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -7878,7 +8019,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7891,7 +8032,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7904,7 +8045,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7917,7 +8071,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -7930,9 +8084,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -8180,7 +8334,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -8191,7 +8345,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8204,7 +8358,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8217,7 +8371,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8230,7 +8397,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8243,9 +8410,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -8467,7 +8634,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -8478,7 +8645,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8491,7 +8658,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8504,7 +8671,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8517,7 +8697,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8530,9 +8710,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -8754,7 +8934,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -8765,7 +8945,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8778,7 +8958,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8791,7 +8971,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8804,7 +8997,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -8817,9 +9010,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9054,7 +9247,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9065,7 +9258,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9078,7 +9271,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9091,7 +9284,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9104,7 +9310,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9117,9 +9323,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9354,7 +9560,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9365,7 +9571,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9378,7 +9584,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9391,7 +9597,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9404,7 +9623,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9417,9 +9636,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9641,7 +9860,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9652,7 +9871,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9665,7 +9884,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9678,7 +9897,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9691,7 +9923,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9704,9 +9936,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9928,7 +10160,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -9939,7 +10171,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9952,7 +10184,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9965,7 +10197,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9978,7 +10223,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -9991,9 +10236,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -10215,7 +10460,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -10226,7 +10471,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10239,7 +10484,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10252,7 +10497,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10265,7 +10523,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10278,9 +10536,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -10502,7 +10760,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -10513,7 +10771,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10526,7 +10784,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10539,7 +10797,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10552,7 +10823,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10565,9 +10836,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -10789,7 +11060,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -10800,7 +11071,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10813,7 +11084,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10826,7 +11097,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10839,7 +11123,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -10852,9 +11136,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -11089,7 +11373,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -11100,7 +11384,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11113,7 +11397,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11126,7 +11410,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11139,7 +11436,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11152,9 +11449,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -11389,7 +11686,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -11400,7 +11697,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11413,7 +11710,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11426,7 +11723,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11439,7 +11749,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11452,9 +11762,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -11676,7 +11986,7 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",
@@ -11687,7 +11997,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 9,
+                                                "x": 8,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11700,7 +12010,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 11,
+                                                "x": 10,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11713,7 +12023,20 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 13,
+                                                "x": 12,
+                                                "y": 0,
+                                                "width": 2,
+                                                "height": 4,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "lever-speed"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 14,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11726,7 +12049,7 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 16,
                                                 "y": 0,
                                                 "width": 2,
                                                 "height": 4,
@@ -11739,9 +12062,9 @@
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 17,
+                                                "x": 18,
                                                 "y": 0,
-                                                "width": 3,
+                                                "width": 2,
                                                 "height": 4,
                                                 "element": {
                                                     "kind": "ElementReference",

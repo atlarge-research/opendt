@@ -19,12 +19,7 @@ def test_dashboards_are_built(tmp_path):
 def test_plots_show_until_hidden():
     spec = screens.detailed["spec"]
     [hidden] = [v["spec"] for v in spec["variables"] if v["spec"]["name"] == "hidden"]
-    pickable = [
-        o["value"]
-        for name, e in spec["elements"].items()
-        if name.startswith("pick-")
-        for o in e["spec"]["vizConfig"]["spec"]["options"]["elements"][0]["options"]
-    ]
+    pickable = [key for _, plots in screens.ROW_PLOTS for key, _ in plots]
     items = [
         item["spec"]
         for row in spec["layout"]["spec"]["rows"]
