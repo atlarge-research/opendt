@@ -1,144 +1,172 @@
-# The steps of the twin's Tutorial screen, per use case, numbered 1, 2, 3 on the screen: the question (`ask`, on
-# one line), its hint, what to change on the twin, its choices A-D (`answer`: the right one; none: a guess), and
-# the plots to look at, by their names in services/grafana/dashboards/plots.py. The solution is the notebooks' (of
-# `question` in questions.yaml), unless the step has its own; hint and solution stay folded until asked for.
-# After a change, run services/grafana/dashboards/build.py.
+# The steps of the twin's Tutorial screen, per use case, numbered 1, 2, 3 on the screen: what to change on the twin
+# (`do`), the question about what follows (`ask`, on one line), its hint, its choices A-D (`answer`: the right one;
+# none: a guess), its solution, and the plots to look at, by their names in services/grafana/dashboards/plots.py.
+# `question` is the notebooks' question the step comes from (questions.yaml), whose solution it takes unless it has
+# its own; hint and solution stay folded until asked for. After a change, run services/grafana/dashboards/build.py.
 
 Dynamic autoscaling:
   - question: "1.1"
+    do: Datacenter, Hosts 277; Twin, Calibration Off; then Apply, and wait for the next window
     ask: Is OpenDT accurate enough for what-if analysis on SURF?
-    hint: 10% is the community-accepted error rate; see the Real-time MAPE.
-    do: Calibration Off (the calibrator would fit r to the ground truth again after each change of hosts)
+    hint: 10% is the community-accepted error rate; see the MAPE in Accuracy.
     choices:
       - Yes, its MAPE stays under 10%
       - No, its MAPE goes over 10%
-      - Only in the first 6 hours
-      - Only with calibration on
+      - Only while the hosts are idle
+      - It cannot tell without calibration
     answer: A
     plots: [power, accuracy-now, mape, error]
   - question: "1.2"
-    ask: SURF draws about 22 kW with its 277 hosts; how much would it draw with 2,770 hosts?
-    hint: A guess is enough; the next two steps check it.
+    do: Datacenter, Hosts 2,770 (10x), then Apply
+    ask: SURF draws about 22 kW with its 277 hosts; how much will OpenDT predict with 2,770?
+    hint: A guess is enough; the next window of operation checks it.
     choices:
       - About 22 kW, the same
-      - About 84 kW
+      - About 84 kW, 4x
       - About 220 kW, 10x
-      - About 2,200 kW
+      - About 2,200 kW, 100x
     plots: [power, hosts]
-  - question: "4.1"
-    ask: After the change, how do OpenDT's power draw and the ground truth move?
-    hint: The change applies from the twin's next window of operation; the ground truth is measured at SURF.
-    do: Hosts 2,770, then Apply
-    solution: >-
-      From the next window of operation, OpenDT twins 2,770 hosts: the predicted power draw goes up about 4x, while
-      the ground truth stays the same.
-    choices:
-      - Both go up
-      - OpenDT's goes up, the ground truth stays the same
-      - The ground truth goes up, OpenDT's stays the same
-      - Both stay the same
-    answer: B
-    plots: [power, hosts, idle-hosts, idle-power]
   - question: "1.3"
-    ask: How far is the power draw with 2,770 hosts from the guess, and why?
-    hint: Look at the idle hosts and at the power they draw.
+    do: 6 h (top left), to see the last hours up close
+    ask: With 2,770 hosts, what share of the hosts runs at least one job?
+    hint: See Hosts in use, in Jobs and hosts.
     choices:
-      - About 10x, as each host runs jobs
-      - About 4x, as the extra hosts are idle but still draw power
-      - About 2x, as the jobs spread over more hosts
-      - About the same, as idle hosts draw nothing
-    answer: B
-    plots: [power, idle-hosts, idle-power]
+      - All of them
+      - About half
+      - Under 10%
+      - None
+    answer: C
+    solution: >-
+      Under 10%: the jobs are the same, so the 2,493 extra hosts are idle, and an idle host still draws 25 W (2,493 x
+      25 W = 62 kW), so the power draw goes up about 4x (84 vs. 22 kW). Over-provisioning could lead to sustainability
+      concerns, both environmental and financial, where energy (and thus, money) is wasted by idle infrastructure.
+    plots: [power, hosts, idle-hosts, idle-power]
   - question: "1.4"
-    ask: With 138 and 69 hosts, how much power does SURF save, and what happens to the jobs?
-    hint: An idle host draws 25 W; look at the jobs waiting.
-    do: Hosts 138, then Apply; later, Hosts 69
+    do: Datacenter, Hosts 138 (half), then Apply
+    ask: With half of SURF's hosts, what happens to the jobs?
+    hint: At its busiest, how many jobs does SURF run at once?
     choices:
-      - Much power, and the jobs run as before
-      - Little power with 138 hosts, and some jobs wait
-      - Half the power, and no job waits
-      - No power, since the hosts are off
+      - They run as before
+      - Some of them wait for a free host
+      - They run faster
+      - They fail
     answer: B
-    plots: [power, queue, jobs, completion]
-  - question: "1.6"
-    ask: Which costs of switching hosts off and on again does this estimate leave out?
-    hint: What does a host do before it can run a job, and who decides to switch it off?
+    solution: >-
+      Some jobs wait: at peak, more than 138 jobs need a host. Under-provisioning ICT infrastructure could lead to
+      performance concerns, system faults, and, ultimately, system failures.
+    plots: [jobs, queue, completion, hosts]
+  - question: "1.4"
+    do: Interval hour (top left), to see the energy per hour
+    ask: With half of SURF's hosts, how much power does SURF save?
+    hint: Only idle hosts are switched off, and an idle host draws 25 W.
     choices:
-      - The boot time, and a human-in-the-loop overseeing the decisions
-      - The power draw of the jobs
-      - The carbon intensity of the grid
-      - None, switching hosts is free
-    answer: A
-    plots: [hosts, jobs]
+      - About half
+      - Little, about 15%
+      - Nothing
+      - Almost all
+    answer: B
+    solution: >-
+      Little, about 16% (switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW), while some jobs wait for a
+      host.
+    plots: [power, energy, idle-power]
+  - question: "1.8"
+    do: Datacenter, Hosts 277, then Apply; on Topology, the SURF-SARA row's pencil, Idle power 10 W
+    ask: With hosts that draw 10 W when idle, how do the power draw and the MAPE change?
+    hint: The ground truth still comes from SURF's hosts.
+    choices:
+      - Both go down
+      - The power draw goes down, the MAPE goes up
+      - The power draw goes up, the MAPE goes down
+      - Neither changes
+    answer: B
+    solution: >-
+      The power draw goes down (about 12%), but the MAPE goes up (to about 18% in notebook 1): with other hardware,
+      the ground truth from SURF no longer applies.
+    plots: [power, mape, error]
 
 Simulation calibration:
   - question: "2.1"
-    ask: OpenDT under-estimates the ground truth; should the Self-Calibrator increase or decrease r?
-    hint: At the same CPU utilization, how does r change the power draw?
-    do: Hosts 277 and Calibration On, then Apply
+    do: On Topology, Idle power 25 W again; Twin, Calibration On, then Apply
+    ask: OpenDT under-estimates the ground truth; does the Self-Calibrator move r up or down?
+    hint: See r in Accuracy; at the same CPU utilization, a higher r gives a higher power draw.
     choices:
-      - Increase r
-      - Decrease r
-      - Keep r
-      - Switch calibration off
+      - Up
+      - Down
+      - It keeps r at 4
+      - It sets r to 0
     answer: A
-    plots: [power, error, energy-error]
-  - question: "4.2"
-    ask: Which values of r does the Self-Calibrator pick in the first hours?
-    hint: The Self-Calibrator picks r in the Range of r, on the top bar.
+    plots: [r, power, error]
+  - question: "2.5"
+    do: Day (top left), with Decisions On, to see the change of calibration on the graphs
+    ask: After an hour of calibration, how does the MAPE compare with the MAPE without calibration?
+    hint: Compare the MAPE per hour before and after the change of r (the markers on the graphs).
     choices:
-      - Always 4, the r of the SURF topology
-      - Values within the Range of r, changing from hour to hour
-      - Always 0.5
-      - Values above 20
+      - Lower
+      - Higher
+      - The same
+      - Zero
+    answer: A
+    solution: >-
+      Lower: in notebook 2, the Self-Calibrator has a MAPE of 3.6% over the week, vs. 6.4% with r = 4. Calibration
+      alleviates underestimation bias, reducing the frequency of underestimated predictions.
+    plots: [mape, error, energy-error, r]
+  - question: "2.10"
+    do: Self-Calibrator, Range of r 3 to 12, then Apply
+    ask: With r up to 12, which r does the Self-Calibrator pick?
+    hint: In notebook 2, r = 9, the edge of the grid, wins in 75 of 168 hours.
+    choices:
+      - Never more than 9
+      - Often the new edge, 12
+      - Always 3
+      - It stops changing r
     answer: B
     solution: >-
-      Values within the Range of r, changing from hour to hour; in notebook 2, the best r changes between 5 and 9
-      from day to day.
-    plots: [r, mape]
-  - question: "2.4"
-    ask: Does the best r stay the same, and what does this mean for a twin that runs for weeks?
-    hint: Hardware behavior varies with temperature, aging, and firmware updates.
-    choices:
-      - It stays the same, so the twin calibrates once
-      - It changes over time, so the twin recalibrates continuously
-      - It grows without bound
-      - It depends only on the hosts
-    answer: B
+      Often 12, again at the edge of the grid; in these hours, OpenDT under-estimates the power draw even with
+      r = 12. A little better MAPE (3.3% vs. 3.6% in notebook 2).
     plots: [r, mape]
 
 CO₂-aware workload migration:
-  - question: "3.1"
-    ask: Which of the four grids has the lowest carbon intensity during the SURF week?
-    hint: Change the CO₂ zone and compare the carbon intensity.
-    do: CO₂ zone RO, then Apply; later, PL and DE
-    choices:
-      - NL
-      - PL
-      - DE
-      - RO
-    answer: D
-    plots: [intensity, co2]
   - question: "3.3"
-    ask: Between the four grids, which numbers change, energy, CO₂, or both?
-    hint: Which of the two depends on the grid?
-    solution: >-
-      The same energy on every grid, since the workload and the hosts are the same; the CO₂ emissions change with
-      the carbon intensity of the grid.
+    do: Grid, CO₂ zone PL, then Apply
+    ask: Moving SURF's workload from NL to PL, which numbers change, energy, CO₂, or both?
+    hint: See Sustainability; the workload and the hosts stay the same.
     choices:
       - Energy
       - CO₂
       - Both
       - Neither
     answer: B
-    plots: [energy, carbon, energy-now]
-  - question: "3.4"
-    ask: Should SURF migrate its workload to RO, and what else does the human-in-the-loop weigh?
-    hint: Think beyond the carbon intensity of the grid.
+    solution: >-
+      The CO₂ only: the same energy on every grid, since the workload and the hosts are the same; the CO₂ emissions
+      change with the carbon intensity of the grid.
+    plots: [co2, carbon, energy]
+  - question: "3.1"
+    do: Grid, CO₂ zone RO, then Apply
+    ask: Moving from PL to RO, how much do the CO₂ emissions per hour change?
+    hint: Compare the carbon intensity of the two grids, in Sustainability.
     choices:
-      - Yes, always, as RO has the lowest carbon intensity
-      - No, never, as migrating saves nothing
-      - Not without weighing the network, the users, the rules, the capacity, and new hardware
-      - Yes, as long as the jobs finish
+      - They do not
+      - They drop by about a tenth
+      - They drop by half or more
+      - They drop to zero
     answer: C
-    plots: [intensity, carbon]
+    solution: >-
+      They drop by half or more: RO has the lowest carbon intensity of the four grids during the SURF week (343
+      gCO₂/kWh on average), PL the highest; over the week, 1,172 kg of CO₂ in RO vs. 2,959 kg in PL.
+    plots: [intensity, co2, carbon]
+  - question: "3.4"
+    do: Decisions On, then look at the Decisions log
+    ask: Which changes did the twin make by itself, without a human-in-the-loop?
+    hint: Each change has its author in the Decisions log; Automatic is the twin's.
+    choices:
+      - None of them
+      - The hosts
+      - Only r, through the Self-Calibrator
+      - The CO₂ zone
+    answer: C
+    solution: >-
+      Only r: the Self-Calibrator changes it at every window, while the hosts, the CO₂ zone, and the scheduler change
+      only from the control panel. Before migrating, the human-in-the-loop considers, e.g., (1) the energy and time to
+      move data and jobs over the network, (2) the latency for the users, (3) the rules on where data may be stored,
+      (4) the free capacity and the cost of the remote datacenter, and (5) the CO₂ emitted to build new hardware.
+    plots: [r, co2]
