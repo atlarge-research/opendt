@@ -25,7 +25,7 @@ def choices(entry: dict) -> str:
     lines = []
     for letter, choice in zip("ABCD", entry["choices"], strict=True):
         if not answer:
-            verdict = "Your guess; the next cells check it."
+            verdict = "A guess; the next cells check it."
         elif letter == answer:
             verdict = "Right. Why? Think it through, then compare with the solution."
         else:

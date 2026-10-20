@@ -98,7 +98,7 @@
     - Nothing either way, as idle hosts draw little
     - About 18% with 0 spare hosts and 12% with 50
   answer: D
-  explore: "try `SPARE = 25` and `SPARE = 100`: how many spare hosts would you keep on, and why?"
+  explore: "try `SPARE = 25` and `SPARE = 100`: how many spare hosts are worth keeping on, and why?"
 
 "1.8":
   optional: true
