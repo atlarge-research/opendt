@@ -50,7 +50,7 @@ def test_solution_images_exist():
 
 def test_four_choices_each_answer_folded(monkeypatch):
     for q, entry in entries().items():
-        assert len(entry["choices"]) == 4 and entry.get("answer", "A") in "ABCD", q
+        assert len(entry["choices"]) == 4 and entry["answer"] in "ABCD" and entry["solution"], q
     shows = shown(monkeypatch, lambda: questions.ask_question("1.1"))
     assert (
         shows.count("<details>") == 4 and "Right" in shows

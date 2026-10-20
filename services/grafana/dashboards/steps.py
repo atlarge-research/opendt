@@ -80,10 +80,9 @@ LETTER = (
 
 
 def choices(options, answer):
-    """The choices of a question, A to D, one under the other; `answer`: the right one's letter (none: a
-    guess)."""
+    """The choices of a question, A to D, one under the other; `answer`: the right one's letter."""
     rows = "".join(
-        f'<a data-choice="{"guess" if not answer else "right" if letter == answer else "wrong"}" '
+        f'<a data-choice="{"right" if letter == answer else "wrong"}" '
         f'style="{CHOICE}"><span style="{LETTER}">{letter}</span>{escape(option)}</a>'
         for letter, option in zip("ABCD", options, strict=True)
     )
@@ -94,23 +93,23 @@ def card(n):
     """Step n as text: the steps, its question (on one line), what to change, and its choices; under them, its hint
     and its solution, folded until asked for; at the bottom, Hint and Solution, then Back and Next."""
     _, step = ORDER[n - 1]
-    solution = step.get("solution", QUESTIONS[step["question"]].get("solution"))
+    solution = step.get("solution", QUESTIONS[step["question"]]["solution"])
     lines = [
         navigator(n),
         f'<p style="font-size:20px;margin:12px 0 0;white-space:nowrap">'
         f"<strong>Question {n}:</strong> {escape(step['ask'])}</p>",
     ]
-    if "do" in step:
-        lines.append(note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}."))
-    if "choices" in step:
-        lines.append(choices(step["choices"], step.get("answer")))
-    lines.append(note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"))
-    left = [unfolds("hint", "Hint")]
-    if solution:
+    if "formula" in step:  # OpenDC's power model, for the steps on r
         lines.append(
-            note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution")
+            f'<p style="font-size:18px;margin:6px 0 0;font-family:serif">{step["formula"]}</p>'
         )
-        left.append(unfolds("solution", "Solution"))
+    lines += [
+        note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}."),
+        choices(step["choices"], step["answer"]),
+        note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"),
+        note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution"),
+    ]
+    left = [unfolds("hint", "Hint"), unfolds("solution", "Solution")]
     right = [
         button(i, label) for i, label in [(n - 1, "Back"), (n + 1, "Next")] if 1 <= i <= len(ORDER)
     ]
@@ -121,7 +120,7 @@ def card(n):
     )
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
-    colors = {"right": GREEN, "wrong": RED, "guess": BLUE, "none": LINE}
+    colors = {"right": GREEN, "wrong": RED, "none": LINE}
     return {
         "type": "marcusolsson-dynamictext-panel",
         "title": "",

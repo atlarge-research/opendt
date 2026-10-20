@@ -1,8 +1,9 @@
-# The steps of the twin's Tutorial screen, per use case, numbered 1, 2, 3 on the screen: what to change on the twin
-# (`do`), the question about what follows (`ask`, on one line), its hint, its choices A-D (`answer`: the right one;
-# none: a guess), its solution, and the plots to look at, by their names in services/grafana/dashboards/plots.py.
-# `question` is the notebooks' question the step comes from (questions.yaml), whose solution it takes unless it has
-# its own; hint and solution stay folded until asked for. After a change, run services/grafana/dashboards/build.py.
+# The steps of the twin's Tutorial screen, per use case, numbered 1, 2, 3 on the screen, each alike: what to change on
+# the twin (`do`), the question about what follows (`ask`, on one line; `formula`, HTML, under it), its hint, its
+# choices A-D (`answer`: the right one), its solution, and the plots to look at, by their names in
+# services/grafana/dashboards/plots.py. `question` is the notebooks' question the step comes from (questions.yaml),
+# whose solution it takes unless it has its own; hint and solution stay folded until asked for. After a change, run
+# services/grafana/dashboards/build.py.
 
 Dynamic autoscaling:
   - question: "1.1"
@@ -19,12 +20,16 @@ Dynamic autoscaling:
   - question: "1.2"
     do: Datacenter, Hosts 2,770 (10x), then Apply
     ask: SURF draws about 22 kW with its 277 hosts; how much will OpenDT predict with 2,770?
-    hint: A guess is enough; the next window of operation checks it.
+    hint: The jobs stay the same; what does a host draw while it runs no job?
     choices:
       - About 22 kW, the same
       - About 84 kW, 4x
       - About 220 kW, 10x
       - About 2,200 kW, 100x
+    answer: B
+    solution: >-
+      About 84 kW, 4x: the jobs are the same, so the 2,493 extra hosts are idle, and an idle host still draws 25 W
+      (2,493 x 25 W = 62 kW).
     plots: [power, hosts]
   - question: "1.3"
     do: 6 h (top left), to see the last hours up close
@@ -37,9 +42,9 @@ Dynamic autoscaling:
       - None
     answer: C
     solution: >-
-      Under 10%: the jobs are the same, so the 2,493 extra hosts are idle, and an idle host still draws 25 W (2,493 x
-      25 W = 62 kW), so the power draw goes up about 4x (84 vs. 22 kW). Over-provisioning could lead to sustainability
-      concerns, both environmental and financial, where energy (and thus, money) is wasted by idle infrastructure.
+      Under 10%: about as many hosts run jobs as with 277, and the others are idle. Over-provisioning could lead to
+      sustainability concerns, both environmental and financial, where energy (and thus, money) is wasted by idle
+      infrastructure.
     plots: [power, hosts, idle-hosts, idle-power]
   - question: "1.4"
     do: Datacenter, Hosts 138 (half), then Apply
@@ -88,6 +93,7 @@ Simulation calibration:
   - question: "2.1"
     do: On Topology, Idle power 25 W again; Twin, Calibration On, then Apply
     ask: OpenDT under-estimates the ground truth; does the Self-Calibrator move r up or down?
+    formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
     hint: See r in Accuracy; at the same CPU utilization, a higher r gives a higher power draw.
     choices:
       - Up
@@ -113,6 +119,7 @@ Simulation calibration:
   - question: "2.10"
     do: Self-Calibrator, Range of r 3 to 12, then Apply
     ask: With r up to 12, which r does the Self-Calibrator pick?
+    formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
     hint: In notebook 2, r = 9, the edge of the grid, wins in 75 of 168 hours.
     choices:
       - Never more than 9

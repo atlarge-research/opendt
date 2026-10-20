@@ -78,6 +78,8 @@ def top(uid, plots=(), period=True):
     return [("brand", brand(uid, plots, period), 0, 0, 8, BAR), *levers]
 
 
+# the rows a fresh screen shows; ☰ Plots shows the others
+SHOWN = ("Performance", "Twin accuracy")
 # the plots of each row, by their titles, to show or hide
 ROW_PLOTS = [
     (title, [(key, plot["title"].replace("$period", "period")) for key, plot in plots.items()])
@@ -107,7 +109,7 @@ detailed = screen(
             "Hidden plots",
             ["none", *(k for p in ROWS.values() for k in p)],
             multi=True,
-            current=["none"],
+            current=["none", *(k for row, p in ROWS.items() if row not in SHOWN for k in p)],
         ),
     ],
 )
@@ -131,32 +133,21 @@ LEFT = [
     ("opendt-box", 3, 2, 3, 2),
     ("mape-box", 0, 4, 3, 2),
     ("co2-box", 3, 4, 3, 2),
-    ("decisions", 0, 6, 6, 15),  # what the markers on the step's graphs stand for
+    ("decisions", 0, 6, 6, 14),  # what the markers on the step's graphs stand for
 ]
-# the step's height, then its plots, all on a 1440x900 screen in full screen; its hint and solution scroll in it
-CARD, PLOTS = 10, 11
+# the step's height, its question with room for its hint and solution, then its plots side by side
+CARD, PLOTS = 12, 8
 
 
-def split(names, x, y, width, height):
-    """The plots of a step in the area, in two columns, each top to bottom, the left one with the
-    fewer; a single plot takes it all."""
-    if len(names) == 1:
-        return [(names[0], x, y, width, height)]
-    half, left = width // 2, len(names) // 2
-    return stack(names[:left], x, y, half, height) + stack(
-        names[left:], x + half, y, width - half, height
-    )
-
-
-def stack(names, x, y, width, height):
-    """The names one under the other, to the bottom; the lower ones take what does not divide."""
-    tops = [y + height * i // len(names) for i in range(len(names) + 1)]
-    return [(name, x, tops[i], width, tops[i + 1] - tops[i]) for i, name in enumerate(names)]
+def side_by_side(names, x, y, width, height):
+    """The plots of a step in one row, as wide each; the last ones take what does not divide."""
+    lefts = [x + width * i // len(names) for i in range(len(names) + 1)]
+    return [(name, lefts[i], y, lefts[i + 1] - lefts[i], height) for i, name in enumerate(names)]
 
 
 def slide(value, step):
     """The row shown while the step variable has this value."""
-    plots = split([f"plot-{key}" for key in step["plots"]], 6, BAR + CARD, 18, PLOTS)
+    plots = side_by_side([f"plot-{key}" for key in step["plots"]], 6, BAR + CARD, 18, PLOTS)
     under = [(name, x, y + BAR, w, h) for name, x, y, w, h in LEFT]
     return row(
         "",

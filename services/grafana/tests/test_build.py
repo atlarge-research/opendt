@@ -28,7 +28,8 @@ def test_plots_show_until_hidden():
     assert hidden["query"].split(",") == ["none", *pickable]
     assert [item["element"]["name"] for item in items] == pickable
     # the address keeps the hidden plots, so a plot added later shows, even with an old address
-    assert hidden["current"]["value"] == ["none"]
+    shown = {k for row, plots in screens.ROWS.items() if row in screens.SHOWN for k in plots}
+    assert hidden["current"]["value"] == ["none", *(k for k in pickable if k not in shown)]
     for item in items:
         [rule] = item["conditionalRendering"]["spec"]["items"]
         assert rule["spec"] == {
@@ -67,32 +68,21 @@ def test_card():
         linked = {int(i) for i in re.findall(r'var-step=(\d+)"', card)}
         assert linked == set(range(1, last + 1)) - {n}  # every other step
         assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 95  # on one line
-        assert (
-            '<p class="hint" hidden' in card
-        )  # every question has a hint, folded like the solution
-        assert len(step["choices"]) == 4  # A to D
-        assert step.get("answer", "A") in "ABCD" and (
-            'class="solution"' in card or "answer" not in step
-        )
+        # each step alike: a change, four choices, the right one; a hint and a solution, folded
+        assert step["do"] and len(step["choices"]) == 4 and step["answer"] in "ABCD"
+        assert '<p class="hint" hidden' in card and '<p class="solution" hidden' in card
     assert ">Back<" not in steps.card(1)["options"]["content"]
     assert ">Next<" not in steps.card(last)["options"]["content"]
     middle = steps.card(2)["options"]["content"]
     assert middle.index(">Back<") < middle.index(">Next<")
 
 
-def test_split():
-    assert screens.split(["a"], 6, 9, 18, 14) == [("a", 6, 9, 18, 14)]
-    assert screens.split(["a", "b"], 6, 9, 18, 14) == [("a", 6, 9, 9, 14), ("b", 15, 9, 9, 14)]
-    # top to bottom, then left to right; of three, the first is as tall as the area
-    three = [("a", 6, 9, 9, 14), ("b", 15, 9, 9, 7), ("c", 15, 16, 9, 7)]
-    assert screens.split(["a", "b", "c"], 6, 9, 18, 14) == three
-    four = [("a", 6, 9, 9, 7), ("b", 6, 16, 9, 7), ("c", 15, 9, 9, 7), ("d", 15, 16, 9, 7)]
-    assert screens.split(["a", "b", "c", "d"], 6, 9, 18, 14) == four
-    # down to the bottom, the lower plot taller by what does not divide
-    assert screens.split(["a", "b", "c"], 6, 9, 18, 13)[1:] == [
-        ("b", 15, 9, 9, 6),
-        ("c", 15, 15, 9, 7),
-    ]
+def test_side_by_side():
+    assert screens.side_by_side(["a"], 6, 9, 18, 8) == [("a", 6, 9, 18, 8)]
+    assert screens.side_by_side(["a", "b"], 6, 9, 18, 8) == [("a", 6, 9, 9, 8), ("b", 15, 9, 9, 8)]
+    # the last ones wider by what does not divide
+    four = [("a", 6, 9, 4, 8), ("b", 10, 9, 5, 8), ("c", 15, 9, 4, 8), ("d", 19, 9, 5, 8)]
+    assert screens.side_by_side(["a", "b", "c", "d"], 6, 9, 18, 8) == four
 
 
 def test_tutorial_starts_on_day():

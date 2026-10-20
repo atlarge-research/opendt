@@ -10,7 +10,6 @@ card.onclick = ({ target }) => {
   const { choice } = option.dataset;
   card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));
   option.style.borderColor = colors[choice];
-  if (choice === 'guess') return;
   card.querySelector('[data-choice="right"]').style.borderColor = colors.right;
   solution.querySelector('strong').textContent = (choice === 'right' ? 'Right. ' : 'Wrong. ') + 'Solution:';
   solution.hidden = false;

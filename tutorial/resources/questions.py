@@ -20,13 +20,10 @@ def ask_question(q: str) -> None:
 
 
 def choices(entry: dict) -> str:
-    """The choices, each folded on its verdict; without an answer, the question asks for a guess."""
-    answer = entry.get("answer")
+    """The choices, each folded on its verdict."""
     lines = []
     for letter, choice in zip("ABCD", entry["choices"], strict=True):
-        if not answer:
-            verdict = "A guess; the next cells check it."
-        elif letter == answer:
+        if letter == entry["answer"]:
             verdict = "Right. Why? Think it through, then compare with the solution."
         else:
             verdict = "Not quite; look at what the cells print or plot, then try another."
@@ -42,8 +39,7 @@ def give_solution(q: str, show: bool = False) -> None:
         display(Markdown(f"*Solution {q}: set `show=True` in this cell and run it again.*"))
         return
     entry = yaml.safe_load(QUESTIONS.read_text())[q]
-    right = f"({entry['answer']}) " if entry.get("answer") else ""
-    display(Markdown(f"**Solution {q}:** {right}{entry['solution']}"))
+    display(Markdown(f"**Solution {q}:** ({entry['answer']}) {entry['solution']}"))
     if "image" in entry:
         display(Image(filename=QUESTIONS.parent / entry["image"], width=700))
     if "explore" in entry:  # an experiment of their own, once the solution is known
