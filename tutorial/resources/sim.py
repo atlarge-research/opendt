@@ -171,7 +171,8 @@ def _clip(until) -> pd.Timestamp:
 def _run_opendc(run_dir: Path, until: pd.Timestamp, topology) -> None:
     inputs = run_dir / "input"
     write_inputs(until, inputs / "workload")
-    (inputs / "topology.json").write_text(topology.model_dump_json(indent=2, exclude_none=True))  # OpenDC rejects nulls
+    # OpenDC rejects nulls
+    (inputs / "topology.json").write_text(topology.model_dump_json(indent=2, exclude_none=True))
     experiment = {  # the experiment file OpenDCRunner writes, minus host.parquet (unused here)
         "name": "run",
         "topologies": [{"pathToFile": str(inputs / "topology.json")}],
