@@ -18,6 +18,7 @@ context.element.querySelectorAll('[data-var]').forEach((choice) => {
 if (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);
 const { from = week.from, to = week.to } = address.getSearchObject();
 const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date
-if (twin && shown('window') !== 'week' && (Date.parse(twin) > end || from === week.from)) {
+const wholeWeek = from === week.from && to === week.to; // Day or 6 h before the twin's time was known
+if (twin && shown('window') !== 'week' && (Date.parse(twin) > end || wholeWeek)) {
   address.partial(range(shown('window'), twin), true);
 }

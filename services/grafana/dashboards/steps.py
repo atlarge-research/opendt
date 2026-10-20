@@ -70,7 +70,7 @@ def note(color, text, folded=""):
 
 # a choice: its letter in a circle, then its text, across the card
 CHOICE = (
-    f"display:flex;align-items:center;gap:12px;padding:5px 12px;border:1px solid {LINE};border-radius:4px;"
+    f"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid {LINE};border-radius:4px;"
     f"color:{INK};font-size:16px;cursor:pointer"
 )
 LETTER = (
@@ -87,7 +87,7 @@ def choices(options, answer):
         f'style="{CHOICE}"><span style="{LETTER}">{letter}</span>{escape(option)}</a>'
         for letter, option in zip("ABCD", options, strict=True)
     )
-    return f'<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">{rows}</div>'
+    return f'<div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">{rows}</div>'
 
 
 def card(n):
