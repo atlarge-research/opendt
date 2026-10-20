@@ -18,9 +18,10 @@ GREY, GREEN, BLUE = "#999999", "#009E73", "#338ec1"
 YELLOW, ORANGE, RED = "#F0E442", "#E69F00", "#D55E00"
 COLORS = {"red": RED, "orange": ORANGE, "yellow": YELLOW, "green": GREEN, "blue": BLUE}
 MARKERS = "rgba(255, 255, 255, 0.35)"  # light, so the data stays in front
-BOX = "#22252b"  # Grafana's dark secondary background: a box in a panel
+BOX = "rgba(128, 128, 128, 0.15)"  # a box in a panel, on the dark and the light theme
 # Grafana's dark theme: text, text of less weight, lines, and the text of most weight
-INK, FAINT, LINE = "#ccccdc", "rgba(204, 204, 220, 0.6)", "rgba(204, 204, 220, 0.3)"
+# the theme's text, fainter, and lines, on the dark and the light theme
+INK, FAINT, LINE = "inherit", "rgba(128, 128, 128, 0.9)", "rgba(128, 128, 128, 0.4)"
 WHITE = "#ffffff"
 TEXT = {"titleSize": 12, "valueSize": 22}  # the same in every tile and box
 TIME = ("timestamp", "timestamp", "timestamp")

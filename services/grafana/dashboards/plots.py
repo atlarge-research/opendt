@@ -16,7 +16,6 @@ from panels import (
     COLORS,
     GREEN,
     GREY,
-    INK,
     ORANGE,
     POWER,
     RANGE,
@@ -482,9 +481,9 @@ WAITING = """<div class="opendt-start" data-step="1" data-steps="3">
 </div>"""  # before the API answers
 STYLE = """.opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display: flex; flex-direction: column;
   justify-content: center; gap: 18px; }
-.opendt-start .doing { color: #ccccdc; font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;
+.opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;
   white-space: nowrap; }
-.opendt-start .bar { aspect-ratio: 24 / 1; background: #22252b; border-radius: 999px; overflow: hidden; }
+.opendt-start .bar { aspect-ratio: 24 / 1; background: rgba(128, 128, 128, 0.2); border-radius: 999px; overflow: hidden; }
 .opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;
   background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }
 .opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;
@@ -523,7 +522,7 @@ TILES |= {
 def numbers(title, url, columns, computed=(), hide=(), more=(), overrides=(), decimals=1):
     """The numbers of a category in one box, each its name over its value; coloured by `overrides`."""
     panel = stat(title, url, columns, overrides, computed, hide=hide, more=more, decimals=decimals)
-    panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = INK
+    panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = "text"  # the theme's
     # two by two, also on a 1440-pixel screen
     panel["options"] |= {
         "colorMode": "value",

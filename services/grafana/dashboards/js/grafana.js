@@ -3,3 +3,19 @@ const grafana = ['[data-testid="public-dashboard-footer"]', '[data-testid="hover
 if (!document.getElementById('opendt-grafana')) {
   document.head.insertAdjacentHTML('beforeend', '<style id="opendt-grafana">' + grafana.join(', ') + ' { display: none !important; }</style>');
 }
+// light or dark, as last chosen in this browser; Grafana takes its theme from the address, when the page loads
+const light = document.body.classList.contains('theme-light');
+const theme = (name) => {
+  const address = new URL(location.href);
+  address.searchParams.set('theme', name);
+  location.replace(address);
+};
+const chosen = localStorage.getItem('opendt-theme');
+if (chosen && (chosen === 'light') !== light) theme(chosen);
+const toggle = context.element.querySelector('.theme');
+toggle.textContent = light ? '☾' : '☀';
+toggle.title = light ? 'Dark' : 'Light';
+toggle.onclick = () => {
+  localStorage.setItem('opendt-theme', light ? 'dark' : 'light');
+  theme(light ? 'dark' : 'light');
+};

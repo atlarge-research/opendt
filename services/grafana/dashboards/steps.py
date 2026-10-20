@@ -97,7 +97,7 @@ def card(n):
     solution = step.get("solution", QUESTIONS[step["question"]].get("solution"))
     lines = [
         navigator(n),
-        f'<p style="font-size:20px;color:{WHITE};margin:12px 0 0;white-space:nowrap">'
+        f'<p style="font-size:20px;margin:12px 0 0;white-space:nowrap">'
         f"<strong>Question {n}:</strong> {escape(step['ask'])}</p>",
     ]
     if "do" in step:

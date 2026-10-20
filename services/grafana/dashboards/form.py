@@ -86,7 +86,10 @@ OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex
 .opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: #111217; color: #ccccdc;
   border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }
 .opendt-lever input { width: 4em; }
-.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }"""
+.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }
+.theme-light .opendt-lever { background: #ffffff; color: #24292e; }
+.theme-light .opendt-lever button:not(.on, .apply), .theme-light .opendt-lever input { background: #f4f5f5;
+  color: #24292e; border-color: #d8d9da; }"""
 
 
 def value(element):
@@ -126,7 +129,7 @@ def group(title, levers, link=None, note=""):
     }
 
 
-TAB = "padding: 2px 8px; border-radius: 2px; color: #ccccdc; cursor: pointer; white-space: nowrap"
+TAB = "padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap"
 # the window of the plots shown, over the screen
 DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;
   justify-content: center; background: rgba(0, 0, 0, 0.6); }
@@ -135,12 +138,13 @@ DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: f
 .opendt-plots section { display: grid; grid-template-columns: repeat(4, auto); gap: 40px; margin: 16px 0 24px; }
 .opendt-plots label { display: flex; gap: 8px; margin-top: 10px; cursor: pointer; }
 .opendt-plots button { float: right; background: #3d71d9; color: white; border: 0; border-radius: 2px;
-  padding: 6px 16px; cursor: pointer; }"""
+  padding: 6px 16px; cursor: pointer; }
+.theme-light .opendt-plots > div { background: #ffffff; border-color: #d8d9da; color: #24292e; }"""
 VIEW = """.view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .view div { display: flex; align-items: center; gap: 4px; }
 .view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }
 .view .on { background: #3d71d9; color: white !important; }
-.view select { height: 26px; padding: 0 6px; background: #111217; color: #ccccdc; border: 1px solid #2f3238;
+.view select { height: 26px; padding: 0 6px; background: transparent; color: inherit; border: 1px solid #8e8e8e;
   border-radius: 2px; }"""
 
 
@@ -153,8 +157,8 @@ def choose(key, choices):
 
 def brand(uid, plots=(), period=True):
     """The view: the logo, the twin's time, and the screens (a click on one shows it, with the same time and
-    markers); then the time shown, the markers, and the interval (`period`), at once on a click; `plots`: (row,
-    [(key, title)]) to show or hide, in a window that ☰ Plots opens."""
+    markers); then the time shown, the markers, the interval (`period`), and the theme, at once on a click; `plots`:
+    (row, [(key, title)]) to show or hide, in a window that ☰ Plots opens."""
     tabs = "".join(
         f'<a data-href="/d/{key}?${{__url_time_range}}&${{markers:queryparam}}&kiosk" style="{TAB}'
         + ('; background: #3d71d9; color: white">' if key == uid else '">')
@@ -171,7 +175,7 @@ def brand(uid, plots=(), period=True):
     logo = (
         '<div style="gap: 12px; font-size: 22px; font-weight: 600"><img src="/public/img/opendt.png" height="36">'
         'OpenDT<span style="margin-left: auto; font-size: 14px; font-weight: 400" data-time="{{twin_time}}">'
-        "</span></div>"
+        f'</span><a class="theme" style="{TAB}"></a></div>'  # light or dark, grafana.js
     )
     html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'
     code = script("links.js", "grafana.js", "range.js", "view.js", week=WEEK)
