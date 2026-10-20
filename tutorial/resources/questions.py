@@ -29,7 +29,7 @@ def choices(entry: dict) -> str:
         elif letter == answer:
             verdict = "Right. Why? Think it through, then compare with the solution."
         else:
-            verdict = "Not quite; run the cells above again, or look at the plot, then try another."
+            verdict = "Not quite; look at what the cells print or plot, then try another."
         lines.append(
             f"<details><summary><b>{letter}.</b> {escape(choice)}</summary><i>{verdict}</i></details>"
         )
