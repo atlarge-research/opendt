@@ -59,3 +59,9 @@ def test_four_choices_each_answer_folded(monkeypatch):
 
 def test_solution_names_the_right_choice(monkeypatch):
     assert "(B)" in shown(monkeypatch, lambda: questions.give_solution("1.1", show=True))
+
+
+def test_explore_comes_with_the_solution(monkeypatch):
+    explore = entries()["1.3"]["explore"]
+    assert explore not in shown(monkeypatch, lambda: questions.ask_question("1.3"))
+    assert explore in shown(monkeypatch, lambda: questions.give_solution("1.3", show=True))

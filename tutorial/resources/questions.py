@@ -46,3 +46,5 @@ def give_solution(q: str, show: bool = False) -> None:
     display(Markdown(f"**Solution {q}:** {right}{entry['solution']}"))
     if "image" in entry:
         display(Image(filename=QUESTIONS.parent / entry["image"], width=700))
+    if "explore" in entry:  # an experiment of their own, once the solution is known
+        display(Markdown(f"*Explore:* {entry['explore']}"))
