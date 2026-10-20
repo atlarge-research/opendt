@@ -121,10 +121,10 @@ topology = screen(
     "OpenDT, topology",
     [
         ("datacenter", datacenter, 0, 0, 24, 6),
-        ("cpus", cpus, 0, 6, 12, 13),  # the nine preconfigured CPUs, and a few of the user's own
-        ("gpus", gpus, 12, 6, 12, 13),
-        ("racks", racks, 0, 19, 24, 10),
-        ("hosts-topology", hosts, 0, 29, 24, 10),
+        ("hosts-topology", hosts, 0, 6, 9, 10),  # about 3:2, by the racks it shows
+        ("racks", racks, 9, 6, 15, 10),
+        ("cpus", cpus, 0, 16, 12, 13),  # the nine preconfigured CPUs, and a few more
+        ("gpus", gpus, 12, 16, 12, 13),
     ],
     period=False,
 )

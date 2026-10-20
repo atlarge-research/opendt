@@ -320,12 +320,12 @@ def get_portfolio(kind: Literal[tuple(portfolio.PRESETS)]):
 
 @app.post("/api/portfolio")
 def edit_portfolio(part: Annotated[portfolio.Part, Query()]):
-    """Save a row of a portfolio table: a part changed, added (no id), or removed."""
-    if part.remove:
-        portfolio.remove(part.kind, part.id)
-        return get_portfolio(part.kind)
+    """Save a row of a portfolio table: a part changed, added (no id), or removed; 422 if it cannot be."""
     try:
-        portfolio.save(part.kind, part.id, part.model_dump(exclude_none=True))
+        if part.remove:
+            portfolio.remove(part.kind, part.id)
+        else:
+            portfolio.save(part.kind, part.id, part.model_dump(exclude_none=True))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return get_portfolio(part.kind)

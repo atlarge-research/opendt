@@ -1127,12 +1127,12 @@
                     }
                 }
             },
-            "cpus": {
+            "hosts-topology": {
                 "kind": "Panel",
                 "spec": {
                     "id": 7,
-                    "title": "CPUs",
-                    "description": "CPUs to build racks from, with the idle and maximum power of their server. A preconfigured one stays as it is: a change to it is saved as yours.",
+                    "title": "Hosts available vs. in use",
+                    "description": "The hosts the twin has and the hosts in use, over time.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -1156,46 +1156,26 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/portfolio?kind=CPU",
+                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "id",
-                                                        "text": "id",
-                                                        "type": "string"
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
                                                     },
                                                     {
-                                                        "selector": "name",
-                                                        "text": "name",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "cores",
-                                                        "text": "cores",
+                                                        "selector": "hosts_up",
+                                                        "text": "Available",
                                                         "type": "number"
                                                     },
                                                     {
-                                                        "selector": "ghz",
-                                                        "text": "ghz",
+                                                        "selector": "hosts_in_use",
+                                                        "text": "In use",
                                                         "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "idle_w",
-                                                        "text": "idle_w",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "max_w",
-                                                        "text": "max_w",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "from",
-                                                        "text": "from",
-                                                        "type": "string"
                                                     }
                                                 ]
                                             }
@@ -1203,772 +1183,103 @@
                                     }
                                 }
                             ],
-                            "transformations": [],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "volkovlabs-table-panel",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "tables": [
-                                    {
-                                        "name": "CPUs",
-                                        "items": [
-                                            {
-                                                "enabled": false,
-                                                "field": {
-                                                    "name": "id",
-                                                    "source": "A"
-                                                },
-                                                "label": "",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "name",
-                                                    "source": "A"
-                                                },
-                                                "label": "Name",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 150
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "cores",
-                                                    "source": "A"
-                                                },
-                                                "label": "Cores",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "ghz",
-                                                    "source": "A"
-                                                },
-                                                "label": "Core speed [GHz]",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "idle_w",
-                                                    "source": "A"
-                                                },
-                                                "label": "Idle power [W]",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "max_w",
-                                                    "source": "A"
-                                                },
-                                                "label": "Max power [W]",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "from",
-                                                    "source": "A"
-                                                },
-                                                "label": "From",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 150
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            }
-                                        ],
-                                        "update": {
-                                            "datasource": "df5tfgbpfeakgc",
-                                            "payload": {
-                                                "refId": "save",
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/portfolio?kind=CPU&id=${payload.id:percentencode}&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}&from=${payload.from:percentencode}",
-                                                "url_options": {
-                                                    "method": "POST"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": []
-                                            }
-                                        },
-                                        "addRow": {
-                                            "enabled": true,
-                                            "permission": {
-                                                "mode": "",
-                                                "userRole": []
-                                            },
-                                            "request": {
-                                                "datasource": "df5tfgbpfeakgc",
-                                                "payload": {
-                                                    "refId": "save",
-                                                    "type": "json",
-                                                    "source": "url",
-                                                    "parser": "backend",
-                                                    "format": "table",
-                                                    "url": "http://api:8000/api/portfolio?kind=CPU&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}&from=${payload.from:percentencode}",
-                                                    "url_options": {
-                                                        "method": "POST"
-                                                    },
-                                                    "root_selector": "data",
-                                                    "columns": []
-                                                }
-                                            }
-                                        },
-                                        "deleteRow": {
-                                            "enabled": true,
-                                            "permission": {
-                                                "mode": "",
-                                                "userRole": []
-                                            },
-                                            "request": {
-                                                "datasource": "df5tfgbpfeakgc",
-                                                "payload": {
-                                                    "refId": "save",
-                                                    "type": "json",
-                                                    "source": "url",
-                                                    "parser": "backend",
-                                                    "format": "table",
-                                                    "url": "http://api:8000/api/portfolio?kind=CPU&id=${payload.id:percentencode}&remove=true",
-                                                    "url_options": {
-                                                        "method": "POST"
-                                                    },
-                                                    "root_selector": "data",
-                                                    "columns": []
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "unit": "locale"
-                                },
-                                "overrides": []
-                            }
-                        }
-                    }
-                }
-            },
-            "gpus": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 8,
-                    "title": "GPUs",
-                    "description": "GPUs to build racks from, with the idle and maximum power of their cubic power model. A preconfigured one stays as it is: a change to it is saved as yours.",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
+                            "transformations": [
                                 {
-                                    "kind": "PanelQuery",
+                                    "kind": "organize",
                                     "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/portfolio?kind=GPU",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "id",
-                                                        "text": "id",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "name",
-                                                        "text": "name",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "cores",
-                                                        "text": "cores",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "ghz",
-                                                        "text": "ghz",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "memory_gb",
-                                                        "text": "memory_gb",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "idle_w",
-                                                        "text": "idle_w",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "max_w",
-                                                        "text": "max_w",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "from",
-                                                        "text": "from",
-                                                        "type": "string"
-                                                    }
-                                                ]
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Available": 0,
+                                                "In use": 1
                                             }
                                         }
                                     }
                                 }
                             ],
-                            "transformations": [],
                             "queryOptions": {}
                         }
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "volkovlabs-table-panel",
+                        "group": "timeseries",
                         "version": "",
                         "spec": {
                             "options": {
-                                "tables": [
-                                    {
-                                        "name": "GPUs",
-                                        "items": [
-                                            {
-                                                "enabled": false,
-                                                "field": {
-                                                    "name": "id",
-                                                    "source": "A"
-                                                },
-                                                "label": "",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "name",
-                                                    "source": "A"
-                                                },
-                                                "label": "Name",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 150
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "cores",
-                                                    "source": "A"
-                                                },
-                                                "label": "Cores",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "ghz",
-                                                    "source": "A"
-                                                },
-                                                "label": "Core speed [GHz]",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "memory_gb",
-                                                    "source": "A"
-                                                },
-                                                "label": "Memory [GB]",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "idle_w",
-                                                    "source": "A"
-                                                },
-                                                "label": "Idle power [W]",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "max_w",
-                                                    "source": "A"
-                                                },
-                                                "label": "Max power [W]",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": true,
-                                                    "editor": {
-                                                        "type": "number"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 60
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "from",
-                                                    "source": "A"
-                                                },
-                                                "label": "From",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 150
-                                                    },
-                                                    "wrap": false
-                                                }
-                                            }
-                                        ],
-                                        "update": {
-                                            "datasource": "df5tfgbpfeakgc",
-                                            "payload": {
-                                                "refId": "save",
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/portfolio?kind=GPU&id=${payload.id:percentencode}&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&memory_gb=${payload.memory_gb:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}&from=${payload.from:percentencode}",
-                                                "url_options": {
-                                                    "method": "POST"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": []
-                                            }
-                                        },
-                                        "addRow": {
-                                            "enabled": true,
-                                            "permission": {
-                                                "mode": "",
-                                                "userRole": []
-                                            },
-                                            "request": {
-                                                "datasource": "df5tfgbpfeakgc",
-                                                "payload": {
-                                                    "refId": "save",
-                                                    "type": "json",
-                                                    "source": "url",
-                                                    "parser": "backend",
-                                                    "format": "table",
-                                                    "url": "http://api:8000/api/portfolio?kind=GPU&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&memory_gb=${payload.memory_gb:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}&from=${payload.from:percentencode}",
-                                                    "url_options": {
-                                                        "method": "POST"
-                                                    },
-                                                    "root_selector": "data",
-                                                    "columns": []
-                                                }
-                                            }
-                                        },
-                                        "deleteRow": {
-                                            "enabled": true,
-                                            "permission": {
-                                                "mode": "",
-                                                "userRole": []
-                                            },
-                                            "request": {
-                                                "datasource": "df5tfgbpfeakgc",
-                                                "payload": {
-                                                    "refId": "save",
-                                                    "type": "json",
-                                                    "source": "url",
-                                                    "parser": "backend",
-                                                    "format": "table",
-                                                    "url": "http://api:8000/api/portfolio?kind=GPU&id=${payload.id:percentencode}&remove=true",
-                                                    "url_options": {
-                                                        "method": "POST"
-                                                    },
-                                                    "root_selector": "data",
-                                                    "columns": []
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
+                                "legend": {
+                                    "calcs": [
+                                        "last"
+                                    ]
+                                },
+                                "tooltip": {
+                                    "mode": "multi"
+                                }
                             },
                             "fieldConfig": {
                                 "defaults": {
+                                    "min": 0,
+                                    "decimals": 0,
+                                    "custom": {
+                                        "axisLabel": "Hosts",
+                                        "lineWidth": 2,
+                                        "showPoints": "never"
+                                    },
                                     "unit": "locale"
                                 },
-                                "overrides": []
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Available"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#338ec1"
+                                                }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "In use"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#009E73"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -1977,9 +1288,9 @@
             "racks": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 9,
+                    "id": 8,
                     "title": "Racks",
-                    "description": "Kinds of hosts: a CPU, memory, and GPUs per host, and how many hosts a rack brings to the datacenter (277, as SURF-SARA, to compare like with like). A preconfigured one stays as it is: a change to it is saved as yours.",
+                    "description": "Kinds of hosts: a CPU, memory, and GPUs per host, and how many hosts a rack brings to the datacenter (277, as SURF-SARA, to compare like with like). Preconfigured at first (SURF's, OpenDC's), then yours: edit, add with +, or delete any; kept across runs in data/portfolio.json, and preconfigured again without it.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -2043,11 +1354,6 @@
                                                         "selector": "hosts",
                                                         "text": "hosts",
                                                         "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "from",
-                                                        "text": "from",
-                                                        "type": "string"
                                                     }
                                                 ]
                                             }
@@ -2392,40 +1698,6 @@
                                                     },
                                                     "wrap": false
                                                 }
-                                            },
-                                            {
-                                                "enabled": true,
-                                                "field": {
-                                                    "name": "from",
-                                                    "source": "A"
-                                                },
-                                                "label": "From",
-                                                "type": "auto",
-                                                "aggregation": "none",
-                                                "group": false,
-                                                "edit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    },
-                                                    "permission": {
-                                                        "mode": "",
-                                                        "userRole": []
-                                                    }
-                                                },
-                                                "newRowEdit": {
-                                                    "enabled": false,
-                                                    "editor": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "appearance": {
-                                                    "width": {
-                                                        "auto": true,
-                                                        "min": 150
-                                                    },
-                                                    "wrap": false
-                                                }
                                             }
                                         ],
                                         "update": {
@@ -2436,7 +1708,7 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/portfolio?kind=Rack&id=${payload.id:percentencode}&name=${payload.name:percentencode}&cpu=${payload.cpu:percentencode}&memory_gb=${payload.memory_gb:percentencode}&gpu=${payload.gpu:percentencode}&gpus=${payload.gpus:percentencode}&hosts=${payload.hosts:percentencode}&from=${payload.from:percentencode}",
+                                                "url": "http://api:8000/api/portfolio?kind=Rack&id=${payload.id:percentencode}&name=${payload.name:percentencode}&cpu=${payload.cpu:percentencode}&memory_gb=${payload.memory_gb:percentencode}&gpu=${payload.gpu:percentencode}&gpus=${payload.gpus:percentencode}&hosts=${payload.hosts:percentencode}",
                                                 "url_options": {
                                                     "method": "POST"
                                                 },
@@ -2458,7 +1730,7 @@
                                                     "source": "url",
                                                     "parser": "backend",
                                                     "format": "table",
-                                                    "url": "http://api:8000/api/portfolio?kind=Rack&name=${payload.name:percentencode}&cpu=${payload.cpu:percentencode}&memory_gb=${payload.memory_gb:percentencode}&gpu=${payload.gpu:percentencode}&gpus=${payload.gpus:percentencode}&hosts=${payload.hosts:percentencode}&from=${payload.from:percentencode}",
+                                                    "url": "http://api:8000/api/portfolio?kind=Rack&name=${payload.name:percentencode}&cpu=${payload.cpu:percentencode}&memory_gb=${payload.memory_gb:percentencode}&gpu=${payload.gpu:percentencode}&gpus=${payload.gpus:percentencode}&hosts=${payload.hosts:percentencode}",
                                                     "url_options": {
                                                         "method": "POST"
                                                     },
@@ -2503,12 +1775,12 @@
                     }
                 }
             },
-            "hosts-topology": {
+            "cpus": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 10,
-                    "title": "Hosts available vs. in use",
-                    "description": "The hosts the twin has and the hosts in use, over time.",
+                    "id": 9,
+                    "title": "CPUs",
+                    "description": "CPUs to build racks from, with the idle and maximum power of their server. Preconfigured at first (SURF's, OpenDC's), then yours: edit, add with +, or delete any; kept across runs in data/portfolio.json, and preconfigured again without it.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -2532,25 +1804,40 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/cluster?start=${__from:date:iso}&end=${__to:date:iso}",
+                                                "url": "http://api:8000/api/portfolio?kind=CPU",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
+                                                        "selector": "id",
+                                                        "text": "id",
+                                                        "type": "string"
                                                     },
                                                     {
-                                                        "selector": "hosts_up",
-                                                        "text": "Available",
+                                                        "selector": "name",
+                                                        "text": "name",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "cores",
+                                                        "text": "cores",
                                                         "type": "number"
                                                     },
                                                     {
-                                                        "selector": "hosts_in_use",
-                                                        "text": "In use",
+                                                        "selector": "ghz",
+                                                        "text": "ghz",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "idle_w",
+                                                        "text": "idle_w",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "max_w",
+                                                        "text": "max_w",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -2559,103 +1846,699 @@
                                     }
                                 }
                             ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Available": 0,
-                                                "In use": 1
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
+                            "transformations": [],
                             "queryOptions": {}
                         }
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "timeseries",
+                        "group": "volkovlabs-table-panel",
                         "version": "",
                         "spec": {
                             "options": {
-                                "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
-                                },
-                                "tooltip": {
-                                    "mode": "multi"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "min": 0,
-                                    "decimals": 0,
-                                    "custom": {
-                                        "axisLabel": "Hosts",
-                                        "lineWidth": 2,
-                                        "showPoints": "never"
-                                    },
-                                    "unit": "locale"
-                                },
-                                "overrides": [
+                                "tables": [
                                     {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Available"
-                                        },
-                                        "properties": [
+                                        "name": "CPUs",
+                                        "items": [
                                             {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#338ec1"
+                                                "enabled": false,
+                                                "field": {
+                                                    "name": "id",
+                                                    "source": "A"
+                                                },
+                                                "label": "",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": false,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": false,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
                                                 }
                                             },
                                             {
-                                                "id": "custom.lineStyle",
-                                                "value": {
-                                                    "fill": "dash",
-                                                    "dash": [
-                                                        8,
-                                                        4
-                                                    ]
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "name",
+                                                    "source": "A"
+                                                },
+                                                "label": "Name",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "string"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 150
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "cores",
+                                                    "source": "A"
+                                                },
+                                                "label": "Cores",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "ghz",
+                                                    "source": "A"
+                                                },
+                                                "label": "Core speed [GHz]",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "idle_w",
+                                                    "source": "A"
+                                                },
+                                                "label": "Idle power [W]",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "max_w",
+                                                    "source": "A"
+                                                },
+                                                "label": "Max power [W]",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
                                                 }
                                             }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "In use"
+                                        ],
+                                        "update": {
+                                            "datasource": "df5tfgbpfeakgc",
+                                            "payload": {
+                                                "refId": "save",
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/portfolio?kind=CPU&id=${payload.id:percentencode}&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}",
+                                                "url_options": {
+                                                    "method": "POST"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": []
+                                            }
                                         },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#009E73"
+                                        "addRow": {
+                                            "enabled": true,
+                                            "permission": {
+                                                "mode": "",
+                                                "userRole": []
+                                            },
+                                            "request": {
+                                                "datasource": "df5tfgbpfeakgc",
+                                                "payload": {
+                                                    "refId": "save",
+                                                    "type": "json",
+                                                    "source": "url",
+                                                    "parser": "backend",
+                                                    "format": "table",
+                                                    "url": "http://api:8000/api/portfolio?kind=CPU&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}",
+                                                    "url_options": {
+                                                        "method": "POST"
+                                                    },
+                                                    "root_selector": "data",
+                                                    "columns": []
                                                 }
                                             }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "timestamp"
                                         },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "Simulated time [UTC]"
+                                        "deleteRow": {
+                                            "enabled": true,
+                                            "permission": {
+                                                "mode": "",
+                                                "userRole": []
+                                            },
+                                            "request": {
+                                                "datasource": "df5tfgbpfeakgc",
+                                                "payload": {
+                                                    "refId": "save",
+                                                    "type": "json",
+                                                    "source": "url",
+                                                    "parser": "backend",
+                                                    "format": "table",
+                                                    "url": "http://api:8000/api/portfolio?kind=CPU&id=${payload.id:percentencode}&remove=true",
+                                                    "url_options": {
+                                                        "method": "POST"
+                                                    },
+                                                    "root_selector": "data",
+                                                    "columns": []
+                                                }
                                             }
-                                        ]
+                                        }
                                     }
                                 ]
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "unit": "locale"
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "gpus": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 10,
+                    "title": "GPUs",
+                    "description": "GPUs to build racks from, with the idle and maximum power of their cubic power model. Preconfigured at first (SURF's, OpenDC's), then yours: edit, add with +, or delete any; kept across runs in data/portfolio.json, and preconfigured again without it.",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/portfolio?kind=GPU",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "id",
+                                                        "text": "id",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "name",
+                                                        "text": "name",
+                                                        "type": "string"
+                                                    },
+                                                    {
+                                                        "selector": "cores",
+                                                        "text": "cores",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "ghz",
+                                                        "text": "ghz",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "memory_gb",
+                                                        "text": "memory_gb",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "idle_w",
+                                                        "text": "idle_w",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "max_w",
+                                                        "text": "max_w",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "volkovlabs-table-panel",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "tables": [
+                                    {
+                                        "name": "GPUs",
+                                        "items": [
+                                            {
+                                                "enabled": false,
+                                                "field": {
+                                                    "name": "id",
+                                                    "source": "A"
+                                                },
+                                                "label": "",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": false,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": false,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "name",
+                                                    "source": "A"
+                                                },
+                                                "label": "Name",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "string"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 150
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "cores",
+                                                    "source": "A"
+                                                },
+                                                "label": "Cores",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "ghz",
+                                                    "source": "A"
+                                                },
+                                                "label": "Core speed [GHz]",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "memory_gb",
+                                                    "source": "A"
+                                                },
+                                                "label": "Memory [GB]",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "idle_w",
+                                                    "source": "A"
+                                                },
+                                                "label": "Idle power [W]",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "field": {
+                                                    "name": "max_w",
+                                                    "source": "A"
+                                                },
+                                                "label": "Max power [W]",
+                                                "type": "auto",
+                                                "aggregation": "none",
+                                                "group": false,
+                                                "edit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    },
+                                                    "permission": {
+                                                        "mode": "",
+                                                        "userRole": []
+                                                    }
+                                                },
+                                                "newRowEdit": {
+                                                    "enabled": true,
+                                                    "editor": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "appearance": {
+                                                    "width": {
+                                                        "auto": true,
+                                                        "min": 60
+                                                    },
+                                                    "wrap": false
+                                                }
+                                            }
+                                        ],
+                                        "update": {
+                                            "datasource": "df5tfgbpfeakgc",
+                                            "payload": {
+                                                "refId": "save",
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/portfolio?kind=GPU&id=${payload.id:percentencode}&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&memory_gb=${payload.memory_gb:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}",
+                                                "url_options": {
+                                                    "method": "POST"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": []
+                                            }
+                                        },
+                                        "addRow": {
+                                            "enabled": true,
+                                            "permission": {
+                                                "mode": "",
+                                                "userRole": []
+                                            },
+                                            "request": {
+                                                "datasource": "df5tfgbpfeakgc",
+                                                "payload": {
+                                                    "refId": "save",
+                                                    "type": "json",
+                                                    "source": "url",
+                                                    "parser": "backend",
+                                                    "format": "table",
+                                                    "url": "http://api:8000/api/portfolio?kind=GPU&name=${payload.name:percentencode}&cores=${payload.cores:percentencode}&ghz=${payload.ghz:percentencode}&memory_gb=${payload.memory_gb:percentencode}&idle_w=${payload.idle_w:percentencode}&max_w=${payload.max_w:percentencode}",
+                                                    "url_options": {
+                                                        "method": "POST"
+                                                    },
+                                                    "root_selector": "data",
+                                                    "columns": []
+                                                }
+                                            }
+                                        },
+                                        "deleteRow": {
+                                            "enabled": true,
+                                            "permission": {
+                                                "mode": "",
+                                                "userRole": []
+                                            },
+                                            "request": {
+                                                "datasource": "df5tfgbpfeakgc",
+                                                "payload": {
+                                                    "refId": "save",
+                                                    "type": "json",
+                                                    "source": "url",
+                                                    "parser": "backend",
+                                                    "format": "table",
+                                                    "url": "http://api:8000/api/portfolio?kind=GPU&id=${payload.id:percentencode}&remove=true",
+                                                    "url_options": {
+                                                        "method": "POST"
+                                                    },
+                                                    "root_selector": "data",
+                                                    "columns": []
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "unit": "locale"
+                                },
+                                "overrides": []
                             }
                         }
                     }
@@ -2888,6 +2771,32 @@
                                             "spec": {
                                                 "x": 0,
                                                 "y": 10,
+                                                "width": 9,
+                                                "height": 10,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "hosts-topology"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 9,
+                                                "y": 10,
+                                                "width": 15,
+                                                "height": 10,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "racks"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 0,
+                                                "y": 20,
                                                 "width": 12,
                                                 "height": 13,
                                                 "element": {
@@ -2900,38 +2809,12 @@
                                             "kind": "GridLayoutItem",
                                             "spec": {
                                                 "x": 12,
-                                                "y": 10,
+                                                "y": 20,
                                                 "width": 12,
                                                 "height": 13,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "gpus"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 23,
-                                                "width": 24,
-                                                "height": 10,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "racks"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 0,
-                                                "y": 33,
-                                                "width": 24,
-                                                "height": 10,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "hosts-topology"
                                                 }
                                             }
                                         }

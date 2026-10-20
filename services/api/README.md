@@ -54,8 +54,10 @@ What the Grafana screens read, in Infinity's `{"data": [...]}` form, from the tw
 - `GET /api/arrivals`: the jobs submitted per hour
 - `GET /api/events?markers`: the decisions (hosts, r, CO₂ zone, scheduler), automatic or manual
 - `GET /api/hosts`, `POST /api/hosts`: the host groups as the Topology table shows them, and a row of it saved
-  (no `id`: a new group; `count=0`: a group removed)
-- `GET /api/components`: the CPUs and GPUs to choose from
+  (no `id`: a new group, of the rack it names; `count=0`: a group removed)
+- `GET /api/portfolio?kind`, `POST /api/portfolio`: the CPUs, GPUs, or racks to build the datacenter from, and a
+  part saved (no `id`: a new one, a copy of the first; `remove=true`: a part removed), kept in `data/portfolio.json`
+- `GET /api/components?part`: the names the Topology tables' lists offer (CPU, GPU with None, Rack)
 - `GET /api/accuracy?minutes`: the MAPE and the error of OpenDT's power vs. the ground truth, and r
 
 ## Data Sources

@@ -469,18 +469,17 @@ datacenter["description"] = (
 
 
 def portfolio(part, title, columns, info):
-    """A table of the portfolio: its preconfigured parts and the user's own, with where each comes from. A new
-    part is a copy of the first, with the numbers given; a preconfigured one stays as it is, its change saved as
-    the user's own."""
+    """A table of the portfolio, edited in place: a new part is a copy of the first, with the numbers given."""
     panel = editable(
         title,
         f"{PORTFOLIO}?kind={part}",
-        [("name", "Name", "string"), *columns, ("from", "From", "-")],
+        [("name", "Name", "string"), *columns],
         save=f"{PORTFOLIO}?kind={part}",
         delete=f"{PORTFOLIO}?kind={part}&id=${{payload.id:percentencode}}&remove=true",
     )
     panel["description"] = (
-        info + " A preconfigured one stays as it is: a change to it is saved as yours."
+        f"{info} Preconfigured at first (SURF's, OpenDC's), then yours: edit, add with +, or delete any; kept across "
+        "runs in data/portfolio.json, and preconfigured again without it."
     )
     return panel
 
