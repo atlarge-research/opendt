@@ -40,6 +40,14 @@ When something fails: OpenDC needs Java 21 (e.g., from [Adoptium](https://adopti
 `make setup` stops when `.venv` already exists, so `make clean-env` comes first; and on a slow machine, or one with
 8 GB of memory, `export OPENDT_TUTORIAL_WORKERS=1` runs one simulation at a time (by default, up to 4 at once).
 
+## The Live Twin
+
+With Docker (at least 8 GB of memory for Docker), `make up config=tutorial/resources/configs/live_twin.yaml` starts the
+live digital twin of the demo; the first start builds its images, for a few minutes.
+Its dashboard opens at http://localhost:3000, and its Tutorial screen goes through the three use cases on the running
+twin, in 12 steps: each step changes the twin and asks what follows, with four choices, a hint, and a solution.
+`make down` stops the twin; the bonus notebook does the same from Python.
+
 ## What Is Where
 
 `resources/` holds the data and scripts of the notebooks (the helpers around the OpenDC simulator of OpenDT, the
