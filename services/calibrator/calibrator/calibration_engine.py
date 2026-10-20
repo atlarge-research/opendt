@@ -1,10 +1,10 @@
 """Calibration engine for running parallel OpenDC simulations with different parameter values.
 
-Uses ProcessPoolExecutor for parallel execution and manages directory structure.
+Runs the simulations in threads (each OpenDC run is a JVM of its own), so they share one copy of the tasks.
 """
 
 import logging
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -39,7 +39,7 @@ def _run_single_simulation(
     simulated_time: datetime,
     timeout_seconds: int,
 ) -> CalibrationResult:
-    """Run a single OpenDC simulation (executed in worker process)."""
+    """Run a single OpenDC simulation (in a thread of the sweep)."""
     try:
         # Initialize OpenDC runner in this process
         opendc_runner = OpenDCRunner()
@@ -175,7 +175,7 @@ class CalibrationEngine:
         # Run simulations in parallel
         results = []
 
-        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all simulations
             futures = {}
             for (sim_num, param_value, topology_variant), sim_dir in zip(
