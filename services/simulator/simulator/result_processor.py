@@ -16,6 +16,13 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
+def save(df: pd.DataFrame, path: Path) -> None:
+    """Whole or not at all: the API reads the file while the simulator writes it."""
+    part = path.with_suffix(".part")
+    df.to_parquet(part, index=False)
+    part.replace(path)
+
+
 class SimulationResultProcessor:
     """Processes and aggregates OpenDC simulation results."""
 
@@ -141,14 +148,14 @@ class SimulationResultProcessor:
                     existing_df = existing_df[existing_columns].copy()
 
                 combined_df = pd.concat([existing_df, power_df], ignore_index=True)
-                combined_df.to_parquet(self.agg_results_file, index=False)
+                save(combined_df, self.agg_results_file)
                 logger.info(
                     f"Appended {len(power_df)} rows to existing aggregated results "
                     f"(total: {len(combined_df)} rows)"
                 )
             else:
                 # Create new aggregated file
-                power_df.to_parquet(self.agg_results_file, index=False)
+                save(power_df, self.agg_results_file)
                 logger.info(f"Created new aggregated results file with {len(power_df)} rows")
 
             # Update last processed time
