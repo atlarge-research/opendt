@@ -100,12 +100,12 @@ def test_tutorial_starts_on_day():
         return time["current"]["value"]
 
     assert window(screens.tutorial) == "day"
-    assert window(screens.detailed) == window(screens.simple) == "week"
+    assert window(screens.detailed) == window(screens.topology) == "week"
 
 
 def test_starting_first():
     # while the twin starts, what it does is the first thing on every screen
-    for board in (screens.detailed, screens.simple, screens.topology, screens.tutorial):
+    for board in (screens.detailed, screens.topology, screens.tutorial):
         [first, *_] = board["spec"]["layout"]["spec"]["rows"]
         items = first["spec"]["layout"]["spec"]["items"]
         assert [i["spec"]["element"]["name"] for i in items] == list(screens.STARTING)

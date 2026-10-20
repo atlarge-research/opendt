@@ -35,9 +35,9 @@ the previous one.
 ## Live Demo (about 5 minutes)
 
 1. `make up config=tutorial/resources/configs/live_twin.yaml`, then open http://localhost:3000: the detailed screen,
-   with the control panel at the top left (Screen: Detailed, Simple, Topology, Tutorial; Full screen). Set the speed factor to
+   with the screens at the top left (Detailed, Topology, Tutorial). Set the speed factor to
    60x: at max, the simulator falls behind the replay and a change shows only minutes later.
-   The Tutorial screen (Screen: Tutorial) asks the questions of the three use cases on the live twin, one step at
+   The Tutorial screen asks the questions of the three use cases on the live twin, one step at
    a time (`tutorial/resources/tutorial.yaml`); its solutions are folded.
 2. Change the hosts in the control panel (Hosts 2,770, Apply), on the Topology screen (the SURF-SARA row's pencil,
    Count 2,770, Save), or from a terminal:

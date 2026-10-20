@@ -21,7 +21,7 @@ make up       # Start services
 ```
 
 **Access:**
-- **Dashboard:** http://localhost:3000 (Grafana: the Detailed, Simple, Topology, and Tutorial screens)
+- **Dashboard:** http://localhost:3000 (Grafana: the Detailed, Topology, and Tutorial screens)
 - **API:** http://localhost:3001 (OpenAPI docs)
 
 ![OpenDT Grafana Dashboard](site/src/components/HomepageFeatures/grafana-dashboard.png)

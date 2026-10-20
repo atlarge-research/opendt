@@ -13,12 +13,10 @@ parallel runs of the calibrator, hosts). Nothing changes before Apply: then the 
 follows. Full screen switches the browser's full screen on and off, without Grafana's bars.
 
 - **OpenDT, detailed** (the home page): ten tiles of the twin's state, power, CO₂ vs. carbon intensity, and hosts;
-  then a row each for performance (P1-P5), utilization (U1-U5), sustainability (S1-S5, per interval), and twin
+  then a row each for performance (P1-P6), utilization (U1-U5), sustainability (S1-S5, per interval), and twin
   accuracy (T1-T5). The Plots row picks the plots to show. Markers on every graph show the decisions (changes of
   hosts, r, CO₂ zone, and scheduler; automatic or manual), the legends the latest values, and the right axis which way
   is better (BETTER with an arrow).
-- **OpenDT, simple:** the physical twin (power draw, jobs arriving) next to the digital twin (total runtime, jobs
-  started within 10 minutes, hosts per CPU utilization, decisions).
 - **OpenDT, topology:** the host groups, edited in place (a row's pencil, + to add one, the bin to delete one), with
   CPUs and GPUs from lists (SURF's node and OpenDC web's host templates) or custom, and the lists themselves.
 - **OpenDT, tutorial:** the 12 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by

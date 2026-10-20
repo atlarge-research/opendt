@@ -9,7 +9,6 @@ from panels import BROWSER_API, PERIODS, STATUS, WEEK, target
 JS = Path(__file__).parent / "js"
 SCREENS = [
     ("opendt-overview", "Detailed"),
-    ("opendt-simple", "Simple"),
     ("opendt-topology", "Topology"),
     ("opendt-tutorial", "Tutorial"),
 ]

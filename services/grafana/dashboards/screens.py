@@ -22,15 +22,10 @@ from plots import (
     GROUPS,
     ROWS,
     STARTING,
-    TILES,
-    arrivals,
     catalog,
     decisions,
     groups,
-    heatmap,
     hosts,
-    power,
-    twin_state,
 )
 
 
@@ -113,22 +108,6 @@ detailed = screen(
             current=["none"],
         ),
     ],
-)
-
-# the physical twin on the left, the digital twin on the right
-simple = screen(
-    "opendt-simple",
-    "OpenDT, simple",
-    [
-        ("twin-state", twin_state, 0, 0, 6, 20),
-        ("physical", TILES["measured-now"], 6, 0, 9, 4),
-        ("power-simple", power, 6, 4, 9, 11),
-        ("arrivals", arrivals, 6, 15, 9, 11),
-        ("twin", TILES["opendt-now"], 15, 0, 9, 4),
-        ("heatmap", heatmap, 15, 4, 9, 11),
-        ("decisions", decisions, 15, 15, 9, 11),
-    ],
-    period=False,
 )
 
 topology = screen(

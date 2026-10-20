@@ -239,6 +239,16 @@ ROWS = {
                 ),
             ],
         ),
+        "arrivals": timeseries(
+            "Jobs arriving per hour",
+            f"{API}/api/arrivals",
+            "Arrivals [jobs/h]",
+            {"Arrivals": GREY},
+            [("jobs", "Arrivals")],
+            unit="locale",
+            decimals=0,
+            **BARS,
+        ),
     },
     "Utilization": {
         "utilization-now": stat(
@@ -412,30 +422,6 @@ for row, plots in ROWS.items():
     for i, (key, plot) in enumerate(plots.items(), 1):
         plots[key] = plot | {"title": f"{row[0]}{i}  {plot['title']}"}
 
-# the simple screen
-
-twin_state = stat(
-    "Twin state",
-    SCHEDULING,
-    [
-        TIME,
-        ("completion_h", "Total runtime [h]"),
-        ("started_in_10_min_pct", "Started within 10 min [%]"),
-    ],
-    [override("timestamp", displayName="Simulated time", unit="time:YYYY-MM-DD HH:mm")],
-    decimals=1,
-    orientation="horizontal",  # three boxes, one under the other
-)
-arrivals = timeseries(
-    "Jobs arriving per hour",
-    f"{API}/api/arrivals",
-    "Arrivals [jobs/h]",
-    {"Arrivals": GREY},
-    [("jobs", "Arrivals")],
-    unit="locale",
-    decimals=0,
-    **BARS,
-)
 decisions = table(
     "Decisions",
     EVENTS,

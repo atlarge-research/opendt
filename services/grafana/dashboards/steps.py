@@ -112,7 +112,7 @@ def card(n):
     )
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
-    colors = {"right": GREEN, "wrong": RED, "guess": BLUE}
+    colors = {"right": GREEN, "wrong": RED, "guess": BLUE, "none": LINE}
     return {
         "type": "marcusolsson-dynamictext-panel",
         "title": "",

@@ -14,7 +14,7 @@ ROUTES = {(method, route.path) for route in main.app.routes for method in route.
 
 
 # ours, in Grafana's v2 format; the classic power_dashboard.json is v1
-OURS = ["overview.json", "simple.json", "topology.json", "tutorial.json"]
+OURS = ["overview.json", "topology.json", "tutorial.json"]
 
 
 def load(name):
