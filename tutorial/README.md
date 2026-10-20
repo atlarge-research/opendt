@@ -14,6 +14,9 @@ everything has to be covered:
 
 The [bonus notebook](4.live_twin.ipynb) runs the live digital twin of the demo, with Docker.
 
+Each question comes with four choices, A to D: we guess first, then click a choice to see whether it holds, and
+reason about why; the solution opens only on request.
+
 ## Setup
 
 The easiest is GitHub Codespaces, a day before class:

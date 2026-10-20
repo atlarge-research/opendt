@@ -125,7 +125,7 @@ def simulate(
     topology = make_topology(
         hosts=hosts, r=r, idle_power=idle_power, max_power=max_power, carbon=carbon
     )
-    key = f"{CACHE_VERSION} {until.isoformat()} {topology.model_dump_json()}"
+    key = f"{CACHE_VERSION} {until.isoformat()} {topology.model_dump_json(exclude_none=True)}"
     run_dir = PATHS.output / hashlib.sha256(key.encode()).hexdigest()[:12]
 
     cached = (run_dir / "DONE").exists()
@@ -171,7 +171,7 @@ def _clip(until) -> pd.Timestamp:
 def _run_opendc(run_dir: Path, until: pd.Timestamp, topology) -> None:
     inputs = run_dir / "input"
     write_inputs(until, inputs / "workload")
-    (inputs / "topology.json").write_text(topology.model_dump_json(indent=2))
+    (inputs / "topology.json").write_text(topology.model_dump_json(indent=2, exclude_none=True))  # OpenDC rejects nulls
     experiment = {  # the experiment file OpenDCRunner writes, minus host.parquet (unused here)
         "name": "run",
         "topologies": [{"pathToFile": str(inputs / "topology.json")}],

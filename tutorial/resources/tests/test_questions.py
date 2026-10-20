@@ -46,3 +46,16 @@ def test_notebooks_and_questions_file_match():
 def test_solution_images_exist():
     images = [e["image"] for e in entries().values() if "image" in e]
     assert images and all((questions.QUESTIONS.parent / image).exists() for image in images)
+
+
+def test_four_choices_each_answer_folded(monkeypatch):
+    for q, entry in entries().items():
+        assert len(entry["choices"]) == 4 and entry.get("answer", "A") in "ABCD", q
+    shows = shown(monkeypatch, lambda: questions.ask_question("1.1"))
+    assert (
+        shows.count("<details>") == 4 and "Right" in shows
+    )  # each choice says if it holds, once opened
+
+
+def test_solution_names_the_right_choice(monkeypatch):
+    assert "(B)" in shown(monkeypatch, lambda: questions.give_solution("1.1", show=True))

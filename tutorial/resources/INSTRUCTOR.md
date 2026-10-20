@@ -35,16 +35,15 @@ the previous one.
 ## Live Demo (about 5 minutes)
 
 1. `make up config=tutorial/resources/configs/live_twin.yaml`, then open http://localhost:3000: the detailed screen,
-   with the screens at the top left (Detailed, Topology, Tutorial). Set the speed factor to
-   60x: at max, the simulator falls behind the replay and a change shows only minutes later.
+   with the screens at the top left (Detailed, Topology, Tutorial). Set Speed to 60x in the Twin box: at max, the simulator falls behind the replay and a change shows only minutes later.
    The Tutorial screen asks the questions of the three use cases on the live twin, one step at
    a time (`tutorial/resources/tutorial.yaml`); its solutions are folded.
-2. Change the hosts in the control panel (Hosts 2,770, Apply), on the Topology screen (the SURF-SARA row's pencil,
+2. Change the hosts in the Datacenter box (Hosts 2,770, Apply), on the Topology screen (the SURF-SARA row's pencil,
    Count 2,770, Save), or from a terminal:
    `curl -X PUT -H "Content-Type: application/json" --data @tutorial/resources/configs/topology_2770_hosts.json http://localhost:3001/api/topology`.
    The predicted power draw jumps to about 4x; notebook 1 explains why. A dashed marker shows the change on every graph.
-3. Calibration: Hosts 277 and Calibration On in the control panel, then Apply (the range of r, the values of r, the
-   parallel runs, and the MAPE window are there too); the Twin accuracy row shows r and the hourly MAPE (in the test
+3. Calibration: Hosts 277 in the Datacenter box and Calibration On in the Twin box, each then Apply (the range of r,
+   the values of r, the parallel runs, and the MAPE window are in the Self-Calibrator box); the Twin accuracy row shows r and the hourly MAPE (in the test
    run, r 4, then 9, then 6, and the MAPE from 14% to about 1% within six trace hours); `make logs-calibrator` shows
    the MAPE of each candidate.
 4. `make down`.
@@ -56,7 +55,7 @@ Known issues:
   the fix need `make up build=true`.
 - Docker Desktop needs at least 8 GB: with calibration, the calibrator container alone used 4.7 GB in the test run (it
   picked r = 9, then 7, then 8 in the first minutes). Each parallel run of the calibrator takes about 1.3 GB; with 4,
-  Docker killed dc-mock for memory, so keep Parallel runs at 2 or lower in the control panel.
+  Docker killed dc-mock for memory, so keep Parallel runs at 2 or lower in the Self-Calibrator box.
 - Port 9092: on the demo laptop, a local Java service listens on 127.0.0.1:9092, the host port of OpenDT's Kafka;
   stop it before `make up`.
 - `make up` deletes the Kafka and Grafana volumes of the previous run.
@@ -66,8 +65,8 @@ Known issues:
   measured power; show what-ifs with the calibrator off.
 - The dashboards use Grafana's new layout (public preview in 12.4); if a screen misbehaves, the classic dashboard
   ("OpenDT Dashboard") still shows power and CO₂.
-- On a projector of 1,600 pixels or less, use Full screen: next to Grafana's menu, the control panel is too narrow
-  for its fields.
+- The screens are checked at 1,440 x 900 pixels and up, in Grafana's kiosk mode (no menus); ☀/☾ next to the twin's
+  time switches to the light theme, which a projector may show better.
 - When every candidate's MAPE is infinite, the calibrator still picks r = 3.0 and publishes it (seen in stored runs
   after about 1.5 trace days); keep the calibration demo within the first trace day.
 - The local `config/default.yaml` spells `linespace_points`; OpenDT ignores this field and tests 9 values (the

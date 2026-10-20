@@ -14,7 +14,7 @@ services:
     simulation_frequency_minutes: 5
     background_load_nodes: 0
 
-  # off at the start (calibration_enabled above): the control panel's Calibration switches it on
+  # off at the start (calibration_enabled above): Calibration in the Twin box switches it on
   calibrator:
     calibrated_property: "cpuPowerModel.calibrationFactor"  # r in the power model
     min_value: 3
