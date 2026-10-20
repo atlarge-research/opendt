@@ -8,14 +8,18 @@
 Dynamic autoscaling:
   - question: "1.1"
     do: Datacenter, Hosts 277; Twin, Calibration Off; then Apply, and wait for the next window
-    ask: Is OpenDT accurate enough for what-if analysis on SURF?
-    hint: 10% is the community-accepted error rate; see the MAPE in Accuracy.
+    ask: How does OpenDT's MAPE compare with 10%, the community-accepted error rate?
+    hint: See the MAPE in Accuracy, and its plot per hour; the first hours of the trace differ.
     choices:
-      - Yes, its MAPE stays under 10%
-      - No, its MAPE goes over 10%
-      - Only while the hosts are idle
-      - It cannot tell without calibration
-    answer: A
+      - Far below, about 1%
+      - Around 10% in the first hours, then lower
+      - Far above, about 50%
+      - Exactly 0%, as OpenDT replays the trace
+    answer: B
+    solution: >-
+      Around 10% in the first hours, then lower: OpenDT under-estimates the ground truth in almost every minute of
+      the day, more in the first 6 hours (MAPE 10.4% in notebook 1) than after (MAPE 4.6%); over the day, about 6%,
+      accurate enough for what-if analysis. The OpenDT paper identifies the same underestimation trend.
     plots: [power, accuracy-now, mape, error]
   - question: "1.2"
     do: Datacenter, Hosts 2,770 (10x), then Apply
@@ -66,13 +70,13 @@ Dynamic autoscaling:
     hint: Only idle hosts are switched off, and an idle host draws 25 W.
     choices:
       - About half
-      - Little, about 15%
+      - Little, under a fifth
       - Nothing
       - Almost all
     answer: B
     solution: >-
-      Little, about 16% (switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW), while some jobs wait for a
-      host.
+      Little, under a fifth (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about
+      3.5 kW, while some jobs wait for a host.
     plots: [power, energy, idle-power]
   - question: "1.8"
     do: Datacenter, Hosts 277, then Apply; on Topology, the SURF-SARA row's pencil, Idle power 10 W
