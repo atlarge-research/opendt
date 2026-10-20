@@ -61,9 +61,9 @@ Known issues:
 - Freshly built images get kafka-python 3.x (`kafka-python>=2.0.2` is not pinned), which rejected the `buffer_memory`
   setting in `libs/common/odt_common/utils/kafka.py`: fixed on the tutorial branch (commit c2df7c5); images built before
   the fix need `make up build=true`.
-- Docker Desktop needs at least 8 GB: with calibration, the calibrator container alone used 4.7 GB in the test run (it
-  picked r = 9, then 7, then 8 in the first minutes). Each parallel run of the calibrator takes about 1.3 GB; with 4,
-  Docker killed dc-mock for memory, so keep Parallel runs at 2 or lower in the Self-Calibrator box.
+- Docker Desktop needs at least 8 GB: with calibration and 2 parallel runs, the calibrator peaks at about 2.7 GB (on
+  a fresh twin, October 2026), and each OpenDC run within 1 GB; keep Parallel runs at 2 or lower in the
+  Self-Calibrator box.
 - Port 9092: on the demo laptop, a local Java service listens on 127.0.0.1:9092, the host port of OpenDT's Kafka;
   stop it before `make up`.
 - `make up` deletes the Kafka and Grafana volumes of the previous run.

@@ -122,18 +122,19 @@ Simulation calibration:
     plots: [mape, error, energy-error, r]
   - question: "2.10"
     do: Self-Calibrator, Range of r 3 to 12, then Apply
-    ask: With r up to 12, which r does the Self-Calibrator pick?
+    ask: With r up to 12, does the Self-Calibrator jump to 12, and why (not)?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
-    hint: In notebook 2, r = 9, the edge of the grid, wins in 75 of 168 hours.
+    hint: The Self-Calibrator picks the r with the lowest MAPE over the last hour; see the MAPE in Accuracy.
     choices:
-      - Never more than 9
-      - Often the new edge, 12
-      - Always 3
-      - It stops changing r
+      - Yes, at once, as 12 is the new edge
+      - Only where the last hour needs it; while 9 fits, it keeps 9
+      - No, it goes down to 3, the other edge
+      - No, it stops calibrating
     answer: B
     solution: >-
-      Often 12, again at the edge of the grid; in these hours, OpenDT under-estimates the power draw even with
-      r = 12. A little better MAPE (3.3% vs. 3.6% in notebook 2).
+      Only where the last hour needs it: while r = 9 fits the ground truth (MAPE under 1% here), the Self-Calibrator
+      keeps it. Over the whole week, r = 12 wins in 69 of 168 hours (notebook 2): in these hours, OpenDT
+      under-estimates the power draw even with r = 9.
     plots: [r, mape]
 
 CO₂-aware workload migration:
