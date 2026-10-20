@@ -33,7 +33,8 @@ info:
     so far.
   accuracy-group: >-
     The mean absolute percentage error of OpenDT's power draw vs. the ground truth (red from 10%, the
-    community-accepted error rate), the energy error, and the calibration parameter r.
+    community-accepted error rate), the energy error, and the calibration parameter r, the exponent of OpenDC's power
+    model P(u) = P_idle + (P_max - P_idle)(2u - u^r), with u the CPU utilization.
   power: The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.
   co2: The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.
   hosts: The hosts the twin has and the hosts in use, over time.

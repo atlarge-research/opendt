@@ -66,6 +66,8 @@ LEVERS = {
             ("Values of r", [R_VALUES]),
             ("MAPE window", [MAPE_WINDOW]),
         ],
+        # what r is: the exponent of OpenDC's power model, of the CPU utilization u (Fan et al., ISCA 2007)
+        note="<small>P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>)</small>",
     ),
 }
 
@@ -132,7 +134,7 @@ LEFT = [
     ("decisions", 0, 6, 6, 15),  # what the markers on the step's graphs stand for
 ]
 # the step's height, then its plots, all on a 1440x900 screen in full screen; its hint and solution scroll in it
-CARD, PLOTS = 8, 13
+CARD, PLOTS = 10, 11
 
 
 def split(names, x, y, width, height):

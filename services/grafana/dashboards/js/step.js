@@ -3,13 +3,16 @@
 const card = context.element;
 const solution = card.querySelector('.solution');
 card.onclick = ({ target }) => {
-  const { show, choice } = target.dataset;
+  const { show } = target.dataset;
   if (show) card.querySelector('.' + show).hidden = false;
-  if (!choice) return;
+  const option = target.closest('[data-choice]');
+  if (!option) return;
+  const { choice } = option.dataset;
   card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));
-  target.style.borderColor = colors[choice];
+  option.style.borderColor = colors[choice];
   if (choice === 'guess') return;
   card.querySelector('[data-choice="right"]').style.borderColor = colors.right;
   solution.querySelector('strong').textContent = (choice === 'right' ? 'Right. ' : 'Wrong. ') + 'Solution:';
   solution.hidden = false;
+  solution.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 };

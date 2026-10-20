@@ -68,17 +68,26 @@ def note(color, text, folded=""):
     )
 
 
+# a choice: its letter in a circle, then its text, across the card
+CHOICE = (
+    f"display:flex;align-items:center;gap:12px;padding:5px 12px;border:1px solid {LINE};border-radius:4px;"
+    f"color:{INK};font-size:16px;cursor:pointer"
+)
+LETTER = (
+    f"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;"
+    f"border:1px solid {LINE};border-radius:50%;font-size:13px"
+)
+
+
 def choices(options, answer):
-    """The choices of a question; `answer`: the right one, from 1 (none: a guess)."""
-    marks = [
-        "guess" if answer is None else "right" if i == answer else "wrong"
-        for i in range(1, len(options) + 1)
-    ]
-    buttons = "".join(
-        f'<a data-choice="{mark}" style="{BUTTON};cursor:pointer">{escape(option)}</a>'
-        for option, mark in zip(options, marks, strict=True)
+    """The choices of a question, A to D, one under the other; `answer`: the right one's letter (none: a
+    guess)."""
+    rows = "".join(
+        f'<a data-choice="{"guess" if not answer else "right" if letter == answer else "wrong"}" '
+        f'style="{CHOICE}"><span style="{LETTER}">{letter}</span>{escape(option)}</a>'
+        for letter, option in zip("ABCD", options, strict=True)
     )
-    return f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">{buttons}</div>'
+    return f'<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">{rows}</div>'
 
 
 def card(n):

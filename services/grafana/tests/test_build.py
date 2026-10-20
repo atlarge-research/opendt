@@ -70,7 +70,10 @@ def test_card():
         assert (
             '<p class="hint" hidden' in card
         )  # every question has a hint, folded like the solution
-        assert step.get("answer", 1) in range(1, len(step.get("choices", [1])) + 1)
+        assert len(step["choices"]) == 4  # A to D
+        assert step.get("answer", "A") in "ABCD" and (
+            'class="solution"' in card or "answer" not in step
+        )
     assert ">Back<" not in steps.card(1)["options"]["content"]
     assert ">Next<" not in steps.card(last)["options"]["content"]
     middle = steps.card(2)["options"]["content"]

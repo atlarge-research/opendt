@@ -70,8 +70,10 @@ BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-c
   padding: 0 8px; cursor: pointer; }
 .lever > small { text-align: center; margin-bottom: 4px; }
 .lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }
-.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0; }
-.lever b { font-size: 16px; font-weight: 500; white-space: nowrap; }
+.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;
+  line-height: 1.3; }
+.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }
+.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }
 .lever i { font-style: normal; }
 .lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; text-align: center; }
 .lever:hover a { color: #6e9fff; }"""
@@ -100,10 +102,10 @@ def value(element):
     return "<i" + "".join(f' data-{k}="{v}"' for k, v in data.items()) + f">{{{{{key}}}}}</i>"
 
 
-def group(title, levers, link=None):
+def group(title, levers, link=None, note=""):
     """Levers of a category in a box, as values of the twin's: each its name and its value now (two: from-to); a
     click opens the box larger, with what they take, and Apply, once confirmed, sends the changes to the twin (from
-    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address)."""
+    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under them."""
     lines = "".join(
         f'<p data-name="{name}"><small>{name}</small><b>{"-".join(map(value, elements))}</b></p>'
         for name, elements in levers
@@ -116,7 +118,7 @@ def group(title, levers, link=None):
         "targets": [target(STATUS, [(k, k, "string") for k in keys]) | {"root_selector": ""}],
         "options": {
             "renderMode": "everyRow",
-            "content": f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}</div>',
+            "content": f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}{note}</div>',
             "defaultContent": f'<div class="lever"><small>{title}</small></div>',
             "styles": BOX,
             "afterRender": script("box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
