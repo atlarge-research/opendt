@@ -22,10 +22,12 @@ from plots import (
     GROUPS,
     ROWS,
     STARTING,
-    catalog,
+    cpus,
+    datacenter,
     decisions,
-    groups,
+    gpus,
     hosts,
+    racks,
 )
 
 
@@ -118,9 +120,11 @@ topology = screen(
     "opendt-topology",
     "OpenDT, topology",
     [
-        ("groups", groups, 0, 0, 24, 6),
-        ("catalog", catalog, 0, 6, 24, 9),
-        ("hosts-topology", hosts, 0, 15, 24, 10),
+        ("datacenter", datacenter, 0, 0, 24, 6),
+        ("cpus", cpus, 0, 6, 12, 13),  # the nine preconfigured CPUs, and a few of the user's own
+        ("gpus", gpus, 12, 6, 12, 13),
+        ("racks", racks, 0, 19, 24, 10),
+        ("hosts-topology", hosts, 0, 29, 24, 10),
     ],
     period=False,
 )

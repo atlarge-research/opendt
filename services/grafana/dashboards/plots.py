@@ -444,28 +444,71 @@ SPECS = [
     ("idle_w", "Idle power [W]"),
     ("max_w", "Max power [W]"),
 ]
-groups = editable(
-    "Hosts",
+# the Topology screen: the datacenter, racks of hosts, and the portfolio of CPUs, GPUs, and racks they come from
+LISTS = {part: f"{API}/api/components?part={part}" for part in ("CPU", "GPU", "Rack")}
+PORTFOLIO = f"{API}/api/portfolio"
+datacenter = editable(
+    "Datacenter",
     f"{API}/api/hosts",
     [
-        ("kind", "Name", "string"),
-        ("count", "Count", "number"),
-        ("cpu", "CPU", f"{API}/api/components?part=CPU"),
+        ("kind", "Rack", LISTS["Rack"]),
+        ("count", "Hosts", "number"),
+        ("cpu", "CPU", LISTS["CPU"]),
         *((field, name, "number") for field, name in SPECS),
-        ("gpu", "GPU", f"{API}/api/components?part=GPU"),
+        ("gpu", "GPU", LISTS["GPU"]),
         ("gpus", "GPUs per host", "number"),
     ],
     save=f"{API}/api/hosts",
     delete=f"{API}/api/hosts?id=${{payload.id}}&count=0",
 )
-groups["description"] = (
-    "Edit a row with its pencil, add one with +. A CPU or GPU picked from the list brings its numbers. "
-    "A new row is a copy of the first, without its GPUs. The twin runs the change from its next window."
+datacenter["description"] = (
+    "The racks the twin runs, with their hosts. Add one with +, picking a rack of the portfolio below; edit one "
+    "with its pencil: a rack, CPU, or GPU picked from its list brings its numbers. The twin runs a change from its "
+    "next window."
 )
-catalog = table(
-    "CPUs and GPUs to choose from",
-    f"{API}/api/components",
-    [("part", "Part", "string"), ("name", "Name", "string"), *SPECS],
+
+
+def portfolio(part, title, columns, info):
+    """A table of the portfolio: its preconfigured parts and the user's own, with where each comes from. A new
+    part is a copy of the first, with the numbers given; a preconfigured one stays as it is, its change saved as
+    the user's own."""
+    panel = editable(
+        title,
+        f"{PORTFOLIO}?kind={part}",
+        [("name", "Name", "string"), *columns, ("from", "From", "-")],
+        save=f"{PORTFOLIO}?kind={part}",
+        delete=f"{PORTFOLIO}?kind={part}&id=${{payload.id:percentencode}}&remove=true",
+    )
+    panel["description"] = (
+        info + " A preconfigured one stays as it is: a change to it is saved as yours."
+    )
+    return panel
+
+
+cpus = portfolio(
+    "CPU",
+    "CPUs",
+    [(field, name, "number") for field, name in SPECS if field != "memory_gb"],
+    "CPUs to build racks from, with the idle and maximum power of their server.",
+)
+gpus = portfolio(
+    "GPU",
+    "GPUs",
+    [(field, name, "number") for field, name in SPECS],
+    "GPUs to build racks from, with the idle and maximum power of their cubic power model.",
+)
+racks = portfolio(
+    "Rack",
+    "Racks",
+    [
+        ("cpu", "CPU", LISTS["CPU"]),
+        ("memory_gb", "Memory [GB]", "number"),
+        ("gpu", "GPU", LISTS["GPU"]),
+        ("gpus", "GPUs per host", "number"),
+        ("hosts", "Hosts", "number"),
+    ],
+    "Kinds of hosts: a CPU, memory, and GPUs per host, and how many hosts a rack brings to the datacenter (277, "
+    "as SURF-SARA, to compare like with like).",
 )
 
 # while the twin starts, the whole screen: what it does, a bar that never stands still, and a fact from the paper

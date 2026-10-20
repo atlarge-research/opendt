@@ -262,18 +262,18 @@ def editable(title, url, columns, save, delete, key="id"):
     """A table edited in place (Business Table): Edit and Delete on each row, Add in the header. A saved row goes
     to `save` with its cells in the address, an added one too but without `key` (it names a row, sent but not
     shown), a deleted one to `delete` (`${payload.<column>}` names a cell). Columns are (field, name, editor),
-    the editor "number", "string", or the URL of a list whose names a select offers."""
+    the editor "number", "string", "-" (shown, not edited), or the URL of a list whose names a select offers."""
 
     def editor(field, kind):
-        if kind in ("number", "string"):
-            return {"type": kind}
+        if kind in ("number", "string", "-"):
+            return {"type": "number" if kind == "number" else "string"}
         return {
             "type": "select",
             "queryOptions": {"source": field, "value": "name", "label": "name"},
         }
 
     def item(field, name, kind, shown=True):
-        edit = {"enabled": shown, "editor": editor(field, kind)}
+        edit = {"enabled": shown and kind != "-", "editor": editor(field, kind)}
         return {
             "enabled": shown,
             "field": {"name": field, "source": "A"},
@@ -283,9 +283,9 @@ def editable(title, url, columns, save, delete, key="id"):
             "group": False,
             "edit": {**edit, "permission": {"mode": "", "userRole": []}},
             "newRowEdit": edit,
-            # wide enough for a list's names and a cell's editor
+            # wide enough for a cell's editor, and for the longest names (2x Xeon Gold 6248R)
             "appearance": {
-                "width": {"auto": True, "min": 60 if kind == "number" else 120},
+                "width": {"auto": True, "min": 60 if kind == "number" else 150},
                 "wrap": False,
             },
         }
@@ -295,7 +295,8 @@ def editable(title, url, columns, save, delete, key="id"):
         return {"datasource": DS["uid"], "payload": query}
 
     def cells(fields):
-        return f"{save}?" + "&".join(f"{f}=${{payload.{f}:percentencode}}" for f in fields)
+        query = "&".join(f"{f}=${{payload.{f}:percentencode}}" for f in fields)
+        return f"{save}{'&' if '?' in save else '?'}{query}"
 
     fields = [c[0] for c in columns]
     allowed = {"enabled": True, "permission": {"mode": "", "userRole": []}}
@@ -307,12 +308,12 @@ def editable(title, url, columns, save, delete, key="id"):
         "deleteRow": {**allowed, "request": request(delete)},
     }
     kinds = [(f, f, "number" if e == "number" else "string") for f, _, e in columns]
-    lists = [(f, e) for f, _, e in columns if e not in ("number", "string")]
+    lists = [(f, e) for f, _, e in columns if e not in ("number", "string", "-")]
     return {
         "type": "volkovlabs-table-panel",
         "title": title,
         "targets": [
-            target(url, [(key, key), *kinds]),
+            target(url, [(key, key, "string"), *kinds]),  # a number or a name
             *({**target(u, [("name", "name", "string")]), "refId": f} for f, u in lists),
         ],
         "fieldConfig": {"defaults": {"unit": "locale"}, "overrides": []},

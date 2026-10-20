@@ -28,7 +28,7 @@ from odt_common.models.topology import (
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
 
-from api import hosts, levers, startup, twin
+from api import hosts, levers, portfolio, startup, twin
 from api.carbon_query import CarbonDataQuery, CarbonDataResponse
 from api.power_query import PowerDataQuery, PowerDataResponse
 
@@ -302,16 +302,33 @@ def edit_hosts(row: Annotated[hosts.Row, Query()]):
 
 
 @app.get("/api/components")
-def get_components(part: Literal[tuple(hosts.PARTS)] | None = None):
-    """The CPUs and GPUs the Topology table offers, with their specs."""
-    parts = [part] if part else hosts.PARTS
+def get_components(part: Literal[tuple(portfolio.PRESETS)]):
+    """The names the Topology tables' lists offer: the portfolio's CPUs, GPUs (a host can also have none), or
+    racks."""
+    names = list(portfolio.parts(part))
+    return {"data": [{"name": name} for name in (["None", *names] if part == "GPU" else names)]}
+
+
+@app.get("/api/portfolio")
+def get_portfolio(kind: Literal[tuple(portfolio.PRESETS)]):
+    """The CPUs, GPUs, or racks to build the datacenter from, preconfigured and the user's own, with where each
+    comes from."""
     return {
-        "data": [
-            {"part": kind, "name": name, **specs}
-            for kind in parts
-            for name, specs in hosts.PARTS[kind].items()
-        ]
+        "data": [{"id": name, "name": name, **part} for name, part in portfolio.parts(kind).items()]
     }
+
+
+@app.post("/api/portfolio")
+def edit_portfolio(part: Annotated[portfolio.Part, Query()]):
+    """Save a row of a portfolio table: a part changed, added (no id), or removed."""
+    if part.remove:
+        portfolio.remove(part.kind, part.id)
+        return get_portfolio(part.kind)
+    try:
+        portfolio.save(part.kind, part.id, part.model_dump(exclude_none=True))
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return get_portfolio(part.kind)
 
 
 @app.get("/api/accuracy")

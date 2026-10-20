@@ -1,24 +1,19 @@
-"""The host groups as the Topology screen's table shows them: one row per group, edited in place, with CPUs and GPUs
-from prefabs or custom. OpenDT's units: MHz, and memory in SURF's unit (128 GB is 128,000,000)."""
+"""The host groups as the Topology screen's table shows them: one row per group, edited in place, from a rack of the
+portfolio, with its CPU and GPUs, or custom. OpenDT's units: MHz, and memory in SURF's unit (128 GB is 128,000,000)."""
 
 import copy
 
 from pydantic import BaseModel, field_validator
 
-# SURF's node (H01) and the CPUs of OpenDC web's host templates (Daniel Halasz, branch feat/refactor-web), with the
-# idle and maximum power of the template's server
-CPUS = {
-    "SURF-SARA": {"cores": 16, "ghz": 2.1, "idle_w": 25, "max_w": 174},
-    "2x EPYC 7502": {"cores": 64, "ghz": 3.2, "idle_w": 120, "max_w": 400},
-    "2x Xeon Gold 6248": {"cores": 40, "ghz": 2.5, "idle_w": 90, "max_w": 300},
-    "2x Xeon Gold 6248R": {"cores": 48, "ghz": 2.9, "idle_w": 140, "max_w": 350},
-    "2x EPYC 7742": {"cores": 128, "ghz": 2.6, "idle_w": 150, "max_w": 500},
-    "Xeon E-2288G": {"cores": 8, "ghz": 3.7, "idle_w": 25, "max_w": 95},
-}
-# the GPU of OpenDC web's GPU template, with its cubic power model
-GPUS = {"A100 40 GiB": {"cores": 6912, "ghz": 1.4, "memory_gb": 40, "idle_w": 100, "max_w": 400}}
-# what the table's lists offer: a host can also have no GPU
-PARTS = {"CPU": CPUS, "GPU": {"None": {}, **GPUS}}
+from api import portfolio
+
+
+def specs(kind: str) -> dict:
+    """The portfolio's CPUs or GPUs by name, their numbers only."""
+    return {
+        name: {f: part[f] for f in portfolio.FIELDS[kind]}
+        for name, part in portfolio.parts(kind).items()
+    }
 
 
 class Row(BaseModel):
@@ -67,7 +62,7 @@ def cpu(host: dict) -> dict:
 
 def gpus(name: str, count: int) -> dict:
     """`count` GPUs of a prefab per host, with their power model, in OpenDT's format."""
-    spec = GPUS[name]
+    spec = specs("GPU")[name]
     return {
         "gpu": {
             "count": count,
@@ -92,10 +87,12 @@ def row(i: int, host: dict) -> dict:
         "id": i,
         "kind": label(host),
         "count": host["count"],
-        "cpu": next((name for name, specs in CPUS.items() if specs == cpu(host)), "Custom"),
+        "cpu": next((name for name, spec in specs("CPU").items() if spec == cpu(host)), "Custom"),
         **cpu(host),
         "memory_gb": host["memory"]["memorySize"] / 1e6,
-        "gpu": next((n for n in GPUS if gpus(n, gpu["count"]) == has), "Custom") if gpu else "None",
+        "gpu": next((n for n in specs("GPU") if gpus(n, gpu["count"]) == has), "Custom")
+        if gpu
+        else "None",
         "gpus": gpu["count"] if gpu else 0,
     }
 
@@ -105,18 +102,34 @@ def rows(topology: dict) -> list[dict]:
 
 
 def edit(groups: list[dict], change: Row) -> list[dict]:
-    """The groups with the row saved; a count of 0 removes one. A row without a number is a new group: a copy of
-    the first one, without its GPUs, with what the row gives (the table starts a new row's numbers at 0)."""
+    """The groups with the row saved; a count of 0 removes one. A row without a number is a new group: its rack's
+    hosts, or a copy of the first group without its GPUs, with what the row gives (the table starts a new row's
+    numbers at 0). A rack picked for a group brings its CPU, memory, and GPUs."""
     groups = list(groups)
+    racks = portfolio.parts("Rack")
+    first = {k: v for k, v in groups[0].items() if k not in ("gpu", "gpuPowerModel")}
     if change.id is None:
         given = Row(**{k: v for k, v in change if v})
-        first = {k: v for k, v in groups[0].items() if k not in ("gpu", "gpuPowerModel")}
-        groups.append(host(given, {**first, "name": given.kind or "New", "count": 1}))
+        new = {**first, "name": given.kind or "New", "count": 1}
+        if given.kind in racks:
+            new = host(rack(given.kind), new) | {"count": given.count or racks[given.kind]["hosts"]}
+        groups.append(host(given, new))
     elif change.count == 0:
         del groups[change.id - 1]
     else:
-        groups[change.id - 1] = host(change, groups[change.id - 1])
+        old = groups[change.id - 1]
+        if change.kind in racks and change.kind != label(old):
+            old = host(rack(change.kind), {**first, "name": change.kind, "count": old["count"]})
+        groups[change.id - 1] = host(change, old)
     return groups
+
+
+def rack(name: str) -> Row:
+    """A rack of the portfolio as the cells of a row."""
+    spec = portfolio.parts("Rack")[name]
+    return Row(
+        kind=name, cpu=spec["cpu"], memory_gb=spec["memory_gb"], gpu=spec["gpu"], gpus=spec["gpus"]
+    )
 
 
 def host(change: Row, old: dict) -> dict:
@@ -124,8 +137,8 @@ def host(change: Row, old: dict) -> dict:
     as typed."""
     was = row(0, old)
     cells = {**was, **change.model_dump(exclude_none=True)}
-    if cells["cpu"] != was["cpu"] and cells["cpu"] in CPUS:
-        cells |= CPUS[cells["cpu"]]
+    if cells["cpu"] != was["cpu"] and cells["cpu"] in specs("CPU"):
+        cells |= specs("CPU")[cells["cpu"]]
     new = copy.deepcopy(old)
     new["name"] = old["name"] if cells["kind"] == was["kind"] else cells["kind"]
     new["count"] = cells["count"]
@@ -133,7 +146,7 @@ def host(change: Row, old: dict) -> dict:
     new["memory"] = {"memorySize": round(cells["memory_gb"] * 1e6)}
     new["cpuPowerModel"] |= {"idlePower": cells["idle_w"], "maxPower": cells["max_w"]}
     gpu, count = cells["gpu"], cells["gpus"]
-    if gpu in GPUS and (count or gpu != was["gpu"]):
+    if gpu in specs("GPU") and (count or gpu != was["gpu"]):
         new |= gpus(gpu, count or 1)  # picked: one per host, until a count is given
     elif gpu == "Custom" and count:
         new["gpu"]["count"] = count

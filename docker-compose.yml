@@ -192,8 +192,8 @@ services:
       - ./libs/common:/app/libs/common
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
-      # Mount data directory for reading simulation results
-      - ./data:/app/data:ro
+      # Mount data directory: the simulation results, and the user's own CPUs, GPUs, and racks (portfolio.json)
+      - ./data:/app/data
       # Mount specific workload directory
       - ${WORKLOAD_PATH:-./workload/SURF}:/app/workload:ro
     depends_on:

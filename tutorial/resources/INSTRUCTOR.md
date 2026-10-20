@@ -47,7 +47,7 @@ the previous one.
    the three use cases on the live twin, one step at a time (`tutorial/resources/tutorial.yaml`); its solutions are
    folded.
 2. Change the hosts in the Datacenter box (Hosts 2,770, Apply), on the Topology screen (the SURF-SARA row's pencil,
-   Count 2,770, Save), or from a terminal:
+   Hosts 2,770, Save), or from a terminal:
    `curl -X PUT -H "Content-Type: application/json" --data @tutorial/resources/configs/topology_2770_hosts.json http://localhost:3001/api/topology`.
    The predicted power draw jumps to about 4x; notebook 1 explains why. A dashed marker shows the change on every graph.
 3. Calibration: Hosts 277 in the Datacenter box and Calibration On in the Twin box, each then Apply (the range of r, the

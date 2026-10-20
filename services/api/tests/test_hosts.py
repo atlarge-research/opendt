@@ -103,3 +103,28 @@ def test_summary():
         "277 SURF-SARA",
         "277 SURF-SARA with 4 GPUs each",
     )
+
+
+def test_rack_added():
+    _, gpu = hosts.edit([H01], hosts.Row(kind="SURF-SARA, 4 A100", count=0))
+    assert (gpu["name"], gpu["count"], gpu["gpu"]["count"], gpu["cpu"]) == (
+        "SURF-SARA, 4 A100",
+        277,
+        4,
+        H01["cpu"],
+    )
+
+
+def test_rack_picked():
+    [r820] = hosts.edit([H01], hosts.Row(id=1, kind="PowerEdge R820"))
+    assert (
+        r820["name"],
+        r820["count"],
+        r820["cpu"]["coreCount"],
+        r820["memory"]["memorySize"],
+    ) == (
+        "PowerEdge R820",
+        277,  # the group's hosts, as they were
+        32,
+        756_000_000,
+    )
