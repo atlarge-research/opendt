@@ -443,7 +443,7 @@
                 "spec": {
                     "id": 6,
                     "title": "",
-                    "description": "",
+                    "description": "The simulated time the twin has reached, the end of its latest window of operation.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -869,7 +869,7 @@
                 "spec": {
                     "id": 10,
                     "title": "",
-                    "description": "",
+                    "description": "The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.",
                     "transparent": false,
                     "links": [],
                     "data": {

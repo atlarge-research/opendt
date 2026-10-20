@@ -13,7 +13,6 @@ from panels import (
     BROWSER_API,
     CLUSTER,
     CO2,
-    COLORS,
     GREEN,
     GREY,
     ORANGE,
@@ -26,12 +25,11 @@ from panels import (
     editable,
     organize,
     override,
-    ratio,
     stat,
     table,
     target,
+    thresholds,
     tile,
-    tiles,
     timeseries,
     units,
 )
@@ -44,40 +42,6 @@ NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
 
 # the top of the detailed screen
 
-TILES = {
-    "twin-time": tile(
-        "Simulated time", STATUS, "twin_time", "timestamp", root="", unit="time:YYYY-MM-DD HH:mm"
-    ),
-    # the power draw, measured and predicted, and how far apart
-    "power-now": tiles(
-        POWER,
-        [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
-        [
-            ("actual_power/1000", "Ground truth [kW]"),
-            ("simulated_power/1000", "OpenDT [kW]"),
-            ("(simulated_power - actual_power)/1000", "Gap [kW]"),
-        ],
-        ["actual_power", "simulated_power"],
-        decimals=1,
-    ),
-    # of the power draw, the last 5 minutes; 10% is the community-accepted error rate (question 1.1)
-    "mape-now": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1, limit=10),
-    "co2-now": tile("CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1),
-    # the physical and digital twin apart, in the colours of their lines (Simple, Tutorial)
-    "measured-now": tile(
-        "Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1, color=GREY
-    ),
-    "opendt-now": tile(
-        "OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1, color=GREEN
-    ),
-    "gap-now": tiles(
-        POWER,
-        [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
-        [("(simulated_power - actual_power)/1000", "Gap [kW]")],
-        ["actual_power", "simulated_power"],
-        decimals=1,
-    ),
-}
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {
     "time-box": tile(
@@ -89,9 +53,14 @@ BOXES = {
         unit="time:YYYY-MM-DD HH:mm",
         color=BLUE,
     ),
-    "truth-box": TILES["measured-now"],
-    "opendt-box": TILES["opendt-now"],
-    "mape-box": TILES["mape-now"],
+    "truth-box": tile(
+        "Ground truth [kW]", POWER, "actual_power", scale="/1000", decimals=1, color=GREY
+    ),
+    "opendt-box": tile(
+        "OpenDT [kW]", POWER, "simulated_power", scale="/1000", decimals=1, color=GREEN
+    ),
+    # of the power draw, the last 5 minutes; 10% is the community-accepted error rate (question 1.1)
+    "mape-box": tile("Real-time MAPE [%]", f"{ACCURACY}?minutes=5", "mape", decimals=1, limit=10),
     "co2-box": tile(
         "CO₂ emissions [kg/h]", CO2, "carbon_emission", scale="/1000", decimals=1, color=ORANGE
     ),
@@ -555,11 +524,6 @@ STARTING = {
     },
 }
 
-TILES |= {
-    name: ratio(tile["title"], NOW, tile["part"], tile["whole"], tile["colors"])
-    for name, tile in CONFIG["ratios"].items()
-}
-
 
 def numbers(title, url, columns, computed=(), hide=(), more=(), overrides=(), decimals=1):
     """The numbers of a category in one box, each its name over its value; coloured by `overrides`."""
@@ -577,9 +541,7 @@ def numbers(title, url, columns, computed=(), hide=(), more=(), overrides=(), de
 
 def colored(name, colors, **props):
     """A number in the colour of each value of `colors` on ({value: name})."""
-    steps = [{"value": v or None, "color": COLORS[c]} for v, c in sorted(colors.items())]
-    thresholds = {"mode": "absolute", "steps": steps}
-    return override(name, color={"mode": "thresholds"}, thresholds=thresholds, **props)
+    return override(name, **thresholds(colors), **props)
 
 
 # the top of the detailed screen: the twin's numbers now, by category, as the rows under it
@@ -640,7 +602,6 @@ GROUPS = {
     ),
 }
 # the (i) of each panel, by its name
-PANELS = {"power": power, "co2": co2, "hosts": hosts, "decisions": decisions, **TILES, **GROUPS}
-INFO = CONFIG["info"] | {name: tile["info"] for name, tile in CONFIG["ratios"].items()}
-for name, text in INFO.items():
+PANELS = {"power": power, "co2": co2, "hosts": hosts, "decisions": decisions, **BOXES, **GROUPS}
+for name, text in CONFIG["info"].items():
     PANELS[name]["description"] = text

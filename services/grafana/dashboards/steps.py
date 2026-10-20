@@ -7,12 +7,12 @@ from pathlib import Path
 import yaml
 from form import script
 from panels import BLUE, BOX, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW
-from plots import ROWS, TILES, co2, hosts, power
+from plots import ROWS, co2, hosts, power
 
 RESOURCES = Path(__file__).resolve().parents[3] / "tutorial" / "resources"
 STEPS = yaml.safe_load((RESOURCES / "tutorial.yaml").read_text())
 QUESTIONS = yaml.safe_load((RESOURCES / "questions.yaml").read_text())
-PLOTS = {"power": power, "co2": co2, "hosts": hosts, **TILES}
+PLOTS = {"power": power, "co2": co2, "hosts": hosts}
 PLOTS |= {key: plot for plots in ROWS.values() for key, plot in plots.items()}
 # step n is ORDER[n - 1]: (use case, step)
 ORDER = [(use_case, step) for use_case, items in STEPS.items() for step in items]

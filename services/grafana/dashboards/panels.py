@@ -197,12 +197,10 @@ def stat(
     }
 
 
-def tiles(url, columns, computed=(), hide=(), root="data", unit=None, decimals=None):
-    """Values of the twin's state side by side in one tile, each with its name, since a title would be cut short."""
-    panel = stat("", url, columns, (), computed, root, hide, unit=unit, decimals=decimals)
-    # the panel is the box
-    panel["options"] |= {"orientation": "vertical", "colorMode": "none", "justifyMode": "center"}
-    return panel
+def thresholds(colors):
+    """A colour from each value of `colors` on ({value: name}), as field properties."""
+    steps = [{"value": v or None, "color": COLORS[c]} for v, c in sorted(colors.items())]
+    return {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": steps}}
 
 
 def tile(
@@ -217,21 +215,18 @@ def tile(
     limit=None,
     color=None,
 ):
-    """One value of the twin's state; with a `scale` ("/1000"), the API's column in other units; with a `color`,
-    the value in it, as its line in the plots; with a `limit`, green under it and red from it on."""
+    """One value of the twin's state, the panel its box; with a `scale` ("/1000"), the API's column in other units;
+    with a `color`, the value in it, as its line in the plots; with a `limit`, green under it and red from it on."""
     columns, computed, hide = [(key, title, kind)], (), ()
     if scale:
         columns, computed, hide = [(key, key)], [(f"{key}{scale}", title)], [key]
-    panel = tiles(url, columns, computed, hide, root, unit, decimals)
+    panel = stat("", url, columns, (), computed, root, hide, unit=unit, decimals=decimals)
+    panel["options"] |= {"orientation": "vertical", "colorMode": "none", "justifyMode": "center"}
     if color:
         panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = color
         panel["options"]["colorMode"] = "value"
     if limit is not None:
-        steps = [{"value": None, "color": GREEN}, {"value": limit, "color": RED}]
-        panel["fieldConfig"]["defaults"] |= {
-            "color": {"mode": "thresholds"},
-            "thresholds": {"mode": "absolute", "steps": steps},
-        }
+        panel["fieldConfig"]["defaults"] |= thresholds({0: "green", limit: "red"})
         panel["options"]["colorMode"] = "value"
     return panel
 
@@ -319,25 +314,3 @@ def editable(title, url, columns, save, delete, key="id"):
         "fieldConfig": {"defaults": {"unit": "locale"}, "overrides": []},
         "options": {"tables": [table]},
     }
-
-
-def ratio(title, url, part, whole, colors):
-    """A share as a percentage with the counts over it (e.g., 90/277); `part` and `whole` are the API's columns,
-    or sums of them; its colour from each share of `colors` on ({share: name})."""
-    names = sorted(set(re.findall(r"[a-z_]+", f"{part} {whole}")))
-    shares = [(f"({part}) / ({whole})", "share"), (f'{part} + "/" + ({whole})', "counts", "string")]
-    panel = stat(title, url, [(n, n) for n in names], computed=shares, hide=names)
-    mappings = [  # the counts name the share
-        {"fieldName": "counts", "handlerKey": "field.name"},
-        {"fieldName": "share", "handlerKey": "field.value"},
-    ]
-    panel["transformations"].append({"id": "rowsToFields", "options": {"mappings": mappings}})
-    steps = [{"value": share or None, "color": COLORS[c]} for share, c in sorted(colors.items())]
-    panel["fieldConfig"]["defaults"] |= {
-        "unit": "percentunit",
-        "decimals": 0,
-        "color": {"mode": "thresholds"},
-        "thresholds": {"mode": "absolute", "steps": steps},
-    }
-    panel["options"]["colorMode"] = "value"
-    return panel
