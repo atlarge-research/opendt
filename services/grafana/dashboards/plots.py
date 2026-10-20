@@ -508,7 +508,7 @@ STARTING = {
             "content": CARD,
             "defaultContent": WAITING,
             "styles": STYLE,
-            "afterRender": script("start.js", progress=f"{BROWSER_API}/api/progress"),
+            "afterRender": script("grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress"),
         },
     },
 }

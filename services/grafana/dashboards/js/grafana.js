@@ -12,10 +12,3 @@ const theme = (name) => {
 };
 const chosen = localStorage.getItem('opendt-theme');
 if (chosen && (chosen === 'light') !== light) theme(chosen);
-const toggle = context.element.querySelector('.theme');
-toggle.textContent = light ? '☾' : '☀';
-toggle.title = light ? 'Dark' : 'Light';
-toggle.onclick = () => {
-  localStorage.setItem('opendt-theme', light ? 'dark' : 'light');
-  theme(light ? 'dark' : 'light');
-};

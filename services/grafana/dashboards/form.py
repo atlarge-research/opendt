@@ -178,7 +178,7 @@ def brand(uid, plots=(), period=True):
         f'</span><a class="theme" style="{TAB}"></a></div>'  # light or dark, grafana.js
     )
     html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'
-    code = script("links.js", "grafana.js", "range.js", "view.js", week=WEEK)
+    code = script("links.js", "grafana.js", "theme.js", "range.js", "view.js", week=WEEK)
     return {
         "type": "marcusolsson-dynamictext-panel",
         "title": "",
