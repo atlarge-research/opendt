@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from api import hosts, levers, main, portfolio, twin
+from api import hosts, levers, main, prefabs, twin
 from conftest import write_window
 from fastapi import HTTPException
 from odt_common import AppConfig
@@ -214,13 +214,13 @@ def test_components():
         part: [c["name"] for c in data(main.get_components(part))]
         for part in ("CPU", "GPU", "Rack")
     }
-    assert names["CPU"] == list(portfolio.PRESETS["CPU"]) and names["Rack"][0] == "SURF-SARA"
-    assert names["GPU"] == ["None", *portfolio.PRESETS["GPU"]]  # a host can also have no GPU
+    assert names["CPU"] == list(prefabs.SHIPPED["CPU"]) and names["Rack"][0] == "SURF-SARA"
+    assert names["GPU"] == ["None", *prefabs.SHIPPED["GPU"]]  # a host can also have no GPU
 
 
-def test_portfolio_saved_and_removed(api):
-    main.edit_portfolio(portfolio.Part(kind="CPU", name="Future", cores=256))
-    main.edit_portfolio(portfolio.Part(kind="Rack", name="Next", cpu="Future", hosts=10))
+def test_prefab_saved_and_removed(api):
+    main.edit_prefab(prefabs.Part(kind="CPU", name="Future", cores=256))
+    main.edit_prefab(prefabs.Part(kind="Rack", name="Next", cpu="Future", hosts=10))
     assert "Next" in [c["name"] for c in data(main.get_components("Rack"))]
     _, future = main.edit_hosts(hosts.Row(kind="Next"))["data"]
     assert (future["kind"], future["count"], future["cpu"], future["cores"]) == (
@@ -229,13 +229,13 @@ def test_portfolio_saved_and_removed(api):
         "Future",
         256,
     )
-    main.edit_portfolio(portfolio.Part(kind="CPU", id="Future", remove=True))
-    assert "Future" not in [c["name"] for c in data(main.get_portfolio("CPU"))]
+    main.edit_prefab(prefabs.Part(kind="CPU", id="Future", remove=True))
+    assert "Future" not in [c["name"] for c in data(main.get_prefabs("CPU"))]
 
 
-def test_portfolio_refused(api):
+def test_prefab_refused(api):
     with pytest.raises(HTTPException):
-        main.edit_portfolio(portfolio.Part(kind="Rack", name="X", cpu="Nope"))
+        main.edit_prefab(prefabs.Part(kind="Rack", name="X", cpu="Nope"))
 
 
 def test_no_queue_time_without_starts(api, run_dir):

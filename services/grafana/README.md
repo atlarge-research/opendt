@@ -18,9 +18,9 @@ follows. Full screen switches the browser's full screen on and off, without Graf
   hosts, r, CO₂ zone, and scheduler; automatic or manual), the legends the latest values, and the right axis which way
   is better (BETTER with an arrow).
 - **OpenDT, topology:** the datacenter, its racks and their hosts, edited in place (a row's pencil, + to add one by
-  picking a rack, the bin to delete one); the hosts available and in use; and the portfolio the racks come from:
-  racks, CPUs, and GPUs, preconfigured at first (SURF's node, OpenDC web's host templates, the Dell servers of
-  OpenDC's RADiCe experiments) and then the user's, kept in `data/portfolio.json` (without it, preconfigured again).
+  picking a rack prefab, the bin to delete one); the hosts available and in use; and the prefabs the racks come from:
+  racks, CPUs, and GPUs, as OpenDT ships them at first (SURF's node, OpenDC web's host templates, the Dell servers of
+  OpenDC's RADiCe experiments) and then the user's, kept in `data/prefabs.json` (without it, as shipped again).
 - **OpenDT, tutorial:** the 12 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
   its tag or by Back and Next: a change to the twin, a question with four choices (a click says if it holds), a hint,
   and a solution, folded, then the step's plots; the twin's state in boxes on the left. It starts on Day.

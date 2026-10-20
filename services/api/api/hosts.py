@@ -1,18 +1,18 @@
 """The host groups as the Topology screen's table shows them: one row per group, edited in place, from a rack of the
-portfolio, with its CPU and GPUs, or custom. OpenDT's units: MHz, and memory in SURF's unit (128 GB is 128,000,000)."""
+prefabs, with its CPU and GPUs, or custom. OpenDT's units: MHz, and memory in SURF's unit (128 GB is 128,000,000)."""
 
 import copy
 
 from pydantic import BaseModel, field_validator
 
-from api import portfolio
+from api import prefabs
 
 
 def specs(kind: str) -> dict:
-    """The portfolio's CPUs or GPUs by name, their numbers only."""
+    """The prefabs's CPUs or GPUs by name, their numbers only."""
     return {
-        name: {f: part[f] for f in portfolio.FIELDS[kind]}
-        for name, part in portfolio.parts(kind).items()
+        name: {f: part[f] for f in prefabs.FIELDS[kind]}
+        for name, part in prefabs.parts(kind).items()
     }
 
 
@@ -106,7 +106,7 @@ def edit(groups: list[dict], change: Row) -> list[dict]:
     hosts, or a copy of the first group without its GPUs, with what the row gives (the table starts a new row's
     numbers at 0). A rack picked for a group brings its CPU, memory, and GPUs."""
     groups = list(groups)
-    racks = portfolio.parts("Rack")
+    racks = prefabs.parts("Rack")
     first = {k: v for k, v in groups[0].items() if k not in ("gpu", "gpuPowerModel")}
     if change.id is None:
         given = Row(**{k: v for k, v in change if v})
@@ -125,8 +125,8 @@ def edit(groups: list[dict], change: Row) -> list[dict]:
 
 
 def rack(name: str) -> Row:
-    """A rack of the portfolio as the cells of a row."""
-    spec = portfolio.parts("Rack")[name]
+    """A rack of the prefabs as the cells of a row."""
+    spec = prefabs.parts("Rack")[name]
     return Row(
         kind=name, cpu=spec["cpu"], memory_gb=spec["memory_gb"], gpu=spec["gpu"], gpus=spec["gpus"]
     )

@@ -444,9 +444,9 @@ SPECS = [
     ("idle_w", "Idle power [W]"),
     ("max_w", "Max power [W]"),
 ]
-# the Topology screen: the datacenter, racks of hosts, and the portfolio of CPUs, GPUs, and racks they come from
+# the Topology screen: the datacenter, racks of hosts, and the prefabs of CPUs, GPUs, and racks they come from
 LISTS = {part: f"{API}/api/components?part={part}" for part in ("CPU", "GPU", "Rack")}
-PORTFOLIO = f"{API}/api/portfolio"
+PREFABS = f"{API}/api/prefabs"
 datacenter = editable(
     "Datacenter",
     f"{API}/api/hosts",
@@ -462,43 +462,43 @@ datacenter = editable(
     delete=f"{API}/api/hosts?id=${{payload.id}}&count=0",
 )
 datacenter["description"] = (
-    "The racks the twin runs, with their hosts. Add one with +, picking a rack of the portfolio below; edit one "
+    "The racks the twin runs, with their hosts. Add one with +, picking a rack prefab; edit one "
     "with its pencil: a rack, CPU, or GPU picked from its list brings its numbers. The twin runs a change from its "
     "next window."
 )
 
 
-def portfolio(part, title, columns, info):
-    """A table of the portfolio, edited in place: a new part is a copy of the first, with the numbers given."""
+def prefabs(part, title, columns, info):
+    """A table of prefabs, edited in place: a new one is a copy of the first, with the numbers given."""
     panel = editable(
         title,
-        f"{PORTFOLIO}?kind={part}",
+        f"{PREFABS}?kind={part}",
         [("name", "Name", "string"), *columns],
-        save=f"{PORTFOLIO}?kind={part}",
-        delete=f"{PORTFOLIO}?kind={part}&id=${{payload.id:percentencode}}&remove=true",
+        save=f"{PREFABS}?kind={part}",
+        delete=f"{PREFABS}?kind={part}&id=${{payload.id:percentencode}}&remove=true",
     )
     panel["description"] = (
-        f"{info} Preconfigured at first (SURF's, OpenDC's), then yours: edit, add with +, or delete any; kept across "
-        "runs in data/portfolio.json, and preconfigured again without it."
+        f"{info} As OpenDT ships them at first (SURF's, OpenDC's), then yours: edit, add with +, or delete any; kept "
+        "across runs in data/prefabs.json, and as shipped again without it."
     )
     return panel
 
 
-cpus = portfolio(
+cpus = prefabs(
     "CPU",
-    "CPUs",
+    "CPU prefabs",
     [(field, name, "number") for field, name in SPECS if field != "memory_gb"],
     "CPUs to build racks from, with the idle and maximum power of their server.",
 )
-gpus = portfolio(
+gpus = prefabs(
     "GPU",
-    "GPUs",
+    "GPU prefabs",
     [(field, name, "number") for field, name in SPECS],
     "GPUs to build racks from, with the idle and maximum power of their cubic power model.",
 )
-racks = portfolio(
+racks = prefabs(
     "Rack",
-    "Racks",
+    "Rack prefabs",
     [
         ("cpu", "CPU", LISTS["CPU"]),
         ("memory_gb", "Memory [GB]", "number"),

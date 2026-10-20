@@ -28,7 +28,7 @@ from odt_common.models.topology import (
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
 
-from api import hosts, levers, portfolio, startup, twin
+from api import hosts, levers, prefabs, startup, twin
 from api.carbon_query import CarbonDataQuery, CarbonDataResponse
 from api.power_query import PowerDataQuery, PowerDataResponse
 
@@ -302,33 +302,31 @@ def edit_hosts(row: Annotated[hosts.Row, Query()]):
 
 
 @app.get("/api/components")
-def get_components(part: Literal[tuple(portfolio.PRESETS)]):
-    """The names the Topology tables' lists offer: the portfolio's CPUs, GPUs (a host can also have none), or
-    racks."""
-    names = list(portfolio.parts(part))
+def get_components(part: Literal[tuple(prefabs.SHIPPED)]):
+    """The names the Topology tables' lists offer: the prefab CPUs, GPUs (a host can also have none), or racks."""
+    names = list(prefabs.parts(part))
     return {"data": [{"name": name} for name in (["None", *names] if part == "GPU" else names)]}
 
 
-@app.get("/api/portfolio")
-def get_portfolio(kind: Literal[tuple(portfolio.PRESETS)]):
-    """The CPUs, GPUs, or racks to build the datacenter from, preconfigured and the user's own, with where each
-    comes from."""
+@app.get("/api/prefabs")
+def get_prefabs(kind: Literal[tuple(prefabs.SHIPPED)]):
+    """The prefab CPUs, GPUs, or racks to build the datacenter from."""
     return {
-        "data": [{"id": name, "name": name, **part} for name, part in portfolio.parts(kind).items()]
+        "data": [{"id": name, "name": name, **part} for name, part in prefabs.parts(kind).items()]
     }
 
 
-@app.post("/api/portfolio")
-def edit_portfolio(part: Annotated[portfolio.Part, Query()]):
-    """Save a row of a portfolio table: a part changed, added (no id), or removed; 422 if it cannot be."""
+@app.post("/api/prefabs")
+def edit_prefab(part: Annotated[prefabs.Part, Query()]):
+    """Save a row of a prefabs table: a prefab changed, added (no id), or removed; 422 if it cannot be."""
     try:
         if part.remove:
-            portfolio.remove(part.kind, part.id)
+            prefabs.remove(part.kind, part.id)
         else:
-            portfolio.save(part.kind, part.id, part.model_dump(exclude_none=True))
+            prefabs.save(part.kind, part.id, part.model_dump(exclude_none=True))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-    return get_portfolio(part.kind)
+    return get_prefabs(part.kind)
 
 
 @app.get("/api/accuracy")
