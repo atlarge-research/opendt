@@ -37,8 +37,8 @@ make setup
 The notebooks then open in VS Code, with the `.venv` environment (or in JupyterLab, after `uv pip install jupyterlab`,
 with `.venv/bin/jupyter lab`).
 When something fails: OpenDC needs Java 21 (e.g., from [Adoptium](https://adoptium.net), with `JAVA_HOME` set);
-`make setup` stops when `.venv` already exists, so `make clean-env` comes first; and on a slow machine,
-`export OPENDT_TUTORIAL_WORKERS=1` runs one simulation at a time.
+`make setup` stops when `.venv` already exists, so `make clean-env` comes first; and on a slow machine, or one with
+8 GB of memory, `export OPENDT_TUTORIAL_WORKERS=1` runs one simulation at a time (by default, up to 4 at once).
 
 ## What Is Where
 
