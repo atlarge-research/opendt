@@ -10,16 +10,23 @@ ASCI course on distributed systems, Friday 30 October 2026, 1 hour, fewer than 2
   cached in `resources/output/`).
 - For the live demo: start Docker Desktop, run `make up config=tutorial/resources/configs/live_twin.yaml` once (the
   first start builds the Docker images), then `make down`.
+- Before the session: `make up config=tutorial/resources/configs/live_twin.yaml`, and let the twin run past its first
+  trace hours (its MAPE is about 10% in the first 6 hours, then lower).
 
 ## Timeline
 
-| Time | Part | Notebook |
-|---|---|---|
-| 0:00-0:15 | Talk and live demo | |
-| 0:15-0:25 | Use case 1: dynamic autoscaling | 1.autoscaling.ipynb |
-| 0:25-0:45 | Use case 2: simulation calibration | 2.calibration.ipynb |
-| 0:45-0:55 | Use case 3: CO2-aware workload migration | 3.co2_migration.ipynb |
-| 0:55-1:00 | Wrap-up: the three questions and their answers | |
+| Time | Part | In pairs | Together, on the projector |
+|---|---|---|---|
+| 0:00-0:10 | Talk | | |
+| 0:10-0:25 | Use case 1: dynamic autoscaling | 1.autoscaling.ipynb (10 min) | Tutorial steps 1-6 (5 min) |
+| 0:25-0:45 | Use case 2: simulation calibration | 2.calibration.ipynb (15 min) | Tutorial steps 7-9 (5 min) |
+| 0:45-0:57 | Use case 3: CO2-aware workload migration | 3.co2_migration.ipynb (8 min) | Tutorial steps 10-12 (4 min) |
+| 0:57-1:00 | Wrap-up: the three questions and their answers | | |
+
+The students work in pairs, one laptop or codespace per pair. While the pairs start a notebook, we make the changes of
+its Tutorial steps on the live twin (the Change line of each step), so the twin shows their effect by the time we look
+at it together; a change shows from the next windows of operation, and calibration needs a few more. If time runs out,
+the instructor goes through the steps alone.
 
 Each notebook is self-contained: at 0:25 and 0:45, all students open the next notebook, also those who did not finish
 the previous one.
@@ -35,17 +42,18 @@ the previous one.
 ## Live Demo (about 5 minutes)
 
 1. `make up config=tutorial/resources/configs/live_twin.yaml`, then open http://localhost:3000: the detailed screen,
-   with the screens at the top left (Detailed, Topology, Tutorial). Set Speed to 60x in the Twin box: at max, the simulator falls behind the replay and a change shows only minutes later.
-   The Tutorial screen asks the questions of the three use cases on the live twin, one step at
-   a time (`tutorial/resources/tutorial.yaml`); its solutions are folded.
+   with the screens at the top left (Detailed, Topology, Tutorial). Set Speed to 60x in the Twin box: at max, the
+   simulator falls behind the replay and a change shows only minutes later. The Tutorial screen asks the questions of
+   the three use cases on the live twin, one step at a time (`tutorial/resources/tutorial.yaml`); its solutions are
+   folded.
 2. Change the hosts in the Datacenter box (Hosts 2,770, Apply), on the Topology screen (the SURF-SARA row's pencil,
    Count 2,770, Save), or from a terminal:
    `curl -X PUT -H "Content-Type: application/json" --data @tutorial/resources/configs/topology_2770_hosts.json http://localhost:3001/api/topology`.
    The predicted power draw jumps to about 4x; notebook 1 explains why. A dashed marker shows the change on every graph.
-3. Calibration: Hosts 277 in the Datacenter box and Calibration On in the Twin box, each then Apply (the range of r,
-   the values of r, the parallel runs, and the MAPE window are in the Self-Calibrator box); the Twin accuracy row shows r and the hourly MAPE (in the test
-   run, r 4, then 9, then 6, and the MAPE from 14% to about 1% within six trace hours); `make logs-calibrator` shows
-   the MAPE of each candidate.
+3. Calibration: Hosts 277 in the Datacenter box and Calibration On in the Twin box, each then Apply (the range of r, the
+   values of r, the parallel runs, and the MAPE window are in the Self-Calibrator box); the Twin accuracy row shows r
+   and the hourly MAPE (in the test run, r 4, then 9, then 6, and the MAPE from 14% to about 1% within six trace hours);
+   `make logs-calibrator` shows the MAPE of each candidate.
 4. `make down`.
 
 Known issues:
