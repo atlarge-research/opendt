@@ -117,6 +117,8 @@ services:
       RUN_ID: ${RUN_ID}
       DATA_DIR: /app/data
       WORKLOAD_DIR: /app/workload
+      # each OpenDC run within 1 GB (a week of SURF needs less), so the twin fits Docker's 8 GB
+      JAVA_OPTS: -Xmx1g
     volumes:
       # Mount source code for hot reload
       - ./services/simulator:/app/services/simulator
@@ -148,6 +150,8 @@ services:
       RUN_ID: ${RUN_ID}
       DATA_DIR: /app/data
       WORKLOAD_DIR: /app/workload
+      # each OpenDC run within 1 GB (a week of SURF needs less), so the twin fits Docker's 8 GB
+      JAVA_OPTS: -Xmx1g
     volumes:
       # Mount source code for hot reload
       - ./services/calibrator:/app/services/calibrator
