@@ -1254,8 +1254,8 @@
                         "spec": {
                             "options": {
                                 "renderMode": "allRows",
-                                "content": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">4</span><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">5</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 4:</strong> With half of SURF&#x27;s hosts, what happens to the jobs?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Datacenter, Hosts 138 (half), then Apply.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>They run as before</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Some of them wait for a free host</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>They run faster</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>They fail</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> At its busiest, how many jobs does SURF run at once?</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Some jobs wait: at peak, more than 138 jobs need a host. Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system failures.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
-                                "defaultContent": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">4</span><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">5</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 4:</strong> With half of SURF&#x27;s hosts, what happens to the jobs?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Datacenter, Hosts 138 (half), then Apply.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>They run as before</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Some of them wait for a free host</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>They run faster</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>They fail</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> At its busiest, how many jobs does SURF run at once?</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Some jobs wait: at peak, more than 138 jobs need a host. Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system failures.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
+                                "content": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">4</span><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">5</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 4:</strong> With half of SURF&#x27;s hosts, how much power does SURF save?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>About half</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Little, under a fifth</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>Nothing</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>Almost all</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> Only idle hosts are switched off, and an idle host draws 25 W.</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Little, under a fifth (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
+                                "defaultContent": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">4</span><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">5</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 4:</strong> With half of SURF&#x27;s hosts, how much power does SURF save?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>About half</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Little, under a fifth</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>Nothing</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>Almost all</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> Only idle hosts are switched off, and an idle host draws 25 W.</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Little, under a fifth (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=5\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
                                 "afterRender": "const colors = {\"right\": \"#009E73\", \"wrong\": \"#D55E00\", \"none\": \"rgba(128, 128, 128, 0.4)\"};\n// the links as Grafana fills them in now (the time, the markers, ...), again at every refresh\ncontext.element.querySelectorAll('[data-href]').forEach((a) => (a.href = context.grafana.replaceVariables(a.dataset.href)));\n// Hint and Solution unfold theirs; a choice says if it is right or wrong (in green or red, the right one in green)\n// and unfolds the solution; another choice takes the last one's place\nconst card = context.element;\nconst solution = card.querySelector('.solution');\ncard.onclick = ({ target }) => {\n  const { show } = target.dataset;\n  if (show) card.querySelector('.' + show).hidden = false;\n  const option = target.closest('[data-choice]');\n  if (!option) return;\n  const { choice } = option.dataset;\n  card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));\n  option.style.borderColor = colors[choice];\n  card.querySelector('[data-choice=\"right\"]').style.borderColor = colors.right;\n  solution.querySelector('strong').textContent = (choice === 'right' ? 'Right. ' : 'Wrong. ') + 'Solution:';\n  solution.hidden = false;\n  solution.scrollIntoView({ block: 'nearest', behavior: 'smooth' });\n};\n"
                             },
                             "fieldConfig": {
@@ -1289,8 +1289,8 @@
                         "spec": {
                             "options": {
                                 "renderMode": "allRows",
-                                "content": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">4</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">5</span></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 5:</strong> With half of SURF&#x27;s hosts, how much power does SURF save?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Interval hour (top left), to see the energy per hour.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>About half</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Little, under a fifth</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>Nothing</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>Almost all</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> Only idle hosts are switched off, and an idle host draws 25 W.</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Little, under a fifth (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW, while some jobs wait for a host.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
-                                "defaultContent": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">4</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">5</span></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 5:</strong> With half of SURF&#x27;s hosts, how much power does SURF save?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Interval hour (top left), to see the energy per hour.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>About half</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Little, under a fifth</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>Nothing</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>Almost all</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> Only idle hosts are switched off, and an idle host draws 25 W.</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Little, under a fifth (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW, while some jobs wait for a host.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
+                                "content": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">4</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">5</span></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 5:</strong> With a quarter of SURF&#x27;s hosts, what happens to the jobs?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Datacenter, Hosts 69 (a quarter), then Apply.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>They run as before</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Many of them wait for a free host</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>They run faster</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>They fail</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> Even at its quietest, how many jobs does SURF run at once?</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Many jobs wait: SURF runs more than 69 jobs at once in 96% of the week (at least 99 on the first day). Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system failures.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
+                                "defaultContent": "<div style=\"display:flex;flex-direction:column;min-height:100%\"><div style=\"display:flex;flex-wrap:wrap;gap:12px 36px\"><div><div style=\"font-size:14px;color:inherit\">Dynamic autoscaling</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=1\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">1</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=2\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">2</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=3\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">3</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">4</a><span style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;background:#338ec1;color:#ffffff\">5</span></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">Simulation calibration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">6</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=7\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">7</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=8\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">8</a></div></div><div><div style=\"font-size:14px;color:rgba(128, 128, 128, 0.9)\">CO₂-aware workload migration</div><div style=\"display:flex;gap:6px;margin-top:4px\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=9\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">9</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=10\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">10</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=11\" style=\"display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;font-weight:500;text-decoration:none;border:1px solid rgba(128, 128, 128, 0.4);color:inherit\">11</a></div></div></div>\n<p style=\"font-size:20px;margin:12px 0 0;white-space:nowrap\"><strong>Question 5:</strong> With a quarter of SURF&#x27;s hosts, what happens to the jobs?</p>\n<p style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #338ec1;background:rgba(128, 128, 128, 0.15)\"><strong>Change:</strong> Datacenter, Hosts 69 (a quarter), then Apply.</p>\n<div style=\"display:flex;flex-direction:column;gap:4px;margin-top:8px\"><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">A</span>They run as before</a><a data-choice=\"right\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">B</span>Many of them wait for a free host</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">C</span>They run faster</a><a data-choice=\"wrong\" style=\"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;cursor:pointer\"><span style=\"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:50%;font-size:13px\">D</span>They fail</a></div>\n<p class=\"hint\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #F0E442;background:rgba(128, 128, 128, 0.15)\"><strong>Hint:</strong> Even at its quietest, how many jobs does SURF run at once?</p>\n<p class=\"solution\" hidden style=\"font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid #009E73;background:rgba(128, 128, 128, 0.15)\"><strong>Solution:</strong> Many jobs wait: SURF runs more than 69 jobs at once in 96% of the week (at least 99 on the first day). Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system failures.</p>\n<div style=\"display:flex;gap:8px;margin-top:auto;padding-top:6px\"><a data-show=\"hint\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Hint</a><a data-show=\"solution\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none;cursor:pointer\">Solution</a><div style=\"display:flex;gap:8px;margin-left:auto\"><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=4\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Back</a><a data-href=\"${__url.path}${__url.params:exclude:var-step}&var-step=6\" style=\"padding:5px 16px;border:1px solid rgba(128, 128, 128, 0.4);border-radius:4px;color:inherit;font-size:16px;text-decoration:none\">Next</a></div></div></div>",
                                 "afterRender": "const colors = {\"right\": \"#009E73\", \"wrong\": \"#D55E00\", \"none\": \"rgba(128, 128, 128, 0.4)\"};\n// the links as Grafana fills them in now (the time, the markers, ...), again at every refresh\ncontext.element.querySelectorAll('[data-href]').forEach((a) => (a.href = context.grafana.replaceVariables(a.dataset.href)));\n// Hint and Solution unfold theirs; a choice says if it is right or wrong (in green or red, the right one in green)\n// and unfolds the solution; another choice takes the last one's place\nconst card = context.element;\nconst solution = card.querySelector('.solution');\ncard.onclick = ({ target }) => {\n  const { show } = target.dataset;\n  if (show) card.querySelector('.' + show).hidden = false;\n  const option = target.closest('[data-choice]');\n  if (!option) return;\n  const { choice } = option.dataset;\n  card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));\n  option.style.borderColor = colors[choice];\n  card.querySelector('[data-choice=\"right\"]').style.borderColor = colors.right;\n  solution.querySelector('strong').textContent = (choice === 'right' ? 'Right. ' : 'Wrong. ') + 'Solution:';\n  solution.hidden = false;\n  solution.scrollIntoView({ block: 'nearest', behavior: 'smooth' });\n};\n"
                             },
                             "fieldConfig": {
@@ -2801,10 +2801,195 @@
                     }
                 }
             },
-            "plot-jobs": {
+            "plot-energy": {
                 "kind": "Panel",
                 "spec": {
                     "id": 30,
+                    "title": "S2  Energy per $period",
+                    "description": "",
+                    "transparent": false,
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "refId": "A",
+                                        "hidden": false,
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "yesoreyeram-infinity-datasource",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "df5tfgbpfeakgc"
+                                            },
+                                            "spec": {
+                                                "type": "json",
+                                                "source": "url",
+                                                "parser": "backend",
+                                                "format": "table",
+                                                "url": "http://api:8000/api/totals?period=$period",
+                                                "url_options": {
+                                                    "method": "GET"
+                                                },
+                                                "root_selector": "data",
+                                                "columns": [
+                                                    {
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "energy_kwh",
+                                                        "text": "Energy [kWh]",
+                                                        "type": "number"
+                                                    }
+                                                ],
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "0",
+                                                        "text": "better",
+                                                        "type": "number"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "transformations": [
+                                {
+                                    "kind": "organize",
+                                    "spec": {
+                                        "id": "organize",
+                                        "options": {
+                                            "indexByName": {
+                                                "Energy [kWh]": 0,
+                                                "better": 1
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "timeseries",
+                        "version": "",
+                        "spec": {
+                            "options": {
+                                "legend": {
+                                    "calcs": [
+                                        "last"
+                                    ]
+                                },
+                                "tooltip": {
+                                    "mode": "multi"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "min": 0,
+                                    "decimals": 1,
+                                    "custom": {
+                                        "axisLabel": "Energy [kWh]",
+                                        "lineWidth": 2,
+                                        "showPoints": "never",
+                                        "drawStyle": "bars",
+                                        "fillOpacity": 80,
+                                        "barAlignment": 1
+                                    },
+                                    "unit": "locale"
+                                },
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Energy [kWh]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#338ec1"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "better"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisPlacement",
+                                                "value": "right"
+                                            },
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "BETTER →"
+                                            },
+                                            {
+                                                "id": "custom.lineWidth",
+                                                "value": 0
+                                            },
+                                            {
+                                                "id": "custom.axisGridShow",
+                                                "value": false
+                                            },
+                                            {
+                                                "id": "custom.hideFrom",
+                                                "value": {
+                                                    "legend": true,
+                                                    "tooltip": true,
+                                                    "viz": false
+                                                }
+                                            },
+                                            {
+                                                "id": "mappings",
+                                                "value": [
+                                                    {
+                                                        "type": "range",
+                                                        "options": {
+                                                            "from": -1000000000000.0,
+                                                            "to": 1000000000000.0,
+                                                            "result": {
+                                                                "text": " "
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "plot-jobs": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 31,
                     "title": "P4  Jobs",
                     "description": "",
                     "transparent": false,
@@ -2983,7 +3168,7 @@
             "plot-queue": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
+                    "id": 32,
                     "title": "P3  Time in queue",
                     "description": "",
                     "transparent": false,
@@ -3164,7 +3349,7 @@
             "plot-completion": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
+                    "id": 33,
                     "title": "P2  Total runtime",
                     "description": "",
                     "transparent": false,
@@ -3266,191 +3451,6 @@
                                         "matcher": {
                                             "id": "byName",
                                             "options": "Total runtime [h]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#338ec1"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "timestamp"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "Simulated time [UTC]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            "plot-energy": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 33,
-                    "title": "S2  Energy per $period",
-                    "description": "",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/totals?period=$period",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "energy_kwh",
-                                                        "text": "Energy [kWh]",
-                                                        "type": "number"
-                                                    }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Energy [kWh]": 0,
-                                                "better": 1
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "timeseries",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
-                                },
-                                "tooltip": {
-                                    "mode": "multi"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "min": 0,
-                                    "decimals": 1,
-                                    "custom": {
-                                        "axisLabel": "Energy [kWh]",
-                                        "lineWidth": 2,
-                                        "showPoints": "never",
-                                        "drawStyle": "bars",
-                                        "fillOpacity": 80,
-                                        "barAlignment": 1
-                                    },
-                                    "unit": "locale"
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Energy [kWh]"
                                         },
                                         "properties": [
                                             {
@@ -5373,50 +5373,37 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 16,
-                                                "width": 4,
+                                                "width": 6,
                                                 "height": 8,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "plot-jobs"
+                                                    "name": "plot-power"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 10,
+                                                "x": 12,
                                                 "y": 16,
-                                                "width": 5,
+                                                "width": 6,
                                                 "height": 8,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "plot-queue"
+                                                    "name": "plot-energy"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 15,
+                                                "x": 18,
                                                 "y": 16,
-                                                "width": 4,
+                                                "width": 6,
                                                 "height": 8,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "plot-completion"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "GridLayoutItem",
-                                            "spec": {
-                                                "x": 19,
-                                                "y": 16,
-                                                "width": 5,
-                                                "height": 8,
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "plot-hosts"
+                                                    "name": "plot-idle-power"
                                                 }
                                             }
                                         }
@@ -5621,37 +5608,50 @@
                                             "spec": {
                                                 "x": 6,
                                                 "y": 16,
-                                                "width": 6,
+                                                "width": 4,
                                                 "height": 8,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "plot-power"
+                                                    "name": "plot-jobs"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 12,
+                                                "x": 10,
                                                 "y": 16,
-                                                "width": 6,
+                                                "width": 5,
                                                 "height": 8,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "plot-energy"
+                                                    "name": "plot-queue"
                                                 }
                                             }
                                         },
                                         {
                                             "kind": "GridLayoutItem",
                                             "spec": {
-                                                "x": 18,
+                                                "x": 15,
                                                 "y": 16,
-                                                "width": 6,
+                                                "width": 4,
                                                 "height": 8,
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "plot-idle-power"
+                                                    "name": "plot-completion"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "kind": "GridLayoutItem",
+                                            "spec": {
+                                                "x": 19,
+                                                "y": 16,
+                                                "width": 5,
+                                                "height": 8,
+                                                "element": {
+                                                    "kind": "ElementReference",
+                                                    "name": "plot-hosts"
                                                 }
                                             }
                                         }
