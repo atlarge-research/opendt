@@ -5,6 +5,7 @@ metadata.json is written last, so a window without it is still running.
 """
 
 import json
+import os
 import threading
 from functools import cache, lru_cache
 from itertools import pairwise
@@ -43,10 +44,20 @@ LOWS = range(0, 100, 20)
 BUCKETS = [f"cpu_{low}_{low + 20}" for low in LOWS]
 
 
+DONE: dict[
+    Path, frozenset[Path]
+] = {}  # the complete windows of each run: a complete window never changes
+
+
 def windows(run_dir: Path) -> list[Path]:
-    """The complete windows, in order."""
-    done = (run_dir / "simulator" / "opendc").glob("run_*/metadata.json")
-    return sorted((m.parent for m in done), key=lambda w: int(w.name.split("_")[1]))
+    """The complete windows, in order; only the newer ones are looked for (a run has thousands)."""
+    folder = run_dir / "simulator" / "opendc"
+    known = DONE.get(folder, frozenset())
+    names = os.listdir(folder) if folder.exists() else []
+    new = {folder / n for n in names if n.startswith("run_")} - known
+    if done := {w for w in new if (w / "metadata.json").exists()}:
+        known = DONE[folder] = known | done
+    return sorted(known, key=lambda w: int(w.name.split("_")[1]))
 
 
 @cache  # a complete window never changes

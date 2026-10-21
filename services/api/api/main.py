@@ -1,7 +1,6 @@
 """OpenDT API - FastAPI Application for datacenter simulation data."""
 
 import json
-import logging
 import os
 import time
 from contextlib import asynccontextmanager
@@ -28,14 +27,9 @@ from odt_common.models.topology import (
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
 
-from api import hosts, levers, prefabs, startup, twin
+from api import data_dir, hosts, levers, prefabs, startup, twin
 from api.carbon_query import CarbonDataQuery, CarbonDataResponse
 from api.power_query import PowerDataQuery, PowerDataResponse
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -145,12 +139,7 @@ def get_power_data(
 ):
     """The measured and the simulated power (simulator/agg_results.parquet), aligned to one interval and clipped to
     the shorter series."""
-    try:
-        return PowerDataQuery(run_dir().name, workload()).query(interval_seconds, start_time)
-    except FileNotFoundError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
+    return answer(power, interval_seconds, start_time)
 
 
 @app.get("/api/co2_emission", response_model=CarbonDataResponse)
@@ -159,8 +148,29 @@ def get_carbon_emission_data(
     start_time: datetime | None = Query(None, description="Optional start time (ISO 8601)"),
 ):
     """The simulated CO2 emissions: power draw [W] x carbon intensity [gCO2/kWh] / 1000 = gCO2/h."""
+    return answer(carbon, interval_seconds, start_time)
+
+
+# once per window (`latest`) and interval, though several panels ask at each refresh
+@lru_cache(maxsize=8)
+def power(
+    latest: Path | None, interval_seconds: int, start_time: datetime | None
+) -> PowerDataResponse:
+    return PowerDataQuery(run_dir(), workload()).query(interval_seconds, start_time)
+
+
+@lru_cache(maxsize=8)
+def carbon(
+    latest: Path | None, interval_seconds: int, start_time: datetime | None
+) -> CarbonDataResponse:
+    return CarbonDataQuery(run_dir()).query(interval_seconds, start_time)
+
+
+def answer(query, interval_seconds: int, start_time: datetime | None):
+    """The query of the latest window: 404 before the twin's first results, 400 for a series it cannot give."""
+    done = twin.windows(run_dir())
     try:
-        return CarbonDataQuery(run_dir().name).query(interval_seconds, start_time)
+        return query(done[-1] if done else None, interval_seconds, start_time)
     except FileNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:
@@ -173,7 +183,7 @@ def workload() -> WorkloadContext:
 
 
 def run_dir() -> Path:
-    return Path(os.getenv("DATA_DIR", "/app/data")) / os.getenv("RUN_ID", "")
+    return data_dir() / os.getenv("RUN_ID", "")
 
 
 def twin_run() -> Path:
@@ -333,13 +343,18 @@ def edit_prefab(part: Annotated[prefabs.Part, Query()]):
 def get_accuracy(minutes: int = Query(60, ge=1, le=1440)):
     """Per period (an hour; 5 minutes for the MAPE now): the MAPE [%] and the mean error [kW] of OpenDT's power vs.
     the measured power, the error of the energy so far, and the r the twin ran with."""
-    return rows(lambda run: accuracy(run, twin.windows(run)[-1], minutes))
+
+    def table(run: Path) -> pd.DataFrame:
+        with twin.LOCK:  # the panels ask at once: one computes, the others take its result
+            return accuracy(run, twin.windows(run)[-1], minutes)
+
+    return rows(table)
 
 
-@lru_cache(maxsize=4)  # once per window (`latest`), though several panels ask
+@lru_cache(maxsize=4)
 def accuracy(run: Path, latest: Path, minutes: int) -> pd.DataFrame:
-    power = PowerDataQuery(run_id=run.name, workload_context=workload()).query(interval_seconds=300)
-    return twin.accuracy(run, pd.DataFrame([point.model_dump() for point in power.data]), minutes)
+    points = power(latest, 300, None).data
+    return twin.accuracy(run, pd.DataFrame([point.model_dump() for point in points]), minutes)
 
 
 def configure(setting: str, value) -> None:

@@ -4,11 +4,12 @@ across runs of the twin; without that file, as shipped again."""
 
 import copy
 import json
-import os
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, field_validator
+
+from api import data_dir
 
 SHIPPED = {
     # with the idle and maximum power of the server: SURF's node; the CPUs of OpenDC web's host templates (Daniel
@@ -76,23 +77,17 @@ SHIPPED = {
 FIELDS = {kind: list(next(iter(shipped.values()))) for kind, shipped in SHIPPED.items()}
 
 
-class Part(BaseModel):
-    """A row of a prefabs table as the table sends it: its table (`kind`), `id`, the part's name before the
-    change (none: a new part), and its cells; `remove`, a row deleted."""
+class Cells(BaseModel):
+    """The cells of a Topology table's row as the table sends them; an empty one, a list left as it was."""
 
-    kind: Literal["CPU", "GPU", "Rack"]
-    id: str | None = None
-    name: str | None = None
+    cpu: str | None = None
     cores: int | None = None
     ghz: float | None = None
     memory_gb: float | None = None
     idle_w: float | None = None
     max_w: float | None = None
-    cpu: str | None = None
     gpu: str | None = None
-    gpus: int | None = None
-    hosts: int | None = None
-    remove: bool = False
+    gpus: int | None = None  # per host
 
     @field_validator("*", mode="before")
     @classmethod
@@ -100,8 +95,19 @@ class Part(BaseModel):
         return None if value == "" else value
 
 
+class Part(Cells):
+    """A row of a prefabs table: its table (`kind`), `id`, the prefab's name before the change (none: a new one),
+    and its cells; `remove`, a row deleted."""
+
+    kind: Literal[tuple(SHIPPED)]
+    id: str | None = None
+    name: str | None = None
+    hosts: int | None = None
+    remove: bool = False
+
+
 def file() -> Path:
-    return Path(os.getenv("DATA_DIR", "/app/data")) / "prefabs.json"
+    return data_dir() / "prefabs.json"
 
 
 def load() -> dict:

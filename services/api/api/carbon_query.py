@@ -1,15 +1,11 @@
 """Carbon emission data query module for dashboard API."""
 
-import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from pydantic import BaseModel, Field
-
-logger = logging.getLogger(__name__)
 
 
 class CarbonDataPoint(BaseModel):
@@ -31,19 +27,10 @@ class CarbonDataResponse(BaseModel):
 class CarbonDataQuery:
     """Query carbon emission data from simulation results."""
 
-    def __init__(self, run_id: str):
-        """Initialize carbon data query."""
-        self.run_id = run_id
-
-        # Get data directory from environment
-        data_dir = Path(os.getenv("DATA_DIR", "/app/data"))
-        self.run_dir = data_dir / run_id
-
-        # Path to aggregated simulation results
-        self.sim_results_path = self.run_dir / "simulator" / "agg_results.parquet"
-
-        logger.debug(f"Initialized CarbonDataQuery for run {run_id}")
-        logger.debug(f"Simulation results: {self.sim_results_path}")
+    def __init__(self, run: Path):
+        """The CO2 emissions of a run (its folder)."""
+        self.run_id = run.name
+        self.sim_results_path = run / "simulator" / "agg_results.parquet"
 
     def query(
         self, interval_seconds: int = 60, start_time: datetime | None = None
@@ -54,7 +41,6 @@ class CarbonDataQuery:
             raise FileNotFoundError(f"Simulation results not found: {self.sim_results_path}")
 
         df = pd.read_parquet(self.sim_results_path)
-        logger.debug(f"Loaded {len(df)} simulation records")
 
         # Validate required columns
         required_cols = ["timestamp", "power_draw", "carbon_intensity"]
@@ -120,7 +106,5 @@ class CarbonDataQuery:
 
         # Remove NaN rows and reset index
         resampled = resampled.dropna().reset_index()
-
-        logger.debug(f"Resampled to {len(resampled)} data points at {interval_seconds}s interval")
 
         return resampled

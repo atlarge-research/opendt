@@ -3,39 +3,16 @@ prefabs, with its CPU and GPUs, or custom. OpenDT's units: MHz, and memory in SU
 
 import copy
 
-from pydantic import BaseModel, field_validator
-
 from api import prefabs
 
 
-def specs(kind: str) -> dict:
-    """The prefabs's CPUs or GPUs by name, their numbers only."""
-    return {
-        name: {f: part[f] for f in prefabs.FIELDS[kind]}
-        for name, part in prefabs.parts(kind).items()
-    }
-
-
-class Row(BaseModel):
-    """A row as the table sends it: the group's number (none for a new group) and its cells. The topology the row
-    makes checks the values."""
+class Row(prefabs.Cells):
+    """A row of the Datacenter table: the group's number (none for a new group), its rack, its hosts, and its
+    cells. The topology the row makes checks the values."""
 
     id: int | None = None
     kind: str | None = None
     count: int | None = None  # 0 removes the group
-    cpu: str | None = None
-    cores: int | None = None
-    ghz: float | None = None
-    memory_gb: float | None = None
-    idle_w: float | None = None
-    max_w: float | None = None
-    gpu: str | None = None
-    gpus: int | None = None  # per host
-
-    @field_validator("*", mode="before")
-    @classmethod
-    def empty(cls, value):
-        return None if value == "" else value  # a list left as it was
 
 
 def label(host: dict) -> str:
@@ -62,7 +39,7 @@ def cpu(host: dict) -> dict:
 
 def gpus(name: str, count: int) -> dict:
     """`count` GPUs of a prefab per host, with their power model, in OpenDT's format."""
-    spec = specs("GPU")[name]
+    spec = prefabs.parts("GPU")[name]
     return {
         "gpu": {
             "count": count,
@@ -87,10 +64,12 @@ def row(i: int, host: dict) -> dict:
         "id": i,
         "kind": label(host),
         "count": host["count"],
-        "cpu": next((name for name, spec in specs("CPU").items() if spec == cpu(host)), "Custom"),
+        "cpu": next(
+            (name for name, spec in prefabs.parts("CPU").items() if spec == cpu(host)), "Custom"
+        ),
         **cpu(host),
         "memory_gb": host["memory"]["memorySize"] / 1e6,
-        "gpu": next((n for n in specs("GPU") if gpus(n, gpu["count"]) == has), "Custom")
+        "gpu": next((n for n in prefabs.parts("GPU") if gpus(n, gpu["count"]) == has), "Custom")
         if gpu
         else "None",
         "gpus": gpu["count"] if gpu else 0,
@@ -137,8 +116,8 @@ def host(change: Row, old: dict) -> dict:
     as typed."""
     was = row(0, old)
     cells = {**was, **change.model_dump(exclude_none=True)}
-    if cells["cpu"] != was["cpu"] and cells["cpu"] in specs("CPU"):
-        cells |= specs("CPU")[cells["cpu"]]
+    if cells["cpu"] != was["cpu"] and cells["cpu"] in prefabs.parts("CPU"):
+        cells |= prefabs.parts("CPU")[cells["cpu"]]
     new = copy.deepcopy(old)
     new["name"] = old["name"] if cells["kind"] == was["kind"] else cells["kind"]
     new["count"] = cells["count"]
@@ -146,7 +125,7 @@ def host(change: Row, old: dict) -> dict:
     new["memory"] = {"memorySize": round(cells["memory_gb"] * 1e6)}
     new["cpuPowerModel"] |= {"idlePower": cells["idle_w"], "maxPower": cells["max_w"]}
     gpu, count = cells["gpu"], cells["gpus"]
-    if gpu in specs("GPU") and (count or gpu != was["gpu"]):
+    if gpu in prefabs.parts("GPU") and (count or gpu != was["gpu"]):
         new |= gpus(gpu, count or 1)  # picked: one per host, until a count is given
     elif gpu == "Custom" and count:
         new["gpu"]["count"] = count

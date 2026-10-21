@@ -1,7 +1,5 @@
 """Power data query and alignment module for dashboard API."""
 
-import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -9,8 +7,6 @@ from typing import Any
 import pandas as pd
 from odt_common import WorkloadContext
 from pydantic import BaseModel, Field
-
-logger = logging.getLogger(__name__)
 
 
 class PowerDataPoint(BaseModel):
@@ -31,29 +27,19 @@ class PowerDataResponse(BaseModel):
 class PowerDataQuery:
     """Query and align power data from simulation and actual consumption."""
 
-    def __init__(self, run_id: str, workload_context: WorkloadContext):
-        """Initialize power data query."""
-        self.run_id = run_id
+    def __init__(self, run: Path, workload_context: WorkloadContext):
+        """The power of a run (its folder) and of its workload."""
+        self.run_id = run.name
         self.workload_context = workload_context
 
-        # Get data directory from environment
-        data_dir = Path(os.getenv("DATA_DIR", "/app/data"))
-        self.run_dir = data_dir / run_id
-
         # Path to aggregated simulation results
-        self.sim_results_path = self.run_dir / "simulator" / "agg_results.parquet"
+        self.sim_results_path = run / "simulator" / "agg_results.parquet"
 
         # Path to actual consumption data
         self.consumption_path = workload_context.consumption_file
 
         # Path to tasks data (needed for earliest task time)
         self.tasks_path = workload_context.tasks_file
-
-        workload_name = workload_context.name if workload_context.name else "mounted"
-        logger.debug(f"Initialized PowerDataQuery for run {run_id}, workload {workload_name}")
-        logger.debug(f"Simulation results: {self.sim_results_path}")
-        logger.debug(f"Consumption data: {self.consumption_path}")
-        logger.debug(f"Tasks data: {self.tasks_path}")
 
     def query(
         self, interval_seconds: int = 60, start_time: datetime | None = None
@@ -64,14 +50,12 @@ class PowerDataQuery:
             raise FileNotFoundError(f"Simulation results not found: {self.sim_results_path}")
 
         sim_df = pd.read_parquet(self.sim_results_path)
-        logger.debug(f"Loaded {len(sim_df)} simulated power records")
 
         # Load actual consumption data
         if not self.consumption_path.exists():
             raise FileNotFoundError(f"Consumption data not found: {self.consumption_path}")
 
         actual_df = pd.read_parquet(self.consumption_path)
-        logger.debug(f"Loaded {len(actual_df)} actual consumption records")
 
         # Prepare simulated data
         sim_df = self._prepare_simulated_data(sim_df)
@@ -151,13 +135,9 @@ class PowerDataQuery:
         # Get earliest task submission time and convert to milliseconds
         earliest_task_time = pd.to_datetime(tasks_df["submission_time"].min())
         earliest_task_time_ms = int(earliest_task_time.timestamp() * 1000)
-        logger.debug(
-            f"Earliest task time: {earliest_task_time.isoformat()} ({earliest_task_time_ms}ms)"
-        )
 
         # Get consumption offset from workload context
         offset_ms = self.workload_context.consumption_offset_ms
-        logger.debug(f"Consumption offset: {offset_ms}ms")
 
         # Convert relative timestamps to absolute timestamps
         # Formula: absolute_time_ms = earliest_task_time_ms + relative_ms + offset_ms
@@ -168,7 +148,6 @@ class PowerDataQuery:
 
         # Convert from milliseconds to datetime (UTC-aware)
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
-        logger.debug(f"Converted {len(df)} consumption timestamps to absolute datetime")
 
         # Use power_draw column
         if "power_draw" not in df.columns:
@@ -192,12 +171,8 @@ class PowerDataQuery:
         start_time = max(sim_df["timestamp"].min(), actual_df["timestamp"].min())
         end_time = min(sim_df["timestamp"].max(), actual_df["timestamp"].max())
 
-        logger.debug(f"Aligning data from {start_time} to {end_time}")
-
         # Generate regular time grid at specified interval
         time_grid = pd.date_range(start=start_time, end=end_time, freq=f"{interval_seconds}s")
-
-        logger.debug(f"Created time grid with {len(time_grid)} points")
 
         # Interpolate simulated data to time grid
         sim_df = sim_df.set_index("timestamp")
@@ -222,7 +197,5 @@ class PowerDataQuery:
 
         # Remove rows with NaN values (shouldn't happen with interpolation, but just in case)
         aligned = aligned.dropna()
-
-        logger.debug(f"Aligned timeseries: {len(aligned)} data points")
 
         return aligned
