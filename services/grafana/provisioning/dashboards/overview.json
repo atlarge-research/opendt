@@ -443,7 +443,7 @@
                 "spec": {
                     "id": 6,
                     "title": "Decisions",
-                    "description": "Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator. The dashed markers on the graphs show the same changes.",
+                    "description": "OpenDT operates autonomously, yet a human can (optionally) intervene and dictate major decisions; Automatic changes come from the Self-Calibrator, Manual ones from the operator. The dashed markers on the graphs show the same changes.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -596,7 +596,7 @@
                 "spec": {
                     "id": 7,
                     "title": "Power [kW]",
-                    "description": "The measured power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample.",
+                    "description": "Datacenter's telemetry on power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample; below 0, OpenDT underestimates.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -755,7 +755,7 @@
                 "spec": {
                     "id": 8,
                     "title": "Jobs and hosts",
-                    "description": "Of the jobs submitted and not done yet, the share running; of the hosts, the share running at least one job (an idle host draws power for nothing); the jobs finished so far; and the CPU utilization of all the hosts.",
+                    "description": "Few hosts in use means overprovisioning, where energy (and thus, money) is wasted by idle infrastructure. Few jobs running means under-provisioning, which could lead to performance concerns, system faults, and, ultimately, system failures.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -1053,7 +1053,7 @@
                 "spec": {
                     "id": 9,
                     "title": "Sustainability",
-                    "description": "The CO₂ emitted per hour now and the carbon intensity of the CO₂ zone; the energy and the CO₂ over the interval so far.",
+                    "description": "The emission rate now and the grid carbon intensity it results from; the energy and the CO₂ over the selected interval (e.g., hour, day).",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -1273,7 +1273,7 @@
                 "spec": {
                     "id": 10,
                     "title": "Accuracy",
-                    "description": "The mean absolute percentage error of OpenDT's power draw vs. the ground truth (red from 10%, the community-accepted error rate), the energy error, and the calibration parameter r, the exponent of OpenDC's power model P(u) = P_idle + (P_max - P_idle)(2u - u^r), with u the CPU utilization.",
+                    "description": "The lower the MAPE, the more accurate the prediction (red from 10%, the community-accepted error rate). The Self-Calibrator measures the difference between predictions and actual telemetry, then adjusts r, the calibration parameter of P(u) = P_idle + (P_max - P_idle)(2u - u^r), with u the CPU utilization.",
                     "transparent": false,
                     "links": [],
                     "data": {

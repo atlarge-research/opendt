@@ -16,25 +16,36 @@ ratios:
 
 # The (i) of a panel, shown on hover, by the panel's name in plots.py.
 info:
-  time-box: The simulated time the twin has reached, the end of its latest window of operation.
+  time-box: >-
+    The end of the latest window of operation, a short period of time during which OpenDT receives telemetry data,
+    runs simulations, and updates the dashboard.
   mape-box: >-
-    The mean absolute percentage error of OpenDT's power draw vs. the ground truth, over the last 5 minutes.
-    Red from 10%, the community-accepted error rate.
-  co2-box: The CO₂ emitted per hour now, OpenDT's power draw times the carbon intensity of the CO₂ zone.
-  power-group: The measured power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample.
+    The MAPE of OpenDT's power draw over the last 5 minutes; the lower the MAPE, the more accurate the prediction.
+    OpenDT should stay within 10% error rate (community-accepted), red above it.
+  co2-box: The emission rate now, resulting from OpenDT's power draw and the grid carbon intensity.
+  power-group: >-
+    Datacenter's telemetry on power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample;
+    below 0, OpenDT underestimates.
   jobs-group: >-
-    Of the jobs submitted and not done yet, the share running; of the hosts, the share running at least one job (an
-    idle host draws power for nothing); the jobs finished so far; and the CPU utilization of all the hosts.
+    Few hosts in use means overprovisioning, where energy (and thus, money) is wasted by idle infrastructure. Few
+    jobs running means under-provisioning, which could lead to performance concerns, system faults, and, ultimately,
+    system failures.
   sustainability-group: >-
-    The CO₂ emitted per hour now and the carbon intensity of the CO₂ zone; the energy and the CO₂ over the interval
-    so far.
+    The emission rate now and the grid carbon intensity it results from; the energy and the CO₂ over the selected
+    interval (e.g., hour, day).
   accuracy-group: >-
-    The mean absolute percentage error of OpenDT's power draw vs. the ground truth (red from 10%, the
-    community-accepted error rate), the energy error, and the calibration parameter r, the exponent of OpenDC's power
-    model P(u) = P_idle + (P_max - P_idle)(2u - u^r), with u the CPU utilization.
-  power: The power draw over time, measured at SURF (ground truth) and predicted by OpenDT.
-  co2: The twin's CO₂ emissions and the carbon intensity of its CO₂ zone, over time.
-  hosts: The hosts the twin has and the hosts in use, over time.
+    The lower the MAPE, the more accurate the prediction (red from 10%, the community-accepted error rate). The
+    Self-Calibrator measures the difference between predictions and actual telemetry, then adjusts r, the
+    calibration parameter of P(u) = P_idle + (P_max - P_idle)(2u - u^r), with u the CPU utilization.
+  power: >-
+    Actual power draw alongside OpenDT's predictions. When the predicted curve closely tracks the actual power
+    draw, the twin accurately represents the physical infrastructure; when drift occurs, the operator can identify
+    whether intervention is needed.
+  co2: Grid carbon intensity correlated with the resulting emission rates, over time.
+  hosts: >-
+    The gap between the two lines is underutilized compute infrastructure, yet consuming electricity while being
+    idle.
   decisions: >-
-    Every change of the twin, when, and by whom. Manual, from the control panel; Automatic, by the calibrator.
-    The dashed markers on the graphs show the same changes.
+    OpenDT operates autonomously, yet a human can (optionally) intervene and dictate major decisions; Automatic
+    changes come from the Self-Calibrator, Manual ones from the operator. The dashed markers on the graphs show the
+    same changes.
