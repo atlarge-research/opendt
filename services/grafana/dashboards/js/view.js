@@ -4,11 +4,13 @@ const address = context.grafana.locationService;
 const time = context.element.querySelector('[data-time]');
 const twin = time.dataset.time;
 time.textContent = twin.slice(0, 16).replace('T', ' ');
-// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week
+// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week, to its next full
+// hour (the range moves, and the panels ask again, once an hour, not at every window)
 const range = (window, twin) => {
   const hours = { day: 24, hours: 6 }[window];
   if (!hours) return week;
-  const from = Math.max(new Date(twin).getTime() - hours * 3600000, new Date(week.from).getTime());
+  const to = Math.ceil(new Date(twin).getTime() / 3600000) * 3600000;
+  const from = Math.max(to - hours * 3600000, new Date(week.from).getTime());
   return { from, to: from + hours * 3600000 };
 };
 const shown = (key) => context.grafana.replaceVariables('$' + key);
