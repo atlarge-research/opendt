@@ -1,5 +1,6 @@
 """Tests for writing OpenDC inputs and running cached simulations."""
 
+import dataclasses
 import logging
 import time
 
@@ -16,10 +17,20 @@ from resources.paths import PATHS
 from resources.sim import simulate, simulate_many, write_inputs
 
 SIX_HOURS = TRACE_START + pd.Timedelta("6h")
+DAY = TRACE_START + pd.Timedelta("24h")
 LIVE_RUN = REPO / "data/2026_05_05_06_54_23"  # Radu's uncalibrated live-twin run (5-min windows)
 needs_live_run = pytest.mark.skipif(
     not LIVE_RUN.exists(), reason="needs Radu's recorded live-twin run in data/"
 )
+
+
+def boom(*_args, **_kwargs):
+    raise AssertionError("OpenDC must not run")
+
+
+def shipped(monkeypatch):
+    """The notebooks' shipped results (conftest hides them: the other tests run OpenDC)."""
+    monkeypatch.setattr(sim, "PATHS", dataclasses.replace(sim.PATHS, results=PATHS.results))
 
 
 def test_input_schema_matches_opendt_runner(tmp_path):
@@ -151,10 +162,6 @@ def test_simulate_many_hosts_keys():
 @pytest.mark.opendc
 def test_cache_hit_does_not_rerun(monkeypatch):
     simulate(until=SIX_HOURS)
-
-    def boom(*_args, **_kwargs):
-        raise AssertionError("OpenDC must not run on a cache hit")
-
     monkeypatch.setattr(sim, "_run_opendc", boom)
     assert simulate(until=SIX_HOURS).cached is True
 
@@ -165,3 +172,31 @@ def test_interrupted_run_is_rerun():
     (first.run_dir / "DONE").unlink()  # an interrupted run never writes DONE
     again = simulate(until=SIX_HOURS)
     assert again.cached is False and again.power.equals(first.power)
+
+
+def test_the_notebooks_simulations_need_no_opendc(monkeypatch):
+    shipped(monkeypatch)
+    monkeypatch.setattr(sim, "_run_opendc", boom)
+    assert simulate(until=DAY, hosts=69).run_dir.parent == PATHS.results
+
+
+def test_a_simulation_not_precomputed_needs_java(monkeypatch):
+    monkeypatch.setattr(sim, "java_version", lambda: None)
+    with pytest.raises(RuntimeError, match="Java 21"):
+        simulate(until=SIX_HOURS, hosts=13)
+
+
+@pytest.mark.opendc
+def test_shipped_results_equal_a_fresh_opendc_run(monkeypatch):
+    fresh = simulate(until=DAY, hosts=138)
+    shipped(monkeypatch)
+    loaded = simulate(until=DAY, hosts=138)
+    assert loaded.run_dir.parent == PATHS.results
+    assert all(getattr(loaded, f).equals(getattr(fresh, f)) for f in ("power", "service", "tasks"))
+
+
+@pytest.mark.opendc
+def test_r_as_int_or_float_is_the_same_simulation(monkeypatch):
+    simulate(until=SIX_HOURS, r=5)
+    monkeypatch.setattr(sim, "_run_opendc", boom)
+    assert simulate(until=SIX_HOURS, r=5.0).cached

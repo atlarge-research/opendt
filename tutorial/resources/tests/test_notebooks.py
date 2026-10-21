@@ -6,6 +6,17 @@ from conftest import TUTORIAL_DIR
 nbformat = pytest.importorskip("nbformat")
 nbclient = pytest.importorskip("nbclient")
 
+# every simulation of a notebook ships precomputed in resources/results/ (resources/precompute.py)
+NO_OPENDC = """
+import resources.sim
+
+
+def no_opendc(*_args):
+    raise RuntimeError("not precomputed: run python tutorial/resources/precompute.py")
+
+
+resources.sim._run_opendc = no_opendc
+"""
 CHECKS = {
     "1.autoscaling.ipynb": """
 SIX_H = TRACE_START + pd.Timedelta("6h")
@@ -23,8 +34,6 @@ assert round(saved_kwh / used_kwh * 100) == 16
 for spare, share in [(0, 18), (50, 12)]:
     off = HOSTS - (in_use + spare).clip(upper=HOSTS)
     assert round((off * IDLE_POWER).mean() / 1000 * 24 / used_kwh * 100) == share
-low = low_idle.summary()["avg_power_kw"]
-assert [round(power[277], 1), round(low, 1), round((1 - low / power[277]) * 100), round(mape(low_idle))] == [21.7, 19.0, 12, 18]
 """,
     "2.calibration.ipynb": """
 assert [round(curves["r = 4"][50]), round(curves["r = 9"][50]), round(curves["r = 4"][80])] == [165, 174, 202]
@@ -79,6 +88,7 @@ def test_live_twin_notebook_compiles():
 @pytest.mark.parametrize("name", sorted(CHECKS))
 def test_notebook_runs_and_tells_the_truth(name):
     notebook = nbformat.read(TUTORIAL_DIR / name, as_version=4)
+    notebook.cells.insert(0, nbformat.v4.new_code_cell(NO_OPENDC))
     notebook.cells.append(nbformat.v4.new_code_cell(CHECKS[name]))
     nbclient.NotebookClient(
         notebook, timeout=900, resources={"metadata": {"path": str(TUTORIAL_DIR)}}

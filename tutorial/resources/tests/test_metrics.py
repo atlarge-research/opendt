@@ -46,6 +46,18 @@ def test_legend_above_puts_the_key_in_one_row_above_the_axes():
     assert key.get_window_extent().y0 >= ax.get_window_extent().y1
 
 
+def test_plot_power_with_hourly_mape_below_on_the_same_time_axis():
+    flat = pd.Series(
+        20_000.0, index=pd.date_range(TRACE_START, periods=49, freq="150s"), name="20 kW"
+    )
+    top, below = plot_power(flat, hourly_mape=True).figure.axes
+    assert [line.get_label() for line in below.lines] == [
+        "20 kW",
+        "Community-Accepted Threshold (10%)",
+    ]
+    assert below.get_ylabel() == "MAPE [%]" and top.get_xlim() == plot_power(flat).get_xlim()
+
+
 @pytest.mark.opendc
 def test_plot_power_draws_measured_and_each_run_or_series():
     day = TRACE_START + pd.Timedelta("6h")
@@ -57,3 +69,13 @@ def test_plot_power_draws_measured_and_each_run_or_series():
         "a power series [W]",
     ]
     assert ax.get_ylabel() == "Power Draw [kW]" and ax.get_ylim()[0] == 0
+
+
+@pytest.mark.opendc
+def test_plot_power_with_energy_on_the_right_per_run_and_per_finished_job():
+    run = simulate(until=TRACE_START + pd.Timedelta("6h"))
+    power, total, per_job = plot_power(run, energy=True).figure.axes
+    s = run.summary()
+    assert [bar.get_width() for bar in total.patches] == [s["energy_kwh"]]
+    assert [bar.get_width() for bar in per_job.patches] == [s["energy_kwh"] / s["jobs_finished"]]
+    assert total.patches[0].get_facecolor() == matplotlib.colors.to_rgba(power.lines[1].get_color())

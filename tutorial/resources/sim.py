@@ -5,6 +5,10 @@ This does what OpenDT's simulator service does for one window of operation
 input, run OpenDC, read its output. OpenDC is deterministic and causal, so one run from the
 start of the trace up to `until` gives exactly the predictions the live twin stitches
 together window by window.
+
+The notebooks' simulations ship precomputed in resources/results/ (resources/precompute.py), so
+they answer at once and need no Java; any other one runs OpenDC once, and is kept in
+resources/output/.
 """
 
 from __future__ import annotations
@@ -23,12 +27,13 @@ import pandas as pd
 from odt_common.odc_runner import FRAGMENT_SCHEMA, TASK_SCHEMA, environment, experiment
 
 from .data import TRACE_END, TRACE_START, load_surf, to_utc
-from .paths import PATHS
+from .paths import PATHS, java_21, java_version
 from .topology import make_topology
 
 log = logging.getLogger(__name__)
 
-CACHE_VERSION = 1  # bump when the run directory layout changes
+CACHE_VERSION = 2  # bump when OpenDC, the SURF trace, or what a run keeps changes
+PARTS = ("power", "service", "tasks")  # what a run keeps, a parquet file each
 
 
 @dataclass(repr=False)
@@ -57,6 +62,7 @@ class SimResult:
             "energy_kwh": float(power["energy_usage"].sum() / 3.6e6),
             "co2_kg": float(power["carbon_emission"].sum() / 1000),
             "jobs_waited": int((jobs["wait_s"] > 0).sum()),
+            "jobs_finished": int((jobs["finish_time"] <= self.until).sum()),
             "mean_wait_min": float(jobs["wait_s"].mean() / 60),
             "waiting_at_end": int((jobs["schedule_time"] > self.until).sum()),  # not started yet
         }
@@ -96,23 +102,27 @@ def simulate(
     carbon: str | None = None,
     label: str | None = None,
 ) -> SimResult:
-    """Simulate SURF from the start of the trace until `until` on the given datacenter.
-
-    Results are cached in tutorial/resources/output/, so running the same simulation again is instant.
-    """
+    """Simulate SURF from the start of the trace until `until` on the given datacenter: precomputed
+    (resources/results/), run before (resources/output/), or now, by OpenDC."""
     until = _clip(until)
     topology = make_topology(
         hosts=hosts, r=r, idle_power=idle_power, max_power=max_power, carbon=carbon
     )
-    key = f"{CACHE_VERSION} {until.isoformat()} {topology.model_dump_json()}"
-    run_dir = PATHS.output / hashlib.sha256(key.encode()).hexdigest()[:12]
-
-    cached = (run_dir / "DONE").exists()
+    # the same name on every machine: the parameters, not the topology's paths
+    params = f"{int(hosts)} {float(r)} {float(idle_power)} {float(max_power)} {carbon}"
+    name = hashlib.sha256(f"{CACHE_VERSION} {until.isoformat()} {params}".encode()).hexdigest()[:12]
+    folders = (PATHS.results, PATHS.output)
+    run_dir = next((f / name for f in folders if (f / name / "DONE").exists()), None)
+    cached = run_dir is not None
     if not cached:
+        run_dir = PATHS.output / name
         shutil.rmtree(run_dir, ignore_errors=True)
-        _run_opendc(run_dir, until, topology)
+        frames = _run_opendc(run_dir / "opendc", until, topology)
+        for part, frame in zip(PARTS, frames, strict=True):
+            frame.to_parquet(run_dir / f"{part}.parquet", compression="zstd")
+        shutil.rmtree(run_dir / "opendc")  # OpenDC's own files, kept only when it fails
         (run_dir / "DONE").touch()  # written last: an interrupted run is simply re-run next time
-    power, service, tasks = _read_output(run_dir, until)
+    power, service, tasks = (pd.read_parquet(run_dir / f"{part}.parquet") for part in PARTS)
     label = label or f"hosts={hosts}, r={r:g}, carbon={carbon or 'OpenDT'}"
     return SimResult(label, until, power, service, tasks, run_dir, cached)
 
@@ -147,7 +157,13 @@ def _clip(until) -> pd.Timestamp:
     return until
 
 
-def _run_opendc(run_dir: Path, until: pd.Timestamp, topology) -> None:
+def _run_opendc(run_dir: Path, until: pd.Timestamp, topology):
+    """OpenDC's power, service, and per-job output for the jobs submitted before `until`."""
+    if not java_21(java_version()):
+        raise RuntimeError(
+            "This simulation is not among the precomputed ones; running it needs Java 21 or newer "
+            "(https://adoptium.net), or the Codespace."
+        )
     inputs = run_dir / "input"
     write_inputs(until, inputs / "workload")
     (inputs / "topology.json").write_text(topology.model_dump_json(indent=2))
@@ -166,6 +182,7 @@ def _run_opendc(run_dir: Path, until: pd.Timestamp, topology) -> None:
         raise RuntimeError(
             f"OpenDC failed (exit code {result.returncode}); see {run_dir / 'opendc.log'}"
         )
+    return _read_output(run_dir, until)
 
 
 def _read_output(run_dir: Path, until: pd.Timestamp):

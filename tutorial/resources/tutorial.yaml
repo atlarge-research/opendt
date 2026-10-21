@@ -78,24 +78,10 @@ Dynamic autoscaling:
       Little, under a fifth (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about
       3.5 kW, while some jobs wait for a host.
     plots: [power, energy, idle-power]
-  - question: "1.8"
-    do: Datacenter, Hosts 277, then Apply; on Topology, the SURF-SARA row's pencil, Idle power 10 W
-    ask: With hosts that draw 10 W when idle, how do the power draw and the MAPE change?
-    hint: The ground truth still comes from SURF's hosts.
-    choices:
-      - Both go down
-      - The power draw goes down, the MAPE goes up
-      - The power draw goes up, the MAPE goes down
-      - Neither changes
-    answer: B
-    solution: >-
-      The power draw goes down (about 12%), but the MAPE goes up (to about 18% in notebook 1): with other hardware,
-      the ground truth from SURF no longer applies.
-    plots: [power, mape, error]
 
 Simulation calibration:
   - question: "2.1"
-    do: On Topology, Idle power 25 W again; Twin, Calibration On, then Apply
+    do: Datacenter, Hosts 277; Twin, Calibration On; then Apply
     ask: OpenDT under-estimates the ground truth; does the Self-Calibrator move r up or down?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
     hint: See r in Accuracy; at the same CPU utilization, a higher r gives a higher power draw.

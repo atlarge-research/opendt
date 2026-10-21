@@ -1,4 +1,5 @@
-"""Paths to OpenDC and the SURF data, and a check that this computer can run the tutorial."""
+"""Paths to OpenDC, the SURF data, and the simulations' results, and a check that this computer
+can run the tutorial."""
 
 from __future__ import annotations
 
@@ -31,7 +32,8 @@ class Paths:
     opendc_bin: Path
     workload: Path
     carbon: Path
-    output: Path
+    results: Path  # the notebooks' simulations, precomputed (resources/precompute.py)
+    output: Path  # any other simulation, once run
 
 
 _root = repo_root()
@@ -40,11 +42,12 @@ PATHS = Paths(
     opendc_bin=_root / "opendc/bin/OpenDCExperimentRunner/bin/OpenDCExperimentRunner",
     workload=_root / "workload/SURF",
     carbon=_root / "workload/SURF/carbon_zones",
+    results=_root / "tutorial/resources/results",
     output=_root / "tutorial/resources/output",
 )
 
 
-def _java_version() -> str | None:
+def java_version() -> str | None:
     """Version of the Java that OpenDC will use, e.g. "21.0.10"; None if there is none."""
     try:
         java = Path(detect_java_home()) / "bin" / "java"
@@ -55,18 +58,18 @@ def _java_version() -> str | None:
     return match.group(1) if match else None
 
 
+def java_21(version: str | None) -> bool:
+    return version is not None and int(re.match(r"\d+", version).group()) >= 21
+
+
 def check_setup() -> None:
-    """Check Java 21, OpenDC and the SURF trace; raise RuntimeError saying what to fix."""
-    version = _java_version()
-    if version is None or int(re.match(r"\d+", version).group()) < 21:
-        raise RuntimeError(
-            f"OpenDC needs Java 21 or newer (found: {version or 'none'}). "
-            "Use the Codespace, or install Java 21 (https://adoptium.net) and set JAVA_HOME."
-        )
-    if not os.access(PATHS.opendc_bin, os.X_OK):
-        raise RuntimeError(
-            f"The OpenDC launcher is missing or not executable. Run: chmod +x {PATHS.opendc_bin}"
-        )
+    """Check the SURF trace and the precomputed simulations; Java 21 and OpenDC run any other."""
     if not (PATHS.workload / "fragments.parquet").is_file():
         raise RuntimeError(f"The SURF workload trace is missing in {PATHS.workload}.")
-    print(f"Setup OK: Java {version}, OpenDC, SURF trace, {os.cpu_count()} CPU cores")
+    runs = len(list(PATHS.results.glob("*/DONE")))
+    version = java_version()
+    if java_21(version) and os.access(PATHS.opendc_bin, os.X_OK):
+        others = f"Java {version} and OpenDC run any other"
+    else:
+        others = "any other would need Java 21 (https://adoptium.net)"
+    print(f"Setup OK: SURF trace, {runs} simulations of OpenDT precomputed; {others}")

@@ -21,11 +21,15 @@ def pytest_configure(config: pytest.Config) -> None:
 
 @pytest.fixture(autouse=True, scope="session")
 def fresh_simulation_cache(tmp_path_factory):
-    """Run OpenDC for real instead of reusing the notebooks' cache in tutorial/resources/output/."""
+    """Run OpenDC for real instead of reusing the shipped results (resources/results/) or the local
+    cache (resources/output/)."""
     from resources import sim
 
+    empty = dataclasses.replace(
+        sim.PATHS,
+        output=tmp_path_factory.mktemp("output"),
+        results=tmp_path_factory.mktemp("results"),
+    )
     with pytest.MonkeyPatch.context() as mp:
-        mp.setattr(
-            sim, "PATHS", dataclasses.replace(sim.PATHS, output=tmp_path_factory.mktemp("output"))
-        )
+        mp.setattr(sim, "PATHS", empty)
         yield

@@ -17,7 +17,7 @@ from .data import (
 from .metrics import align, mape
 from .paths import PATHS, check_setup, repo_root
 from .plots import legend_above, plot_power
-from .questions import ask_question, give_solution
+from .questions import ask_question
 from .sim import SimResult, default_workers, simulate, simulate_many, write_inputs
 from .topology import make_topology
 
@@ -34,7 +34,6 @@ __all__ = [
     "check_setup",
     "legend_above",
     "default_workers",
-    "give_solution",
     "load_surf",
     "make_topology",
     "mape",

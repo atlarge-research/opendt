@@ -6,8 +6,8 @@ ASCI course on distributed systems, Friday 30 October 2026, 1 hour, fewer than 2
 
 - One week before: send the students the README (Option 1) and ask them to create the codespace and run the first cell
   of notebook 1 (`Setup OK`) at least one day before class.
-- One day before: run notebooks 1-3 on the laptop (about 15 s each with an empty cache on an M3 Max; the results stay
-  cached in `resources/output/`).
+- One day before: run notebooks 1-3 on the laptop (a few seconds each: their simulations ship precomputed in
+  `resources/results/`, so they need no Java).
 - For the live demo: start Docker Desktop, run `make up config=tutorial/resources/configs/live_twin.yaml` once (the
   first start builds the Docker images), then `make down`.
 - Before the session: `make up config=tutorial/resources/configs/live_twin.yaml`, and let the twin run past its first
@@ -18,9 +18,9 @@ ASCI course on distributed systems, Friday 30 October 2026, 1 hour, fewer than 2
 | Time | Part | In pairs | Together, on the projector |
 |---|---|---|---|
 | 0:00-0:10 | Talk | | |
-| 0:10-0:25 | Use case 1: dynamic autoscaling | 1.autoscaling.ipynb (10 min) | Tutorial steps 1-6 (5 min) |
-| 0:25-0:45 | Use case 2: simulation calibration | 2.calibration.ipynb (15 min) | Tutorial steps 7-9 (5 min) |
-| 0:45-0:57 | Use case 3: CO2-aware workload migration | 3.co2_migration.ipynb (8 min) | Tutorial steps 10-12 (4 min) |
+| 0:10-0:25 | Use case 1: dynamic autoscaling | 1.autoscaling.ipynb (10 min) | Tutorial steps 1-5 (5 min) |
+| 0:25-0:45 | Use case 2: simulation calibration | 2.calibration.ipynb (15 min) | Tutorial steps 6-8 (5 min) |
+| 0:45-0:57 | Use case 3: CO2-aware workload migration | 3.co2_migration.ipynb (8 min) | Tutorial steps 9-11 (4 min) |
 | 0:57-1:00 | Wrap-up: the three questions and their answers | | |
 
 The students work in pairs, one laptop or codespace per pair. While the pairs start a notebook, we make the changes of
@@ -83,10 +83,10 @@ Known issues:
 ## Plan B
 
 - A codespace does not start: the student follows with a neighbour, or reads the notebooks on GitHub.
-- Simulations are slow on 2 cores: notebooks 2 and 3 simulate the full week 7 and 4 times; start the simulation cell
-  first, then discuss the question while it runs. If the kernel runs out of memory, set `OPENDT_TUTORIAL_WORKERS=1`.
-- The live demo fails: show `resources/images/grafana_dashboard.png` and the bonus section of notebook 1, which rebuilds
-  the same view from simulations.
+- A simulation of the students' own (e.g., 333 hosts) runs OpenDC, which needs Java 21 (in the codespace, it is
+  there); the notebooks' own simulations are precomputed and answer at once.
+- The live demo fails: show `resources/images/grafana_dashboard.png` and section 5 of notebook 1, which rebuilds the
+  same view from simulations.
 
 ## Key Numbers (for the wrap-up)
 

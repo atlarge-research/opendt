@@ -25,7 +25,12 @@ def align(simulated, measured=None, start=TRACE_START, end=TRACE_END) -> pd.Data
     return both.reindex(both.index.union(grid)).interpolate("time").reindex(grid)
 
 
+def error(simulated, measured=None, start=TRACE_START, end=TRACE_END) -> pd.Series:
+    """Error at each minute [%]: |measured - simulated| / measured."""
+    both = align(simulated, measured, start, end)
+    return (both["measured"] - both["simulated"]).abs() / both["measured"] * 100
+
+
 def mape(simulated, measured=None, start=TRACE_START, end=TRACE_END) -> float:
     """Mean absolute percentage error [%]: the average of |measured - simulated| / measured."""
-    both = align(simulated, measured, start, end)
-    return float(((both["measured"] - both["simulated"]).abs() / both["measured"]).mean() * 100)
+    return float(error(simulated, measured, start, end).mean())
