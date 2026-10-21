@@ -40,7 +40,7 @@ Calibration automatically finds parameter values that minimize prediction error,
 2. **Search**: Run parallel simulations with different parameter values
 3. **Compare**: Calculate MAPE for each configuration
 4. **Select**: Choose the parameter value with lowest error
-5. **Publish**: Send calibrated topology to `sim.topology`
+5. **Publish**: Send the calibrated topology to `sim.topology`, when the best value changes
 6. **Apply**: Simulator uses calibrated topology for future windows
 
 ## MAPE Calculation
@@ -51,24 +51,27 @@ Mean Absolute Percentage Error measures prediction accuracy:
 MAPE = mean(|actual - predicted| / actual) × 100%
 ```
 
-Lower MAPE indicates better prediction accuracy. A well-calibrated model typically achieves MAPE under 5%.
+The calibrator computes it over the last `mape_window_minutes` of power, on a 60-s grid.
+
+Lower MAPE indicates better prediction accuracy; 10% is the community-accepted error rate for datacenter simulation.
 
 ## Calibrated Properties
 
-The calibrator can tune any numeric topology parameter. Common targets:
+The calibrator tunes one numeric parameter of the hosts, by its path from the host, on all hosts:
 
 | Property | Path | Description |
 |----------|------|-------------|
-| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient |
-| calibrationFactor | cpuPowerModel.calibrationFactor | MSE model scaling factor |
+| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient (asymptotic power model only) |
+| calibrationFactor | cpuPowerModel.calibrationFactor | Exponent r of the MSE power model; the one for SURF's hosts |
 
 ## Enabling Calibration
 
-Set `calibration_enabled: true` in your configuration file:
+Add a `services.calibrator` section to the configuration file (see [calibrator](/docs/services/calibrator)), and set
+`calibration_enabled: true` to calibrate from the start:
 
 ```yaml
 global:
   calibration_enabled: true
 ```
 
-The calibrator only runs when this flag is set.
+The control panel switches calibration on and off while the twin runs.

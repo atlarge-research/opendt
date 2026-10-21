@@ -18,15 +18,9 @@ A **Task** represents a job submitted to the datacenter. Each task requests comp
 | submission_time | datetime | When the task was submitted |
 | duration | int | Total duration in milliseconds |
 | cpu_count | int | Number of CPU cores requested |
-| cpu_capacity | float | CPU speed in MHz |
+| cpu_capacity | float | CPU capacity in MHz (SURF: 33,600 for every task, a whole host) |
 | mem_capacity | int | Memory capacity in MB |
 | fragments | list | Execution profile segments |
-
-A task represents a request for compute cycles:
-
-```
-Total Cycles = cpu_count × cpu_capacity × duration
-```
 
 ### Fragment
 
@@ -34,11 +28,10 @@ A **Fragment** describes resource usage during a segment of task execution. Task
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | int | Fragment identifier |
-| task_id | int | Parent task ID |
+| task_id | int | Parent task ID (`id` in the Parquet file) |
 | duration | int | Segment duration in milliseconds |
 | cpu_count | int | CPUs used in this segment |
-| cpu_usage | float | CPU utilization value |
+| cpu_usage | float | CPU usage in MHz |
 
 ## Power Data
 
@@ -60,30 +53,37 @@ The **Topology** defines the datacenter hardware that the simulator uses to calc
 Topology
 └── Cluster (e.g., "C01")
     └── Host
+        ├── name: "H01"
         ├── count: 277 (number of identical hosts)
         ├── CPU
         │   ├── coreCount: 16
         │   └── coreSpeed: 2100 MHz
         ├── Memory
-        │   └── memorySize: 128 GB
-        └── CPUPowerModel
-            ├── modelType: "mse"
-            ├── idlePower: 25 W
-            ├── maxPower: 174 W
-            └── calibrationFactor: 10.0
+        │   └── memorySize: 128000000
+        ├── CPUPowerModel
+        │   ├── modelType: "mse"
+        │   ├── power: 300 W
+        │   ├── idlePower: 25 W
+        │   ├── maxPower: 174 W
+        │   └── calibrationFactor: 4
+        └── GPU and GPUPowerModel (optional)
 ```
+
+Each cluster also has a `powerSource.carbonTracePath`, the carbon intensity trace of its grid.
 
 ## Model Definitions
 
 All data models are defined using Pydantic v2 in `libs/common/odt_common/models/`:
 
-| Model | File | Description |
-|-------|------|-------------|
-| Task | task.py | Workload task |
-| Fragment | fragment.py | Task execution segment |
-| Consumption | consumption.py | Power measurement |
-| Topology | topology.py | Datacenter topology |
-| WorkloadMessage | workload_message.py | Kafka message wrapper |
+| Model | File | Description | Topic |
+|-------|------|-------------|-------|
+| Task | task.py | Workload task | - |
+| Fragment | fragment.py | Task execution segment | - |
+| WorkloadMessage | workload_message.py | A task or a heartbeat | `dc.workload` |
+| Consumption | consumption.py | Power measurement | `dc.power` |
+| TopologySnapshot | topology.py | The datacenter's topology at a time | `dc.topology` |
+| Topology | topology.py | Datacenter topology | `sim.topology` |
+| DynamicConfigEvent | `config.py` | A runtime setting from the control panel | `sys.config` |
 
 These models provide:
 

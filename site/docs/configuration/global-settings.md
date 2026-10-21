@@ -16,6 +16,8 @@ Controls how fast the simulation runs relative to real time.
 | 300 | 300x speed (1 hour simulation = 12 seconds wall clock) |
 | -1 | Maximum speed (no delays between messages) |
 
+The value must be above 0, or -1; without it, the speed is 10. The control panel changes the speed while the twin runs.
+
 ```yaml
 global:
   speed_factor: 300
@@ -32,23 +34,26 @@ With the SURF workload (~7 days of data):
 | 300 | ~34 minutes |
 | -1 | ~10 minutes |
 
+These are the replay times; the simulator can finish later, as each window re-simulates the trace from its start.
+
 ## calibration_enabled
 
-Enables the calibrator service for automatic parameter tuning.
+Sets whether the calibrator tunes the power model from the start. The calibrator runs when the configuration has a
+`services.calibrator` section (see [calibrator](/docs/services/calibrator)); `calibration_enabled: true` without that
+section fails to load. The control panel switches calibration on and off while the twin runs.
 
 ```yaml
 global:
   calibration_enabled: true
 ```
 
-When `true`:
+When calibrating:
 
-- The calibrator container starts
-- Grid search runs periodically to optimize topology parameters
-- Calibrated topologies are published to `sim.topology`
-- Simulator uses calibrated values for predictions
+- Grid searches run one after another over `linspace_points` values of `calibrated_property`, from `min_value` to
+  `max_value`
+- When the best value changes, the calibrated topology is published to `sim.topology`
+- The simulator uses it from the next window
 
-When `false`:
+When not calibrating:
 
-- Calibrator does not start
-- Simulator uses the original topology without modifications
+- The simulator uses the workload's topology, or the last one changed in the dashboard

@@ -35,42 +35,40 @@ Monitor progress via the Grafana dashboard at http://localhost:3000.
 
 ### 3. Generate Plots
 
-After the simulation completes:
+After the simulation completes (or during it, for intermediate results), activate the virtual environment and run the
+plot generator:
 
 ```bash
+source .venv/bin/activate
 python reproducibility-capsule/generate_plot.py
 ```
 
-The interactive script will:
+The interactive script:
 
-1. Prompt you to select an experiment (1 or 2)
-2. Show available data sources with timestamps
-3. Generate a plot comparing:
-   - Ground Truth (actual power)
-   - FootPrinter baseline
-   - OpenDT prediction
+1. Asks which experiment to plot (1 or 2)
+2. Shows the available runs, completed or in progress
+3. Offers the plots as a checkbox:
+   - Experiment 1: Power Prediction Accuracy (Ground Truth vs. FootPrinter vs. OpenDT), Sustainability/Performance/Efficiency
+     Overview, and Job Completion Efficiency (jobs per kWh)
+   - Experiment 2: MAPE Over Time (calibrated vs. non-calibrated), which also needs a run of experiment 1, plus all
+     Experiment 1 plots
 
-Plots are saved to `reproducibility-capsule/output/`.
+Plots are saved to `reproducibility-capsule/output/experiment_<number>/<workload>_<plot>.pdf`.
 
 ## Output
 
-Generated plots show:
+The Power Prediction Accuracy plot shows:
 
-- **Left Y-axis**: Power draw (kW)
-- **Right Y-axis**: MAPE percentage
+- **Left Y-axis**: Power draw [kW] of the Ground Truth (actual measurements), FootPrinter (baseline predictor), and
+  OpenDT (digital twin prediction)
+- **Right Y-axis**: OpenDT's cumulative MAPE [%]
 - **X-axis**: Time
 
-Three time series are plotted:
-
-- Ground Truth (actual measurements)
-- FootPrinter (baseline predictor)
-- OpenDT (digital twin prediction)
-
-MAPE values for both FootPrinter and OpenDT are displayed in the legend.
+The script also prints the MAPE of FootPrinter and of OpenDT.
 
 ## Reference Data
 
-The `reproducibility-capsule/data/` directory contains reference data for the baseline comparisons:
+The plots compare OpenDT with two references:
 
-- `footprinter.parquet` - FootPrinter predictions
-- `real_world.parquet` - Ground truth measurements
+- `reproducibility-capsule/data/SURF/footprinter.parquet` - FootPrinter predictions
+- `workload/SURF/consumption.parquet` - Ground truth measurements

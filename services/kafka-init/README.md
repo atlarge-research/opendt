@@ -14,7 +14,7 @@ kafka-init creates the Kafka topics of the configuration, with their retention a
 | dc.power | Stream | 1 hour | Power consumption telemetry |
 | dc.topology | Compacted | - | Real datacenter topology |
 | sim.topology | Compacted | - | Calibrated topology |
-| sim.results | Stream | 7 days | Simulation predictions |
+| sim.results | Stream | 7 days | Created, not used (the results are files in `data/<RUN_ID>/simulator/`) |
 | sys.config | Compacted | - | Runtime configuration |
 
 ### Topic Types

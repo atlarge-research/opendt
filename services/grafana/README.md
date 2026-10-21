@@ -21,7 +21,7 @@ follows. Full screen switches the browser's full screen on and off, without Graf
   picking a rack prefab, the bin to delete one); the hosts available and in use; and the prefabs the racks come from:
   racks, CPUs, and GPUs, as OpenDT ships them at first (SURF's node, OpenDC web's host templates, the Dell servers of
   OpenDC's RADiCe experiments) and then the user's, kept in `data/prefabs.json` (without it, as shipped again).
-- **OpenDT, tutorial:** the 12 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
+- **OpenDT, tutorial:** the 11 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
   its tag or by Back and Next: a change to the twin, a question with four choices (a click says if it holds), a hint,
   and a solution, folded, then the step's plots; the twin's state in boxes on the left. It starts on Day.
 - **OpenDT Dashboard** (classic): power and carbon emissions.
@@ -38,7 +38,7 @@ The screens are built by the code in `dashboards/`:
 - `plots.py`: what each plot shows, one definition per plot;
 - `steps.py`: what each step of the tutorial shows, from `tutorial/resources/tutorial.yaml`;
 - `screens.py`: where each panel sits on each screen;
-- `form.py` and `js/`: the control panel and the plot picker (Business Forms) and their code;
+- `form.py` and `js/`: the control panel and the plot picker (Business Text panels) and their code;
 - `panels.py`: the building blocks (endpoints, colours, Grafana's panel types);
 - `layout.py`: Grafana's v2 dashboard format.
 
@@ -48,7 +48,7 @@ After a change, `python3 services/grafana/dashboards/build.py` writes the dashbo
 ## Image
 
 The image pins Grafana 12.4.13, the [Infinity datasource](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/)
-3.11.1, and [Business Forms](https://grafana.com/grafana/plugins/volkovlabs-form-panel/) 6.3.5 (the control panel),
+3.11.1, and [Business Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) 6.3.0 (the control panel),
 so Grafana starts without internet; after a version change, `make up build=true` rebuilds it.
 
 ## Provisioning

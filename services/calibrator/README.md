@@ -36,25 +36,26 @@ The calibrator can tune any numeric topology parameter. Common targets:
 
 ## Configuration
 
-Enable calibration in the config file:
+The calibrator runs when the config file has a `services.calibrator` section; `calibration_enabled` sets whether it
+calibrates from the start:
 
 ```yaml
 global:
   calibration_enabled: true
 ```
 
-The calibrator only runs when this flag is set.
+The control panel switches calibration on and off, and changes all settings but the property, while the twin runs.
 
 Settings under `services.calibrator` in the config file:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| calibrated_property | string | - | Topology property path to calibrate (e.g., `cpuPowerModel.calibrationFactor`) |
-| min_value | float | - | Minimum value in the search space |
-| max_value | float | - | Maximum value in the search space |
-| linspace_points | int | 10 | Number of candidate values to evaluate |
+| calibrated_property | string | cpuPowerModel.asymUtil | Topology property path to calibrate (`cpuPowerModel.calibrationFactor` for SURF's MSE hosts) |
+| min_value | float | 0.1 | Minimum value in the search space |
+| max_value | float | 0.9 | Maximum value in the search space |
+| linspace_points | int | 9 | Number of candidate values to evaluate |
 | max_parallel_workers | int | 4 | Maximum parallel calibration simulations |
-| mape_window_minutes | int | 60 | Time window for MAPE calculation |
+| mape_window_minutes | int | 1440 | Time window for MAPE calculation |
 
 ### calibrated_property
 

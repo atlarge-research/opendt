@@ -17,7 +17,9 @@ workload/
     ├── fragments.parquet
     ├── consumption.parquet
     ├── carbon.parquet
-    └── topology.json
+    ├── carbon_zones/        # NL, DE, PL, RO
+    ├── topology.json
+    └── workload.yaml
 ```
 
 ## Required Files
@@ -27,8 +29,10 @@ workload/
 | tasks.parquet | Task definitions with submission times and resource requirements |
 | fragments.parquet | Task execution profiles showing resource usage over time |
 | consumption.parquet | Actual power measurements from the real datacenter |
-| carbon.parquet | Grid carbon intensity data |
+| carbon.parquet | Grid carbon intensity data (used by the tutorial) |
+| carbon_zones/ | Carbon intensity per zone (NL, DE, PL, RO) [gCO2eq/kWh], for the CO₂ zone lever |
 | topology.json | Datacenter hardware configuration |
+| workload.yaml | Name, description, and `timestamps.consumption_offset_ms`, added to the power timestamps |
 
 ## Selecting a Workload
 
@@ -57,27 +61,27 @@ To add a new workload:
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | int | Unique task identifier |
+| id | string | Unique task identifier |
 | submission_time | timestamp | When the task was submitted |
 | duration | int | Task duration in milliseconds |
 | cpu_count | int | Number of CPU cores |
-| cpu_capacity | float | CPU speed in MHz |
+| cpu_capacity | float | CPU capacity in MHz (SURF: 33,600 for every task, 16 cores x 2,100 MHz) |
 | mem_capacity | int | Memory in MB |
 
 ### fragments.parquet
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | int | Fragment identifier |
-| task_id | int | Parent task ID |
+| id | string | ID of the task |
 | duration | int | Fragment duration in milliseconds |
 | cpu_count | int | CPUs used |
-| cpu_usage | float | CPU utilization |
+| cpu_usage | float | CPU usage in MHz |
 
 ### consumption.parquet
 
 | Column | Type | Description |
 |--------|------|-------------|
-| timestamp | timestamp | Measurement time |
+| timestamp | int | Milliseconds since the first task's submission (plus `consumption_offset_ms`) |
 | power_draw | float | Power in Watts |
-| energy_usage | float | Energy in Joules |
+| energy_usage | float | Energy in Joules, per 30-s sample |
+| host | string | Source of the measurement (not used by OpenDT) |

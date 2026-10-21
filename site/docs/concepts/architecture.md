@@ -10,7 +10,7 @@ OpenDT follows a modular architecture designed for datacenter digital twins. Thi
 
 ![OpenDT High-Level Architecture](/img/design_opendt_hl.png)
 
-The architecture consists of five main components:
+The architecture consists of six main components:
 
 ### Physical Infrastructure (P)
 
@@ -20,12 +20,14 @@ The **Datacenter Twin** represents the real physical infrastructure being monito
 
 The **Interfaces** component provides user access to the system. OpenDT implements this through:
 
-- **Grafana Dashboard** - Real-time visualization of power consumption and carbon emissions
+- **Grafana Dashboard** - Three screens of power, CO₂, jobs, and the twin's accuracy, with a control panel that changes
+  the running twin
 - **REST API** - Programmatic access for querying data and controlling topology
 
 ### Orchestration (C)
 
-The **Orchestrator** coordinates the flow of data between components. In OpenDT, **Kafka** serves as the message broker that enables this orchestration, with topics for workload, power, topology, and results.
+The **Orchestrator** coordinates the flow of data between components. In OpenDT, **Kafka** serves as the message broker that enables this orchestration, with topics for workload, power, and topology (`dc.*`), the simulated topology (`sim.topology`), and runtime settings
+(`sys.config`).
 
 ### Data Platform (D, E)
 
@@ -89,7 +91,7 @@ OpenDT supports multiple user types:
 
 | Component | OpenDT Implementation |
 |-----------|----------------------|
-| Input (G) | Task accumulator, window manager |
+| Input (G) | Task accumulator, which closes the windows |
 | Simulation Engine (H) | OpenDC binary invocation |
 | Output (I) | Result processor, Parquet writer |
 | Topology Adjuster (J) | Calibration engine with grid search |
@@ -142,8 +144,8 @@ The digital twin mirrors this state, with the ability to modify parameters for w
       │  simulator  │◄── sim.topology ──│ calibrator  │
       └──────┬──────┘         ▲         └─────────────┘
              │                │
-             │          ┌─────┴─────┐≈
-             │          │    api    │ (can also write topology)
+             │          ┌─────┴─────┐
+             │          │    api    │ (writes the topology and sys.config)
              │          └───────────┘
              │
              ▼              ┌───────────┐     ┌───────────┐
@@ -151,13 +153,17 @@ The digital twin mirrors this state, with the ability to modify parameters for w
                             └───────────┘     └───────────┘
 ```
 
+The simulator reads `dc.workload` and `dc.topology`; the calibrator also reads `dc.power`. Besides
+`agg_results.parquet`, the API reads each window's OpenDC output and the workload's `consumption.parquet`.
+
 ## Service Mapping
 
 | Architecture Component | OpenDT Service | Docker Container |
 |------------------------|----------------|------------------|
-| Physical Orchestrator | dc-mock | `dc-mock` |
-| Central Orchestrator | Kafka | `kafka` |
-| Simulation Engine | simulator | `simulator` |
-| Topology Adjuster | calibrator | `calibrator` |
-| API Server | api | `api` |
+| Physical Orchestrator | dc-mock | `opendt-dc-mock` |
+| Central Orchestrator | Kafka | `opendt-kafka` |
+| Topic setup | kafka-init | `opendt-kafka-init` |
+| Simulation Engine | simulator | `opendt-simulator` |
+| Topology Adjuster | calibrator | `opendt-calibrator` |
+| API Server | api | `opendt-api` |
 | Web Interface | Grafana | `grafana` |
