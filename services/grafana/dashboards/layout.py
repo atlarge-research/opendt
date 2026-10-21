@@ -121,13 +121,11 @@ def auto(shown, columns):
     return {"kind": "AutoGridLayout", "spec": {**spec, "items": items}}
 
 
-def row(title, layout, collapse=False, shown=None):
-    spec = {"title": title, "collapse": collapse, "layout": layout}
+def row(title, layout, shown):
+    spec = {"title": title, "collapse": False, "layout": layout}
     if not title:
         spec["hideHeader"] = True
-    if shown:
-        spec["conditionalRendering"] = shown
-    return {"kind": "RowsLayoutRow", "spec": spec}
+    return {"kind": "RowsLayoutRow", "spec": spec | {"conditionalRendering": shown}}
 
 
 def query(name, target):

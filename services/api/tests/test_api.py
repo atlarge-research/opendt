@@ -253,5 +253,6 @@ def test_status_at_start(api, tmp_path, monkeypatch):
     monkeypatch.setenv(
         "WORKLOAD_DIR", str(REPO / "workload" / "SURF")
     )  # its topology: the twin's at start
-    status = {"speed_factor": -1, "calibration": False, "hosts": 277, "carbon_zone": "NL"}
+    status = {"speed_factor": -1, "calibration": False, "servers": "277 SURF-SARA", "hosts": 277}
+    status |= {"calibration_factor": 4, "carbon_zone": "NL"}
     assert main.get_status() == status

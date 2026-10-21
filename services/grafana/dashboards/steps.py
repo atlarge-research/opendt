@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 from form import script
-from panels import BLUE, BOX, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW
+from panels import BLUE, BOX, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW, text
 from plots import ROWS, co2, hosts, power
 
 RESOURCES = Path(__file__).resolve().parents[3] / "tutorial" / "resources"
@@ -121,16 +121,7 @@ def card(n):
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
     colors = {"right": GREEN, "wrong": RED, "none": LINE}
-    return {
-        "type": "marcusolsson-dynamictext-panel",
-        "title": "",
-        "options": {
-            "renderMode": "allRows",  # once, with or without data
-            "content": content,
-            "defaultContent": content,
-            "afterRender": script("links.js", "step.js", colors=colors),
-        },
-    }
+    return text(content, script("links.js", "step.js", colors=colors))
 
 
 # the values of the step variable, 1, 2, 3, ...: (value, step, card)

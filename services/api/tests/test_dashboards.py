@@ -117,3 +117,18 @@ def test_home_page():
     compose = (REPO / "docker-compose.yml").read_text()
     home = re.search(r"GF_USERS_HOME_PAGE=/d/([\w-]+)", compose).group(1)
     assert home in [load(name)["metadata"]["name"] for name in OURS]
+
+
+@pytest.mark.parametrize("name", ["overview.json", "tutorial.json"])
+def test_intervals_are_the_api_periods(name):
+    period = next(v for v in load(name)["spec"]["variables"] if v["spec"]["name"] == "period")
+    assert [o["value"] for o in period["spec"]["options"]] == list(twin.PERIODS)
+
+
+def test_heatmap_buckets_are_the_api_buckets():
+    (columns,) = [
+        [c["selector"] for c in targets[0]["columns"]]
+        for _, kind, _, targets in panels(load("overview.json"))
+        if kind == "status-history"
+    ]
+    assert sorted(columns[1:]) == sorted(twin.BUCKETS)  # after the timestamp, the busiest first

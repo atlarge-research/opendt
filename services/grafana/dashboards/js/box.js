@@ -7,9 +7,7 @@ const levers = [...box.querySelectorAll('[data-key]')];
 const label = ({ dataset: { choices, labels } }, value) =>
   choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');
 levers.forEach((lever) => (lever.textContent = label(lever, lever.dataset.value)));
-if (!document.getElementById('opendt-lever')) {
-  document.head.insertAdjacentHTML('beforeend', '<style id="opendt-lever">' + style + '</style>');
-}
+css('opendt-lever', style);
 // a lever's choices as buttons, or its number
 const edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices
   ? choices.split(',').map((c, i) => '<button class="choice' + (c === draft[key] ? ' on' : '') + '" data-key="' + key + '" value="' + c + '">' + labels.split('|')[i] + '</button>').join('')

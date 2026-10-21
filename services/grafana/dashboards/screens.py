@@ -16,7 +16,7 @@ from form import (
     group,
 )
 from layout import all_of, auto, custom, dashboard, grid, picked, query, row, when
-from panels import PERIODS, STATUS, target
+from panels import PERIODS, status
 from plots import (
     BOXES,
     GROUPS,
@@ -49,7 +49,7 @@ def screen(uid, title, placed, rows=(), panels=None, variables=(), plots=(), per
 # while the twin starts, a row above all: gone once its first window is complete
 STARTUP = row("", grid([("start", 0, 0, 24, 28)]), shown=when("twin", "equals", ""))
 # the twin's time, empty until its first window is complete (or while the API does not answer)
-TWIN = query("twin", target(STATUS, [("twin_time", "twin_time", "string")]) | {"root_selector": ""})
+TWIN = query("twin", status("twin_time"))
 # the top of every screen: the view, then the levers by category
 BAR = 4
 LEVERS = {
@@ -131,6 +131,7 @@ topology = screen(
 
 # the Tutorial screen, one step at a time, each a row shown at its step: the twin's state on the left, in
 # boxes; the step on the right, its question and its plots
+TOP = top("opendt-tutorial")
 LEFT = [
     ("time-box", 0, 0, 6, 2),
     ("truth-box", 0, 2, 3, 2),
@@ -157,7 +158,7 @@ def slide(value, step):
         "",
         grid(
             [
-                *((name, x, y, w, h) for name, _, x, y, w, h in top("opendt-tutorial")),
+                *((name, x, y, w, h) for name, _, x, y, w, h in TOP),
                 *under,
                 (f"step-{value}", 6, BAR, 18, CARD),
                 *plots,
@@ -170,7 +171,7 @@ def slide(value, step):
 tutorial = dashboard(
     "opendt-tutorial",
     "OpenDT, tutorial",
-    {name: panel for name, panel, *_ in top("opendt-tutorial")}
+    {name: panel for name, panel, *_ in TOP}
     | BOXES
     | {"decisions": decisions}
     | {f"step-{value}": card for value, _, card in steps.SLIDES}

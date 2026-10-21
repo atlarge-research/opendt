@@ -28,6 +28,7 @@ from panels import (
     stat,
     table,
     target,
+    text,
     thresholds,
     tile,
     timeseries,
@@ -39,6 +40,9 @@ EVENTS = f"{API}/api/events?markers=on"
 # what tiles.yaml sets: the tiles of a share, and the (i) of each panel
 CONFIG = yaml.safe_load((Path(__file__).parent / "tiles.yaml").read_text())
 NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
+# the power draw, from the API's W to kW
+WATTS = [("actual_power", "actual_power"), ("simulated_power", "simulated_power")]
+KW = [("actual_power/1000", "Ground truth"), ("simulated_power/1000", "OpenDT")]
 
 # the top of the detailed screen
 
@@ -70,9 +74,9 @@ power = timeseries(
     POWER,
     "Power draw [kW]",
     {"Ground truth": GREY, "OpenDT": GREEN},
-    [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
+    WATTS,
     better="lower",
-    computed=[("actual_power/1000", "Ground truth"), ("simulated_power/1000", "OpenDT")],
+    computed=KW,
     hide=["actual_power", "simulated_power"],
     apart=["Ground truth"],
 )
@@ -500,11 +504,10 @@ STYLE = """.opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display
 .opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;
   font-size: 17px; white-space: nowrap; }"""
 STARTING = {
-    "start": {
-        "type": "marcusolsson-dynamictext-panel",
-        "title": "",
-        "transparent": True,
-        "targets": [
+    "start": text(
+        CARD,
+        script("css.js", "grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress"),
+        [
             target(
                 PROGRESS,
                 [
@@ -514,14 +517,10 @@ STARTING = {
                 ],
             )
         ],
-        "options": {
-            "renderMode": "everyRow",
-            "content": CARD,
-            "defaultContent": WAITING,
-            "styles": STYLE,
-            "afterRender": script("grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress"),
-        },
-    },
+        WAITING,
+        STYLE,
+    )
+    | {"transparent": True},
 }
 
 
@@ -551,12 +550,8 @@ GROUPS = {
     "power-group": numbers(
         "Power [kW]",
         POWER,
-        [("actual_power", "actual_power"), ("simulated_power", "simulated_power")],
-        [
-            ("actual_power/1000", "Ground truth"),
-            ("simulated_power/1000", "OpenDT"),
-            ("(simulated_power - actual_power)/1000", "Gap"),
-        ],
+        WATTS,
+        [*KW, ("(simulated_power - actual_power)/1000", "Gap")],
         ["actual_power", "simulated_power"],
         overrides=[  # in the colours of their lines
             override("Ground truth", color={"mode": "fixed", "fixedColor": GREY}),
@@ -603,5 +598,5 @@ GROUPS = {
 }
 # the (i) of each panel, by its name
 PANELS = {"power": power, "co2": co2, "hosts": hosts, "decisions": decisions, **BOXES, **GROUPS}
-for name, text in CONFIG["info"].items():
-    PANELS[name]["description"] = text
+for name, info in CONFIG["info"].items():
+    PANELS[name]["description"] = info

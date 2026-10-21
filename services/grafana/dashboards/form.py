@@ -4,7 +4,7 @@ category; Business Text panels, their code in js/."""
 import json
 from pathlib import Path
 
-from panels import BROWSER_API, PERIODS, STATUS, WEEK, target
+from panels import BROWSER_API, PERIODS, WEEK, status, text
 
 JS = Path(__file__).parent / "js"
 SCREENS = [
@@ -79,17 +79,14 @@ BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-c
 .lever:hover a { color: #6e9fff; }"""
 # a box, once clicked: larger, over the screen, with what its levers take
 OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;
-  padding: 12px; background: #181b1f; border: 1px solid #3d71d9; border-radius: 2px; color: #ccccdc;
+  padding: 12px; background: var(--panel); border: 1px solid #3d71d9; border-radius: 2px; color: var(--ink);
   font-size: 14px; }
 .opendt-lever small { font-size: 12px; color: #8e8e8e; margin-top: 4px; }
 .opendt-lever div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: #111217; color: #ccccdc;
-  border: 1px solid #2f3238; border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }
+.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: var(--canvas); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }
 .opendt-lever input { width: 4em; }
-.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }
-.theme-light .opendt-lever { background: #ffffff; color: #24292e; }
-.theme-light .opendt-lever button:not(.on, .apply), .theme-light .opendt-lever input { background: #f4f5f5;
-  color: #24292e; border-color: #d8d9da; }"""
+.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }"""
 
 
 def value(element):
@@ -115,31 +112,25 @@ def group(title, levers, link=None, note=""):
     )
     more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
     keys = [e["id"] for _, elements in levers for e in elements]
-    return {
-        "type": "marcusolsson-dynamictext-panel",
-        "title": "",
-        "targets": [target(STATUS, [(k, k, "string") for k in keys]) | {"root_selector": ""}],
-        "options": {
-            "renderMode": "everyRow",
-            "content": f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}{note}</div>',
-            "defaultContent": f'<div class="lever"><small>{title}</small></div>',
-            "styles": BOX,
-            "afterRender": script("box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
-        },
-    }
+    return text(
+        f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}{note}</div>',
+        script("css.js", "box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
+        [status(*keys)],
+        f'<div class="lever"><small>{title}</small></div>',
+        BOX,
+    )
 
 
 TAB = "padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap"
 # the window of the plots shown, over the screen
 DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;
   justify-content: center; background: rgba(0, 0, 0, 0.6); }
-.opendt-plots > div { background: #181b1f; border: 1px solid #2f3238; border-radius: 4px; padding: 24px;
-  color: #ccccdc; font-size: 14px; }
+.opendt-plots > div { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 24px;
+  color: var(--ink); font-size: 14px; }
 .opendt-plots section { display: grid; grid-template-columns: repeat(4, auto); gap: 40px; margin: 16px 0 24px; }
 .opendt-plots label { display: flex; gap: 8px; margin-top: 10px; cursor: pointer; }
 .opendt-plots button { float: right; background: #3d71d9; color: white; border: 0; border-radius: 2px;
-  padding: 6px 16px; cursor: pointer; }
-.theme-light .opendt-plots > div { background: #ffffff; border-color: #d8d9da; color: #24292e; }"""
+  padding: 6px 16px; cursor: pointer; }"""
 VIEW = """.view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .view div { display: flex; align-items: center; gap: 4px; }
 .view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }
@@ -178,16 +169,14 @@ def brand(uid, plots=(), period=True):
         f'</span><a class="theme" style="{TAB}"></a></div>'  # light or dark, grafana.js
     )
     html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'
-    code = script("links.js", "grafana.js", "theme.js", "range.js", "view.js", week=WEEK)
-    return {
-        "type": "marcusolsson-dynamictext-panel",
-        "title": "",
-        "targets": [target(STATUS, [("twin_time", "twin_time", "string")]) | {"root_selector": ""}],
-        "options": {
-            "renderMode": "everyRow",
-            "content": html,
-            "defaultContent": html.replace("{{twin_time}}", ""),
-            "styles": VIEW,
-            "afterRender": code + (script("plots.js", plots=plots, style=DIALOG) if plots else ""),
-        },
-    }
+    code = script(
+        "links.js",
+        "css.js",
+        "grafana.js",
+        "view.js",
+        "plots.js",
+        week=WEEK,
+        plots=plots,
+        style=DIALOG,
+    )
+    return text(html, code, [status("twin_time")], html.replace("{{twin_time}}", ""), VIEW)

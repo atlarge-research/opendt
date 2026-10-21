@@ -79,21 +79,24 @@ def topology(window: Path) -> dict:
     return json.loads((window / "input" / "topology.json").read_text())
 
 
-@cache
-def settings(window: Path) -> dict:
-    """Servers, power-model exponent r, carbon zone, and scheduler the window ran with."""
-    cluster = topology(window)["clusters"][0]
+def setup(topology: dict) -> dict:
+    """Servers, power-model exponent r, and carbon zone of a topology."""
+    cluster = topology["clusters"][0]
     hosts = cluster["hosts"]
-    path = cluster["powerSource"]["carbonTracePath"]
-    experiment = json.loads((window / "input" / "experiment.json").read_text())
-    policies = experiment.get("allocationPolicies", [])  # none: OpenDC's default, Mem
     return {
         "servers": " + ".join(summary(host) for host in hosts),
         "hosts": hosts[0]["count"],  # of the first group, the control panel's Hosts
         "calibration_factor": hosts[0]["cpuPowerModel"]["calibrationFactor"],
-        "carbon_zone": zone(path),
-        "scheduler": policies[0]["policyName"] if policies else "Mem",
+        "carbon_zone": zone(cluster["powerSource"]["carbonTracePath"]),
     }
+
+
+@cache
+def settings(window: Path) -> dict:
+    """The setup and the scheduler the window ran with."""
+    experiment = json.loads((window / "input" / "experiment.json").read_text())
+    policies = experiment.get("allocationPolicies", [])  # none: OpenDC's default, Mem
+    return setup(topology(window)) | {"scheduler": policies[0]["policyName"] if policies else "Mem"}
 
 
 def zone(path: str) -> str:

@@ -1,9 +1,7 @@
 // ☰ Plots opens the plots of the screen by row, ticked while shown: a tick shows or hides a plot at once, a row's tick
 // all of its plots. The address keeps the hidden plots, so a plot added later shows, even with an old address
 const hidden = () => context.grafana.replaceVariables('$' + '{hidden:csv}').split(',');
-if (!document.getElementById('opendt-plots')) {
-  document.head.insertAdjacentHTML('beforeend', '<style id="opendt-plots">' + style + '</style>');
-}
+css('opendt-plots', style);
 const tick = (value, label, checked) =>
   '<label><input type="checkbox" value="' + value + '"' + (checked ? ' checked' : '') + '>' + label + '</label>';
 const rows = Object.fromEntries(plots.map(([row, shown]) => [row, shown.map(([key]) => key)]));

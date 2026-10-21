@@ -19,7 +19,6 @@ YELLOW, ORANGE, RED = "#F0E442", "#E69F00", "#D55E00"
 COLORS = {"red": RED, "orange": ORANGE, "yellow": YELLOW, "green": GREEN, "blue": BLUE}
 MARKERS = "rgba(255, 255, 255, 0.35)"  # light, so the data stays in front
 BOX = "rgba(128, 128, 128, 0.15)"  # a box in a panel, on the dark and the light theme
-# Grafana's dark theme: text, text of less weight, lines, and the text of most weight
 # the theme's text, fainter, and lines, on the dark and the light theme
 INK, FAINT, LINE = "inherit", "rgba(128, 128, 128, 0.9)", "rgba(128, 128, 128, 0.4)"
 WHITE = "#ffffff"
@@ -49,6 +48,29 @@ def target(url, columns, computed=()):
     if computed:
         query["computed_columns"] = [column(*c) for c in computed]
     return query
+
+
+def status(*keys):
+    """The twin's status (one object, not a table), its `keys` as strings."""
+    return target(STATUS, [(k, k, "string") for k in keys]) | {"root_selector": ""}
+
+
+def text(content, code, targets=(), default=None, styles=None):
+    """A Business Text panel: `content` for each row of the `targets` (`default` until they answer; without
+    targets, once), then the JavaScript `code` on it; `styles`, the CSS of its content."""
+    options = {
+        "renderMode": "everyRow" if targets else "allRows",
+        "content": content,
+        "defaultContent": default or content,
+    }
+    if styles:
+        options["styles"] = styles
+    return {
+        "type": "marcusolsson-dynamictext-panel",
+        "title": "",
+        "targets": list(targets),
+        "options": options | {"afterRender": code},
+    }
 
 
 def override(name, **props):
@@ -158,7 +180,6 @@ def stat(
     root="data",
     hide=(),
     more=(),
-    orientation="auto",
     unit=None,
     decimals=None,
 ):
@@ -187,7 +208,7 @@ def stat(
             "graphMode": "none",
             "textMode": "value_and_name",
             # auto: a grid, two boxes per line in a row's first panel
-            "orientation": orientation,
+            "orientation": "auto",
             "minVizWidth": 100,
             "minVizHeight": 60,
             "justifyMode": "auto",
@@ -253,9 +274,9 @@ def table(title, url, columns, overrides=(), sort=None, header=True):
     return panel
 
 
-def editable(title, url, columns, save, delete, key="id"):
+def editable(title, url, columns, save, delete):
     """A table edited in place (Business Table): Edit and Delete on each row, Add in the header. A saved row goes
-    to `save` with its cells in the address, an added one too but without `key` (it names a row, sent but not
+    to `save` with its cells in the address, an added one too but without its id (it names a row, sent but not
     shown), a deleted one to `delete` (`${payload.<column>}` names a cell). Columns are (field, name, editor),
     the editor "number", "string", or the URL of a list whose names a select offers."""
 
@@ -297,8 +318,8 @@ def editable(title, url, columns, save, delete, key="id"):
     allowed = {"enabled": True, "permission": {"mode": "", "userRole": []}}
     table = {
         "name": title,
-        "items": [item(key, "", "number", shown=False), *(item(*c) for c in columns)],
-        "update": request(cells([key, *fields])),
+        "items": [item("id", "", "number", shown=False), *(item(*c) for c in columns)],
+        "update": request(cells(["id", *fields])),
         "addRow": {**allowed, "request": request(cells(fields))},
         "deleteRow": {**allowed, "request": request(delete)},
     }
@@ -308,7 +329,7 @@ def editable(title, url, columns, save, delete, key="id"):
         "type": "volkovlabs-table-panel",
         "title": title,
         "targets": [
-            target(url, [(key, key, "string"), *kinds]),  # a number or a name
+            target(url, [("id", "id", "string"), *kinds]),  # a number or a name
             *({**target(u, [("name", "name", "string")]), "refId": f} for f, u in lists),
         ],
         "fieldConfig": {"defaults": {"unit": "locale"}, "overrides": []},

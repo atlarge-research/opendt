@@ -224,11 +224,7 @@ def get_status():
             "mape_window": calibrator.mape_window_minutes,
         }
     if not twin.windows(run_dir()):  # starting: what is configured, and the workload's topology
-        cluster = json.loads(workload().topology_file.read_text())["clusters"][0]
-        start = {
-            "hosts": cluster["hosts"][0]["count"],
-            "carbon_zone": twin.zone(cluster["powerSource"]["carbonTracePath"]),
-        }
+        start = twin.setup(json.loads(workload().topology_file.read_text()))
         return {**configured, **start, **app.state.settings}
     status = twin.status(run_dir())
     return {
