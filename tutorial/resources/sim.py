@@ -20,8 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-import pyarrow as pa
-from odt_common.odc_runner.java_home import detect_java_home
+from odt_common.odc_runner import FRAGMENT_SCHEMA, TASK_SCHEMA, environment, experiment
 
 from .data import TRACE_END, TRACE_START, load_surf, to_utc
 from .paths import PATHS
@@ -30,26 +29,6 @@ from .topology import make_topology
 log = logging.getLogger(__name__)
 
 CACHE_VERSION = 1  # bump when the run directory layout changes
-
-# OpenDC needs non-nullable columns; this is the schema OpenDT's OpenDCRunner writes.
-TASK_SCHEMA = pa.schema(
-    [
-        ("id", pa.int32(), False),
-        ("submission_time", pa.int64(), False),
-        ("duration", pa.int64(), False),
-        ("cpu_count", pa.int32(), False),
-        ("cpu_capacity", pa.float64(), False),
-        ("mem_capacity", pa.int64(), False),
-    ]
-)
-FRAGMENT_SCHEMA = pa.schema(
-    [
-        ("id", pa.int32(), False),
-        ("duration", pa.int64(), False),
-        ("cpu_count", pa.int32(), False),
-        ("cpu_usage", pa.float64(), False),
-    ]
-)
 
 
 @dataclass(repr=False)
@@ -171,32 +150,16 @@ def _clip(until) -> pd.Timestamp:
 def _run_opendc(run_dir: Path, until: pd.Timestamp, topology) -> None:
     inputs = run_dir / "input"
     write_inputs(until, inputs / "workload")
-    # OpenDC rejects nulls
     (inputs / "topology.json").write_text(topology.model_dump_json(indent=2))
-    experiment = {  # the experiment file OpenDCRunner writes, minus host.parquet (unused here)
-        "name": "run",
-        "topologies": [{"pathToFile": str(inputs / "topology.json")}],
-        "workloads": [{"pathToFile": str(inputs / "workload"), "type": "ComputeWorkload"}],
-        "outputFolder": str(run_dir / "output"),
-        "exportModels": [
-            {"exportInterval": 150, "filesToExport": ["powerSource", "service", "task"]}
-        ],
-    }
-    (inputs / "experiment.json").write_text(json.dumps(experiment, indent=2))
-
-    env = {
-        **os.environ,
-        "JAVA_HOME": detect_java_home(),
-        # Host names from /etc/hosts only: without it, parallel runs can wait 5 s for DNS at start-up.
-        # The serial garbage collector needs less CPU and memory on 2-core machines (e.g., Codespaces).
-        "OPEN_DC_EXPERIMENT_RUNNER_OPTS": "-Djdk.net.hosts.file=/etc/hosts -XX:+UseSerialGC",
-    }
+    # the experiment OpenDCRunner writes, minus host.parquet (unused here)
+    run = experiment("run", inputs, run_dir / "output", ["powerSource", "service", "task"])
+    (inputs / "experiment.json").write_text(json.dumps(run, indent=2))
     with open(run_dir / "opendc.log", "w") as log_file:
         result = subprocess.run(
             [str(PATHS.opendc_bin), "--experiment-path", str(inputs / "experiment.json")],
             stdout=log_file,
             stderr=subprocess.STDOUT,
-            env=env,
+            env=environment(),
             timeout=600,
         )
     if result.returncode != 0:

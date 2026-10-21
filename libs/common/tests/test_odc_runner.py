@@ -4,7 +4,7 @@ and the topology."""
 import json
 
 from odt_common.models import Topology
-from odt_common.odc_runner import OpenDCRunner
+from odt_common.odc_runner import OpenDCRunner, environment, experiment
 
 
 def runner(tmp_path):
@@ -13,21 +13,17 @@ def runner(tmp_path):
     return OpenDCRunner(runner_bin)
 
 
-def experiment(tmp_path, **scheduler):
-    path = tmp_path / "experiment.json"
-    runner(tmp_path)._create_experiment_json(
-        "run_1", tmp_path, tmp_path / "topology.json", path, str(tmp_path / "output"), **scheduler
-    )
-    return json.loads(path.read_text())
-
-
 def test_scheduler(tmp_path):
-    policies = experiment(tmp_path, scheduler="ActiveServers")["allocationPolicies"]
-    assert policies == [{"type": "prefab", "policyName": "ActiveServers"}]
+    run = experiment("run_1", tmp_path, tmp_path / "output", ["task"], "ActiveServers")
+    assert run["allocationPolicies"] == [{"type": "prefab", "policyName": "ActiveServers"}]
 
 
 def test_default_scheduler(tmp_path):
-    assert "allocationPolicies" not in experiment(tmp_path)
+    assert "allocationPolicies" not in experiment("run_1", tmp_path, tmp_path / "output", ["task"])
+
+
+def test_jvm_within_1_gb():
+    assert "-Xmx1g" in environment()["OPEN_DC_EXPERIMENT_RUNNER_OPTS"]
 
 
 def test_topology(tmp_path):
