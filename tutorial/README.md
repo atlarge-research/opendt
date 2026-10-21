@@ -25,7 +25,8 @@ The easiest is GitHub Codespaces, a day before class:
 The setup installs Python, Java 21, and OpenDT in a few minutes; then, in `tutorial/1.autoscaling.ipynb`, we select the
 kernel "OpenDT (.venv)" and run the first cell, which prints `Setup OK`.
 
-Locally, with Python 3.11+, [uv](https://docs.astral.sh/uv/), and make (on Windows, in WSL2):
+Locally, with Python 3.11+ and make (on Windows, in WSL2; `make setup` installs [uv](https://docs.astral.sh/uv/) when it
+is missing):
 
 ```
 git clone https://github.com/atlarge-research/opendt.git
@@ -40,9 +41,8 @@ The notebooks then open in VS Code, with the `.venv` environment (or in JupyterL
 with `.venv/bin/jupyter lab`).
 The notebooks' simulations ship precomputed, so they need no Java; a simulation of our own (e.g., with 333 hosts) runs
 OpenDC, which needs Java 21 (e.g., from [Adoptium](https://adoptium.net), with `JAVA_HOME` set).
-When something fails: `make setup` stops when `.venv` already exists, so `make clean-env` comes first; and on a slow
-machine, or one with 8 GB of memory, `export OPENDT_TUTORIAL_WORKERS=1` runs one of our own simulations at a time (by
-default, up to 4 at once).
+On a slow machine, or one with 8 GB of memory, `export OPENDT_TUTORIAL_WORKERS=1` runs one of our own simulations at a
+time (by default, up to 4 at once).
 
 ## The Live Twin
 
