@@ -8,8 +8,8 @@ Simulates a datacenter by replaying historical workload and power data to Kafka.
 
 ## Purpose
 
-dc-mock acts as the data source for OpenDT. It reads Parquet files from the configured workload directory and publishes messages to Kafka topics at the replay speed: `global.speed_factor` at the start (1 real time, -1 maximum),
-then each change from the control panel, continuing from where the replay is.
+dc-mock acts as the data source for OpenDT. It publishes the workload's tasks, power, and topology to Kafka at
+`global.speed_factor`; a speed change from the control panel applies from where the replay is.
 
 ## Data Sources
 
@@ -46,7 +46,7 @@ Published to `dc.topology` (compacted topic) with the datacenter hardware config
 | workload | string | - | Required: workload directory under `workload/` (e.g., "SURF") |
 | heartbeat_frequency_minutes | int | 1 | Heartbeat interval in simulation time |
 
-Lower heartbeat frequency provides more granular window closing but increases Kafka message volume.
+A shorter heartbeat interval closes windows sooner but sends more Kafka messages.
 
 ## Logs
 

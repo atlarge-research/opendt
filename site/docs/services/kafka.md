@@ -30,7 +30,7 @@ The `kafka-init` container creates and configures topics before other services s
 ## Configuration
 
 Topics are configured under `kafka.topics` in the config file. The services look them up by their keys (`workload`,
-`power`, `topology`, `sim_topology`, `system`), so only their `name` may change:
+`power`, `topology`, `sim_topology`, `system`), so each topic's `name` and `config` may change, not its key:
 
 ```yaml
 kafka:

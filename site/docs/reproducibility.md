@@ -29,7 +29,7 @@ make up config=config/experiments/experiment_2.yaml
 
 ### 2. Wait for Completion
 
-With `speed_factor: 300` and the SURF workload (~7 days), each experiment takes approximately 1 hour.
+With `speed_factor: 300`, the replay of the SURF week takes ~34 minutes; the simulator finishes later.
 
 Monitor progress via the Grafana dashboard at http://localhost:3000.
 
@@ -47,7 +47,7 @@ The interactive script:
 
 1. Asks which experiment to plot (1 or 2)
 2. Shows the available runs, completed or in progress
-3. Offers the plots as a checkbox:
+3. Offers the plots as a checkbox (checked at first: the Overview for experiment 1, MAPE Over Time for experiment 2):
    - Experiment 1: Power Prediction Accuracy (Ground Truth vs. FootPrinter vs. OpenDT), Sustainability/Performance/Efficiency
      Overview, and Job Completion Efficiency (jobs per kWh)
    - Experiment 2: MAPE Over Time (calibrated vs. non-calibrated), which also needs a run of experiment 1, plus all

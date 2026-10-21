@@ -86,17 +86,15 @@ workload/SURF/topology.json
 | power | Nominal power (Watts, required) |
 | idlePower | Power at 0% utilization (Watts) |
 | maxPower | Power at 100% utilization (Watts) |
-| calibrationFactor | Exponent r of the mse model, from 0 to 50: P(u) = idlePower + (maxPower - idlePower)(2u - u^r), with u the CPU utilization |
+| calibrationFactor | Exponent r of the mse model, from 0 to 50 (see [Power Models](/docs/concepts/power-models)) |
 | asymUtil | Curve coefficient of the asymptotic model, from 0 to 1 |
 | dvfs | Dynamic voltage and frequency scaling, asymptotic model only (default: false) |
 
-For GPUs, `gpuPowerModel.modelType` takes OpenDC's models (e.g., "linear", "cubic"); the GPU prefabs use "cubic".
-
 ## Carbon Tracking
 
-The `powerSource.carbonTracePath` points to a Parquet file with grid carbon intensity data over time, inside the
-container (`workload/` is mounted at `/app/workload`). This enables carbon emission calculations. The CO₂ zone lever
-switches among `carbon_zones/NL.parquet`, `DE.parquet`, `PL.parquet`, and `RO.parquet`.
+The `powerSource.carbonTracePath` points to a Parquet file of the grid's carbon intensity over time, as the containers
+see it: the workload's directory (e.g., `workload/SURF/`) is mounted at `/app/workload`. The CO₂ zone lever switches
+among `carbon_zones/NL.parquet`, `DE.parquet`, `PL.parquet`, and `RO.parquet`.
 
 ## Editing at Runtime
 

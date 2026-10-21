@@ -4,11 +4,11 @@ Optimizes topology parameters by comparing simulation output against actual powe
 
 ## Purpose
 
-The calibrator performs grid search over topology parameters (e.g., `asymUtil`) to find values that minimize the error between predicted and actual power consumption. It publishes the best-performing topology to Kafka for use by the simulator.
+The calibrator performs grid search over a topology parameter (e.g., `calibrationFactor`, the exponent r of SURF's power model) to find values that minimize the error between predicted and actual power consumption. It publishes the best-performing topology to Kafka for use by the simulator.
 
 ## How It Works
 
-1. **Accumulate tasks** - Collect tasks from `dc.workload` over a calibration window
+1. **Accumulate tasks** - Collect all tasks so far from `dc.workload`
 2. **Track power** - Record actual power consumption from `dc.power`
 3. **Grid search** - Run parallel simulations with different parameter values
 4. **Compare** - Calculate MAPE against actual power for each simulation
@@ -17,11 +17,12 @@ The calibrator performs grid search over topology parameters (e.g., `asymUtil`) 
 
 ## Calibrated Properties
 
-The calibrator can tune any numeric topology parameter. Common targets:
+The calibrator sets one numeric parameter, by its path from the host, on all hosts:
 
 | Property | Path | Description |
 |----------|------|-------------|
-| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient |
+| calibrationFactor | cpuPowerModel.calibrationFactor | Exponent r of the MSE power model; the one for SURF's hosts |
+| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient (asymptotic model only) |
 
 ## Components
 
@@ -59,7 +60,8 @@ Settings under `services.calibrator` in the config file:
 
 ### calibrated_property
 
-Uses dot notation to specify nested properties in the topology JSON.
+A dot path from the host (e.g., `cpuPowerModel.calibrationFactor`). The default, `cpuPowerModel.asymUtil`, exists only
+in the asymptotic model.
 
 ### linspace_points
 
@@ -86,4 +88,5 @@ calibrator/
 make logs-calibrator
 ```
 
-Note: The calibrator runs with the `calibration` Docker Compose profile. It will not start unless `calibration_enabled: true` is set.
+Note: the calibrator runs with the `calibration` Docker Compose profile, when the config has a `services.calibrator`
+section.

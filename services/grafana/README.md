@@ -7,16 +7,16 @@ Visualization dashboards for OpenDT metrics.
 - **URL:** http://localhost:3000
 - **Authentication:** Disabled (anonymous admin access)
 
-Four screens, each with a control panel at the top left (in place of Grafana's time picker): the screen, the time
-window, the interval of the totals, the decisions markers, and the twin's levers (CO₂ zone, scheduler, speed factor,
-parallel runs of the calibrator, hosts). Nothing changes before Apply: then the levers go to the twin and the screen
-follows. Full screen switches the browser's full screen on and off, without Grafana's bars.
+Three screens, each with a control panel on top, in place of Grafana's time picker: at the top left, the view (the
+screen, the time window, the decisions markers, and the interval of the totals); on the right, the twin's levers
+(hosts, scheduler, CO₂ zone, speed, calibration, parallel runs, range and values of r, and MAPE window). The view
+changes at once; the levers, after Apply. The screens always run in Grafana's kiosk mode (no menus, no bars).
 
-- **OpenDT, detailed** (the home page): ten tiles of the twin's state, power, CO₂ vs. carbon intensity, and hosts;
-  then a row each for performance (P1-P6), utilization (U1-U5), sustainability (S1-S5, per interval), and twin
-  accuracy (T1-T5). The Plots row picks the plots to show. Markers on every graph show the decisions (changes of
-  hosts, r, CO₂ zone, and scheduler; automatic or manual), the legends the latest values, and the right axis which way
-  is better (BETTER with an arrow).
+- **OpenDT, detailed** (the home page): the decisions and four groups of the twin's numbers now (power, jobs and hosts,
+  sustainability, accuracy); then a row each for performance (P1-P6), utilization (U1-U5), sustainability (S1-S5, per
+  interval), and twin accuracy (T1-T5). The ☰ Plots button picks the plots to show. Markers on every graph show the
+  decisions (changes of hosts, r, CO₂ zone, and scheduler; automatic or manual), the legends the latest values, and
+  the right axis which way is better (BETTER with an arrow).
 - **OpenDT, topology:** the datacenter, its racks and their hosts, edited in place (a row's pencil, + to add one by
   picking a rack prefab, the bin to delete one); the hosts available and in use; and the prefabs the racks come from:
   racks, CPUs, and GPUs, as OpenDT ships them at first (SURF's node, OpenDC web's host templates, the Dell servers of
@@ -24,12 +24,12 @@ follows. Full screen switches the browser's full screen on and off, without Graf
 - **OpenDT, tutorial:** the 11 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
   its tag or by Back and Next: a change to the twin, a question with four choices (a click says if it holds), a hint,
   and a solution, folded, then the step's plots; the twin's state in boxes on the left. It starts on Day.
-- **OpenDT Dashboard** (classic): power and carbon emissions.
+- **OpenDT Dashboard** (classic, no control panel): power and carbon emissions.
 
 The dashboards use Grafana's v2 format and its new layout (public preview in 12.4, enabled in the image), which
-shows or hides each plot. The panels query the OpenDT API at `http://api:8000`, from the Grafana server; the forms
-send their requests from the browser, to the API's port on the host, `http://localhost:3001` (`GET /api/status`,
-`PATCH /api/control`).
+shows or hides each plot. The panels query the OpenDT API at `http://api:8000`, from the Grafana server; the control
+panel sends its changes from the browser, to the API's port on the host, `http://localhost:3001` (`PATCH /api/control`,
+and `GET /api/progress` while the twin starts).
 
 ## Changing a screen
 
@@ -48,24 +48,11 @@ After a change, `python3 services/grafana/dashboards/build.py` writes the dashbo
 ## Image
 
 The image pins Grafana 12.4.13, the [Infinity datasource](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/)
-3.11.1, and [Business Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) 6.3.0 (the control panel),
-so Grafana starts without internet; after a version change, `make up build=true` rebuilds it.
+3.11.1, [Business Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) 6.3.0 (the control panel),
+and [Business Table](https://grafana.com/grafana/plugins/volkovlabs-table-panel/) 3.6.8 (the Topology tables), so Grafana starts without internet; after a version change, `make up build=true` rebuilds it.
 
 ## Provisioning
 
-Dashboards in `provisioning/dashboards/` are auto-provisioned on startup. These are read-only templates.
-
-To create an editable copy:
-1. Open the dashboard
-2. Click title → **Save As**
-3. Save with a new name
-
-Custom dashboards are persisted in the Docker volume.
-
-## Persistence
-
-Dashboard data is stored in the `opendt-grafana-storage` Docker volume. To reset:
-
-```
-make clean-volumes
-```
+Dashboards in `provisioning/dashboards/` are auto-provisioned on startup; Grafana re-reads them every 10 s. Each
+`make up` deletes the `opendt-grafana-storage` volume, as `make clean-volumes` does, so dashboards saved from the UI
+are lost.

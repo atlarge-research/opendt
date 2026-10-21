@@ -83,7 +83,7 @@ The screens in Grafana read and change the twin through these endpoints:
 | parallel_simulations | Parallel runs of the calibrator |
 | calibration | Calibration on or off |
 | calibration_min, calibration_max | The range of r the calibrator tries |
-| calibration_points | The values of r in that range |
+| calibration_points | Number of values of r in that range (2 or more) |
 | mape_window | Minutes of power the MAPE is computed over |
 
 ## Data Sources
@@ -93,7 +93,7 @@ The API reads from:
 - `data/<RUN_ID>/simulator/agg_results.parquet` - Simulation results
 - `data/<RUN_ID>/simulator/opendc/run_<N>/` - The OpenDC output of each window of operation (the screens)
 - `workload/<WORKLOAD>/consumption.parquet` - Actual power data
-- `workload/<WORKLOAD>/tasks.parquet` - The jobs of the trace
+- `workload/<WORKLOAD>/tasks.parquet` - The first submission time, which places the actual power in time
 - `data/prefabs.json` - The prefabs as edited (without it, the shipped `services/api/api/prefabs.yaml`)
 
 ## Logs

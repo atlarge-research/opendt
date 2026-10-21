@@ -22,17 +22,17 @@ workload/
     └── workload.yaml
 ```
 
-## Required Files
+## Files
 
-| File | Description |
-|------|-------------|
-| tasks.parquet | Task definitions with submission times and resource requirements |
-| fragments.parquet | Task execution profiles showing resource usage over time |
-| consumption.parquet | Actual power measurements from the real datacenter |
-| carbon.parquet | Grid carbon intensity data (used by the tutorial) |
-| carbon_zones/ | Carbon intensity per zone (NL, DE, PL, RO) [gCO2eq/kWh], for the CO₂ zone lever |
-| topology.json | Datacenter hardware configuration |
-| workload.yaml | Name, description, and `timestamps.consumption_offset_ms`, added to the power timestamps |
+| File | Required | Description |
+|------|----------|-------------|
+| tasks.parquet | Yes | Task definitions with submission times and resource requirements |
+| fragments.parquet | Yes | Task execution profiles showing resource usage over time |
+| topology.json | Yes | Datacenter hardware configuration |
+| consumption.parquet | No | Actual power measurements, the ground truth |
+| carbon_zones/ | No | Carbon intensity per zone (NL, DE, PL, RO) [gCO2eq/kWh], for the CO₂ zone lever |
+| carbon.parquet | No | Grid carbon intensity, used by the tutorial |
+| workload.yaml | No | Name, description, and `timestamps.consumption_offset_ms`, added to the power timestamps |
 
 ## Selecting a Workload
 
@@ -44,14 +44,14 @@ services:
     workload: "SURF"
 ```
 
-The value is the directory name under `workload/`.
+The value is the directory name under `workload/`; the containers see that directory at `/app/workload`.
 
 ## Creating Custom Workloads
 
 To add a new workload:
 
 1. Create a directory under `workload/`
-2. Add the required Parquet files
+2. Add the required files
 3. Create a `topology.json` matching your datacenter hardware
 4. Reference the directory name in your configuration
 
@@ -61,7 +61,7 @@ To add a new workload:
 
 | Column | Type | Description |
 |--------|------|-------------|
-| id | string | Unique task identifier |
+| id | string | Unique task identifier, a number (e.g., "2152647") |
 | submission_time | timestamp | When the task was submitted |
 | duration | int | Task duration in milliseconds |
 | cpu_count | int | Number of CPU cores |

@@ -6,46 +6,36 @@ sidebar_position: 3
 
 Optimizes topology parameters by comparing simulation output against actual power measurements.
 
-## Purpose
-
-The calibrator performs grid search over a topology parameter to find the value that minimizes the error between predicted and actual power consumption. It publishes the best-performing topology to Kafka for use by the simulator.
-
 ## How It Works
 
-1. **Accumulate tasks** - Collect tasks from `dc.workload`
-2. **Track power** - Record actual power from `dc.power`
-3. **Grid search** - Run parallel simulations, one per value (`linspace_points` values from `min_value` to `max_value`, rounded to 2 decimals), each with all tasks so far
-4. **Compare** - Calculate MAPE against actual power, over the last `mape_window_minutes`, on a 60-s grid
-5. **Select** - Choose the parameter value with lowest error
-6. **Publish** - Send the calibrated topology to `sim.topology`, only when the best value changes
+The calibrator runs grid searches, one after another, and publishes the best-performing topology for the simulator:
 
-Grid searches run one after another. The simulations run in threads, each OpenDC run in its own JVM, with a timeout of
-120 s.
+1. **Accumulate** - Collect tasks from `dc.workload` and actual power from `dc.power`
+2. **Grid search** - One OpenDC run per value: `linspace_points` values from `min_value` to `max_value`, rounded to 2
+   decimals, each on all tasks so far
+3. **Compare** - Calculate MAPE against actual power, over the last `mape_window_minutes`, on a 60-s grid
+4. **Select** - Choose the value with the lowest error
+5. **Publish** - Send the calibrated topology to `sim.topology`, when the best value changes
 
-## Calibrated Properties
+The runs go in threads, each OpenDC run in its own JVM; each takes about 1.3 GB and times out after 120 s.
 
-The calibrator tunes one numeric parameter of the hosts, by its path from the host, on all hosts:
+## Calibrated Property
+
+The calibrator sets one numeric parameter, by its path from the host, on all hosts:
 
 | Property | Path | Description |
 |----------|------|-------------|
-| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient (asymptotic power model only) |
 | calibrationFactor | cpuPowerModel.calibrationFactor | Exponent r of the MSE power model; the one for SURF's hosts |
+| asymUtil | cpuPowerModel.asymUtil | Curve coefficient of the asymptotic power model |
 
-## Components
-
-| File | Purpose |
-|------|---------|
-| main.py | Service orchestration |
-| calibration_engine.py | Parallel OpenDC simulations |
-| mape_comparator.py | Error calculation |
-| power_tracker.py | Actual power tracking |
-| result_processor.py | Results and topology broadcasts |
-| topology_manager.py | Topology subscription and publishing |
+The default, `cpuPowerModel.asymUtil`, exists only in the asymptotic model; SURF's MSE hosts need
+`cpuPowerModel.calibrationFactor`.
 
 ## Configuration
 
-The calibrator runs when the config file has a `services.calibrator` section, for example from
-`config/experiments/experiment_2.yaml`:
+The calibrator runs when the config file has a `services.calibrator` section. `global.calibration_enabled` sets whether
+it calibrates from the start; the control panel switches it on and off, and changes all settings but the property,
+while the twin runs. From `config/experiments/experiment_2.yaml`:
 
 ```yaml
 global:
@@ -67,11 +57,8 @@ services:
 | min_value | 0.1 | Lowest value to test |
 | max_value | 0.9 | Highest value to test |
 | linspace_points | 9 | Number of values to test |
-| max_parallel_workers | 4 | Parallel OpenDC simulations |
+| max_parallel_workers | 4 | Parallel OpenDC runs |
 | mape_window_minutes | 1440 | Minutes of power the MAPE is computed over |
-
-`global.calibration_enabled` sets whether the calibrator calibrates from the start. The control panel switches calibration
-on and off, and changes all settings but the property, while the twin runs.
 
 ## Output
 

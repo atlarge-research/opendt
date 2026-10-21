@@ -4,13 +4,13 @@ Core simulation engine that consumes workload data and produces power prediction
 
 ## Purpose
 
-The simulator aggregates tasks into time windows, invokes the OpenDC simulator, and outputs power consumption predictions. It maintains cumulative state to ensure accurate long-running simulations.
+The simulator aggregates tasks into time windows, invokes the OpenDC simulator, and outputs power consumption predictions. Each window simulates all tasks so far, from the start of the trace.
 
 ## Processing Flow
 
 1. **Consume** - Read tasks from `dc.workload` topic
 2. **Aggregate** - Group tasks into time windows based on submission timestamp
-3. **Close** - When heartbeat timestamp exceeds window end, close the window
+3. **Close** - When the heartbeat timestamp reaches the window end, close the window
 4. **Simulate** - Invoke OpenDC with all tasks from beginning (cumulative)
 5. **Output** - Write results to `agg_results.parquet`
 
@@ -78,7 +78,7 @@ Settings under `services.simulator` in the config file:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| simulation_frequency_minutes | int | 5 | Window size for task aggregation |
+| simulation_frequency_minutes | int | 15 | Window size for task aggregation (5 in `config/default.yaml`) |
 | background_load_nodes | int | (required) | Number of nodes reserved for background load |
 
 ### simulation_frequency_minutes

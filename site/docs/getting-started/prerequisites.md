@@ -32,12 +32,11 @@ uv --version
 
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
-| RAM | 8 GB | 16 GB |
+| RAM | 8 GB (16 GB with calibration) | 16 GB |
 | CPU | 4 cores | 8 cores |
 | Disk | 10 GB | 20 GB |
 
-OpenDT runs multiple containers including Kafka, Grafana, and the simulation services. More RAM and CPU cores will improve performance, especially for faster simulation speeds. With calibration on, Docker needs at least 8 GB of memory (in Docker Desktop:
-Settings, Resources).
+With calibration on, Docker needs at least 8 GB of memory (in Docker Desktop: Settings, Resources).
 
 ## Network Ports
 

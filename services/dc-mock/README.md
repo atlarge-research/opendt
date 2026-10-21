@@ -69,7 +69,7 @@ Settings under `services.dc-mock` in the config file:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| workload | string | "SURF" | Workload directory name under `workload/` |
+| workload | string | (required) | Workload directory name under `workload/` (e.g., "SURF") |
 | heartbeat_frequency_minutes | int | 1 | Heartbeat interval in simulation time |
 
 ### heartbeat_frequency_minutes
