@@ -9,23 +9,24 @@ This module handles:
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
+def save(df: pd.DataFrame, path: Path) -> None:
+    """Whole or not at all: the API reads the file while the simulator writes it."""
+    part = path.with_suffix(".part")
+    df.to_parquet(part, index=False)
+    part.replace(path)
+
+
 class SimulationResultProcessor:
     """Processes and aggregates OpenDC simulation results."""
 
     def __init__(self, simulator_output_dir: Path):
-        """Initialize the result processor.
-
-        Args:
-            simulator_output_dir: Base directory for simulator outputs
-                                  (e.g., data/run_id/simulator/)
-        """
+        """Initialize the result processor."""
         self.simulator_output_dir = Path(simulator_output_dir)
         self.agg_results_file = self.simulator_output_dir / "agg_results.parquet"
         self.last_processed_time: datetime | None = None
@@ -52,14 +53,7 @@ class SimulationResultProcessor:
         aligned_simulated_time: datetime,
         cached: bool = False,
     ) -> None:
-        """Process results from a simulation run and append new data to aggregated file.
-
-        Args:
-            run_number: The simulation run number
-            output_dir: Path to the output directory for this run (e.g., run_17/output/)
-            aligned_simulated_time: The end time of this simulation run
-            cached: Whether this was a cached result
-        """
+        """Process results from a simulation run and append new data to aggregated file."""
         logger.debug(
             f"Processing results for run {run_number} (cached: {cached}, "
             f"simulated_time: {aligned_simulated_time.isoformat()}, output_dir: {output_dir})"
@@ -146,21 +140,21 @@ class SimulationResultProcessor:
                 # Append to existing file
                 existing_df = pd.read_parquet(self.agg_results_file)
 
-                # Ensure existing data also only has required columns (for backwards compatibility)
+                # files of older runs have more columns
                 existing_columns = [col for col in required_columns if col in existing_df.columns]
                 if existing_columns != list(existing_df.columns):
                     logger.info(f"Filtering existing data to required columns: {required_columns}")
                     existing_df = existing_df[existing_columns].copy()
 
                 combined_df = pd.concat([existing_df, power_df], ignore_index=True)
-                combined_df.to_parquet(self.agg_results_file, index=False)
+                save(combined_df, self.agg_results_file)
                 logger.info(
                     f"Appended {len(power_df)} rows to existing aggregated results "
                     f"(total: {len(combined_df)} rows)"
                 )
             else:
                 # Create new aggregated file
-                power_df.to_parquet(self.agg_results_file, index=False)
+                save(power_df, self.agg_results_file)
                 logger.info(f"Created new aggregated results file with {len(power_df)} rows")
 
             # Update last processed time
@@ -174,49 +168,3 @@ class SimulationResultProcessor:
         except Exception as e:
             logger.error(f"Error processing simulation results: {e}", exc_info=True)
             raise
-
-    def get_aggregated_results(self) -> pd.DataFrame | None:
-        """Get the current aggregated results.
-
-        Returns:
-            DataFrame with aggregated results, or None if no results exist
-        """
-        if not self.agg_results_file.exists():
-            return None
-
-        try:
-            return pd.read_parquet(self.agg_results_file)
-        except Exception as e:
-            logger.error(f"Error reading aggregated results: {e}")
-            return None
-
-    def get_stats(self) -> dict[str, Any]:
-        """Get statistics about the aggregated results.
-
-        Returns:
-            Dictionary with statistics
-        """
-        if not self.agg_results_file.exists():
-            return {
-                "exists": False,
-                "row_count": 0,
-                "last_processed_time": None,
-            }
-
-        try:
-            df = pd.read_parquet(self.agg_results_file)
-            return {
-                "exists": True,
-                "row_count": len(df),
-                "last_processed_time": self.last_processed_time.isoformat()
-                if self.last_processed_time
-                else None,
-                "time_range": {
-                    "start": df["timestamp"].min().isoformat() if not df.empty else None,
-                    "end": df["timestamp"].max().isoformat() if not df.empty else None,
-                },
-                "run_numbers": sorted(df["run_number"].unique().tolist()) if not df.empty else [],
-            }
-        except Exception as e:
-            logger.error(f"Error getting stats: {e}")
-            return {"exists": True, "error": str(e)}

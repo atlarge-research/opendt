@@ -1,0 +1,30 @@
+{
+    "clusters": [
+        {
+            "name": "C01",
+            "hosts": [
+                {
+                    "name": "H01",
+                    "count": 2770,
+                    "cpu": {
+                        "coreCount": 16,
+                        "coreSpeed": 2100
+                    },
+                    "memory": {
+                        "memorySize": 128000000
+                    },
+                    "cpuPowerModel": {
+                        "modelType": "mse",
+                        "power": 300.0,
+                        "idlePower": 25.0,
+                        "maxPower": 174.0,
+                        "calibrationFactor": 4
+                    }
+                }
+            ],
+            "powerSource": {
+                "carbonTracePath": "/app/workload/carbon_zones/NL.parquet"
+            }
+        }
+    ]
+}

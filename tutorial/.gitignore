@@ -1,0 +1,5 @@
+# Simulation outputs written by the notebooks
+output/
+
+# Jupyter
+.ipynb_checkpoints/

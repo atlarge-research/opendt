@@ -1,14 +1,4 @@
-"""DC-Mock Service - Main Entry Point.
-
-This service:
-1. Loads configuration from environment
-2. Starts three independent threaded producers:
-   - TopologyProducer: Periodically publishes datacenter topology
-   - WorkloadProducer: Streams task/workload events in time order
-   - PowerProducer: Streams power consumption telemetry in time order
-3. Respects simulation speed_factor for timing
-4. Gracefully handles shutdown
-"""
+"""dc-mock: replays the workload, power, and topology of the datacenter onto Kafka, at the replay speed."""
 
 import logging
 import os
@@ -21,6 +11,7 @@ from odt_common import load_config_from_env
 from odt_common.utils import get_kafka_bootstrap_servers
 
 from dc_mock.producers import PowerProducer, TopologyProducer, WorkloadProducer
+from dc_mock.speed import Speed, follow
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -29,20 +20,19 @@ logger = logging.getLogger(__name__)
 
 
 class DCMockOrchestrator:
-    """Orchestrates multiple threaded producers for DC-Mock service."""
+    """The three producers, each on its own thread."""
 
     def __init__(self):
-        """Initialize the orchestrator."""
         self.topology_producer: TopologyProducer | None = None
         self.workload_producer: WorkloadProducer | None = None
         self.power_producer: PowerProducer | None = None
         self.shutdown_requested = False
 
     def setup_signal_handlers(self) -> None:
-        """Setup signal handlers for graceful shutdown."""
+        """Stop the producers on SIGINT and SIGTERM."""
 
         def signal_handler(signum, frame):
-            logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+            logger.info(f"Received signal {signum}, stopping")
             self.shutdown_requested = True
             self.stop_all()
 
@@ -53,29 +43,16 @@ class DCMockOrchestrator:
         self,
         workload_context,
         kafka_bootstrap_servers: str,
-        speed_factor: float,
+        speed: Speed,
         topology_topic: str,
         workload_topic: str,
         power_topic: str,
         heartbeat_frequency_minutes: int = 1,
     ) -> None:
-        """Start all producers.
-
-        Args:
-            workload_context: Workload context with resolved file paths
-            kafka_bootstrap_servers: Kafka broker addresses
-            speed_factor: Simulation speed multiplier
-            topology_topic: Kafka topic for topology events
-            workload_topic: Kafka topic for workload events
-            power_topic: Kafka topic for power consumption events
-            heartbeat_frequency_minutes: Frequency in simulation minutes for heartbeat messages
-        """
-        logger.info("=" * 70)
+        """Start the producers, with the heartbeats every `heartbeat_frequency_minutes` of the trace."""
         logger.info("Starting DC-Mock Producers")
-        logger.info("=" * 70)
 
-        # Create a synchronization barrier for all producers
-        # This ensures they all start at the same wall-clock time
+        # the workload and power producers start at the same wall-clock time
         num_producers = 2  # WorkloadProducer and PowerProducer (TopologyProducer is periodic)
         if workload_context.consumption_file.exists():
             start_barrier = threading.Barrier(num_producers, timeout=30)
@@ -89,7 +66,7 @@ class DCMockOrchestrator:
         self.workload_producer = WorkloadProducer(
             workload_context=workload_context,
             kafka_bootstrap_servers=kafka_bootstrap_servers,
-            speed_factor=speed_factor,
+            speed=speed,
             topic=workload_topic,
             heartbeat_frequency_minutes=heartbeat_frequency_minutes,
             start_barrier=start_barrier if start_barrier else None,
@@ -106,7 +83,6 @@ class DCMockOrchestrator:
         logger.info(f"Earliest task time: {earliest_task_time} ({earliest_task_time_ms}ms)")
         del tasks_df  # Free memory
 
-        # Start workload producer thread
         self.workload_producer.start()
 
         # 2. Start PowerProducer
@@ -115,7 +91,7 @@ class DCMockOrchestrator:
             self.power_producer = PowerProducer(
                 workload_context=workload_context,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=speed_factor,
+                speed=speed,
                 topic=power_topic,
                 earliest_task_time_ms=earliest_task_time_ms,
                 start_barrier=start_barrier,
@@ -133,7 +109,7 @@ class DCMockOrchestrator:
             self.topology_producer = TopologyProducer(
                 topology_file=workload_context.topology_file,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=speed_factor,
+                speed=speed,
                 topic=topology_topic,
                 publish_interval_seconds=30.0,
                 start_barrier=None,  # TopologyProducer doesn't need synchronization
@@ -145,9 +121,7 @@ class DCMockOrchestrator:
                 "skipping topology publishing"
             )
 
-        logger.info("\n" + "=" * 70)
-        logger.info("✅ All producers started and synchronized")
-        logger.info("=" * 70)
+        logger.info("All producers started and synchronized")
 
     def wait_for_completion(self) -> None:
         """Wait for all producers to complete or be interrupted."""
@@ -179,9 +153,7 @@ class DCMockOrchestrator:
 
     def stop_all(self) -> None:
         """Stop all running producers."""
-        logger.info("\n" + "=" * 70)
         logger.info("Stopping all producers...")
-        logger.info("=" * 70)
 
         producers = [
             ("TopologyProducer", self.topology_producer),
@@ -196,48 +168,34 @@ class DCMockOrchestrator:
             elif producer:
                 logger.info(f"{name} already stopped")
 
-        logger.info("=" * 70)
-        logger.info("✅ All producers stopped")
-        logger.info("=" * 70)
+        logger.info("All producers stopped")
 
     def run(self) -> int:
-        """Run the orchestrator.
-
-        Returns:
-            Exit code: 0 for success, 1 for error
-        """
+        """Replay the workload until it ends; the exit code is 0, or 1 on an error."""
         try:
-            # Load configuration
             logger.info("Loading configuration...")
             config = load_config_from_env()
             logger.info(f"Loaded configuration for workload: {config.workload}")
             logger.info(f"Simulation speed: {config.global_config.speed_factor}x")
 
-            # Get workload directory from environment (mounted to specific workload)
             workload_dir = Path(os.getenv("WORKLOAD_DIR", "/app/workload"))
 
-            # Verify workload directory exists
             if not workload_dir.exists():
                 logger.error(f"Workload directory not found: {workload_dir}")
                 return 1
 
-            # Create workload context directly from the mounted workload directory
             from odt_common.config import WorkloadContext
 
             workload_context = WorkloadContext(workload_dir=workload_dir)
 
-            # Log file status
             file_status = workload_context.get_file_status()
             logger.info("Workload files:")
             for file_type, exists in file_status.items():
-                status = "✓" if exists else "✗"
-                logger.info(f"  {status} {file_type}")
+                logger.info(f"  {file_type}: {'found' if exists else 'missing'}")
 
-            # Get Kafka configuration from environment variable
             kafka_bootstrap_servers = get_kafka_bootstrap_servers()
             logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
 
-            # Get topic names
             topology_topic = config.kafka.topics["topology"].name
             workload_topic = config.kafka.topics["workload"].name
             power_topic = config.kafka.topics["power"].name
@@ -245,24 +203,25 @@ class DCMockOrchestrator:
                 f"Topics: topology={topology_topic}, workload={workload_topic}, power={power_topic}"
             )
 
-            # Setup signal handlers
             self.setup_signal_handlers()
 
-            # Start all producers
+            # The replay speed starts as configured and follows changes from the control panel
+            speed = Speed(config.global_config.speed_factor)
+            follow(speed, config.kafka.topics["system"].name)
+
             self.start_all(
                 workload_context=workload_context,
                 kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed_factor=config.global_config.speed_factor,
+                speed=speed,
                 topology_topic=topology_topic,
                 workload_topic=workload_topic,
                 power_topic=power_topic,
                 heartbeat_frequency_minutes=config.services.dc_mock.heartbeat_frequency_minutes,
             )
 
-            # Wait for completion
             self.wait_for_completion()
 
-            logger.info("✅ DC-Mock service completed successfully")
+            logger.info("DC-Mock service completed successfully")
             return 0
 
         except KeyboardInterrupt:
@@ -270,17 +229,12 @@ class DCMockOrchestrator:
             self.stop_all()
             return 0
         except Exception as e:
-            logger.error(f"❌ Error in DC-Mock service: {e}", exc_info=True)
+            logger.error(f"Error in DC-Mock service: {e}", exc_info=True)
             self.stop_all()
             return 1
 
 
 def main() -> int:
-    """Main entry point.
-
-    Returns:
-        Exit code: 0 for success, 1 for error
-    """
     orchestrator = DCMockOrchestrator()
     return orchestrator.run()
 

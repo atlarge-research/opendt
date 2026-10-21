@@ -40,6 +40,26 @@ Update the simulated datacenter topology.
 
 Publishes the new topology to `sim.topology` Kafka topic. The simulator will use this topology for future simulations.
 
+### The screens and the control panel
+
+What the Grafana screens read, in Infinity's `{"data": [...]}` form, from the twin's windows of operation
+(`api/twin.py`), and how the control panel changes the twin (`api/levers.py`):
+
+- `GET /api/status`: the twin's time, hosts, CO₂ zone, scheduler, and runtime settings, as one object
+- `PATCH /api/control`: hosts, CO₂ zone (a new topology), scheduler, speed factor, parallel runs (`sys.config`)
+- `GET /api/cluster?start&end&points`: hosts, jobs, CPU, idle power, energy, and CO₂ per sample
+- `GET /api/totals?period`: energy, CO₂, and embodied CO₂ per minute, hour, day, week, month, or year
+- `GET /api/scheduling`: per window, the time until all jobs are done and the median time in queue
+- `GET /api/jobs`: the jobs not done yet, with the hours left
+- `GET /api/arrivals`: the jobs submitted per hour
+- `GET /api/events?markers`: the decisions (hosts, r, CO₂ zone, scheduler), automatic or manual
+- `GET /api/hosts`, `POST /api/hosts`: the host groups as the Topology table shows them, and a row of it saved
+  (no `id`: a new group, of the rack prefab it names; `count=0`: a group removed)
+- `GET /api/prefabs?kind`, `POST /api/prefabs`: the prefab CPUs, GPUs, or racks to build the datacenter from, and a
+  prefab saved (no `id`: a new one, a copy of the first; `remove=true`: one removed), kept in `data/prefabs.json`
+- `GET /api/components?part`: the names the Topology tables' lists offer (CPU, GPU with None, Rack)
+- `GET /api/accuracy?minutes`: the MAPE and the error of OpenDT's power vs. the ground truth, and r
+
 ## Data Sources
 
 The API reads from:

@@ -1,0 +1,218 @@
+"""Run OpenDT's simulator (the bundled OpenDC) on the SURF trace.
+
+This does what OpenDT's simulator service does for one window of operation
+(libs/common/odt_common/odc_runner/runner.py): write the jobs submitted so far as OpenDC
+input, run OpenDC, read its output. OpenDC is deterministic and causal, so one run from the
+start of the trace up to `until` gives exactly the predictions the live twin stitches
+together window by window.
+
+The notebooks' simulations ship precomputed in resources/results/ (resources/precompute.py), so
+they answer at once and need no Java; any other one runs OpenDC once, and is kept in
+resources/output/.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import os
+import shutil
+import subprocess
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
+
+import pandas as pd
+from odt_common.odc_runner import FRAGMENT_SCHEMA, TASK_SCHEMA, environment, experiment
+
+from .data import TRACE_END, TRACE_START, load_surf, to_utc
+from .paths import PATHS, java_21, java_version
+from .topology import make_topology
+
+log = logging.getLogger(__name__)
+
+CACHE_VERSION = 2  # bump when OpenDC, the SURF trace, or what a run keeps changes
+PARTS = ("power", "service", "tasks")  # what a run keeps, a parquet file each
+
+
+@dataclass(repr=False)
+class SimResult:
+    """One OpenDC run up to `until`.
+
+    power    per 150-s sample (UTC index): power_draw [W], energy_usage [J],
+             carbon_intensity [gCO2/kWh], carbon_emission [g]
+    service  per sample: hosts_up, tasks_pending, tasks_active, tasks_completed, ...
+    tasks    per job id: submission_time, schedule_time, finish_time (UTC), wait_s
+    """
+
+    label: str
+    until: pd.Timestamp
+    power: pd.DataFrame
+    service: pd.DataFrame
+    tasks: pd.DataFrame
+    run_dir: Path
+    cached: bool
+
+    def summary(self) -> dict:
+        """Key numbers of the run, from the start of the trace to `until`."""
+        power, jobs = self.power, self.tasks
+        return {
+            "avg_power_kw": float(power["power_draw"].mean() / 1000),
+            "energy_kwh": float(power["energy_usage"].sum() / 3.6e6),
+            "co2_kg": float(power["carbon_emission"].sum() / 1000),
+            "jobs_waited": int((jobs["wait_s"] > 0).sum()),
+            "jobs_finished": int((jobs["finish_time"] <= self.until).sum()),
+            "mean_wait_min": float(jobs["wait_s"].mean() / 60),
+            "waiting_at_end": int((jobs["schedule_time"] > self.until).sum()),  # not started yet
+        }
+
+    def __repr__(self) -> str:
+        return f"SimResult({self.label!r}, until={self.until:%Y-%m-%d %H:%M}, cached={self.cached})"
+
+
+def write_inputs(until, out_dir: Path) -> int:
+    """Write OpenDC's tasks.parquet and fragments.parquet for the jobs submitted before `until`.
+
+    Ordered like the live twin: jobs by submission time, fragments grouped per job.
+    Returns the number of jobs.
+    """
+    until = _clip(until)
+    surf = load_surf()
+    tasks = surf.tasks[surf.tasks["submission_time"] < until]
+    tasks = tasks.sort_values("submission_time", kind="stable")
+    fragments = tasks[["id"]].merge(surf.fragments, on="id")  # keeps the job order
+    epoch_ms = (tasks["submission_time"] - pd.Timestamp(0, tz="UTC")) // pd.Timedelta("1ms")
+    tasks = tasks.assign(submission_time=epoch_ms)
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tasks.to_parquet(out_dir / "tasks.parquet", schema=TASK_SCHEMA, index=False)
+    fragments.to_parquet(out_dir / "fragments.parquet", schema=FRAGMENT_SCHEMA, index=False)
+    return len(tasks)
+
+
+def simulate(
+    until,
+    *,
+    hosts: int = 277,
+    r: float = 4.0,
+    idle_power: float = 25.0,
+    max_power: float = 174.0,
+    carbon: str | None = None,
+    label: str | None = None,
+) -> SimResult:
+    """Simulate SURF from the start of the trace until `until` on the given datacenter: precomputed
+    (resources/results/), run before (resources/output/), or now, by OpenDC."""
+    until = _clip(until)
+    topology = make_topology(
+        hosts=hosts, r=r, idle_power=idle_power, max_power=max_power, carbon=carbon
+    )
+    # the same name on every machine: the parameters, not the topology's paths
+    params = f"{int(hosts)} {float(r)} {float(idle_power)} {float(max_power)} {carbon}"
+    name = hashlib.sha256(f"{CACHE_VERSION} {until.isoformat()} {params}".encode()).hexdigest()[:12]
+    folders = (PATHS.results, PATHS.output)
+    run_dir = next((f / name for f in folders if (f / name / "DONE").exists()), None)
+    cached = run_dir is not None
+    if not cached:
+        run_dir = PATHS.output / name
+        shutil.rmtree(run_dir, ignore_errors=True)
+        frames = _run_opendc(run_dir / "opendc", until, topology)
+        for part, frame in zip(PARTS, frames, strict=True):
+            frame.to_parquet(run_dir / f"{part}.parquet", compression="zstd")
+        shutil.rmtree(run_dir / "opendc")  # OpenDC's own files, kept only when it fails
+        (run_dir / "DONE").touch()  # written last: an interrupted run is simply re-run next time
+    power, service, tasks = (pd.read_parquet(run_dir / f"{part}.parquet") for part in PARTS)
+    label = label or f"hosts={hosts}, r={r:g}, carbon={carbon or 'OpenDT'}"
+    return SimResult(label, until, power, service, tasks, run_dir, cached)
+
+
+def simulate_many(param: str, values, **common) -> dict:
+    """Run `simulate` once per value of `param`, several at a time; returns {value: SimResult}."""
+    load_surf()  # load the trace once here rather than in every thread
+
+    def run(value):
+        shown = value if isinstance(value, str) else f"{value:,g}"  # 2770 -> 2,770
+        return simulate(**common, **{param: value}, label=f"{param} = {shown}")
+
+    values = list(values)
+    with ThreadPoolExecutor(default_workers()) as pool:
+        return dict(zip(values, pool.map(run, values), strict=True))
+
+
+def default_workers() -> int:
+    """Simulations run at once: $OPENDT_TUTORIAL_WORKERS, else one per CPU core, at most 4."""
+    return int(os.environ.get("OPENDT_TUTORIAL_WORKERS", min(4, os.cpu_count() or 1)))
+
+
+def _clip(until) -> pd.Timestamp:
+    until = to_utc(until)
+    if until <= TRACE_START:
+        raise ValueError(
+            f"until must be after the trace start ({TRACE_START:%Y-%m-%d %H:%M} UTC), got {until}."
+        )
+    if until > TRACE_END:
+        log.warning("until=%s is past the end of the trace; using %s.", until, TRACE_END)
+        return TRACE_END
+    return until
+
+
+def _run_opendc(run_dir: Path, until: pd.Timestamp, topology):
+    """OpenDC's power, service, and per-job output for the jobs submitted before `until`."""
+    if not java_21(java_version()):
+        raise RuntimeError(
+            "This simulation is not among the precomputed ones; running it needs Java 21 or newer "
+            "(https://adoptium.net), or the Codespace."
+        )
+    inputs = run_dir / "input"
+    write_inputs(until, inputs / "workload")
+    (inputs / "topology.json").write_text(topology.model_dump_json(indent=2))
+    # the experiment OpenDCRunner writes, minus host.parquet (unused here)
+    run = experiment("run", inputs, run_dir / "output", ["powerSource", "service", "task"])
+    (inputs / "experiment.json").write_text(json.dumps(run, indent=2))
+    with open(run_dir / "opendc.log", "w") as log_file:
+        result = subprocess.run(
+            [str(PATHS.opendc_bin), "--experiment-path", str(inputs / "experiment.json")],
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            env=environment(),
+            timeout=600,
+        )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"OpenDC failed (exit code {result.returncode}); see {run_dir / 'opendc.log'}"
+        )
+    return _read_output(run_dir, until)
+
+
+def _read_output(run_dir: Path, until: pd.Timestamp):
+    """OpenDC's power, service and per-job output, with OpenDC's clock turned into UTC times."""
+
+    def read(name, columns=None):
+        return pd.read_parquet(
+            next((run_dir / "output").glob(f"**/{name}.parquet")), columns=columns
+        )
+
+    power = read("powerSource").drop(columns=["source_name", "cluster_name"])
+    service = read("service")
+    # task.parquet has a row per job per sample; the last one holds the job's final times.
+    tasks = read("task", ["task_id", "submission_time", "schedule_time", "finish_time"])
+    tasks = tasks.drop_duplicates("task_id", keep="last").set_index("task_id")
+
+    # OpenDC counts milliseconds from its time zero, the submission of the first job.
+    origin_ms = power["timestamp_absolute"].iloc[0] - power["timestamp"].iloc[0]
+
+    def utc(ms):
+        return pd.to_datetime(ms + origin_ms, unit="ms", utc=True)
+
+    for frame in (power, service):
+        frame.index = pd.DatetimeIndex(utc(frame.pop("timestamp")), name="timestamp")
+        frame.pop("timestamp_absolute")
+    for col in ("submission_time", "schedule_time", "finish_time"):
+        tasks[col] = utc(tasks[col])
+    tasks["wait_s"] = (tasks["schedule_time"] - tasks["submission_time"]).dt.total_seconds()
+    # When the simulation ends on an export instant, OpenDC writes that instant twice: for power, the
+    # second row is an empty interval (0 J); for service, it is the final state.
+    power = power[~power.index.duplicated(keep="first")]
+    service = service[~service.index.duplicated(keep="last")]
+    return power[:until], service[:until], tasks

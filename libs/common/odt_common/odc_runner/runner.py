@@ -18,6 +18,53 @@ from .java_home import detect_java_home
 
 logger = logging.getLogger(__name__)
 
+# OpenDC's input as OpenDT writes it, for the twin and the tutorial: columns without nulls, as
+# OpenDC requires
+TASK_SCHEMA = pa.schema(
+    [
+        ("id", pa.int32(), False),
+        ("submission_time", pa.int64(), False),
+        ("duration", pa.int64(), False),
+        ("cpu_count", pa.int32(), False),
+        ("cpu_capacity", pa.float64(), False),
+        ("mem_capacity", pa.int64(), False),
+    ]
+)
+FRAGMENT_SCHEMA = pa.schema(
+    [
+        ("id", pa.int32(), False),
+        ("duration", pa.int64(), False),
+        ("cpu_count", pa.int32(), False),
+        ("cpu_usage", pa.float64(), False),
+    ]
+)
+
+
+def experiment(
+    name: str, inputs: Path, output: Path, exports: list[str], scheduler: str | None = None
+) -> dict:
+    """OpenDC's experiment: the topology.json and workload/ in `inputs`, a sample of the `exports`
+    every 150 s into `output`; without a scheduler, OpenDC's default."""
+    experiment = {
+        "name": name,
+        "topologies": [{"pathToFile": str(inputs / "topology.json")}],
+        "workloads": [{"pathToFile": str(inputs / "workload"), "type": "ComputeWorkload"}],
+        "outputFolder": str(output),
+        "exportModels": [{"exportInterval": 150, "filesToExport": exports}],
+    }
+    if scheduler:
+        experiment["allocationPolicies"] = [{"type": "prefab", "policyName": scheduler}]
+    return experiment
+
+
+def environment() -> dict[str, str]:
+    """OpenDC's JVM: within 1 GB (a week of SURF needs less), so the twin's parallel runs fit
+    Docker's 8 GB; host names from /etc/hosts (without it, parallel runs can wait 5 s for DNS at
+    start-up); and the serial garbage collector, which needs less CPU and memory on 2-core machines
+    (e.g., Codespaces)."""
+    opts = "-Xmx1g -Djdk.net.hosts.file=/etc/hosts -XX:+UseSerialGC"
+    return {**os.environ, "JAVA_HOME": detect_java_home(), "OPEN_DC_EXPERIMENT_RUNNER_OPTS": opts}
+
 
 class OpenDCRunner:
     """Wrapper around OpenDC ExperimentRunner binary.
@@ -30,12 +77,7 @@ class OpenDCRunner:
     """
 
     def __init__(self, opendc_bin_path: Path | None = None) -> None:
-        """Initialize the OpenDC runner.
-
-        Args:
-            opendc_bin_path: Path to OpenDCExperimentRunner binary.
-                Defaults to /app/opendc/bin/OpenDCExperimentRunner/bin/OpenDCExperimentRunner
-        """
+        """Initialize the OpenDC runner."""
         if opendc_bin_path is None:
             opendc_bin_path = Path(
                 "/app/opendc/bin/OpenDCExperimentRunner/bin/OpenDCExperimentRunner"
@@ -43,55 +85,15 @@ class OpenDCRunner:
 
         self.opendc_path = opendc_bin_path
 
-        # Verify the binary exists
         if not self.opendc_path.exists():
             raise FileNotFoundError(
-                f"OpenDC runner not found at {self.opendc_path}. "
-                "Ensure the OpenDC binaries are mounted into the container."
+                f"OpenDC runner not found at {self.opendc_path}; mount OpenDC into the container"
             )
 
-        # Ensure it's executable
-        if not os.access(self.opendc_path, os.X_OK):
-            logger.warning(
-                f"OpenDC runner not executable, attempting to fix permissions: {self.opendc_path}"
-            )
-            try:
-                os.chmod(self.opendc_path, 0o755)
-            except Exception as e:
-                logger.error(f"Failed to make OpenDC runner executable: {e}")
-
-        logger.info(f"✅ OpenDC runner initialized: {self.opendc_path}")
+        logger.info(f"OpenDC runner initialized: {self.opendc_path}")
 
     def _create_tasks_parquet(self, tasks: list[Task], output_path: Path) -> None:
         """Create tasks.parquet file from Task models."""
-        if not tasks:
-            logger.warning("No tasks provided, creating empty tasks.parquet")
-            schema = pa.schema(
-                [
-                    ("id", pa.int64()),
-                    ("submission_time", pa.int64()),
-                    ("duration", pa.int64()),
-                    ("cpu_count", pa.int32()),
-                    ("cpu_capacity", pa.float64()),
-                    ("mem_capacity", pa.int64()),
-                ]
-            )
-            table = pa.Table.from_pydict({}, schema=schema)
-            pq.write_table(table, output_path)
-            return
-
-        # Create explicit schema (OpenDC requires non-nullable columns)
-        schema = pa.schema(
-            [
-                ("id", pa.int32(), False),  # required (not nullable)
-                ("submission_time", pa.int64(), False),
-                ("duration", pa.int64(), False),
-                ("cpu_count", pa.int32(), False),
-                ("cpu_capacity", pa.float64(), False),
-                ("mem_capacity", pa.int64(), False),
-            ]
-        )
-
         data = {
             "id": [t.id for t in tasks],
             "submission_time": [int(t.submission_time.timestamp() * 1000) for t in tasks],
@@ -101,40 +103,12 @@ class OpenDCRunner:
             "mem_capacity": [t.mem_capacity for t in tasks],
         }
 
-        table = pa.Table.from_pydict(data, schema=schema)
-        pq.write_table(table, output_path)
+        pq.write_table(pa.Table.from_pydict(data, schema=TASK_SCHEMA), output_path)
         logger.debug(f"Created tasks.parquet with {len(tasks)} tasks")
 
     def _create_fragments_parquet(self, tasks: list[Task], output_path: Path) -> None:
         """Create fragments.parquet file from Task models."""
-        all_fragments = []
-        for task in tasks:
-            all_fragments.extend(task.fragments)
-
-        if not all_fragments:
-            logger.warning("No fragments provided, creating empty fragments.parquet")
-            schema = pa.schema(
-                [
-                    ("id", pa.int64()),
-                    ("duration", pa.int64()),
-                    ("cpu_count", pa.int32()),
-                    ("cpu_usage", pa.float64()),
-                ]
-            )
-            table = pa.Table.from_pydict({}, schema=schema)
-            pq.write_table(table, output_path)
-            return
-
-        # Create explicit schema (OpenDC requires non-nullable columns)
-        schema = pa.schema(
-            [
-                ("id", pa.int32(), False),  # required (not nullable)
-                ("duration", pa.int64(), False),
-                ("cpu_count", pa.int32(), False),
-                ("cpu_usage", pa.float64(), False),
-            ]
-        )
-
+        all_fragments = [f for task in tasks for f in task.fragments]
         data = {
             "id": [f.task_id for f in all_fragments],
             "duration": [f.duration for f in all_fragments],
@@ -142,8 +116,7 @@ class OpenDCRunner:
             "cpu_usage": [f.cpu_usage for f in all_fragments],
         }
 
-        table = pa.Table.from_pydict(data, schema=schema)
-        pq.write_table(table, output_path)
+        pq.write_table(pa.Table.from_pydict(data, schema=FRAGMENT_SCHEMA), output_path)
         logger.debug(f"Created fragments.parquet with {len(all_fragments)} fragments")
 
     def _create_topology_json(self, topology: Topology, output_path: Path) -> None:
@@ -155,33 +128,6 @@ class OpenDCRunner:
 
         logger.debug(f"Created topology.json at {output_path}")
 
-    def _create_experiment_json(
-        self,
-        experiment_name: str,
-        workload_path: Path,
-        topology_path: Path,
-        output_path: Path,
-        opendc_output_folder: str,
-    ) -> None:
-        """Create experiment.json file for OpenDC."""
-        experiment = {
-            "name": experiment_name,
-            "topologies": [{"pathToFile": str(topology_path)}],
-            "workloads": [{"pathToFile": str(workload_path), "type": "ComputeWorkload"}],
-            "outputFolder": opendc_output_folder,
-            "exportModels": [
-                {
-                    "exportInterval": 150,
-                    "filesToExport": ["powerSource", "host", "task", "service"],
-                }
-            ],
-        }
-
-        with open(output_path, "w") as f:
-            json.dump(experiment, f, indent=2)
-
-        logger.debug(f"Created experiment.json at {output_path} (output: {opendc_output_folder})")
-
     def run_simulation(
         self,
         tasks: list[Task],
@@ -190,20 +136,9 @@ class OpenDCRunner:
         run_number: int,
         simulated_time: datetime,
         timeout_seconds: int = 120,
+        scheduler: str | None = None,
     ) -> tuple[bool, Path]:
-        """Run OpenDC simulation with given tasks and topology.
-
-        Args:
-            tasks: List of Task models (with fragments)
-            topology: Topology model
-            run_dir: Directory for this run (e.g., /app/data/<timestamp>/opendc/run_5)
-            run_number: Run number for this simulation
-            simulated_time: Aligned simulation trigger time (frequency-based)
-            timeout_seconds: Maximum time to wait for simulation
-
-        Returns:
-            Tuple of (success: bool, output_dir: Path)
-        """
+        """Run OpenDC simulation with given tasks and topology."""
 
         logger.info(f"Starting OpenDC simulation: run_{run_number}")
         logger.debug(f"Tasks: {len(tasks)}, Fragments: {sum(len(t.fragments) for t in tasks)}")
@@ -225,12 +160,9 @@ class OpenDCRunner:
             self._create_fragments_parquet(tasks, workload_dir / "fragments.parquet")
             self._create_topology_json(topology, topology_file)
 
-            # Configure OpenDC to write to output directory
-            opendc_output_folder = str(output_dir)
-            experiment_name = f"run_{run_number}"
-            self._create_experiment_json(
-                experiment_name, workload_dir, topology_file, experiment_file, opendc_output_folder
-            )
+            exports = ["powerSource", "host", "task", "service"]
+            run = experiment(f"run_{run_number}", input_dir, output_dir, exports, scheduler)
+            experiment_file.write_text(json.dumps(run, indent=2))
 
             # Run OpenDC
             result = self._execute_opendc(experiment_file, timeout_seconds)
@@ -268,11 +200,7 @@ class OpenDCRunner:
         self, experiment_file: Path, timeout: int
     ) -> subprocess.CompletedProcess[str]:
         """Execute the OpenDC binary."""
-        # Set up environment with JAVA_HOME
-        env = os.environ.copy()
-        if "JAVA_HOME" not in env:
-            env["JAVA_HOME"] = detect_java_home()
-
+        env = environment()
         logger.debug(f"Using JAVA_HOME: {env['JAVA_HOME']}")
 
         # Build command

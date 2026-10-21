@@ -7,12 +7,13 @@ This module defines the hierarchical structure of a datacenter:
       - CPU
       - Memory
       - CPU Power Model
+      - GPUs and their power model (optional)
 """
 
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Discriminator, Field, Tag
+from pydantic import BaseModel, Discriminator, Field, Tag, model_validator
 
 
 class CPU(BaseModel):
@@ -28,7 +29,15 @@ class Memory(BaseModel):
     memorySize: int = Field(..., description="Memory size in bytes", gt=0)
 
 
-class AsymptoticCPUPowerModel(BaseModel):
+class PowerModel(BaseModel):
+    """How utilization translates to power."""
+
+    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
+    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
+    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
+
+
+class AsymptoticCPUPowerModel(PowerModel):
     """Asymptotic CPU power consumption model.
 
     Defines how CPU utilization translates to power consumption using
@@ -38,9 +47,6 @@ class AsymptoticCPUPowerModel(BaseModel):
     modelType: Literal["asymptotic"] = Field(
         "asymptotic", description="Power model type (asymptotic)"
     )
-    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
-    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
-    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
     asymUtil: float = Field(
         default=0.5,
         description="Asymptotic utilization coefficient",
@@ -53,7 +59,7 @@ class AsymptoticCPUPowerModel(BaseModel):
     )
 
 
-class MseCPUPowerModel(BaseModel):
+class MseCPUPowerModel(PowerModel):
     """MSE-based CPU power consumption model.
 
     Defines how CPU utilization translates to power consumption using
@@ -61,9 +67,6 @@ class MseCPUPowerModel(BaseModel):
     """
 
     modelType: Literal["mse"] = Field("mse", description="Power model type (MSE)")
-    power: float = Field(..., description="Nominal power consumption in Watts", gt=0)
-    idlePower: float = Field(..., description="Power at 0% utilization in Watts", ge=0)
-    maxPower: float = Field(..., description="Power at 100% utilization in Watts", gt=0)
     calibrationFactor: float = Field(
         default=0.5,
         description="Calibration factor for MSE model",
@@ -79,6 +82,21 @@ CPUPowerModel = Annotated[
 ]
 
 
+class GPU(CPU):
+    """The GPUs of a host, all of one kind."""
+
+    count: int = Field(..., description="Number of GPUs per host", gt=0)
+    memorySize: int = Field(
+        ..., description="GPU memory size, in the unit of the host's memory", gt=0
+    )
+
+
+class GPUPowerModel(PowerModel):
+    """How GPU utilization translates to power, as OpenDC models it (e.g., linear, cubic)."""
+
+    modelType: str = Field(..., description="Power model type")
+
+
 class Host(BaseModel):
     """Host (physical server) in a datacenter cluster."""
 
@@ -89,6 +107,19 @@ class Host(BaseModel):
     cpuPowerModel: AsymptoticCPUPowerModel | MseCPUPowerModel = Field(
         ..., description="CPU power consumption model"
     )
+    # none: left out of the JSON, as OpenDC rejects a null
+    gpu: GPU | None = Field(
+        None, description="GPUs of the host, if any", exclude_if=lambda v: v is None
+    )
+    gpuPowerModel: GPUPowerModel | None = Field(
+        None, description="GPU power consumption model", exclude_if=lambda v: v is None
+    )
+
+    @model_validator(mode="after")
+    def gpu_with_power(self):
+        if (self.gpu is None) != (self.gpuPowerModel is None):
+            raise ValueError("A host's GPUs need their power model, and the other way around")
+        return self
 
 
 class PowerSource(BaseModel):
@@ -103,7 +134,7 @@ class Cluster(BaseModel):
     name: str = Field(..., description="Cluster identifier/name")
     hosts: list[Host] = Field(..., description="List of host types in this cluster", min_length=1)
     powerSource: PowerSource | None = Field(
-        None, description="Power source configuration (optional)"
+        None, description="Power source configuration (optional)", exclude_if=lambda v: v is None
     )
 
 
@@ -154,7 +185,7 @@ class TopologySnapshot(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S")
-            if v.microsecond == 0
-            else v.isoformat()
+            datetime: lambda v: (
+                v.strftime("%Y-%m-%dT%H:%M:%S") if v.microsecond == 0 else v.isoformat()
+            )
         }

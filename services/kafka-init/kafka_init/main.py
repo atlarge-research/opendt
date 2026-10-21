@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
-"""Kafka Infrastructure Initialization Script.
-
-This script:
-1. Loads configuration from the environment
-2. Creates Kafka topics based on the configuration
-3. Applies partitions, replication factor, and topic-specific settings
-4. Exits with code 1 if creation fails (Fail Fast)
-"""
+"""kafka-init: creates the Kafka topics of the configuration, with their partitions, replication, and settings
+(e.g., compaction), before the other services start; exits with 1 if Kafka does not answer."""
 
 import logging
-import sys
 import time
 
 from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
-from kafka.errors import KafkaError, TopicAlreadyExistsError
+from kafka.errors import KafkaError
 from odt_common import load_config_from_env
 from odt_common.utils import get_kafka_bootstrap_servers
 
@@ -24,143 +17,38 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def ensure_topics_exist(
-    bootstrap_servers: str,
-    topics: list[NewTopic],
-    max_retries: int = 10,
-    retry_delay: float = 2.0,
-) -> bool:
-    """Ensure Kafka topics exist, creating them if necessary.
-
-    Args:
-        bootstrap_servers: Kafka bootstrap servers
-        topics: List of NewTopic objects defining topic configurations
-        max_retries: Maximum number of connection retries
-        retry_delay: Delay between retries in seconds
-
-    Returns:
-        True if all topics exist or were created successfully
-
-    Raises:
-        KafkaError: If topics cannot be created after max retries
-    """
-    if not topics:
-        logger.info("No topics to create")
-        return True
-
-    topic_names = [t.name for t in topics]
-
-    for attempt in range(max_retries):
+def admin(bootstrap_servers: str, attempts: int = 30) -> KafkaAdminClient:
+    """An admin client, once Kafka answers (it may take a minute to start)."""
+    for attempt in range(1, attempts + 1):
         try:
-            admin_client = KafkaAdminClient(
+            return KafkaAdminClient(
                 bootstrap_servers=bootstrap_servers,
                 client_id="topic-manager",
                 request_timeout_ms=10000,
             )
-
-            # Get existing topics
-            existing_topics = admin_client.list_topics()
-            topics_to_create = [t for t in topics if t.name not in existing_topics]
-
-            if not topics_to_create:
-                logger.info(f"All topics already exist: {topic_names}")
-                admin_client.close()
-                return True
-
-            # Create missing topics with their specific configurations
-            try:
-                admin_client.create_topics(topics_to_create, validate_only=False)
-                created_names = [t.name for t in topics_to_create]
-                logger.info(f"Created topics: {created_names}")
-
-                # Give Kafka a moment to create the topics
-                time.sleep(1.0)
-
-                # Verify topics were created
-                existing_topics_after = admin_client.list_topics()
-                still_missing = [
-                    t.name for t in topics_to_create if t.name not in existing_topics_after
-                ]
-
-                if still_missing:
-                    logger.warning(f"Some topics may not be ready yet: {still_missing}")
-                else:
-                    logger.info(f"✓ Successfully ensured all topics exist: {topic_names}")
-
-                admin_client.close()
-                return True
-
-            except TopicAlreadyExistsError:
-                logger.info("Topics already exist (race condition)")
-                admin_client.close()
-                return True
-
-        except KafkaError as e:
-            logger.warning(f"Failed to connect to Kafka (attempt {attempt + 1}/{max_retries}): {e}")
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay)
-            else:
-                raise
-
-    return False
+        except KafkaError as error:
+            logger.warning(f"Kafka not ready (attempt {attempt}/{attempts}): {error}")
+            time.sleep(2)
+    raise SystemExit(1)
 
 
-def main() -> int:
-    """Initialize Kafka infrastructure.
-
-    Returns:
-        Exit code: 0 for success, 1 for failure
-    """
-    try:
-        # Load configuration from environment
-        logger.info("Loading configuration...")
-        config = load_config_from_env()
-        logger.info(f"Configuration loaded for workload: {config.workload}")
-
-        # Extract Kafka configuration
-        kafka_config = config.kafka
-        kafka_bootstrap_servers = get_kafka_bootstrap_servers()
-        logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
-        logger.info(f"Topics to create: {list(kafka_config.topics.keys())}")
-
-        # Convert topic configurations to NewTopic objects
-        new_topics: list[NewTopic] = []
-        for logical_key, topic_config in kafka_config.topics.items():
-            logger.info(
-                f"  - {logical_key}: {topic_config.name} "
-                f"(partitions={topic_config.partitions}, "
-                f"replication_factor={topic_config.replication_factor})"
-            )
-
-            # Create NewTopic with configuration
-            new_topic = NewTopic(
-                name=topic_config.name,
-                num_partitions=topic_config.partitions,
-                replication_factor=topic_config.replication_factor,
-                topic_configs=topic_config.config,  # Apply topic-specific configs
-            )
-            new_topics.append(new_topic)
-
-        # Ensure topics exist
-        logger.info("Creating Kafka topics...")
-        success = ensure_topics_exist(
-            bootstrap_servers=kafka_bootstrap_servers,
-            topics=new_topics,
-            max_retries=30,  # Kafka may take time to start
-            retry_delay=2.0,
+def main() -> None:
+    topics = [
+        NewTopic(
+            name=topic.name,
+            num_partitions=topic.partitions,
+            replication_factor=topic.replication_factor,
+            topic_configs=topic.config,
         )
-
-        if success:
-            logger.info("✅ Kafka infrastructure initialization complete")
-            return 0
-        else:
-            logger.error("❌ Failed to initialize Kafka infrastructure")
-            return 1
-
-    except Exception as e:
-        logger.error(f"❌ Error during Kafka initialization: {e}", exc_info=True)
-        return 1
+        for topic in load_config_from_env().kafka.topics.values()
+    ]
+    client = admin(get_kafka_bootstrap_servers())
+    missing = [topic for topic in topics if topic.name not in client.list_topics()]
+    if missing:
+        client.create_topics(missing)
+    logger.info(f"Topics {[t.name for t in topics]}; created now: {[t.name for t in missing]}")
+    client.close()
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

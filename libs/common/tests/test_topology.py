@@ -263,3 +263,15 @@ def test_topology_snapshot_with_microseconds():
     snapshot_dict = snapshot.model_dump(mode="json")
     # With microseconds, should use full ISO format
     assert "T" in snapshot_dict["timestamp"]
+
+
+def test_gpu_needs_power_model(sample_topology_data):
+    host = sample_topology_data["clusters"][0]["hosts"][0]
+    host["gpu"] = {"count": 4, "coreCount": 6912, "coreSpeed": 1400, "memorySize": 40_000_000}
+    with pytest.raises(ValueError):
+        Topology(**sample_topology_data)
+
+
+def test_no_nulls_for_opendc(sample_topology_data):
+    # OpenDC rejects a null: no GPUs and no power source, left out of the dump
+    assert Topology(**sample_topology_data).model_dump(mode="json") == sample_topology_data

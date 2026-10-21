@@ -1,0 +1,51 @@
+# The shares of the Jobs and hosts box, and the (i) of each panel. Edit, then run python3 services/grafana/dashboards/build.py.
+
+# A share of the twin, from /api/cluster: the part of the whole (columns, or sums of them), as a percentage; its
+# colour from each share on (red, orange, yellow, green, or blue).
+ratios:
+  hosts-now:
+    title: Hosts in use
+    part: hosts_in_use
+    whole: hosts_up
+    colors: {0: red, 0.2: orange, 0.6: green}
+  jobs-now:
+    title: Jobs running
+    part: tasks_active
+    whole: tasks_active + tasks_pending
+    colors: {0: red, 0.2: orange, 0.99: green}
+
+# The (i) of a panel, shown on hover, by the panel's name in plots.py.
+info:
+  time-box: >-
+    The end of the latest window of operation, a short period of time during which OpenDT receives telemetry data,
+    runs simulations, and updates the dashboard.
+  mape-box: >-
+    The MAPE of OpenDT's power draw over the last 5 minutes; the lower the MAPE, the more accurate the prediction.
+    OpenDT should stay within 10% error rate (community-accepted), red above it.
+  co2-box: The emission rate now, resulting from OpenDT's power draw and the grid carbon intensity.
+  power-group: >-
+    Datacenter's telemetry on power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample;
+    below 0, OpenDT underestimates.
+  jobs-group: >-
+    Few hosts in use means overprovisioning, where energy (and thus, money) is wasted by idle infrastructure. Few
+    jobs running means under-provisioning, which could lead to performance concerns, system faults, and, ultimately,
+    system failures.
+  sustainability-group: >-
+    The emission rate now and the grid carbon intensity it results from; the energy and the CO₂ over the selected
+    interval (e.g., hour, day).
+  accuracy-group: >-
+    The lower the MAPE, the more accurate the prediction (red from 10%, the community-accepted error rate). The
+    Self-Calibrator measures the difference between predictions and actual telemetry, then adjusts r, the
+    calibration parameter of P(u) = P_idle + (P_max - P_idle)(2u - u^r), with u the CPU utilization.
+  power: >-
+    Actual power draw alongside OpenDT's predictions. When the predicted curve closely tracks the actual power
+    draw, the twin accurately represents the physical infrastructure; when drift occurs, the operator can identify
+    whether intervention is needed.
+  co2: Grid carbon intensity correlated with the resulting emission rates, over time.
+  hosts: >-
+    The gap between the two lines is underutilized compute infrastructure, yet consuming electricity while being
+    idle.
+  decisions: >-
+    OpenDT operates autonomously, yet a human can (optionally) intervene and dictate major decisions; Automatic
+    changes come from the Self-Calibrator, Manual ones from the operator. The dashed markers on the graphs show the
+    same changes.

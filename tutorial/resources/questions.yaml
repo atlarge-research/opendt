@@ -1,0 +1,364 @@
+# The questions of the notebooks and their solutions.
+# In a notebook, ask_question("1.1") shows question 1.1 and its choices; the right choice unfolds its solution.
+
+# 1. Dynamic Autoscaling
+
+"1.1":
+  question: |
+    With 10% as the community-accepted error rate, is OpenDT accurate enough for what-if analysis on SURF? In which hours is OpenDT the least accurate and why?
+  solution: |
+    OpenDT has ~6% MAPE, thus, within the community-accepted limits. However, OpenDT tends to drift in the first few hours, 
+    until calibration "kicks in", and drops MAPE to under 5%.
+  choices:
+    - "Yes, OpenDT's MAPE is about 1%, the same in every hour"
+    - "Yes, OpenDT's MAPE is about 6%, worst in the first 6 hours"
+    - "No, OpenDT's MAPE is about 15%, worst in the evening"
+    - "No, OpenDT's MAPE is over 10% in every hour"
+  answer: B
+
+"1.2":
+  question: |
+    Estimate: SURF draws about 22 kW with 277 hosts; how much would SURF draw with 2,770 hosts (10x more hosts)?
+  choices:
+    - About 22 kW, the same
+    - About 84 kW, ~4x
+    - About 220 kW, ~10x
+    - About 350 kW, ~16x
+  answer: B
+  solution: |
+    About 84 kW, 4x; next question (1.3) asks why.
+
+"1.3":
+  question: |
+    Interesting, 10x infrastructure, but only 4x more power! Why is that?
+  solution: |
+    The jobs are identical, so the ~2,500 hosts sit idle. However, they still draw electricity! At 25W per host, we 
+    it leads to 62kW (2,493 x 25 W = 62 kW), just for staying idle.
+    Over-provisioning could lead to sustainability concerns, both environmental and financial, where energy (and thus,
+    money) is wasted by idle infrastructure.
+  choices:
+    - "About 10x: each extra host runs jobs too"
+    - "About the same: idle hosts draw nothing"
+    - "About 4x: the extra hosts are idle, but draw power"
+    - "About 2x: the jobs spread over more hosts and end sooner"
+  answer: C
+  explore: "Add 500 and 1,000 to `sizes` and run the cell again: how many watts does each extra host add, and why this number?"
+
+"1.4":
+  question: |
+    Let's downscale to 138 and 69 hosts. How much power do we save? How does downscaling affect the jobs?
+  solution: |
+    See the table above: 138 hosts (half), but only 3 kW better, and queueing time to 13.7 minutes. 69 hosts (quarter), 
+    halves power draw, but at the cost of 28 hours in the queue.
+    Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system
+    failures.
+  choices:
+    - With 138, half the power; with 69, a quarter; no job waits
+    - With 138, no power saved; with 69, the jobs fail
+    - With 138, about 16% less power and no job waits; with 69, about half
+    - With 138, about 16% less power and some jobs wait; with 69, jobs wait more than a day
+  answer: D
+  explore: "Add 160 and 200 to `sizes`: what is the smallest number of hosts with which no job waits?"
+
+"1.5":
+  question: |
+    How many of the 277 hosts does SURF need over the day, at the busiest and at the quietest moment?
+  solution: |
+    Between 99 (at 18:35) and 160 (at 08:05) of the 277 hosts.
+  choices:
+    - All 277, all day
+    - Between about 100 and 160
+    - Between about 10 and 50
+    - Between about 200 and 277
+  answer: B
+
+"1.6":
+  question: |
+    Which costs of switching hosts off and on again does this estimate leave out?
+  solution: |
+    Boot time: hosts take time to boot, and consume energy. Also, a human-in-the-loop, aiming to ensure the correct and
+    ethical operation of the process, oversees at least the major decisions (e.g., switching off hosts) and can intervene at any time.
+  choices:
+    - The energy of the jobs themselves
+    - The carbon intensity of the grid
+    - The boot time, and a human-in-the-loop overseeing the decisions
+    - "None: switching hosts off and on is free"
+  answer: C
+
+"1.7":
+  question: |
+    With `SPARE = 0` and then `SPARE = 50` in the cell with `SPARE`, how much energy does SURF save, and what could go
+    wrong without spare hosts?
+  solution: |
+    About 18% with 0 spare hosts and about 12% with 50; with 0, every new job waits for a host to boot.
+  choices:
+    - About 50% with 0 spare hosts and 40% with 50
+    - About 12% with 0 spare hosts and 18% with 50
+    - Nothing either way, as idle hosts draw little
+    - About 18% with 0 spare hosts and 12% with 50
+  answer: D
+  explore: "Try `SPARE = 25` and `SPARE = 100`: how many spare hosts are worth keeping on, and why?"
+
+# 2. Simulation Calibration
+
+"2.1":
+  question: |
+    In notebook 1, OpenDT under-estimates the ground truth in almost every minute; should the Self-Calibrator increase
+    or decrease r to close the gap?
+  solution: |
+    Increase r: at the same CPU utilization, a higher r gives a higher power draw (e.g., at 50% utilization, 165 W with
+    r = 4 vs. 174 W with r = 9).
+  choices:
+    - Decrease r
+    - Increase r
+    - Keep r = 4
+    - Set r below 1
+  answer: B
+
+"2.2":
+  optional: true
+  question: |
+    For r > 2, the curves exceed $P_{max}$ (174 W) before full load; can a SURF host draw more than its maximum power?
+  solution: |
+    No; the formula is an empirical model (Fan et al., ISCA 2007), and with r > 2 it exceeds $P_{max}$ below full load
+    (e.g., 202 W at 80% utilization with r = 4).
+  choices:
+    - "Yes, at full load, when it boosts its clock"
+    - "Yes, at any load above 50%"
+    - Only with GPUs
+    - No; the formula is an empirical model, which overshoots for r > 2
+  answer: D
+  explore: "Add r = 1 and r = 20 to the list in the cell with the curves: what does r do to the shape of the curve?"
+
+"2.3":
+  question: |
+    Which r has the lowest MAPE over the week, and is it the r = 4 of the SURF topology?
+  solution: |
+    r = 7, with a MAPE of 4.5% (vs. 6.4% for r = 4).
+  choices:
+    - r = 4, the r of the SURF topology
+    - r = 3
+    - r = 7, not the r = 4 of the SURF topology
+    - r = 9
+  answer: C
+  explore: "Add 2 and 10 to `R_VALUES` (each one more simulation of the week): does the best r move?"
+
+"2.4":
+  question: |
+    Does the best r stay the same from one day to the next, and what does this mean for a digital twin that runs for
+    weeks?
+  solution: |
+    No; the best r changes between 5 and 9 from day to day.
+    Static simulation models can drift and introduce errors as the time horizon increases: hardware behavior varies
+    with temperature, aging, and firmware updates, while workload characteristics evolve over time.
+    Therefore, OpenDT recalibrates continuously.
+  choices:
+    - "No, it changes between 5 and 9 from day to day"
+    - "Yes, r = 7 every day"
+    - "Yes, r = 4 every day"
+    - "No, it changes between 1 and 2 from day to day"
+  answer: A
+
+"2.5":
+  question: |
+    The Self-Calibrator only sees the last hour, while r = 7 is the best r for the whole week in hindsight; which of the
+    two has the lower MAPE?
+  solution: |
+    The Self-Calibrator: MAPE 3.6% (vs. 4.5% with r = 7, and 6.4% with r = 4).
+  choices:
+    - r = 7, with the hindsight of the whole week
+    - The Self-Calibrator, with only the last hour
+    - Both have the same MAPE
+    - Neither does better than r = 4
+  answer: B
+
+"2.6":
+  question: |
+    In the OpenDT paper, calibration improves the MAPE from 5.13% to 4.39%, and the time within 10% from 86% to 92%;
+    how close are the numbers here, and why do they differ?
+  solution: |
+    Same trend; the self-calibrating twin even beats the best fixed r (3.6% vs. 4.5%).
+    The numbers differ because of the method: the paper computes the MAPE on 5-minute averages, after aligning the two
+    series in time, with 10 values of r; here, 1-minute samples (as in the Self-Calibrator) and 7 values of r.
+    As in the paper, calibration alleviates underestimation bias, reducing the frequency of underestimated predictions
+    (here, from 93% to 69% of the minutes; in the paper, from 85% to 66%).
+    Below, MAPE over time with and without calibration, SURF week (OpenDT paper, Figure 6).
+  image: images/paper_mape_over_time.png
+  choices:
+    - "Opposite trends: here, calibration makes OpenDT worse"
+    - The same numbers, as the method is the same
+    - The same trend; the numbers differ with the method (samples, alignment, values of r)
+    - "None: the paper does not calibrate"
+  answer: C
+
+"2.7":
+  question: |
+    The calibrated twin has the lower MAPE over the week; is it also better in every single hour?
+  solution: |
+    No; in 5 of 168 hours, the r picked over the last hour does not fit the next one.
+    It would be tempting to conclude that using calibration is always beneficial; however, there exist significant
+    simulation-periods when the no-calibration technique performs better than the OpenDT calibration.
+    This suggests calibration is important but its technique requires further attention.
+  choices:
+    - No; in a few of the 168 hours, the r of the last hour does not fit the next one
+    - "Yes, in every hour"
+    - No; in about half of the hours
+    - Only at night
+  answer: A
+
+"2.8":
+  question: |
+    The default `mape_window_minutes` in the code of OpenDT is 1,440 (24 hours), while experiment E2 uses 60; the next
+    cell replays the self-calibrating twin with the 24-hour window, so which window gives the lower MAPE?
+  solution: |
+    Worse: MAPE 4.3% (vs. 3.6%), and worse than no calibration in 20 hours (vs. 5); a longer window reacts later to
+    drift.
+  choices:
+    - The 24-hour window, as it sees more data
+    - Both have the same MAPE
+    - "Neither: the calibrator stops with a 24-hour window"
+    - "The 1-hour window: a longer window reacts later to drift"
+  answer: D
+  explore: "Replace \"24h\" by \"6h\" in the next cell: is any window better than the last hour?"
+
+"2.9":
+  optional: true
+  question: |
+    In how many of the 168 hours does each r win (next cell), and is the grid from 3 to 9 wide enough?
+  solution: |
+    r = 9, the edge of the grid, in 75 of 168 hours; the grid may be too narrow.
+  choices:
+    - Each r wins about equally often
+    - "r = 9, the edge of the grid, wins most often: the grid may be too narrow"
+    - r = 3, the other edge, wins most often
+    - r = 7, the best over the week, wins most often
+  answer: B
+
+"2.10":
+  optional: true
+  question: |
+    With three more simulations of the full week (r = 10, 11, and 12), does the self-calibrating twin improve, and
+    where is the best r now?
+  solution: |
+    A little: MAPE 3.3% (vs. 3.6%), but now r = 12 is the best in 69 hours, again at the edge; in these hours, OpenDT
+    under-estimates the power draw even with r = 12.
+  choices:
+    - Much better, and the best r stays inside the grid
+    - Worse, as more values of r add noise
+    - A little better, but now r = 12, the new edge, wins most often
+    - The same, as r never goes above 9
+  answer: C
+
+# 3. CO2-Aware Workload Migration
+
+"3.1":
+  question: |
+    SURF runs in NL; which of the four grids has the lowest carbon intensity during the SURF week (6-13 October 2022)?
+  solution: |
+    RO, with 343 gCO2/kWh on average, then NL, DE, and PL.
+  choices:
+    - NL
+    - PL
+    - DE
+    - RO
+  answer: D
+
+"3.2":
+  question: |
+    Is the grid with the lowest average also the greenest in every one of the 168 hours?
+  solution: |
+    No. RO has the lowest average (343 gCO2/kWh), but NL is greener in 57 of the 168 hours; the carbon intensity of NL
+    changes more over the week (from 123 to 528 gCO2/kWh).
+  choices:
+    - No; NL is greener in about a third of the hours
+    - "Yes, in every hour"
+    - No; PL is greener in half of the hours
+    - "Yes, except at night"
+  answer: A
+
+"3.3":
+  question: |
+    Between the four simulations, which numbers change (energy, CO2, or both), and why?
+  solution: |
+    The same energy on every grid (3,424 kWh), since the workload and the hosts are the same; the CO2 emissions go from
+    1,172 kg (RO) to 2,959 kg (PL), with the carbon intensity of the grid.
+  choices:
+    - The energy
+    - The CO2
+    - Both
+    - Neither
+  answer: B
+  explore: "`simulate(until=TRACE_END, hosts=2770, carbon=\"RO\")`: does a greener grid make up for idle hosts?"
+
+"3.4":
+  question: |
+    Should SURF migrate its workload to RO, and what else does the human-in-the-loop weigh before such a decision?
+  solution: |
+    The saving is small (6% vs. NL), and NL is greener than RO in a third of the hours.
+    Before migrating, the human-in-the-loop considers, e.g., (1) the energy and time to move data and jobs over the
+    network, (2) the latency for the users, (3) the rules on where data may be stored, (4) the free capacity and the
+    cost of the remote datacenter, and (5) the CO2 emitted to build new hardware.
+  choices:
+    - "Yes, always: RO has the lowest carbon intensity"
+    - "No, never: migrating saves nothing"
+    - "Not yet: the saving is small, and the network, the users, the rules, the capacity, and new hardware count too"
+    - "Yes, as long as the jobs finish in time"
+  answer: C
+
+"3.5":
+  question: |
+    With a workload that follows the greenest of the four grids, hour by hour (next cell), how much CO2 does SURF emit
+    in the week, and how many migrations does this take?
+  solution: |
+    1,065 kg, 15% less than in NL and 9% less than in RO; however, the workload migrates 11 times in one week, between
+    NL and RO, and each migration costs energy and time.
+  choices:
+    - About 15% less CO2 than in NL, with about a dozen migrations in the week
+    - About 15% less CO2 than in NL, with no migration
+    - About half the CO2 of NL, with hundreds of migrations
+    - More CO2 than in NL, as migrations cost energy
+  answer: A
+
+"3.6":
+  optional: true
+  question: |
+    Combining notebooks 1 and 3, SURF could run in RO with 1/2 of the hosts (138); compare its CO2 and waiting jobs
+    with NL and all 277 hosts.
+  solution: |
+    971 kg CO2, 23% less than NL with 277 hosts; however, 2,631 jobs wait for a free host, 78 minutes per job on
+    average.
+  choices:
+    - Half the CO2, and no job waits
+    - About a quarter less CO2, but thousands of jobs wait for a free host
+    - More CO2, as the jobs run longer
+    - The same CO2 and waiting as NL with 277 hosts
+  answer: B
+  explore: "Try `hosts=200` in the next cell: with how many hosts does RO emit less CO2 than NL, with few jobs waiting?"
+
+# 4. The Live Digital Twin
+
+"4.1":
+  question: |
+    After the change, how do the predicted power draw and the ground truth on the dashboard move?
+  solution: |
+    From the next window of operation, OpenDT twins 2,770 hosts: the predicted power draw goes up about 4x (as in
+    notebook 1), while the ground truth stays the same.
+  choices:
+    - Both go up about 4x
+    - The predicted power draw goes up about 4x; the ground truth stays the same
+    - The ground truth goes up; the prediction stays the same
+    - Neither moves
+  answer: B
+
+"4.2":
+  question: |
+    Which values of r does the Self-Calibrator pick in the first hours, compared with the best r per day in notebook 2?
+  choices:
+    - Always 4, the r of the SURF topology
+    - Values between 5 and 9, as the best r per day in notebook 2
+    - Often 9, the edge of the grid
+    - Values below 3
+  answer: B
+  solution: |
+    Values between 5 and 9 (in a test run, 9, then 7, then 8), as the best r per day in notebook 2: the
+    Self-Calibrator fits r to the last hour.

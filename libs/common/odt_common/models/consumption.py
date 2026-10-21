@@ -21,21 +21,14 @@ class Consumption(BaseModel):
     @field_validator("timestamp", mode="before")
     @classmethod
     def parse_timestamp(cls, v: datetime | int | float | str) -> datetime:
-        """Parse timestamp from epoch milliseconds to datetime (UTC-aware).
-
-        Args:
-            v: Timestamp as milliseconds (int/float), datetime object, or ISO string
-
-        Returns:
-            UTC-aware datetime object
-        """
+        """Parse timestamp from epoch milliseconds to datetime (UTC-aware)."""
         if isinstance(v, (int, float)):
             # Convert milliseconds to seconds for datetime, make it UTC-aware
             return datetime.fromtimestamp(v / 1000.0, tz=UTC)
         elif isinstance(v, str):
             # Parse ISO format string
             dt = datetime.fromisoformat(v.replace("Z", "+00:00"))
-            # Ensure UTC if not already timezone-aware
+            # naive times are UTC
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=UTC)
             return dt

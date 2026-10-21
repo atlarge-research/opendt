@@ -9,14 +9,7 @@ from odt_common.models import CPU, Cluster, CPUPowerModel, Fragment, Host, Memor
 
 @pytest.fixture
 def opendc_bin_path() -> Path:
-    """Get the path to the OpenDC binary.
-
-    Returns:
-        Path to OpenDCExperimentRunner binary
-
-    Raises:
-        pytest.skip: If OpenDC binary is not found
-    """
+    """Get the path to the OpenDC binary."""
     # Try to find OpenDC binary in the service directory
     possible_paths = [
         Path(__file__).parent.parent
@@ -32,7 +25,7 @@ def opendc_bin_path() -> Path:
         if path.exists():
             return path
 
-    pytest.skip("OpenDC binary not found. Please ensure OpenDC binaries are available for testing.")
+    pytest.skip("OpenDC binary not found; the tests run OpenDC.")
 
 
 @pytest.fixture
@@ -87,9 +80,5 @@ def simple_topology() -> Topology:
 
 @pytest.fixture
 def base_time() -> datetime:
-    """Get a base timestamp for testing.
-
-    Returns:
-        A fixed datetime for reproducible tests
-    """
+    """Get a base timestamp for testing."""
     return datetime(2024, 1, 1, 0, 0, 0)

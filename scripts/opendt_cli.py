@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""OpenDT CLI - Initialization and management tool."""
+"""OpenDT CLI: starts a run (its folder, configuration, and .env for docker compose) and shows its status."""
 
 import json
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
+import yaml
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -16,17 +18,13 @@ app = typer.Typer(
     add_completion=False,
 )
 console = Console()
+ROOT = Path(__file__).parent.parent
+RUN_ID_FILE = ROOT / ".run_id"
 
 
-def get_project_root() -> Path:
-    """Get the project root directory."""
-    # Script is in scripts/, so parent is project root
-    return Path(__file__).parent.parent
-
-
-def get_run_id_file() -> Path:
-    """Get the path to the run ID file."""
-    return get_project_root() / ".run_id"
+def windows(folder: Path) -> list[Path]:
+    """The OpenDC runs of a service's folder, in order."""
+    return sorted(folder.glob("opendc/run_*"), key=lambda run: int(run.name.split("_")[1]))
 
 
 @app.command()
@@ -38,123 +36,62 @@ def init(
         help="Path to configuration file",
     ),
 ) -> None:
-    """Initialize a new OpenDT run.
-
-    This command:
-    - Generates a unique run ID timestamp
-    - Creates required directory structure
-    - Copies config to data directory
-    - Creates metadata file
-    - Saves run ID for docker-compose to use
-    """
+    """Start a new run: data/<run id>/ with the configuration, its metadata, and the .env docker compose reads."""
     console.print()
     console.print(Panel.fit("OpenDT Initialization", style="bold cyan"))
     console.print()
 
-    # Validate config file exists
-    project_root = get_project_root()
-    config_path = project_root / config
-
+    config_path = ROOT / config
     if not config_path.exists():
         console.print(f"[red]Error:[/red] Config file not found: {config_path}")
         raise typer.Exit(code=1)
 
-    # Generate timestamp ID and formatted invocation time
-    now_utc = datetime.now(UTC)
-    timestamp = now_utc.strftime("%Y_%m_%d_%H_%M_%S")
-    invocation_time = now_utc.replace(microsecond=0, tzinfo=None).isoformat()
-
-    # Create directory structure
-    data_dir = project_root / "data" / timestamp
+    now = datetime.now(UTC)
+    run_id = now.strftime("%Y_%m_%d_%H_%M_%S")
+    data_dir = ROOT / "data" / run_id
     data_dir.mkdir(parents=True, exist_ok=True)
-
-    # Copy config to data directory
-    config_copy_path = data_dir / "config.yaml"
-    try:
-        import shutil
-
-        shutil.copy2(config_path, config_copy_path)
-    except Exception as e:
-        console.print(f"[red]Error:[/red] Failed to copy config: {e}")
-        raise typer.Exit(code=1) from e
-
-    # Create metadata file
+    config_copy = data_dir / "config.yaml"
+    shutil.copy2(config_path, config_copy)
     metadata = {
-        "run_id": timestamp,
+        "run_id": run_id,
         "config_source": config,
-        "invocation_time": invocation_time,
+        "invocation_time": now.replace(microsecond=0, tzinfo=None).isoformat(),
     }
-    metadata_path = data_dir / "metadata.json"
-    try:
-        with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=2)
-    except Exception as e:
-        console.print(f"[red]Error:[/red] Failed to create metadata: {e}")
-        raise typer.Exit(code=1) from e
+    (data_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
+    RUN_ID_FILE.write_text(run_id)
 
-    # Save run ID to file for docker-compose
-    run_id_file = get_run_id_file()
-    try:
-        run_id_file.write_text(timestamp)
-    except Exception as e:
-        console.print(f"[red]Error:[/red] Failed to save run ID: {e}")
-        raise typer.Exit(code=1) from e
+    settings = yaml.safe_load(config_copy.read_text())
+    calibration_enabled = settings.get("global", {}).get("calibration_enabled", False)
+    # a calibrator with settings runs, also when off at the start: the control panel can switch it on
+    has_calibrator = settings.get("services", {}).get("calibrator") is not None
+    profile_flag = "--profile calibration" if calibration_enabled or has_calibrator else ""
+    workload = settings.get("services", {}).get("dc-mock", {}).get("workload", "SURF")
+    if not (ROOT / "workload" / workload).exists():
+        console.print(
+            f"[red]Error:[/red] Workload directory not found: {ROOT / 'workload' / workload}"
+        )
+        raise typer.Exit(code=1)
 
-    # Check if calibration is enabled and read workload name
-    try:
-        import yaml
-
-        with open(config_copy_path) as f:
-            config_data = yaml.safe_load(f)
-        calibration_enabled = config_data.get("global", {}).get("calibration_enabled", False)
-        profile_flag = "--profile calibration" if calibration_enabled else ""
-
-        # Get workload name from config
-        workload_name = config_data.get("services", {}).get("dc-mock", {}).get("workload", "SURF")
-
-        # Validate workload directory exists
-        workload_dir = project_root / "workload" / workload_name
-        if not workload_dir.exists():
-            console.print(f"[red]Error:[/red] Workload directory not found: {workload_dir}")
-            raise typer.Exit(code=1)
-
-    except typer.Exit:
-        raise
-    except Exception as e:
-        console.print(f"[yellow]Warning:[/yellow] Could not read config: {e}")
-        calibration_enabled = False
-        profile_flag = ""
-        workload_name = "SURF"
-
-    # Generate .env file in run directory
-    config_path_relative = config_copy_path.relative_to(project_root)
-    try:
-        env_content = f"""# OpenDT Run Environment
+    (data_dir / ".env").write_text(
+        f"""# OpenDT Run Environment
 # Generated by opendt_cli.py - Do not edit manually
-RUN_ID={timestamp}
-CONFIG_PATH=./{config_path_relative}
+RUN_ID={run_id}
+CONFIG_PATH=./{config_copy.relative_to(ROOT)}
 CALIBRATION_ENABLED={str(calibration_enabled).lower()}
 PROFILE_FLAG="{profile_flag}"
-WORKLOAD_NAME={workload_name}
-WORKLOAD_PATH=./workload/{workload_name}
+WORKLOAD_NAME={workload}
+WORKLOAD_PATH=./workload/{workload}
 """
-        run_env_file = data_dir / ".env"
-        run_env_file.write_text(env_content)
-    except Exception as e:
-        console.print(f"[red]Error:[/red] Failed to create .env file: {e}")
-        raise typer.Exit(code=1) from e
+    )
 
-    # Display summary
     table = Table(show_header=False, box=None, padding=(0, 2))
     table.add_column("Key", style="dim")
     table.add_column("Value")
-
-    table.add_row("Run ID", f"[bold]{timestamp}[/bold]")
-    table.add_row("Config", str(config_path.relative_to(project_root)))
-    table.add_row("Workload", workload_name)
+    table.add_row("Run ID", f"[bold]{run_id}[/bold]")
+    table.add_row("Config", str(config_path.relative_to(ROOT)))
+    table.add_row("Workload", workload)
     table.add_row("Calibration", "enabled" if calibration_enabled else "disabled")
-    table.add_row("Data dir", str(data_dir.relative_to(project_root)))
-
+    table.add_row("Data dir", str(data_dir.relative_to(ROOT)))
     console.print(table)
     console.print()
 
@@ -166,63 +103,28 @@ def status() -> None:
     console.print(Panel.fit("OpenDT Run Status", style="bold cyan"))
     console.print()
 
-    run_id_file = get_run_id_file()
-
-    if not run_id_file.exists():
+    if not RUN_ID_FILE.exists():
         console.print("[dim]No active run found.[/dim]")
         console.print("Initialize a new run with: [cyan]python scripts/opendt_cli.py init[/cyan]")
         console.print()
         return
 
-    try:
-        run_id = run_id_file.read_text().strip()
-    except Exception as e:
-        console.print(f"[red]Error:[/red] Failed to read run ID: {e}")
-        raise typer.Exit(code=1) from e
-
-    project_root = get_project_root()
-    data_dir = project_root / "data" / run_id
-    simulator_dir = data_dir / "simulator"
-    calibrator_dir = data_dir / "calibrator"
-
-    # Create status table
+    run_id = RUN_ID_FILE.read_text().strip()
+    data_dir = ROOT / "data" / run_id
     table = Table(show_header=False, box=None, padding=(0, 2))
     table.add_column("Key", style="dim")
     table.add_column("Value")
-
     table.add_row("Run ID", f"[bold]{run_id}[/bold]")
-    table.add_row("Data dir", str(data_dir.relative_to(project_root)))
+    table.add_row("Data dir", str(data_dir.relative_to(ROOT)))
 
-    # Count simulator runs
-    if simulator_dir.exists():
-        run_dirs = sorted(
-            [d for d in simulator_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
-        )
-        table.add_row("Simulator runs", str(len(run_dirs)))
-
-        if run_dirs:
-            last_run = run_dirs[-1]
-            metadata_file = last_run / "metadata.json"
-            if metadata_file.exists():
-                try:
-                    with open(metadata_file) as f:
-                        metadata = json.load(f)
-                    table.add_row("  Latest", last_run.name)
-                    table.add_row("  Tasks", str(metadata.get("task_count", "—")))
-                    table.add_row("  Cached", str(metadata.get("cached", False)))
-                except Exception:
-                    pass
-    else:
-        table.add_row("Simulator runs", "0")
-
-    # Count calibrator runs
-    if calibrator_dir.exists():
-        run_dirs = sorted(
-            [d for d in calibrator_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
-        )
-        table.add_row("Calibrator runs", str(len(run_dirs)))
-    else:
-        table.add_row("Calibrator runs", "0")
+    simulated = windows(data_dir / "simulator")
+    table.add_row("Simulator runs", str(len(simulated)))
+    if simulated and (simulated[-1] / "metadata.json").exists():
+        metadata = json.loads((simulated[-1] / "metadata.json").read_text())
+        table.add_row("  Latest", simulated[-1].name)
+        table.add_row("  Tasks", str(metadata.get("task_count", "-")))
+        table.add_row("  Cached", str(metadata.get("cached", False)))
+    table.add_row("Calibrator runs", str(len(windows(data_dir / "calibrator"))))
 
     console.print(table)
     console.print()
@@ -231,22 +133,16 @@ def status() -> None:
 @app.command()
 def clean() -> None:
     """Remove run ID file (does not delete data directories)."""
-    run_id_file = get_run_id_file()
-
-    if not run_id_file.exists():
+    if not RUN_ID_FILE.exists():
         console.print("[dim]No run ID file found.[/dim]")
         console.print()
         return
 
-    try:
-        run_id = run_id_file.read_text().strip()
-        run_id_file.unlink()
-        console.print(f"Removed run ID file (run: {run_id})")
-        console.print("[dim]Note: Data directories were not deleted.[/dim]")
-        console.print()
-    except Exception as e:
-        console.print(f"[red]Error:[/red] Failed to remove run ID file: {e}")
-        raise typer.Exit(code=1) from e
+    run_id = RUN_ID_FILE.read_text().strip()
+    RUN_ID_FILE.unlink()
+    console.print(f"Removed run ID file (run: {run_id})")
+    console.print("[dim]Note: Data directories were not deleted.[/dim]")
+    console.print()
 
 
 if __name__ == "__main__":

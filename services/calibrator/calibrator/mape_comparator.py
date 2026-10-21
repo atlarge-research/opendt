@@ -17,15 +17,14 @@ class MapeComparator:
     """Compares simulated and actual power consumption using MAPE metric."""
 
     def __init__(self, mape_window_minutes: int):
-        """Initialize the MAPE comparator.
-
-        Args:
-            mape_window_minutes: Maximum time window for MAPE calculation
-        """
+        """Initialize the MAPE comparator."""
         self.mape_window_minutes = mape_window_minutes
-        self.mape_window = timedelta(minutes=mape_window_minutes)
 
         logger.info(f"Initialized MapeComparator with window {mape_window_minutes} minutes")
+
+    @property
+    def mape_window(self) -> timedelta:
+        return timedelta(minutes=self.mape_window_minutes)
 
     def compare(
         self,
@@ -33,22 +32,7 @@ class MapeComparator:
         actual_power: pd.DataFrame,
         simulation_end_time: datetime,
     ) -> dict[str, Any]:
-        """Compare simulated vs actual power and calculate MAPE.
-
-        Args:
-            simulated_power: DataFrame with columns [timestamp, power_draw]
-            actual_power: DataFrame with columns [timestamp, power_draw]
-            simulation_end_time: End time of simulation (determines window end)
-
-        Returns:
-            Dictionary with:
-                - mape: Mean absolute percentage error (%)
-                - window_start: Start of comparison window
-                - window_end: End of comparison window
-                - num_points: Number of aligned data points
-                - mean_simulated: Mean simulated power
-                - mean_actual: Mean actual power
-        """
+        """Compare simulated vs actual power and calculate MAPE."""
         # Determine comparison window (rolling, capped at mape_window)
         window_end = simulation_end_time
 
@@ -72,9 +56,7 @@ class MapeComparator:
         earliest_actual = pd.to_datetime(actual_power["timestamp"].min())
         latest_actual = pd.to_datetime(actual_power["timestamp"].max())
 
-        logger.info("=" * 80)
-        logger.info("📊 MAPE Calculation - Data Windowing")
-        logger.info("=" * 80)
+        logger.info("MAPE Calculation - Data Windowing")
         logger.info(
             f"Input Data Ranges:\n"
             f"  Simulated power: {sim_count} points\n"
@@ -96,7 +78,7 @@ class MapeComparator:
         # Start from the END and go back mape_window_minutes
         ideal_window_start = window_end - self.mape_window
 
-        # But ensure we have data available (don't go before earliest data)
+        # not before the earliest data
         earliest_available = max(earliest_sim, earliest_actual)
         window_start = max(ideal_window_start, earliest_available)
 
@@ -110,7 +92,6 @@ class MapeComparator:
             f"  Span:  {window_span_minutes:.1f} minutes "
             f"({'CAPPED at max' if is_using_full_window else f'LIMITED by data ({window_span_minutes:.1f} < {self.mape_window_minutes})'})"
         )
-        logger.info("=" * 80)
 
         # Filter both series to window
         sim_windowed = simulated_power[
@@ -199,7 +180,7 @@ class MapeComparator:
         mape = float(np.mean(percentage_errors))
 
         logger.info(
-            f"\n✅ MAPE Calculation Complete:\n"
+            f"\nMAPE Calculation Complete:\n"
             f"  Result:       {mape:.2f}%\n"
             f"  Valid points: {len(aligned_df[mask])}/{len(aligned_df)}\n"
             f"  Mean actual:  {np.mean(actual):.1f} W\n"
@@ -216,16 +197,7 @@ class MapeComparator:
         }
 
     def _align_timeseries(self, sim_df: pd.DataFrame, actual_df: pd.DataFrame) -> pd.DataFrame:
-        """Align simulated and actual power timeseries by interpolation.
-
-        Args:
-            sim_df: Simulated power with columns [timestamp, power_draw]
-            actual_df: Actual power with columns [timestamp, power_draw]
-
-        Returns:
-            Aligned DataFrame with columns [timestamp, simulated_power, actual_power]
-        """
-        # Ensure timestamps are datetime
+        """Align simulated and actual power timeseries by interpolation."""
         sim_df = sim_df.copy()
         actual_df = actual_df.copy()
         sim_df["timestamp"] = pd.to_datetime(sim_df["timestamp"])

@@ -188,8 +188,8 @@ services:
       - ./libs/common:/app/libs/common
       # Mount configuration file
       - ${CONFIG_PATH:-./config/default.yaml}:/app/config/simulation.yaml:ro
-      # Mount data directory for reading simulation results
-      - ./data:/app/data:ro
+      # Mount data directory: the simulation results, and the user's own CPUs, GPUs, and racks (portfolio.json)
+      - ./data:/app/data
       # Mount specific workload directory
       - ${WORKLOAD_PATH:-./workload/SURF}:/app/workload:ro
     depends_on:
@@ -200,17 +200,19 @@ services:
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
   grafana:
-    image: grafana/grafana:latest
+    build: services/grafana
     container_name: grafana
     restart: always
     environment:
-      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
       # Disable authentication - anonymous access with Admin role
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
-      # Set OpenDT dashboard as home page
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/power_dashboard.json
+      # The detailed screen, with the control panel, is the home page
+      - GF_USERS_HOME_PAGE=/d/opendt-overview?kiosk
+      # dates as 10-07, not the American 10/07
+      - GF_DATE_FORMATS_INTERVAL_HOUR=MM-DD HH:mm
+      - GF_DATE_FORMATS_INTERVAL_DAY=MM-DD
     ports:
       - "3000:3000"
     volumes:

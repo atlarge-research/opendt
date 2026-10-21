@@ -2,12 +2,16 @@
 
 import logging
 import threading
+import time
 from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
 from typing import Any
 
 from kafka import KafkaProducer
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
+
+from dc_mock.speed import Speed
 
 logger = logging.getLogger(__name__)
 
@@ -25,22 +29,14 @@ class BaseProducer(ABC):
     def __init__(
         self,
         kafka_bootstrap_servers: str,
-        speed_factor: float,
+        speed: Speed,
         topic: str,
         name: str | None = None,
         start_barrier: threading.Barrier | None = None,
     ):
-        """Initialize the base producer.
-
-        Args:
-            kafka_bootstrap_servers: Kafka broker addresses
-            speed_factor: Simulation speed multiplier (1.0 = realtime, -1 = max speed)
-            topic: Kafka topic name for this producer
-            name: Optional producer name for logging
-            start_barrier: Optional barrier for synchronized startup across producers
-        """
+        """Initialize the base producer."""
         self.kafka_bootstrap_servers = kafka_bootstrap_servers
-        self.speed_factor = speed_factor
+        self.speed = speed
         self.topic = topic
         self.name = name or self.__class__.__name__
         self._stop_event = threading.Event()
@@ -50,25 +46,16 @@ class BaseProducer(ABC):
 
         logger.info(f"Initialized {self.name}")
         logger.info(f"  Topic: {self.topic}")
-        logger.info(f"  Speed factor: {self.speed_factor}x")
+        logger.info(f"  Speed factor: {self.speed.factor}x")
 
     def _get_producer(self) -> KafkaProducer:
-        """Get or create the Kafka producer.
-
-        Returns:
-            Kafka producer instance
-        """
+        """Get or create the Kafka producer."""
         if self._producer is None:
             self._producer = get_kafka_producer(self.kafka_bootstrap_servers)
         return self._producer
 
     def emit_message(self, message: dict[str, Any], key: str | None = None) -> None:
-        """Emit a message to Kafka.
-
-        Args:
-            message: Message payload (will be JSON serialized)
-            key: Optional message key
-        """
+        """Emit a message to Kafka."""
         try:
             send_message(
                 self._get_producer(),
@@ -85,19 +72,41 @@ class BaseProducer(ABC):
         if self._producer:
             self._producer.flush()
 
-    def calculate_sleep_time(self, realtime_seconds: float) -> float:
-        """Calculate actual sleep time based on speed factor.
+    def start_clock(self, trace_start: datetime) -> None:
+        """Start replaying: `trace_start` of the trace is now."""
+        self._trace_start = trace_start
+        self._wall_start = time.time()
+        self._factor = self.speed.factor
 
-        Args:
-            realtime_seconds: Desired sleep time in realtime seconds
+    def wait_until(self, trace_time: datetime) -> bool:
+        """Sleep until `trace_time` of the trace is due at the current speed; True if stopped meanwhile.
 
-        Returns:
-            Actual sleep time adjusted for speed factor
+        The speed is checked at least every second; after a change, the pace restarts from where the replay is.
         """
-        if self.speed_factor <= 0:
+        while True:
+            if self.speed.factor != self._factor:
+                if self._factor > 0:
+                    replayed = timedelta(seconds=(time.time() - self._wall_start) * self._factor)
+                    trace_time_now = min(self._trace_start + replayed, trace_time)
+                else:
+                    trace_time_now = trace_time
+                self._trace_start, self._wall_start = trace_time_now, time.time()
+                self._factor = self.speed.factor
+            if self._factor <= 0:  # -1: maximum speed
+                return self.should_stop()
+            due = (trace_time - self._trace_start).total_seconds() / self._factor
+            delay = due - (time.time() - self._wall_start)
+            if delay <= 0:
+                return False
+            if self.wait_interruptible(min(delay, 1.0)):
+                return True
+
+    def calculate_sleep_time(self, realtime_seconds: float) -> float:
+        """Calculate actual sleep time based on speed factor."""
+        if self.speed.factor <= 0:
             # Max speed (-1): minimal sleep
             return 0.001
-        return realtime_seconds / self.speed_factor
+        return realtime_seconds / self.speed.factor
 
     @abstractmethod
     def run(self) -> None:
@@ -136,11 +145,7 @@ class BaseProducer(ABC):
             self._cleanup()
 
     def stop(self, timeout: float = 5.0) -> None:
-        """Stop the producer and wait for thread to finish.
-
-        Args:
-            timeout: Maximum time to wait for thread termination in seconds
-        """
+        """Stop the producer and wait for thread to finish."""
         if self._thread is None or not self._thread.is_alive():
             logger.debug(f"{self.name} is not running")
             return
@@ -168,28 +173,13 @@ class BaseProducer(ABC):
                 self._producer = None
 
     def is_running(self) -> bool:
-        """Check if the producer thread is running.
-
-        Returns:
-            True if thread is alive, False otherwise
-        """
+        """Check if the producer thread is running."""
         return self._thread is not None and self._thread.is_alive()
 
     def should_stop(self) -> bool:
-        """Check if stop has been requested.
-
-        Returns:
-            True if stop event is set, False otherwise
-        """
+        """Check if stop has been requested."""
         return self._stop_event.is_set()
 
     def wait_interruptible(self, seconds: float) -> bool:
-        """Wait for specified seconds, but can be interrupted by stop event.
-
-        Args:
-            seconds: Time to wait in seconds
-
-        Returns:
-            True if interrupted (should stop), False if timed out normally
-        """
+        """Wait for specified seconds, but can be interrupted by stop event."""
         return self._stop_event.wait(timeout=seconds)

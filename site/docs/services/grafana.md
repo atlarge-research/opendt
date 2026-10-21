@@ -16,12 +16,8 @@ Authentication is disabled by default (anonymous admin access).
 
 ## Dashboards
 
-### Power Dashboard
-
-The default dashboard displays:
-
-- **Power Consumption** - Actual vs simulated power draw over time
-- **Carbon Emissions** - Estimated carbon emissions based on power and grid intensity
+Four screens: Detailed (the home page), Simple, Topology, and Tutorial, each with a control panel; see
+`services/grafana/README.md`. They are built by the code in `services/grafana/dashboards/`.
 
 Data is queried from the OpenDT API at `http://api:8000`.
 
