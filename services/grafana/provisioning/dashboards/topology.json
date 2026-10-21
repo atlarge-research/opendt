@@ -660,7 +660,8 @@
                                                 "edit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -670,7 +671,8 @@
                                                 "newRowEdit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -738,7 +740,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -748,7 +751,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -816,7 +820,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -826,7 +831,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -850,7 +856,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -860,7 +867,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -884,7 +892,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -894,7 +903,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -918,7 +928,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -928,7 +939,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -952,7 +964,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -962,7 +975,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1030,7 +1044,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1040,7 +1055,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1454,7 +1470,8 @@
                                                 "edit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1464,7 +1481,8 @@
                                                 "newRowEdit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1566,7 +1584,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1576,7 +1595,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1644,7 +1664,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1654,7 +1675,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1678,7 +1700,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1688,7 +1711,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1873,7 +1897,8 @@
                                                 "edit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1883,7 +1908,8 @@
                                                 "newRowEdit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1941,7 +1967,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1951,7 +1978,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -1975,7 +2003,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -1985,7 +2014,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2009,7 +2039,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2019,7 +2050,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2043,7 +2075,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2053,7 +2086,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2243,7 +2277,8 @@
                                                 "edit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2253,7 +2288,8 @@
                                                 "newRowEdit": {
                                                     "enabled": false,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2311,7 +2347,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2321,7 +2358,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2345,7 +2383,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2355,7 +2394,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2379,7 +2419,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2389,7 +2430,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2413,7 +2455,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2423,7 +2466,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {
@@ -2447,7 +2491,8 @@
                                                 "edit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     },
                                                     "permission": {
                                                         "mode": "",
@@ -2457,7 +2502,8 @@
                                                 "newRowEdit": {
                                                     "enabled": true,
                                                     "editor": {
-                                                        "type": "number"
+                                                        "type": "number",
+                                                        "min": 0
                                                     }
                                                 },
                                                 "appearance": {

@@ -74,9 +74,17 @@ LEVERS = {
 }
 
 
+def side_by_side(names, x, y, width, height):
+    """Panels in one row, as wide each; the last ones take what does not divide."""
+    lefts = [x + width * i // len(names) for i in range(len(names) + 1)]
+    return [(name, lefts[i], y, lefts[i + 1] - lefts[i], height) for i, name in enumerate(names)]
+
+
 def top(uid, plots=(), period=True):
     """The view, then the levers, all as wide."""
-    levers = [(name, LEVERS[name], 8 + 4 * i, 0, 4, BAR) for i, name in enumerate(LEVERS)]
+    levers = [
+        (name, LEVERS[name], *place) for name, *place in side_by_side(list(LEVERS), 8, 0, 16, BAR)
+    ]
     return [("brand", brand(uid, plots, period), 0, 0, 8, BAR), *levers]
 
 
@@ -94,7 +102,7 @@ detailed = screen(
     [
         # the top third: what the screen shows and the decisions, the twin now; then the plots
         ("decisions", decisions, 0, 0, 8, 5),  # what the markers on the graphs stand for
-        *[(name, GROUPS[name], 8 + 4 * i, 0, 4, 5) for i, name in enumerate(GROUPS)],
+        *[(name, GROUPS[name], *place) for name, *place in side_by_side(list(GROUPS), 8, 0, 16, 5)],
     ],
     rows=[
         # a row shows while one of its plots is not hidden
@@ -142,12 +150,6 @@ LEFT = [
 ]
 # the step's height, its question with room for its hint and solution, then its plots side by side
 CARD, PLOTS = 12, 8
-
-
-def side_by_side(names, x, y, width, height):
-    """The plots of a step in one row, as wide each; the last ones take what does not divide."""
-    lefts = [x + width * i // len(names) for i in range(len(names) + 1)]
-    return [(name, lefts[i], y, lefts[i + 1] - lefts[i], height) for i, name in enumerate(names)]
 
 
 def slide(value, step):

@@ -281,7 +281,9 @@ def editable(title, url, columns, save, delete):
     the editor "number", "string", or the URL of a list whose names a select offers."""
 
     def editor(field, kind):
-        if kind in ("number", "string"):
+        if kind == "number":
+            return {"type": kind, "min": 0}  # no negative counts or watts
+        if kind == "string":
             return {"type": kind}
         return {
             "type": "select",
