@@ -9,7 +9,6 @@ This module handles:
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 
@@ -169,41 +168,3 @@ class SimulationResultProcessor:
         except Exception as e:
             logger.error(f"Error processing simulation results: {e}", exc_info=True)
             raise
-
-    def get_aggregated_results(self) -> pd.DataFrame | None:
-        """Get the current aggregated results."""
-        if not self.agg_results_file.exists():
-            return None
-
-        try:
-            return pd.read_parquet(self.agg_results_file)
-        except Exception as e:
-            logger.error(f"Error reading aggregated results: {e}")
-            return None
-
-    def get_stats(self) -> dict[str, Any]:
-        """Get statistics about the aggregated results."""
-        if not self.agg_results_file.exists():
-            return {
-                "exists": False,
-                "row_count": 0,
-                "last_processed_time": None,
-            }
-
-        try:
-            df = pd.read_parquet(self.agg_results_file)
-            return {
-                "exists": True,
-                "row_count": len(df),
-                "last_processed_time": self.last_processed_time.isoformat()
-                if self.last_processed_time
-                else None,
-                "time_range": {
-                    "start": df["timestamp"].min().isoformat() if not df.empty else None,
-                    "end": df["timestamp"].max().isoformat() if not df.empty else None,
-                },
-                "run_numbers": sorted(df["run_number"].unique().tolist()) if not df.empty else [],
-            }
-        except Exception as e:
-            logger.error(f"Error getting stats: {e}")
-            return {"exists": True, "error": str(e)}

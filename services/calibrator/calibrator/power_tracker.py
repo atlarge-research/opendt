@@ -185,8 +185,3 @@ class PowerTracker:
             if not self.power_readings:
                 return None
             return self.power_readings[-1][0]
-
-    def get_reading_count(self) -> int:
-        """Get current number of power readings in memory."""
-        with self._lock:
-            return len(self.power_readings)

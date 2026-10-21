@@ -1,7 +1,7 @@
 """Result caching for simulation services.
 
-Caches simulation output directory paths based on inputs (topology + task count) to avoid
-redundant OpenDC invocations when inputs haven't changed.
+Caches simulation output directory paths based on inputs (topology, scheduler, and task count) to
+avoid redundant OpenDC invocations when inputs haven't changed.
 """
 
 import hashlib
@@ -18,7 +18,7 @@ class SimulationState:
     """State used to determine if simulation can be cached.
 
     Attributes:
-        topology_hash: SHA256 hash of topology JSON
+        topology_hash: SHA256 hash of the topology JSON and the scheduler
         task_count: Number of tasks in the simulation
     """
 
@@ -40,13 +40,12 @@ class ResultCache:
         self.last_state: SimulationState | None = None
         self.last_run_dir: Path | None = None
 
-    def _compute_topology_hash(self, topology: Topology) -> str:
-        """Compute deterministic hash of topology."""
-        topology_dict = topology.model_dump(mode="json")
-        topology_json = json.dumps(topology_dict, sort_keys=True)
-        return hashlib.sha256(topology_json.encode()).hexdigest()
+    def _compute_topology_hash(self, topology: Topology, scheduler: str | None) -> str:
+        """Compute deterministic hash of the topology and the scheduler (none: OpenDC's default)."""
+        inputs = {"topology": topology.model_dump(mode="json"), "scheduler": scheduler}
+        return hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
 
-    def can_reuse(self, topology: Topology, task_count: int) -> bool:
+    def can_reuse(self, topology: Topology, scheduler: str | None, task_count: int) -> bool:
         """Check if cached results can be reused for given inputs."""
         if self.last_state is None or self.last_run_dir is None:
             return False
@@ -54,7 +53,7 @@ class ResultCache:
         if not self.last_run_dir.exists():
             return False
 
-        current_hash = self._compute_topology_hash(topology)
+        current_hash = self._compute_topology_hash(topology, scheduler)
 
         return (
             current_hash == self.last_state.topology_hash
@@ -84,13 +83,10 @@ class ResultCache:
             source_run_dir, destination_run_dir, ignore=shutil.ignore_patterns("metadata.json")
         )
 
-    def update(self, topology: Topology, task_count: int, run_dir: Path) -> None:
+    def update(
+        self, topology: Topology, scheduler: str | None, task_count: int, run_dir: Path
+    ) -> None:
         """Update cache with new simulation state and run directory."""
-        topology_hash = self._compute_topology_hash(topology)
+        topology_hash = self._compute_topology_hash(topology, scheduler)
         self.last_state = SimulationState(topology_hash=topology_hash, task_count=task_count)
         self.last_run_dir = run_dir
-
-    def clear(self) -> None:
-        """Clear the cache (e.g., when topology changes)."""
-        self.last_state = None
-        self.last_run_dir = None

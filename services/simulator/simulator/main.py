@@ -41,7 +41,6 @@ class SimulationService:
         sim_topology_topic: str,
         system_topic: str,
         simulation_frequency_minutes: int,
-        speed_factor: float,
         run_output_dir: str,
         run_id: str,
         background_load_nodes: int = 0,
@@ -55,7 +54,6 @@ class SimulationService:
         self.sim_topology_topic = sim_topology_topic
         self.system_topic = system_topic
         self.simulation_frequency = timedelta(minutes=simulation_frequency_minutes)
-        self.speed_factor = speed_factor
         self.run_id = run_id
         self.background_load_nodes = background_load_nodes
 
@@ -63,7 +61,6 @@ class SimulationService:
         self.output_base_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Simulator output directory: {self.output_base_dir}")
-        logger.info(f"Configured speed factor: {self.speed_factor}x")
 
         self.result_processor = SimulationResultProcessor(self.output_base_dir)
         logger.info("Initialized result processor")
@@ -90,7 +87,6 @@ class SimulationService:
         self.scheduler: str | None = None  # OpenDC's default until the control panel picks one
 
         self.tasks_processed = 0
-        self.simulations_run = 0
         self.run_number = 0
 
         self.result_cache = ResultCache()
@@ -183,7 +179,7 @@ class SimulationService:
         run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
         was_cached = False
 
-        if self.result_cache.can_reuse(topology_to_use, len(all_tasks)):
+        if self.result_cache.can_reuse(topology_to_use, self.scheduler, len(all_tasks)):
             logger.info(
                 f"Reusing cached results for run {self.run_number} "
                 f"(topology unchanged, {len(all_tasks)} tasks)"
@@ -226,7 +222,7 @@ class SimulationService:
                 return
 
             # Update cache with run directory (not output directory)
-            self.result_cache.update(topology_to_use, len(all_tasks), run_dir)
+            self.result_cache.update(topology_to_use, self.scheduler, len(all_tasks), run_dir)
             logger.info(f"Simulation {self.run_number} complete, results cached")
 
         output_dir = run_dir / "output"
@@ -240,7 +236,6 @@ class SimulationService:
         except Exception as e:
             logger.error(f"Failed to process simulation results: {e}", exc_info=True)
 
-        self.simulations_run += 1
         self.task_accumulator.last_simulation_time = aligned_simulated_time
 
         logger.info(
@@ -271,9 +266,8 @@ class SimulationService:
             logger.info("Initialized simulated topology from real topology")
 
     def _process_topology_update_message(self, message_data: dict[str, Any]) -> None:
-        """A new simulated topology (a Topology, not a TopologySnapshot): the cached results no longer hold."""
+        """A new simulated topology (a Topology, not a TopologySnapshot)."""
         self.simulated_topology = Topology(**message_data)
-        self.result_cache.clear()
         logger.info(f"Simulated topology: {self.simulated_topology.total_host_count()} hosts")
 
     def _process_config_event(self, message_data: dict[str, Any]) -> None:
@@ -281,7 +275,6 @@ class SimulationService:
         event = DynamicConfigEvent(**message_data)
         if event.setting_key == SCHEDULER and event.new_value != self.scheduler:
             self.scheduler = event.new_value
-            self.result_cache.clear()  # the same topology gives other results now
             logger.info(f"Scheduler: {self.scheduler}")
 
     def process_message(self, message):
@@ -330,7 +323,6 @@ def main():
 
     simulation_frequency_minutes = config.services.simulator.simulation_frequency_minutes
     background_load_nodes = config.services.simulator.background_load_nodes
-    speed_factor = config.global_config.speed_factor
     run_output_dir = Path(os.getenv("DATA_DIR", "/app/data"))
 
     logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
@@ -339,7 +331,6 @@ def main():
     logger.info(f"Simulated topology topic: {sim_topology_topic}")
     logger.info(f"Simulation frequency: {simulation_frequency_minutes} minutes")
     logger.info(f"Background load nodes: {background_load_nodes}")
-    logger.info(f"Speed factor: {speed_factor}x")
     logger.info(f"Data directory: {run_output_dir}")
 
     run_id = os.getenv("RUN_ID")
@@ -365,7 +356,6 @@ def main():
                 sim_topology_topic=sim_topology_topic,
                 system_topic=system_topic,
                 simulation_frequency_minutes=simulation_frequency_minutes,
-                speed_factor=speed_factor,
                 run_output_dir=str(run_output_dir),
                 run_id=run_id,
                 background_load_nodes=background_load_nodes,
