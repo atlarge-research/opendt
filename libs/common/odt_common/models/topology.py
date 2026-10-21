@@ -107,8 +107,13 @@ class Host(BaseModel):
     cpuPowerModel: AsymptoticCPUPowerModel | MseCPUPowerModel = Field(
         ..., description="CPU power consumption model"
     )
-    gpu: GPU | None = Field(None, description="GPUs of the host, if any")
-    gpuPowerModel: GPUPowerModel | None = Field(None, description="GPU power consumption model")
+    # none: left out of the JSON, as OpenDC rejects a null
+    gpu: GPU | None = Field(
+        None, description="GPUs of the host, if any", exclude_if=lambda v: v is None
+    )
+    gpuPowerModel: GPUPowerModel | None = Field(
+        None, description="GPU power consumption model", exclude_if=lambda v: v is None
+    )
 
     @model_validator(mode="after")
     def gpu_with_power(self):
@@ -129,7 +134,7 @@ class Cluster(BaseModel):
     name: str = Field(..., description="Cluster identifier/name")
     hosts: list[Host] = Field(..., description="List of host types in this cluster", min_length=1)
     powerSource: PowerSource | None = Field(
-        None, description="Power source configuration (optional)"
+        None, description="Power source configuration (optional)", exclude_if=lambda v: v is None
     )
 
 
