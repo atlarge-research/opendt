@@ -8,7 +8,7 @@
     With 10% as the community-accepted error rate, is OpenDT accurate enough for what-if analysis on SURF? In which hours is OpenDT the least accurate and why?
   solution: |
     OpenDT has ~6% MAPE, thus, within the community-accepted limits. However, OpenDT tends to drift in the first few hours, 
-    until calibration "kicks in", and drops MAPE to under 5%.
+    and then its MAPE drops to under 5%.
   choices:
     - "Yes, OpenDT's MAPE is about 1%, the same in every hour"
     - "Yes, OpenDT's MAPE is about 6%, worst in the first 6 hours"
@@ -48,7 +48,7 @@
   question: |
     Let's downscale to 138 and 69 hosts. How much power do we save? How does downscaling affect the jobs?
   solution: |
-    See the table above: 138 hosts (half), but only 3 kW better, and queueing time to 13.7 minutes. 69 hosts (quarter), 
+    See the table above: 138 hosts (half), but only 3.5 kW better, and queueing time to 13.7 minutes. 69 hosts (quarter), 
     halves power draw, but at the cost of 28 hours in the queue.
     Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system
     failures.
@@ -103,7 +103,7 @@
 
 "2.1":
   question: |
-    In notebook 1, OpenDT under-estimates the ground truth in almost every minute; should the Self-Calibrator increase
+    In notebook 1, OpenDT under-estimates the ground truth in almost every minute; should the self-calibrator increase
     or decrease r to close the gap?
   solution: |
     Increase r: at the same CPU utilization, a higher r gives a higher power draw (e.g., at 50% utilization, 165 W with
@@ -150,7 +150,7 @@
     - "A bug: OpenDT should use r = 7"
     - OpenDT learns a window's best r only after the window ends, so it uses the best r of the window before
     - r = 6 is faster to simulate
-    - The Self-Calibrator only runs every two hours
+    - The self-calibrator only runs every two hours
   answer: B
   solution: |
     OpenDT calibrates from the telemetry it has: the best r of 11:00-12:00 (r = 6) is the r of 12:00-13:00. The lag, however,

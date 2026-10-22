@@ -44,6 +44,7 @@ def test_steps_are_known():
         for step in use_case:
             assert step["question"] in steps.QUESTIONS
             assert set(step["plots"]) <= steps.PLOTS.keys()
+            assert {*step.get("set", {}), *step.get("start", {})} <= {*steps.BASE}  # what the twin's API takes
 
 
 def test_one_step_at_a_time():
@@ -68,9 +69,10 @@ def test_card():
         linked = {int(i) for i in re.findall(r'var-step=(\d+)"', card)}
         assert linked == set(range(1, last + 1)) - {n}  # every other step
         assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 95  # on one line
-        # each step alike: a change, four choices, the right one; a hint and a solution, folded
-        assert step["do"] and len(step["choices"]) == 4 and step["answer"] in "ABCD"
+        # each step alike: four choices, the right one; a hint and a solution, folded; what to change, if any, too
+        assert len(step["choices"]) == 4 and step["answer"] in "ABCD"
         assert '<p class="hint" hidden' in card and '<p class="solution" hidden' in card
+        assert ("do" in step) == ('<p class="change" hidden' in card)
     assert ">Back<" not in steps.card(1)["options"]["content"]
     assert ">Next<" not in steps.card(last)["options"]["content"]
     middle = steps.card(2)["options"]["content"]

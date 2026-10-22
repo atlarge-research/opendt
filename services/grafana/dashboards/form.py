@@ -8,7 +8,7 @@ from panels import BROWSER_API, PERIODS, WEEK, status, text
 
 JS = Path(__file__).parent / "js"
 SCREENS = [
-    ("opendt-overview", "Detailed"),
+    ("opendt-overview", "Dashboard"),
     ("opendt-topology", "Topology"),
     ("opendt-tutorial", "Tutorial"),
 ]
@@ -54,7 +54,7 @@ SPEED = select("speed_factor", "Speed", SPEEDS)
 CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
 # the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
 PARALLEL = select(
-    "parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 4, 8)], "radio"
+    "parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 3, 4)], "radio"
 )
 R_FROM = field("calibration_min", "r from", "slider", min=0.5, max=20, step=0.5)
 R_TO = field("calibration_max", "r to", "slider", min=0.5, max=20, step=0.5)
@@ -68,16 +68,16 @@ HOSTS = field("hosts", "Hosts", "number", min=1)
 
 BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;
   padding: 0 8px; cursor: pointer; }
-.lever > small { text-align: center; margin-bottom: 4px; }
 .lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }
+.lever > small:first-child { margin-bottom: 2px; font-size: 14px; font-weight: 500; color: inherit; }
 .lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;
   line-height: 1.3; }
 .lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }
 .lever > small:last-child { margin: 4px 0 0; font-size: 11px; }
 .lever i { font-style: normal; }
-.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; text-align: center; }
+.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }
 .lever:hover a { color: #6e9fff; }"""
-# a box, once clicked: larger, over the screen, with what its levers take
+# a box, once clicked: larger, over the screen, with what its levers take; and a change sent, pulsing
 OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;
   padding: 12px; background: var(--panel); border: 1px solid #3d71d9; border-radius: 2px; color: var(--ink);
   font-size: 14px; }
@@ -86,7 +86,11 @@ OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex
 .opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: var(--canvas); color: var(--ink);
   border: 1px solid var(--line); border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }
 .opendt-lever input { width: 4em; }
-.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }"""
+.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }
+/* a change sent, until the twin follows it (box.js) */
+.lever i.pending { padding: 0 4px; border-radius: 2px; background: #3d71d9; color: white;
+  animation: opendt-pending 1.6s ease-in-out infinite; }
+@keyframes opendt-pending { 50% { opacity: 0.55; } }"""
 
 
 def value(element):
@@ -135,8 +139,8 @@ VIEW = """.view { display: flex; flex-direction: column; gap: 8px; font-size: 14
 .view div { display: flex; align-items: center; gap: 4px; }
 .view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }
 .view .on { background: #3d71d9; color: white !important; }
-.view select { height: 26px; padding: 0 6px; background: transparent; color: inherit; border: 1px solid #8e8e8e;
-  border-radius: 2px; }"""
+.view select { width: auto; height: 26px; padding: 0 6px; background: transparent; color: inherit;
+  border: 1px solid #8e8e8e; border-radius: 2px; }"""
 
 
 def choose(key, choices):

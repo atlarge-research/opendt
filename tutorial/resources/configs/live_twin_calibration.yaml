@@ -1,4 +1,4 @@
-# OpenDT live twin of SURF with the Self-Calibrator (notebook 4), as in the ICPE demo.
+# OpenDT live twin of SURF with the self-calibrator (notebook 4), as in the ICPE demo.
 # Start: make up config=tutorial/resources/configs/live_twin_calibration.yaml
 
 global:
@@ -19,7 +19,7 @@ services:
     min_value: 3
     max_value: 9
     linspace_points: 7  # r = 3, 4, ..., 9
-    max_parallel_workers: 4
+    max_parallel_workers: 3
     mape_window_minutes: 60
 
 kafka:

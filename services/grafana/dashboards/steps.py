@@ -6,7 +6,21 @@ from pathlib import Path
 
 import yaml
 from form import script
-from panels import BLUE, BOX, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW, text
+from panels import (
+    BLUE,
+    BOX,
+    BROWSER_API,
+    FAINT,
+    GREEN,
+    GREY,
+    INK,
+    LINE,
+    RED,
+    WHITE,
+    YELLOW,
+    text,
+    timeseries,
+)
 from plots import ROWS, co2, hosts, power
 
 RESOURCES = Path(__file__).resolve().parents[3] / "tutorial" / "resources"
@@ -14,8 +28,67 @@ STEPS = yaml.safe_load((RESOURCES / "tutorial.yaml").read_text())
 QUESTIONS = yaml.safe_load((RESOURCES / "questions.yaml").read_text())
 PLOTS = {"power": power, "co2": co2, "hosts": hosts}
 PLOTS |= {key: plot for plots in ROWS.values() for key, plot in plots.items()}
+# the trace's first day, as the notebooks simulate it (make_first_day.py): the same at any time of the twin
+DAY = (RESOURCES / "first_day_power.csv").read_text()
+CALIBRATION = (RESOURCES / "first_day_calibration.csv").read_text()
+NO, SELF, LIMIT = (
+    "No calibration (r = 4)",
+    "Self-calibrating every hour",
+    "Community-accepted threshold",
+)
+THRESHOLD = ("10", LIMIT)  # 10%, as notebook 1 draws it (question 1.1)
+PLOTS |= {
+    "first-day-power": timeseries(
+        "Power draw, first day (notebook 1)",
+        None,
+        "Power draw [kW]",
+        {"Ground truth": GREY, "OpenDT": GREEN},
+        [("truth", "Ground truth"), ("opendt", "OpenDT")],
+        apart=["Ground truth"],
+        csv=DAY,
+    ),
+    "first-day-mape": timeseries(
+        "Power draw MAPE per hour, first day (notebook 1)",
+        None,
+        "Power draw MAPE [%]",
+        {"MAPE": RED, LIMIT: GREY},
+        [("mape", "MAPE")],
+        computed=[THRESHOLD],
+        apart=[LIMIT],
+        csv=DAY,
+    ),
+    "first-day-calibration": timeseries(
+        "Power draw MAPE per hour, first day (notebook 2)",
+        None,
+        "Power draw MAPE [%]",
+        {NO: RED, SELF: GREEN, LIMIT: GREY},
+        [("r4", NO), ("calibrated", SELF)],
+        computed=[THRESHOLD],
+        apart=[NO, LIMIT],
+        csv=CALIBRATION,
+        lineInterpolation="stepAfter",
+    ),
+    "first-day-r": timeseries(
+        "Calibration parameter r, first day (notebook 2)",
+        None,
+        "r",
+        {"r": BLUE},
+        [("r", "r")],
+        csv=CALIBRATION,
+        lineInterpolation="stepAfter",
+    ),
+}
 # step n is ORDER[n - 1]: (use case, step)
 ORDER = [(use_case, step) for use_case, items in STEPS.items() for step in items]
+# the twin as step n starts, STARTS[n - 1]: as the live twin's configuration starts it, then as the steps before
+# left it (their `set`), then as its own `start` says; opening a step sets it (step.js)
+BASE = {"hosts": 277, "carbon_zone": "NL", "calibration": False}
+BASE |= {"calibration_min": 3, "calibration_max": 9, "calibration_points": 7}  # r = 3, 4, ..., 9
+STARTS, state = [], dict(BASE)
+for _, step in ORDER:
+    state |= step.get("start", {})
+    STARTS.append(dict(state))
+    state |= step.get("set", {})
 
 # this screen as it is (time, full screen, ...), at another step; links.js fills in ${__url...}
 HERE = "${__url.path}${__url.params:exclude:var-step}&var-step="
@@ -30,10 +103,11 @@ BUTTON = (
 
 
 def circled(n, current):
-    """Step n in a circle, as the steps of a figure: filled if current, else a link to step n."""
+    """Step n in a circle, as the steps of a figure: filled if current, else a link to step n; ringed in the colour of
+    how it was answered (step.js)."""
     if n == current:
-        return f'<span style="{CIRCLE};background:{BLUE};color:{WHITE}">{n}</span>'
-    return f'<a data-href="{HERE}{n}" style="{CIRCLE};border:1px solid {LINE};color:{INK}">{n}</a>'
+        return f'<span data-step="{n}" style="{CIRCLE};background:{BLUE};color:{WHITE}">{n}</span>'
+    return f'<a data-step="{n}" data-href="{HERE}{n}" style="{CIRCLE};border:1px solid {LINE};color:{INK}">{n}</a>'
 
 
 def navigator(current):
@@ -54,9 +128,12 @@ def button(step, label):
     return f'<a data-href="{HERE}{step}" style="{BUTTON}">{label}</a>'
 
 
-def unfolds(name, label):
-    """A button that unfolds the hint or the solution."""
-    return f'<a data-show="{name}" style="{BUTTON};cursor:pointer">{label}</a>'
+def unfolds(name, label, shown, alone=False):
+    """A button that shows or hides the hint, the solution, or what to change: `label` while it is hidden, `shown`
+    while it shows (`alone`: on a line of its own)."""
+    place = ";align-self:flex-start;margin-top:8px" if alone else ""
+    data = f'data-show="{name}" data-folded="{label}" data-shown="{shown}"'
+    return f'<a {data} style="{BUTTON};cursor:pointer{place}">{label}</a>'
 
 
 def note(color, text, folded=""):
@@ -103,13 +180,22 @@ def card(n):
         lines.append(
             f'<p style="font-size:18px;margin:6px 0 0;font-family:serif">{step["formula"]}</p>'
         )
+    if "do" in step:  # what to change on the twin, hidden until asked for
+        lines += [
+            unfolds("change", "Tell me what to change", "Hide what to change", alone=True),
+            note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}.", "change"),
+        ]
     lines += [
-        note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}."),
         choices(step["choices"], step["answer"]),
+        note(
+            RED,
+            "<strong>Not quite;</strong> look at what the plots show, then try another.",
+            "retry",
+        ),
         note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"),
         note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution"),
     ]
-    left = [unfolds("hint", "Hint"), unfolds("solution", "Solution")]
+    left = [unfolds("hint", "Hint", "Hide hint"), unfolds("solution", "Solution", "Hide solution")]
     right = [
         button(i, label) for i, label in [(n - 1, "Back"), (n + 1, "Next")] if 1 <= i <= len(ORDER)
     ]
@@ -120,8 +206,17 @@ def card(n):
     )
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
-    colors = {"right": GREEN, "wrong": RED, "none": LINE}
-    return text(content, script("links.js", "step.js", colors=colors))
+    colors = {"right": GREEN, "late": YELLOW, "wrong": RED, "none": LINE}
+    code = script(
+        "links.js",
+        "step.js",
+        colors=colors,
+        step=str(n),
+        start=STARTS[n - 1],
+        control=f"{BROWSER_API}/api/control",
+        status=f"{BROWSER_API}/api/status",
+    )
+    return text(content, code)
 
 
 # the values of the step variable, 1, 2, 3, ...: (value, step, card)

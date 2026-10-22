@@ -61,7 +61,7 @@ LEVERS = {
     "lever-grid": group("Grid", [("CO₂ zone", [ZONE])]),
     "lever-twin": group("Twin", [("Speed", [SPEED]), ("Calibration", [CALIBRATION])]),
     "lever-calibrator": group(
-        "Self-Calibrator",
+        "Self-calibrator",
         [
             ("Parallel runs", [PARALLEL]),
             ("Range of r", [R_FROM, R_TO]),
@@ -90,19 +90,27 @@ def top(uid, plots=(), period=True):
 
 # the rows a fresh screen shows; ☰ Plots shows the others
 SHOWN = ("Performance", "Twin accuracy")
+
+
+def listed(title):
+    """A plot's title in ☰ Plots, which fills in no variable: Energy per period, Carbon intensity."""
+    return title.replace(" (${zone})", "").replace("$period", "period")
+
+
 # the plots of each row, by their titles, to show or hide
 ROW_PLOTS = [
-    (title, [(key, plot["title"].replace("$period", "period")) for key, plot in plots.items()])
+    (title, [(key, listed(plot["title"])) for key, plot in plots.items()])
     for title, plots in ROWS.items()
 ]
 
 detailed = screen(
     "opendt-overview",
-    "OpenDT, detailed",
+    "OpenDT, dashboard",
     [
         # the top third: what the screen shows and the decisions, the twin now; then the plots
-        ("decisions", decisions, 0, 0, 8, 5),  # what the markers on the graphs stand for
-        *[(name, GROUPS[name], *place) for name, *place in side_by_side(list(GROUPS), 8, 0, 16, 5)],
+        ("decisions", decisions, 0, 0, 8, 6),  # what the markers on the graphs stand for
+        # 6 high: four numbers two by two, also on a 1920-pixel screen
+        *[(name, GROUPS[name], *place) for name, *place in side_by_side(list(GROUPS), 8, 0, 16, 6)],
     ],
     rows=[
         # a row shows while one of its plots is not hidden
@@ -146,15 +154,22 @@ LEFT = [
     ("opendt-box", 3, 2, 3, 2),
     ("mape-box", 0, 4, 3, 2),
     ("co2-box", 3, 4, 3, 2),
-    ("decisions", 0, 6, 6, 14),  # what the markers on the step's graphs stand for
+    (
+        "decisions",
+        0,
+        6,
+        6,
+        7,
+    ),  # what the markers on the step's graphs stand for; down to the step's bottom
 ]
-# the step's height, its question with room for its hint and solution, then its plots side by side
-CARD, PLOTS = 12, 8
+# the step's height, its question with room for one of its parts (a 2-line solution, under a formula; the twin's state
+# beside it), then its plots side by side across the screen: all on a 1080p screen
+CARD, PLOTS = 13, 10
 
 
 def slide(value, step):
     """The row shown while the step variable has this value."""
-    plots = side_by_side([f"plot-{key}" for key in step["plots"]], 6, BAR + CARD, 18, PLOTS)
+    plots = side_by_side([f"plot-{key}" for key in step["plots"]], 0, BAR + CARD, 24, PLOTS)
     under = [(name, x, y + BAR, w, h) for name, x, y, w, h in LEFT]
     return row(
         "",

@@ -20,7 +20,7 @@ services:
     min_value: 3
     max_value: 9
     linspace_points: 7  # r = 3, 4, ..., 9
-    max_parallel_workers: 2  # each OpenDC run takes about 1.3 GB
+    max_parallel_workers: 3  # each OpenDC run takes about 1.3 GB
     mape_window_minutes: 60
 
 kafka:

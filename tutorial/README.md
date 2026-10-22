@@ -22,6 +22,14 @@ make up config=tutorial/resources/configs/live_twin.yaml
 Then run the notebooks with the `.venv` kernel, and open the dashboard of the live twin at http://localhost:3000;
 `make down` stops it.
 
+## Doing the Tutorial
+
+1. Run the three notebooks in order, in pairs; each takes about 10 minutes, and each question unfolds its answer
+   when a choice is clicked.
+2. Then, on the dashboard of the live twin (http://localhost:3000, Tutorial screen), go through its 11 steps: each
+   changes the running twin (e.g., the hosts, the CO2 zone) and asks a question of the notebooks about what follows.
+   In a classroom, the instructor can run the twin on the projector.
+
 ## Data and Citation
 
 SURF traces: [Versluis et al., FGCS 2023](https://doi.org/10.1016/j.future.2022.12.022). Carbon intensity:

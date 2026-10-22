@@ -1,6 +1,6 @@
 """Grafana's v2 dashboard format: elements, layouts, variables, and the decisions markers."""
 
-from panels import API, DS, MARKERS, WEEK, target
+from panels import API, DS, MARKERS, WEEK, status, target
 
 
 def data_query(target):
@@ -173,9 +173,11 @@ def custom(name, label, values, multi=False, current=None):
     }
 
 
+# a marker's text, on hover: what changed, and by whom (e.g., Hosts 277 to 2,770 (Manual))
 EVENTS = target(
     f"{API}/api/events?markers=$markers",
-    [("time", "time", "timestamp"), ("text", "text", "string")],
+    [("time", "time", "timestamp"), ("text", "change", "string"), ("by", "by", "string")],
+    [("change + ' (' + by + ')'", "text", "string")],
 )
 ANNOTATION = {
     "kind": "AnnotationQuery",
@@ -212,6 +214,8 @@ def dashboard(uid, title, panels, layout, variables=(), window="week"):
             "variables": [
                 custom("markers", "Decisions", ["on", "off"]),
                 custom("window", "Time", ["week", "day", "hours"], current=window),
+                # the CO₂ zone the twin runs on now, named with every carbon intensity
+                query("zone", status("carbon_zone")),
                 *variables,
             ],
             "timeSettings": {
