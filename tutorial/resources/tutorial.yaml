@@ -1,7 +1,7 @@
 # The steps of the twin's Tutorial screen, per use case, numbered 1, 2, 3 on the screen, each alike: what to change on
 # the twin (`do`), the question about what follows (`ask`, on one line; `formula`, HTML, under it), its hint, its
 # choices A-D (`answer`: the right one), its solution, and the plots to look at, by their names in
-# services/grafana/dashboards/plots.py, or a fixed figure (`figure`, in this folder; make_figures.py renders it).
+# services/grafana/dashboards/plots.py, or steps.py for those of fixed data (the first_day_*.csv of make_first_day.py).
 # `question` is the notebooks' question the step comes from (questions.yaml), whose solution it takes unless it has its
 # own; hint and solution stay folded until asked for. `set`: the change of `do` for the twin's API; a step starts the
 # twin as the steps before it left it, then as its own `start` says, and opening a step sets that. After a change,
@@ -9,10 +9,8 @@
 
 Dynamic autoscaling:
   - question: "1.1"
-    do: Datacenter, Hosts 277; Twin, Calibration Off; then Apply, and wait for the next window
-    set: {hosts: 277, calibration: false}
     ask: With 10% as the community-accepted error rate, is OpenDT accurate enough? When is it worst?
-    hint: See the MAPE per hour, in the figure; the first hours of the trace differ.
+    hint: See the MAPE per hour, in the plots; the first hours of the trace differ.
     choices:
       - Yes, OpenDT's MAPE is about 1%, the same in every hour
       - Yes, OpenDT's MAPE is about 6%, worst in the first 6 hours
@@ -23,7 +21,7 @@ Dynamic autoscaling:
       Yes, about 6% over the day, within the community-accepted error rate, and worst in the first 6 hours: OpenDT
       under-estimates the ground truth in almost every minute, more in the first 6 hours (MAPE 10.4% in notebook 1)
       than after (MAPE 4.6%). The OpenDT paper identifies the same underestimation trend.
-    figure: images/tutorial_step1.png
+    plots: [first-day-power, first-day-mape]
   - question: "1.2"
     do: Datacenter, Hosts 2,770 (10x), then Apply
     set: {hosts: 2770}
@@ -41,12 +39,12 @@ Dynamic autoscaling:
   - question: "1.3"
     do: 6 h (top left), to see the hosts in use up close
     ask: 10x infrastructure, but only 4x more power! Why is that?
-    hint: See Hosts in use, in Jobs and hosts; how many of the 2,770 hosts run a job?
+    hint: See Hosts available vs. in use; how many of the 2,770 hosts run a job?
     choices:
-      - "About 10x: each extra host runs jobs too"
-      - "About the same: idle hosts draw nothing"
-      - "About 4x: the extra hosts are idle, but draw power"
-      - "About 2x: the jobs spread over more hosts and end sooner"
+      - Each extra host runs jobs too
+      - Idle hosts draw nothing
+      - The extra hosts are idle, but still draw power
+      - The jobs spread over more hosts and end sooner
     answer: C
     solution: >-
       The jobs are identical, so the ~2,500 extra hosts sit idle; however, they still draw electricity: at 25 W per
@@ -54,19 +52,19 @@ Dynamic autoscaling:
       environmental and financial, where energy (and thus, money) is wasted by idle infrastructure.
     plots: [power, hosts]
   - question: "1.4"
+    start: {hosts: 277}
     do: Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour
     set: {hosts: 138}
     ask: Let's downscale to 138 hosts (half). How much power do we save?
     hint: Only idle hosts are switched off, and an idle host draws 25 W.
     choices:
-      - About half
-      - Little, under a fifth
-      - Nothing
-      - Almost all
+      - About 50%
+      - Under 20%
+      - None
+      - Over 80%
     answer: B
     solution: >-
-      Little, under a fifth (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about
-      3.5 kW.
+      Under 20% (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW.
     plots: [power, energy, idle-power]
   - question: "1.4"
     do: Datacenter, Hosts 69 (a quarter), then Apply
@@ -74,10 +72,10 @@ Dynamic autoscaling:
     ask: Now 69 hosts (a quarter). How does downscaling affect the jobs?
     hint: Even at its quietest, how many jobs does SURF run at once?
     choices:
-      - They run as before
-      - Many of them wait for a free host
-      - They run faster
-      - They fail
+      - Jobs run as before
+      - Many jobs wait for a free host
+      - Jobs run faster
+      - Jobs fail
     answer: B
     solution: >-
       Many jobs wait: SURF runs more than 69 jobs at once in 96% of the week (at least 99 on the first day).
@@ -88,21 +86,19 @@ Dynamic autoscaling:
 Simulation calibration:
   - question: "2.1"
     start: {hosts: 277, calibration: true}
-    ask: OpenDT under-estimates the ground truth; does the Self-Calibrator move r up or down?
+    ask: OpenDT under-estimates the ground truth; does the self-calibrator move r up or down?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
-    hint: See r in Accuracy; at the same CPU utilization, a higher r gives a higher power draw.
+    hint: See Calibration parameter r; at the same CPU utilization, what does a higher r do to P(u)?
     choices:
       - Up
       - Down
-      - It keeps r at 4
-      - It sets r to 0
+      - r stays at 4
+      - r drops to 0
     answer: A
     plots: [r, power, error]
   - question: "2.4"
-    do: Twin (top right), Calibration Off and then On again, to compare the MAPE with and without calibration
-    set: {calibration: true}
     ask: After an hour of calibration, how does the MAPE compare with the MAPE without calibration?
-    hint: Compare the MAPE per hour before and after the change of r (the markers on the graphs).
+    hint: Compare the MAPE per hour with and without calibration, from the first change of r on.
     choices:
       - Lower
       - Higher
@@ -110,33 +106,32 @@ Simulation calibration:
       - Zero
     answer: A
     solution: >-
-      Lower: in notebook 2, the Self-Calibrator has a MAPE of 3.6% over the week, vs. 6.4% with r = 4. Calibration
+      Lower: in notebook 2, the self-calibrator has a MAPE of 3.6% over the week, vs. 6.4% with r = 4. Calibration
       alleviates underestimation bias, reducing the frequency of underestimated predictions.
-    plots: [mape, error, energy-error, r]
+    plots: [first-day-calibration, first-day-r]
   - question: "2.6"
-    do: Self-Calibrator, Range of r 3 to 12, then Apply
-    set: {calibration_max: 12}
-    ask: With r up to 12, does the Self-Calibrator jump to 12, and why (not)?
+    do: Self-calibrator, Range of r 3 to 12 and Values of r 10, then Apply
+    set: {calibration_max: 12, calibration_points: 10}
+    ask: With r up to 12, does the self-calibrator jump to 12, and why (not)?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
-    hint: The Self-Calibrator picks the r with the lowest MAPE over the last hour; see the MAPE in Accuracy.
+    hint: The self-calibrator picks the r with the lowest MAPE over the last hour; see Power draw MAPE per hour.
     choices:
       - Yes, at once, as 12 is the new edge
-      - Only where the last hour needs it; while 9 fits, it keeps 9
-      - No, it goes down to 3, the other edge
-      - No, it stops calibrating
+      - No, only when the last hour needs r above 9
+      - No, r goes down to 3, the other edge
+      - No, calibration stops
     answer: B
     solution: >-
-      Only where the last hour needs it: while r = 9 fits the ground truth (MAPE under 1% here), the Self-Calibrator
-      keeps it. Over the whole week, r = 12 wins in 69 of 168 hours (notebook 2): in these hours, OpenDT
-      under-estimates the power draw even with r = 9.
+      No, only when the last hour needs r above 9; while an r of 3 to 9 fits, the self-calibrator keeps it. Over the
+      week, r = 12 wins in 69 of 168 hours, mostly in the last 3 days, when OpenDT under-estimates even with r = 9.
     plots: [r, mape]
 
 CO₂-aware workload migration:
   - question: "3.2"
     do: Grid, CO₂ zone PL, then Apply
     set: {carbon_zone: PL}
-    ask: Moving SURF's workload from NL to PL, which numbers change, energy, CO₂, or both?
-    hint: See Sustainability; the workload and the hosts stay the same.
+    ask: "Moving SURF's workload from NL to PL, which numbers change: energy, CO₂, or both?"
+    hint: See Power draw and CO₂ emissions vs. carbon intensity; the workload and the hosts stay the same.
     choices:
       - Energy
       - CO₂
@@ -151,7 +146,7 @@ CO₂-aware workload migration:
     do: Grid, CO₂ zone RO, then Apply
     set: {carbon_zone: RO}
     ask: Moving from PL to RO, how much do the CO₂ emissions per hour change?
-    hint: Compare the carbon intensity of the two grids, in Sustainability.
+    hint: Compare the carbon intensity of the two grids, in Carbon intensity.
     choices:
       - Almost no change
       - About 10% less
@@ -161,18 +156,18 @@ CO₂-aware workload migration:
     solution: >-
       About 60% less: RO has the lowest carbon intensity of the four grids during the SURF week (343 gCO₂/kWh on
       average), PL the highest (868); over the week, 1,172 kg of CO₂ in RO vs. 2,959 kg in PL.
-    plots: [intensity, co2, carbon]
+    plots: [intensity, co2]
   - question: "3.6"
     do: Decisions On, then look at the Decisions log
     ask: Which changes did the twin make by itself, without a human-in-the-loop?
     hint: Each change has its author in the Decisions log; Automatic is the twin's.
     choices:
-      - None of them
+      - None
       - The hosts
-      - Only r, through the Self-Calibrator
+      - Only r, through the self-calibrator
       - The CO₂ zone
     answer: C
     solution: >-
-      Only r: the Self-Calibrator changes it at every window; the hosts, the CO₂ zone, and the scheduler change only
+      Only r: the self-calibrator changes it at every window; the hosts, the CO₂ zone, and the scheduler change only
       from the control panel, as major decisions stay with the human-in-the-loop.
     plots: [r, co2]

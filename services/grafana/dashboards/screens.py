@@ -61,7 +61,7 @@ LEVERS = {
     "lever-grid": group("Grid", [("CO₂ zone", [ZONE])]),
     "lever-twin": group("Twin", [("Speed", [SPEED]), ("Calibration", [CALIBRATION])]),
     "lever-calibrator": group(
-        "Self-Calibrator",
+        "Self-calibrator",
         [
             ("Parallel runs", [PARALLEL]),
             ("Range of r", [R_FROM, R_TO]),
@@ -98,7 +98,7 @@ ROW_PLOTS = [
 
 detailed = screen(
     "opendt-overview",
-    "OpenDT, detailed",
+    "OpenDT, dashboard",
     [
         # the top third: what the screen shows and the decisions, the twin now; then the plots
         ("decisions", decisions, 0, 0, 8, 5),  # what the markers on the graphs stand for
@@ -146,19 +146,16 @@ LEFT = [
     ("opendt-box", 3, 2, 3, 2),
     ("mape-box", 0, 4, 3, 2),
     ("co2-box", 3, 4, 3, 2),
-    ("decisions", 0, 6, 6, 6),  # what the markers on the step's graphs stand for
+    ("decisions", 0, 6, 6, 7),  # what the markers on the step's graphs stand for; down to the step's bottom
 ]
-# the step's height, its question with room for its hint and solution (the twin's state beside it), then its plots
-# side by side across the screen (or its figure)
-CARD, PLOTS, FIGURE = 12, 10, 16
+# the step's height, its question with room for one of its parts (a 2-line solution, under a formula; the twin's state
+# beside it), then its plots side by side across the screen: all on a 1080p screen
+CARD, PLOTS = 13, 10
 
 
 def slide(value, step):
     """The row shown while the step variable has this value."""
-    if "figure" in step:
-        plots = [(f"figure-{value}", 0, BAR + CARD, 24, FIGURE)]
-    else:
-        plots = side_by_side([f"plot-{key}" for key in step["plots"]], 0, BAR + CARD, 24, PLOTS)
+    plots = side_by_side([f"plot-{key}" for key in step["plots"]], 0, BAR + CARD, 24, PLOTS)
     under = [(name, x, y + BAR, w, h) for name, x, y, w, h in LEFT]
     return row(
         "",
@@ -181,8 +178,7 @@ tutorial = dashboard(
     | BOXES
     | {"decisions": decisions}
     | {f"step-{value}": card for value, _, card in steps.SLIDES}
-    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step.get("plots", [])}
-    | steps.FIGURES
+    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]}
     | STARTING,
     [STARTUP, *(slide(value, step) for value, step, _ in steps.SLIDES)],
     [

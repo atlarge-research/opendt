@@ -173,9 +173,11 @@ def custom(name, label, values, multi=False, current=None):
     }
 
 
+# a marker's text, on hover: what changed, and by whom (e.g., Hosts 277 to 2,770 (Manual))
 EVENTS = target(
     f"{API}/api/events?markers=$markers",
-    [("time", "time", "timestamp"), ("text", "text", "string")],
+    [("time", "time", "timestamp"), ("text", "change", "string"), ("by", "by", "string")],
+    [("change + ' (' + by + ')'", "text", "string")],
 )
 ANNOTATION = {
     "kind": "AnnotationQuery",

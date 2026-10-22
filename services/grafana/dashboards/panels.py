@@ -122,9 +122,11 @@ def timeseries(
     decimals=1,
     apart=(),
     signed=False,
+    csv=None,
     **custom,
 ):
-    """A time series of an API table; `colors` maps each shown field to its colour, in legend order."""
+    """A time series of an API table; `colors` maps each shown field to its colour, in legend order; with `csv`, of
+    fixed data instead, over its hours since the trace start (column `hours`), the same at any time of the screen."""
 
     # the legend gives each line its axis' unit, except a percentage, which shows its own %
     def named(name):
@@ -153,21 +155,27 @@ def timeseries(
     if better:  # "higher" or "lower"
         computed = [*computed, ("0", "better")]
         overrides["better"] = better_axis(better)
-    overrides["timestamp"] = {"custom__axisLabel": "Simulated time [UTC]"}
+    # the latest value; with gaps, the latest there is
+    options = {"legend": {"calcs": ["lastNotNull" if gaps else "last"]}, "tooltip": {"mode": "multi"}}
+    if csv:  # a trend: a time series over a number, not over the screen's time; fixed data has no latest value
+        query = target("", [("hours", "hours"), *columns], computed)
+        query |= {"type": "csv", "source": "inline", "data": csv, "root_selector": ""}
+        # the hours without the one decimal of the other numbers: 0, 1, 2 on the axis
+        overrides["hours"] = {"custom__axisLabel": "Time since the trace start [h]", "min": 0, "decimals": None}
+        options |= {"xField": "hours", "legend": {"calcs": []}}
+    else:
+        query = target(url, [TIME, *columns], computed)
+        overrides["timestamp"] = {"custom__axisLabel": "Simulated time [UTC]"}
     return {
-        "type": "timeseries",
+        "type": "trend" if csv else "timeseries",
         "title": title,
-        "targets": [target(url, [TIME, *columns], computed)],
+        "targets": [query],
         "transformations": [organize([*names.values(), *(["better"] if better else [])], hide)],
         "fieldConfig": {
             "defaults": defaults,
             "overrides": [override(n, **p) for n, p in overrides.items()],
         },
-        "options": {
-            # the latest value; with gaps, the latest there is
-            "legend": {"calcs": ["lastNotNull" if gaps else "last"]},
-            "tooltip": {"mode": "multi"},
-        },
+        "options": options,
     }
 
 

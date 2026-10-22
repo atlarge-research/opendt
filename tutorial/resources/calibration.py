@@ -1,4 +1,4 @@
-"""OpenDT's Self-Calibrator, replayed hour by hour on the simulations of the SURF week (notebook 2)."""
+"""OpenDT's self-calibrator, replayed hour by hour on the simulations of the SURF week (notebook 2)."""
 
 import pandas as pd
 

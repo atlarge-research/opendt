@@ -3,6 +3,18 @@
 const card = context.element;
 const solution = card.querySelector('.solution');
 const retry = card.querySelector('.retry');
+// one part at a time, so the card fits its panel: this one shown (or, `shown` false, hidden too), the others hidden
+const parts = card.querySelectorAll('.change, .retry, .hint, .solution');
+const only = (part, shown = true) => parts.forEach((p) => (p.hidden = p !== part || !shown));
+// how each step was answered, kept over steps and reloads, its circle ringed in its colour: right at once (green), right
+// after a wrong choice (yellow), or wrong so far (red)
+const ANSWERS = 'opendt-answers';
+const answered = () => JSON.parse(sessionStorage.getItem(ANSWERS) || '{}');
+const rings = (answers) => card.querySelectorAll('[data-step]').forEach((circle) => {
+  const outcome = answers[circle.dataset.step];
+  if (outcome) circle.style.outline = '2px solid ' + colors[outcome];
+});
+rings(answered());
 // each button says what a click does: show its part, or hide it again
 const labels = () => card.querySelectorAll('[data-show]').forEach((button) => {
   const { show, folded, shown } = button.dataset;
@@ -10,23 +22,28 @@ const labels = () => card.querySelectorAll('[data-show]').forEach((button) => {
 });
 card.onclick = ({ target }) => {
   const { show } = target.dataset;
-  if (show) card.querySelector('.' + show).hidden ^= true;
+  if (show) {
+    const part = card.querySelector('.' + show);
+    only(part, part.hidden);
+  }
   const option = target.closest('[data-choice]');
   if (!option) return labels();
   const { choice } = option.dataset;
   card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));
   option.style.borderColor = colors[choice];
-  retry.hidden = choice === 'right';
-  if (choice === 'right') {
-    solution.querySelector('strong').textContent = 'Right. Solution:';
-    solution.hidden = false;
-  }
+  const answers = answered();
+  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] ? 'late' : 'right';
+  sessionStorage.setItem(ANSWERS, JSON.stringify(answers));
+  rings(answers);
+  if (choice === 'right') solution.querySelector('strong').textContent = 'Right. Solution:';
+  const part = choice === 'right' ? solution : retry;
+  only(part);
   labels();
-  (choice === 'right' ? solution : retry).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  part.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 };
 // opening a step sets the twin as the steps before it left it (`start`), once per visit, and says what it changed;
 // the boxes show the changes until the twin follows them (box.js)
-const LABELS = { hosts: 'Hosts', carbon_zone: 'CO₂ zone', calibration: 'Calibration', calibration_min: 'r from', calibration_max: 'r to' };
+const LABELS = { hosts: 'Hosts', carbon_zone: 'CO₂ zone', calibration: 'Calibration', calibration_min: 'r from', calibration_max: 'r to', calibration_points: 'Values of r' };
 const shown = (value) => (value === true ? 'On' : value === false ? 'Off' : Number.isFinite(value) ? value.toLocaleString('en') : value);
 if (context.grafana.replaceVariables('${step}') === step && sessionStorage.getItem('opendt-step') !== step) {
   sessionStorage.setItem('opendt-step', step);

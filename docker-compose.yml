@@ -208,7 +208,7 @@ services:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
-      # The detailed screen, with the control panel, is the home page
+      # The Dashboard screen, with the control panel, is the home page
       - GF_USERS_HOME_PAGE=/d/opendt-overview?kiosk
       # dates as 10-07, not the American 10/07
       - GF_DATE_FORMATS_INTERVAL_HOUR=MM-DD HH:mm

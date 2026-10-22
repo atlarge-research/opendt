@@ -44,7 +44,7 @@ NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
 WATTS = [("actual_power", "actual_power"), ("simulated_power", "simulated_power")]
 KW = [("actual_power/1000", "Ground truth"), ("simulated_power/1000", "OpenDT")]
 
-# the top of the detailed screen
+# the top of the Dashboard screen
 
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {
@@ -102,7 +102,7 @@ hosts = timeseries(
     apart=["Available"],
 )
 
-# the rows of the detailed screen, each plot shown or hidden in the Plots row
+# the rows of the Dashboard screen, each plot shown or hidden in the Plots row
 
 # the hosts in each CPU-utilization bucket over time, the busiest bucket on top; the key gives each step
 BUCKETS = [(f"cpu_{low}_{low + 20}", f"{low}-{low + 20}%") for low in range(80, -1, -20)]
@@ -450,10 +450,7 @@ def prefabs(part, title, columns, info):
         save=f"{PREFABS}?kind={part}",
         delete=f"{PREFABS}?kind={part}&id=${{payload.id:percentencode}}&remove=true",
     )
-    panel["description"] = (
-        f"{info} As OpenDT ships them at first (SURF's, OpenDC's), then yours: edit, add with +, or delete any; kept "
-        "across runs in data/prefabs.json, and as shipped again without it."
-    )
+    panel["description"] = f"{info} Edit, add (+), or delete them; your changes are kept across runs."
     return panel
 
 
@@ -467,7 +464,7 @@ gpus = prefabs(
     "GPU",
     "GPU prefabs",
     [(field, name, "number") for field, name in SPECS],
-    "GPUs to build racks from, with the idle and maximum power of their cubic power model.",
+    "GPUs to build racks from, with their idle and maximum power.",
 )
 racks = prefabs(
     "Rack",
@@ -543,7 +540,7 @@ def colored(name, colors, **props):
     return override(name, **thresholds(colors), **props)
 
 
-# the top of the detailed screen: the twin's numbers now, by category, as the rows under it
+# the top of the Dashboard screen: the twin's numbers now, by category, as the rows under it
 SHARES = CONFIG["ratios"].values()
 COUNTS = sorted({c for r in SHARES for c in re.findall(r"[a-z_]+", f"{r['part']} {r['whole']}")})
 GROUPS = {

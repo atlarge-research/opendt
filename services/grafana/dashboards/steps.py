@@ -1,13 +1,12 @@
 """What each step of the Tutorial screen shows: tutorial/resources/tutorial.yaml, with the solutions of the
 notebooks (questions.yaml)."""
 
-import base64
 from html import escape
 from pathlib import Path
 
 import yaml
 from form import script
-from panels import BLUE, BOX, BROWSER_API, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW, text
+from panels import BLUE, BOX, BROWSER_API, FAINT, GREEN, GREY, INK, LINE, RED, WHITE, YELLOW, text, timeseries
 from plots import ROWS, co2, hosts, power
 
 RESOURCES = Path(__file__).resolve().parents[3] / "tutorial" / "resources"
@@ -15,11 +14,61 @@ STEPS = yaml.safe_load((RESOURCES / "tutorial.yaml").read_text())
 QUESTIONS = yaml.safe_load((RESOURCES / "questions.yaml").read_text())
 PLOTS = {"power": power, "co2": co2, "hosts": hosts}
 PLOTS |= {key: plot for plots in ROWS.values() for key, plot in plots.items()}
+# the trace's first day, as the notebooks simulate it (make_first_day.py): the same at any time of the twin
+DAY = (RESOURCES / "first_day_power.csv").read_text()
+CALIBRATION = (RESOURCES / "first_day_calibration.csv").read_text()
+NO, SELF, LIMIT = "No calibration (r = 4)", "Self-calibrating every hour", "Community-accepted threshold"
+THRESHOLD = ("10", LIMIT)  # 10%, as notebook 1 draws it (question 1.1)
+PLOTS |= {
+    "first-day-power": timeseries(
+        "Power draw, first day (notebook 1)",
+        None,
+        "Power draw [kW]",
+        {"Ground truth": GREY, "OpenDT": GREEN},
+        [("truth", "Ground truth"), ("opendt", "OpenDT")],
+        better="lower",
+        apart=["Ground truth"],
+        csv=DAY,
+    ),
+    "first-day-mape": timeseries(
+        "Power draw MAPE per hour, first day (notebook 1)",
+        None,
+        "Power draw MAPE [%]",
+        {"MAPE": RED, LIMIT: GREY},
+        [("mape", "MAPE")],
+        better="lower",
+        computed=[THRESHOLD],
+        apart=[LIMIT],
+        csv=DAY,
+    ),
+    "first-day-calibration": timeseries(
+        "Power draw MAPE per hour, first day (notebook 2)",
+        None,
+        "Power draw MAPE [%]",
+        {NO: RED, SELF: GREEN, LIMIT: GREY},
+        [("r4", NO), ("calibrated", SELF)],
+        better="lower",
+        computed=[THRESHOLD],
+        apart=[NO, LIMIT],
+        csv=CALIBRATION,
+        lineInterpolation="stepAfter",
+    ),
+    "first-day-r": timeseries(
+        "Calibration parameter r, first day (notebook 2)",
+        None,
+        "r",
+        {"r": BLUE},
+        [("r", "r")],
+        csv=CALIBRATION,
+        lineInterpolation="stepAfter",
+    ),
+}
 # step n is ORDER[n - 1]: (use case, step)
 ORDER = [(use_case, step) for use_case, items in STEPS.items() for step in items]
 # the twin as step n starts, STARTS[n - 1]: as the live twin's configuration starts it, then as the steps before
 # left it (their `set`), then as its own `start` says; opening a step sets it (step.js)
-BASE = {"hosts": 277, "carbon_zone": "NL", "calibration": False, "calibration_min": 3, "calibration_max": 9}
+BASE = {"hosts": 277, "carbon_zone": "NL", "calibration": False}
+BASE |= {"calibration_min": 3, "calibration_max": 9, "calibration_points": 7}  # r = 3, 4, ..., 9
 STARTS, state = [], dict(BASE)
 for _, step in ORDER:
     state |= step.get("start", {})
@@ -39,10 +88,11 @@ BUTTON = (
 
 
 def circled(n, current):
-    """Step n in a circle, as the steps of a figure: filled if current, else a link to step n."""
+    """Step n in a circle, as the steps of a figure: filled if current, else a link to step n; ringed in the colour of
+    how it was answered (step.js)."""
     if n == current:
-        return f'<span style="{CIRCLE};background:{BLUE};color:{WHITE}">{n}</span>'
-    return f'<a data-href="{HERE}{n}" style="{CIRCLE};border:1px solid {LINE};color:{INK}">{n}</a>'
+        return f'<span data-step="{n}" style="{CIRCLE};background:{BLUE};color:{WHITE}">{n}</span>'
+    return f'<a data-step="{n}" data-href="{HERE}{n}" style="{CIRCLE};border:1px solid {LINE};color:{INK}">{n}</a>'
 
 
 def navigator(current):
@@ -137,7 +187,7 @@ def card(n):
     )
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
-    colors = {"right": GREEN, "wrong": RED, "none": LINE}
+    colors = {"right": GREEN, "late": YELLOW, "wrong": RED, "none": LINE}
     code = script(
         "links.js",
         "step.js",
@@ -150,13 +200,5 @@ def card(n):
     return text(content, code)
 
 
-def figure(path):
-    """A fixed figure in place of a step's plots (tutorial/resources/`path`), embedded in the screen."""
-    png = base64.b64encode((RESOURCES / path).read_bytes()).decode()
-    style = "width:100%;height:100%;object-fit:contain;background:white;border-radius:4px"
-    return text(f'<img src="data:image/png;base64,{png}" style="{style}">', "")
-
-
 # the values of the step variable, 1, 2, 3, ...: (value, step, card)
 SLIDES = [(str(n), step, card(n)) for n, (_, step) in enumerate(ORDER, 1)]
-FIGURES = {f"figure-{n}": figure(step["figure"]) for n, (_, step) in enumerate(ORDER, 1) if "figure" in step}

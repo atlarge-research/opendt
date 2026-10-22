@@ -1,4 +1,4 @@
-# OpenDT live twin of SURF with the Self-Calibrator (notebook 4), as in the ICPE demo.
+# OpenDT live twin of SURF with the self-calibrator (notebook 4), as in the ICPE demo.
 # Start: make up config=tutorial/resources/configs/live_twin_calibration.yaml
 
 global:
