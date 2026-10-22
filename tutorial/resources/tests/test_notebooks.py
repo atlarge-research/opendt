@@ -37,23 +37,24 @@ for spare, share in [(0, 18), (50, 12)]:
 """,
     "2.calibration.ipynb": """
 assert [round(curves["r = 4"][50]), round(curves["r = 9"][50]), round(curves["r = 4"][80])] == [165, 174, 202]
+assert [round(curves[f"r = {r}"][u]) for u in [20, 80] for r in [2, 9]] == [79, 85, 168, 243]
 
 mape_per_r = errors.mean()
 assert mape_per_r.idxmin() == 7 and [round(mape_per_r[7], 1), round(mape_per_r[4], 1)] == [4.5, 6.4]
 assert [best_r_per_day.min(), best_r_per_day.max()] == [5, 9]
 
-assert [round(no_calibration.mean(), 1), round((no_calibration < 10).mean() * 100)] == [6.4, 80]
+noon = "2022-10-07 12:00"
+assert [best_r[noon], used_r[noon]] == [7, 6]
+assert [round(hourly.loc[noon, r], 1) for r in [6, 7, 4]] == [1.5, 0.8, 4.8]
 assert [round(with_calibration.mean(), 1), round((with_calibration < 10).mean() * 100)] == [3.6, 91]
-under = pd.DataFrame({r: align(run).eval("measured > simulated") for r, run in sweep.items()})
-under = under.resample("1h").mean()
-assert [round(under[4].mean() * 100), round(self_calibrate(under, best_r).mean() * 100)] == [93, 69]
-assert [worse.sum(), len(worse)] == [5, 168]
+assert [round(hourly[4].mean(), 1), round((hourly[4] < 10).mean() * 100)] == [6.4, 80]
 
-assert [round(with_24h.mean(), 1), (with_24h > no_calibration).sum()] == [4.3, 20]
-assert (best_r == 9).sum() == 75
-assert [round(with_wide.mean(), 1), (best_r_wide == 12).sum()] == [3.3, 69]
-edge = best_r_wide.index[best_r_wide == 12]
-assert align(sweep_wide[12]).eval("measured > simulated").resample("1h").mean()[edge].mean() > 0.9
+from resources.calibration import hourly_mape, self_calibrate
+wide = hourly_mape([*range(1, 21), 30, 40])
+assert [round(self_calibrate(wide, grid).mean(), 1) for grid in GRIDS.values()] == [3.7, 4.2, 3.6, 3.0]
+assert wide.idxmin(axis=1).between(5, 9).sum() == 81
+assert [round(self_calibrate(wide, R_VALUES, every=hours).mean(), 1) for hours in [1, 6, 24, 48]] == [3.6, 4.0, 4.8, 5.7]
+assert round(self_calibrate(wide, R_VALUES, lookback=24).mean(), 1) == 4.3
 """,
     "3.co2_migration.ipynb": """
 average = intensity.mean()

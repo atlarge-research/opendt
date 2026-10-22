@@ -5,11 +5,11 @@ October 2026).
 OpenDT is an open-source digital twin for monitoring and operating datacenters; here, it twins the SURF-SARA cluster of
 SURF over one week of October 2022, with the OpenDC simulator at its core.
 
-We go through the three use cases of the talk, one notebook each, in about 40 minutes; going slowly is fine, and not
+We go through the three use cases of the talk, one notebook each, in about 30 minutes; going slowly is fine, and not
 everything has to be covered:
 
 1. [Dynamic autoscaling](1.autoscaling.ipynb): how many hosts does SURF need? (10 minutes)
-2. [Simulation calibration](2.calibration.ipynb): can the digital twin correct itself? (20 minutes)
+2. [Simulation calibration](2.calibration.ipynb): can the digital twin correct itself? (10 minutes)
 3. [Workload migration, CO2 aware](3.co2_migration.ipynb): where should SURF run its workload? (10 minutes)
 
 Each question comes with four choices, A to D: we guess first, then click a choice to see whether it holds, and

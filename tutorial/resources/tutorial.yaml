@@ -92,7 +92,7 @@ Simulation calibration:
       - It sets r to 0
     answer: A
     plots: [r, power, error]
-  - question: "2.5"
+  - question: "2.4"
     do: Day (top left), with Decisions On, to see the change of calibration on the graphs
     ask: After an hour of calibration, how does the MAPE compare with the MAPE without calibration?
     hint: Compare the MAPE per hour before and after the change of r (the markers on the graphs).
@@ -106,7 +106,7 @@ Simulation calibration:
       Lower: in notebook 2, the Self-Calibrator has a MAPE of 3.6% over the week, vs. 6.4% with r = 4. Calibration
       alleviates underestimation bias, reducing the frequency of underestimated predictions.
     plots: [mape, error, energy-error, r]
-  - question: "2.10"
+  - question: "2.6"
     do: Self-Calibrator, Range of r 3 to 12, then Apply
     ask: With r up to 12, does the Self-Calibrator jump to 12, and why (not)?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter

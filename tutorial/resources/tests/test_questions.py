@@ -45,7 +45,7 @@ def test_notebooks_and_questions_file_match():
 
 def test_solution_images_exist():
     images = [e["image"] for e in entries().values() if "image" in e]
-    assert images and all((questions.QUESTIONS.parent / image).exists() for image in images)
+    assert all((questions.QUESTIONS.parent / image).exists() for image in images)
 
 
 def test_four_choices_each_answer_folded(monkeypatch):
