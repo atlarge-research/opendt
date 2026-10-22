@@ -8,51 +8,50 @@
 Dynamic autoscaling:
   - question: "1.1"
     do: Datacenter, Hosts 277; Twin, Calibration Off; then Apply, and wait for the next window
-    ask: How does OpenDT's MAPE compare with 10%, the community-accepted error rate?
+    ask: With 10% as the community-accepted error rate, is OpenDT accurate enough? When is it worst?
     hint: See the MAPE in Accuracy, and its plot per hour; the first hours of the trace differ.
     choices:
-      - Far below, about 1%
-      - Around 10% in the first hours, then lower
-      - Far above, about 50%
-      - Exactly 0%, as OpenDT replays the trace
+      - Yes, OpenDT's MAPE is about 1%, the same in every hour
+      - Yes, OpenDT's MAPE is about 6%, worst in the first 6 hours
+      - No, OpenDT's MAPE is about 15%, worst in the evening
+      - No, OpenDT's MAPE is over 10% in every hour
     answer: B
     solution: >-
-      Around 10% in the first hours, then lower: OpenDT under-estimates the ground truth in almost every minute of
-      the day, more in the first 6 hours (MAPE 10.4% in notebook 1) than after (MAPE 4.6%); over the day, about 6%,
-      accurate enough for what-if analysis. The OpenDT paper identifies the same underestimation trend.
+      Yes, about 6% over the day, within the community-accepted error rate, and worst in the first 6 hours: OpenDT
+      under-estimates the ground truth in almost every minute, more in the first 6 hours (MAPE 10.4% in notebook 1)
+      than after (MAPE 4.6%). The OpenDT paper identifies the same underestimation trend.
     plots: [power, accuracy-now, mape, error]
   - question: "1.2"
     do: Datacenter, Hosts 2,770 (10x), then Apply
-    ask: SURF draws about 22 kW with its 277 hosts; how much will OpenDT predict with 2,770?
+    ask: "Estimate: SURF draws about 22 kW with 277 hosts; how much with 2,770 hosts (10x)?"
     hint: The jobs stay the same; what does a host draw while it runs no job?
     choices:
       - About 22 kW, the same
-      - About 84 kW, 4x
-      - About 220 kW, 10x
-      - About 2,200 kW, 100x
+      - About 84 kW, ~4x
+      - About 220 kW, ~10x
+      - About 350 kW, ~16x
     answer: B
     solution: >-
-      About 84 kW, 4x: the jobs are the same, so the 2,493 extra hosts are idle, and an idle host still draws 25 W
-      (2,493 x 25 W = 62 kW).
+      About 84 kW, 4x; the next step asks why.
     plots: [power, hosts]
   - question: "1.3"
-    do: 6 h (top left), to see the last hours up close
-    ask: With 2,770 hosts, what share of the hosts runs at least one job?
-    hint: See Hosts in use, in Jobs and hosts.
+    do: 6 h (top left), to see the hosts in use up close
+    ask: 10x infrastructure, but only 4x more power! Why is that?
+    hint: See Hosts in use, in Jobs and hosts; how many of the 2,770 hosts run a job?
     choices:
-      - All of them
-      - About half
-      - Under 10%
-      - None
+      - "About 10x: each extra host runs jobs too"
+      - "About the same: idle hosts draw nothing"
+      - "About 4x: the extra hosts are idle, but draw power"
+      - "About 2x: the jobs spread over more hosts and end sooner"
     answer: C
     solution: >-
-      Under 10%: about as many hosts run jobs as with 277, and the others are idle. Over-provisioning could lead to
-      sustainability concerns, both environmental and financial, where energy (and thus, money) is wasted by idle
-      infrastructure.
+      The jobs are identical, so the ~2,500 extra hosts sit idle; however, they still draw electricity: at 25 W per
+      host, 2,493 x 25 W = 62 kW, just for staying idle. Over-provisioning could lead to sustainability concerns, both
+      environmental and financial, where energy (and thus, money) is wasted by idle infrastructure.
     plots: [power, hosts, idle-hosts, idle-power]
   - question: "1.4"
     do: Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour
-    ask: With half of SURF's hosts, how much power does SURF save?
+    ask: Let's downscale to 138 hosts (half). How much power do we save?
     hint: Only idle hosts are switched off, and an idle host draws 25 W.
     choices:
       - About half
@@ -66,7 +65,7 @@ Dynamic autoscaling:
     plots: [power, energy, idle-power]
   - question: "1.4"
     do: Datacenter, Hosts 69 (a quarter), then Apply
-    ask: With a quarter of SURF's hosts, what happens to the jobs?
+    ask: Now 69 hosts (a quarter). How does downscaling affect the jobs?
     hint: Even at its quietest, how many jobs does SURF run at once?
     choices:
       - They run as before
