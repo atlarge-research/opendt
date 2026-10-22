@@ -15,7 +15,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-ZONES = ("NL", "DE", "RO", "PL")
+ZONES = ("NL", "DE", "RO", "PL", "SE")
 START, END = pd.Timestamp("2022-10-01 00:00"), pd.Timestamp("2022-11-01 00:00")
 SCHEMA = pa.schema(
     [

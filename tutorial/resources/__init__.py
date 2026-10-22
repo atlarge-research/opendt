@@ -8,6 +8,7 @@ notebooks comes from the same machinery as the live digital twin.
 from .calibration import compare_frequencies, compare_grids
 from .data import (
     CARBON_ZONES,
+    GREENEST_ZONE,
     TRACE_END,
     TRACE_START,
     carbon_intensity,
@@ -17,13 +18,14 @@ from .data import (
 )
 from .metrics import align, mape
 from .paths import PATHS, check_setup, repo_root
-from .plots import legend_above, plot_power
+from .plots import legend_above, plot_electricity_mix, plot_power
 from .questions import ask_question
 from .sim import SimResult, default_workers, simulate, simulate_many, write_inputs
 from .topology import make_topology
 
 __all__ = [
     "CARBON_ZONES",
+    "GREENEST_ZONE",
     "PATHS",
     "TRACE_END",
     "TRACE_START",
@@ -41,6 +43,7 @@ __all__ = [
     "make_topology",
     "mape",
     "measured_power",
+    "plot_electricity_mix",
     "plot_power",
     "repo_root",
     "simulate",

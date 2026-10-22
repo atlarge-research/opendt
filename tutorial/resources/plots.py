@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from .data import measured_power
 from .metrics import error
@@ -90,3 +93,26 @@ def energy_bars(runs, total, per_job, colors):
     for bars in (total, per_job):
         bars.invert_yaxis()  # the first run on top, as in the key
         bars.grid(axis="y", visible=False)
+
+
+MIX = Path(__file__).with_name("electricity_mix_2022.csv")  # IEA, electricity generation by source in 2022 [GWh]
+SOURCES = {"Coal": "Coal", "Natural gas": "Natural Gas", "Nuclear": "Nuclear", "Hydropower": "Hydropower",
+           "Wind": "Wind", "Solar PV": "Solar PV"}  # the rest (oil, biofuels, waste, ...) shows as Other
+
+
+def plot_electricity_mix():
+    """Share of each source in the electricity generation of NL, DE, RO, and PL in 2022 [%], from the IEA."""
+    gwh = pd.read_csv(MIX, index_col="source")
+    mix = gwh.loc[list(SOURCES)].rename(index=SOURCES)
+    mix.loc["Other"] = gwh.drop(SOURCES).sum()
+    share = (mix / mix.sum() * 100).T  # one row per country
+    colors = ["#000000", "#D55E00", "#9557a5", "#338ec1", "#56B4E9", "#E69F00", "#BBBBBB"]
+    ax = share.plot.barh(stacked=True, color=colors, width=0.6, edgecolor="white", figsize=(10, 2.5))
+    for bars, hatch in zip(ax.containers, ["", "//", "..", "xx", "\\\\", "--", ""]):  # readable in grayscale
+        for bar in bars:
+            bar.set_hatch(hatch)
+    ax.set(xlabel="Share of Electricity Generation, as of Oct 2022, based on IEA [%]", xlim=(0, 100))
+    ax.invert_yaxis()  # NL on top, as in the other plots
+    ax.grid(axis="y", visible=False)
+    legend_above(ax)
+    return ax
