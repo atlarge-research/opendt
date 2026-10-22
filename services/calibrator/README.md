@@ -4,11 +4,11 @@ Optimizes topology parameters by comparing simulation output against actual powe
 
 ## Purpose
 
-The calibrator performs grid search over topology parameters (e.g., `asymUtil`) to find values that minimize the error between predicted and actual power consumption. It publishes the best-performing topology to Kafka for use by the simulator.
+The calibrator performs grid search over a topology parameter (e.g., `calibrationFactor`, the exponent r of SURF's power model) to find values that minimize the error between predicted and actual power consumption. It publishes the best-performing topology to Kafka for use by the simulator.
 
 ## How It Works
 
-1. **Accumulate tasks** - Collect tasks from `dc.workload` over a calibration window
+1. **Accumulate tasks** - Collect all tasks so far from `dc.workload`
 2. **Track power** - Record actual power consumption from `dc.power`
 3. **Grid search** - Run parallel simulations with different parameter values
 4. **Compare** - Calculate MAPE against actual power for each simulation
@@ -17,11 +17,12 @@ The calibrator performs grid search over topology parameters (e.g., `asymUtil`) 
 
 ## Calibrated Properties
 
-The calibrator can tune any numeric topology parameter. Common targets:
+The calibrator sets one numeric parameter, by its path from the host, on all hosts:
 
 | Property | Path | Description |
 |----------|------|-------------|
-| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient |
+| calibrationFactor | cpuPowerModel.calibrationFactor | Exponent r of the MSE power model; the one for SURF's hosts |
+| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient (asymptotic model only) |
 
 ## Components
 
@@ -36,29 +37,31 @@ The calibrator can tune any numeric topology parameter. Common targets:
 
 ## Configuration
 
-Enable calibration in the config file:
+The calibrator runs when the config file has a `services.calibrator` section; `calibration_enabled` sets whether it
+calibrates from the start:
 
 ```yaml
 global:
   calibration_enabled: true
 ```
 
-The calibrator only runs when this flag is set.
+The control panel switches calibration on and off, and changes all settings but the property, while the twin runs.
 
 Settings under `services.calibrator` in the config file:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| calibrated_property | string | - | Topology property path to calibrate (e.g., `cpuPowerModel.calibrationFactor`) |
-| min_value | float | - | Minimum value in the search space |
-| max_value | float | - | Maximum value in the search space |
-| linspace_points | int | 10 | Number of candidate values to evaluate |
+| calibrated_property | string | cpuPowerModel.asymUtil | Topology property path to calibrate (`cpuPowerModel.calibrationFactor` for SURF's MSE hosts) |
+| min_value | float | 0.1 | Minimum value in the search space |
+| max_value | float | 0.9 | Maximum value in the search space |
+| linspace_points | int | 9 | Number of candidate values to evaluate |
 | max_parallel_workers | int | 4 | Maximum parallel calibration simulations |
-| mape_window_minutes | int | 60 | Time window for MAPE calculation |
+| mape_window_minutes | int | 1440 | Time window for MAPE calculation |
 
 ### calibrated_property
 
-Uses dot notation to specify nested properties in the topology JSON.
+A dot path from the host (e.g., `cpuPowerModel.calibrationFactor`). The default, `cpuPowerModel.asymUtil`, exists only
+in the asymptotic model.
 
 ### linspace_points
 
@@ -85,4 +88,5 @@ calibrator/
 make logs-calibrator
 ```
 
-Note: The calibrator runs with the `calibration` Docker Compose profile. It will not start unless `calibration_enabled: true` is set.
+Note: the calibrator runs with the `calibration` Docker Compose profile, when the config has a `services.calibrator`
+section.

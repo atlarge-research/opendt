@@ -6,32 +6,27 @@ sidebar_position: 3
 
 ## Start the System
 
-Start all services with the default configuration:
-
 ```bash
-make up
+make up                                              # config/default.yaml
+make up config=config/experiments/experiment_1.yaml  # another configuration
 ```
 
-Or specify a configuration file:
+`config/default.yaml` replays the week in real time (`speed_factor: 1`); the experiments replay at 300x. The control
+panel changes the speed while the twin runs.
 
-```bash
-make up config=config/experiments/experiment_1.yaml
-```
+The first `make up` builds the Docker images, which takes a few minutes; `make up build=true` rebuilds them.
 
 ## Access the Dashboard
-
-Once services are running:
 
 | URL | Description |
 |-----|-------------|
 | http://localhost:3000 | Grafana Dashboard |
 | http://localhost:3001 | API Documentation |
 
-The Grafana dashboard shows real-time power consumption data as the simulation progresses.
+Grafana opens on the Detailed screen; its tabs at the top left switch to the Topology and Tutorial screens. See
+[grafana](/docs/services/grafana).
 
 ## Monitor Progress
-
-View logs from a specific service:
 
 ```bash
 make logs-simulator
@@ -40,9 +35,10 @@ make logs-api
 make logs-calibrator
 ```
 
-## Stop the System
+The calibrator runs only when the configuration has a `services.calibrator` section (e.g.,
+`config/experiments/experiment_2.yaml`).
 
-Stop all running services:
+## Stop the System
 
 ```bash
 make down
@@ -50,10 +46,9 @@ make down
 
 ## Clean Up
 
-Remove all data and volumes to start fresh:
-
 ```bash
 make clean-volumes
 ```
 
-This removes simulation results and resets Grafana to its initial state.
+This stops the containers and deletes the Kafka and Grafana volumes. `make up` runs it first; each run's results stay in
+`data/<RUN_ID>/`.

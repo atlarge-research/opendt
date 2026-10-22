@@ -8,27 +8,20 @@ Core simulation engine that consumes workload data and produces power prediction
 
 ## Purpose
 
-The simulator aggregates tasks into time windows, invokes the OpenDC simulator, and outputs power consumption predictions. It maintains cumulative state to ensure accurate long-running simulations.
-
-## Processing Flow
-
-1. **Consume** - Read tasks from `dc.workload` topic
-2. **Aggregate** - Group tasks into time windows
-3. **Close** - When heartbeat timestamp exceeds window end
-4. **Simulate** - Invoke OpenDC with all tasks from beginning
-5. **Output** - Write results to `agg_results.parquet`
-
-## Cumulative Simulation
-
-Each window simulates all tasks from the beginning of the workload, not just tasks in that window. This ensures accurate power predictions for long-running workloads.
+The simulator runs OpenDC once per window of operation, on all tasks so far; see [Windowing](/docs/concepts/windowing).
+It reads the tasks from `dc.workload`, the topology from `dc.topology` and `sim.topology`, and the scheduler from
+`sys.config`. From the next window, it runs the last topology on `sim.topology` (from the dashboard, the API, or the
+calibrator), else the workload's.
 
 ## OpenDC Integration
 
 The simulator invokes the OpenDC binary for power calculations:
 
 ```
-opendc/bin/OpenDCExperimentRunner
+opendc/bin/OpenDCExperimentRunner/bin/OpenDCExperimentRunner --experiment-path ...
 ```
+
+It is called by `libs/common/odt_common/odc_runner/runner.py`, with a timeout of 120 s per run.
 
 ### Input Files
 
@@ -41,10 +34,8 @@ Created for each simulation run:
 
 ### Output Files
 
-Parsed after simulation:
-
-- `powerSource.parquet` - Power consumption over time
-- `host.parquet` - Host-level metrics
+OpenDC exports `powerSource`, `host`, `task`, and `service` every 150 s. The simulator parses `powerSource.parquet`
+(power consumption over time); the API reads the others for the screens.
 
 ## Output
 
@@ -55,23 +46,31 @@ simulator/
 ├── agg_results.parquet
 └── opendc/
     └── run_<N>/
+        ├── input/
+        ├── output/
+        └── metadata.json
 ```
+
+`metadata.json` is written last: a run without it is still running, or failed.
 
 ### agg_results.parquet
 
 | Column | Description |
 |--------|-------------|
 | timestamp | Simulation timestamp |
+| run_number | The window's OpenDC run |
 | power_draw | Predicted power in Watts |
+| energy_usage | Predicted energy in Joules |
 | carbon_intensity | Grid carbon intensity |
+| carbon_emission | Predicted carbon emission |
+| cached | Whether the run was copied from the previous window |
 
 ## Configuration
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| simulation_frequency_minutes | int | 5 | Window size for task aggregation |
-
-Larger windows mean fewer OpenDC invocations but less granular results.
+| simulation_frequency_minutes | int | 15 | Window size (5 in `config/default.yaml`, 60 in the experiments) |
+| background_load_nodes | int | - | Required: hosts of the first group reserved for background load, left out of the simulation |
 
 ## Logs
 

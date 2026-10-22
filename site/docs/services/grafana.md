@@ -16,33 +16,34 @@ Authentication is disabled by default (anonymous admin access).
 
 ## Dashboards
 
-Four screens: Detailed (the home page), Simple, Topology, and Tutorial, each with a control panel; see
-`services/grafana/README.md`. They are built by the code in `services/grafana/dashboards/`.
+Three screens, each with the levers of the twin on top: Detailed (the home page), Topology, and Tutorial; see
+`services/grafana/README.md`. They always run in Grafana's kiosk mode (no menus). The classic OpenDT Dashboard
+(`power_dashboard.json`) still shows power and CO₂.
 
-Data is queried from the OpenDT API at `http://api:8000`.
+The panels query the OpenDT API at `http://api:8000`; the control panel sends its changes from the browser to
+`http://localhost:3001`.
+
+## Building the Screens
+
+The screens are built by the code in `services/grafana/dashboards/`. After a change there, or in `tiles.yaml` (the
+shares and the ⓘ text of each panel), rebuild the provisioned dashboards:
+
+```bash
+python3 services/grafana/dashboards/build.py
+```
+
+A test fails while the provisioned JSON is out of date.
 
 ## Provisioning
 
-Dashboards in `services/grafana/provisioning/dashboards/` are auto-provisioned on startup. These are read-only templates.
-
-To create an editable copy:
-
-1. Open the dashboard
-2. Click title → **Save As**
-3. Save with a new name
-
-Custom dashboards are persisted in the Docker volume.
+Dashboards in `services/grafana/provisioning/dashboards/` are auto-provisioned on startup; Grafana re-reads them every
+10 s. Each `make up` deletes the `opendt-grafana-storage` volume, so dashboards saved from the UI are lost.
 
 ## Data Sources
 
 The [Infinity datasource](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/) is pre-configured to query JSON endpoints from the OpenDT API.
 
-## Persistence
+## Image
 
-Dashboard data is stored in the `opendt-grafana-storage` Docker volume.
-
-To reset Grafana to its initial state:
-
-```bash
-make clean-volumes
-```
+The image pins Grafana 12.4.13 and its plugins, so the dashboard needs no internet at start; after a change of version,
+`make up build=true` rebuilds it.

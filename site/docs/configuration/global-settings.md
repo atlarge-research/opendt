@@ -8,7 +8,7 @@ The `global:` section contains settings that affect the entire system.
 
 ## speed_factor
 
-Controls how fast the simulation runs relative to real time.
+Controls how fast the replay runs relative to real time.
 
 | Value | Behavior |
 |-------|----------|
@@ -21,34 +21,27 @@ global:
   speed_factor: 300
 ```
 
+The value must be above 0, or -1; without it, the speed is 10. The control panel changes the speed while the twin runs.
+
 ### Estimating Runtime
 
-With the SURF workload (~7 days of data):
+The replay of the SURF workload (~7 days of data) takes:
 
 | Speed Factor | Approximate Runtime |
 |--------------|---------------------|
 | 1 | 7 days |
 | 60 | ~2.8 hours |
 | 300 | ~34 minutes |
-| -1 | ~10 minutes |
+
+The simulator can finish later, as each window re-simulates the trace from its start. At maximum speed, the OpenDT paper
+twins the 7 days within 46 minutes, on a common machine.
 
 ## calibration_enabled
 
-Enables the calibrator service for automatic parameter tuning.
+Sets whether the calibrator tunes the power model from the start. The calibrator runs only with a `services.calibrator`
+section (see [calibrator](/docs/services/calibrator)); `calibration_enabled: true` without that section fails to load.
 
 ```yaml
 global:
   calibration_enabled: true
 ```
-
-When `true`:
-
-- The calibrator container starts
-- Grid search runs periodically to optimize topology parameters
-- Calibrated topologies are published to `sim.topology`
-- Simulator uses calibrated values for predictions
-
-When `false`:
-
-- Calibrator does not start
-- Simulator uses the original topology without modifications

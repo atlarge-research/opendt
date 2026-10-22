@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 3
 ---
 
 # Calibration
@@ -36,12 +36,7 @@ Calibration automatically finds parameter values that minimize prediction error,
                       Publish Calibrated Topology
 ```
 
-1. **Accumulate**: Collect tasks and actual power readings
-2. **Search**: Run parallel simulations with different parameter values
-3. **Compare**: Calculate MAPE for each configuration
-4. **Select**: Choose the parameter value with lowest error
-5. **Publish**: Send calibrated topology to `sim.topology`
-6. **Apply**: Simulator uses calibrated topology for future windows
+The [calibrator](/docs/services/calibrator) page has the steps, the property it tunes, and its settings.
 
 ## MAPE Calculation
 
@@ -51,24 +46,5 @@ Mean Absolute Percentage Error measures prediction accuracy:
 MAPE = mean(|actual - predicted| / actual) × 100%
 ```
 
-Lower MAPE indicates better prediction accuracy. A well-calibrated model typically achieves MAPE under 5%.
-
-## Calibrated Properties
-
-The calibrator can tune any numeric topology parameter. Common targets:
-
-| Property | Path | Description |
-|----------|------|-------------|
-| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient |
-| calibrationFactor | cpuPowerModel.calibrationFactor | MSE model scaling factor |
-
-## Enabling Calibration
-
-Set `calibration_enabled: true` in your configuration file:
-
-```yaml
-global:
-  calibration_enabled: true
-```
-
-The calibrator only runs when this flag is set.
+The calibrator computes it over the last `mape_window_minutes` of power, on a 60-s grid. Lower MAPE indicates better
+prediction accuracy; 10% is the community-accepted error rate for datacenter simulation.

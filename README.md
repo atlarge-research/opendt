@@ -68,9 +68,9 @@ Run `make help` for the complete list.
 
 | Document | Description |
 |----------|-------------|
-| [Getting Started](docs/GETTING_STARTED.md) | Installation, configuration, and running experiments |
-| [Concepts](docs/CONCEPTS.md) | Core concepts, data models, and system behavior |
-| [Configuration](docs/CONFIGURATION.md) | Configuration file reference |
+| [Getting Started](https://atlarge-research.github.io/opendt/docs/category/getting-started) | Installation, configuration, and running experiments |
+| [Concepts](https://atlarge-research.github.io/opendt/docs/category/concepts) | Core concepts, data models, and system behavior |
+| [Configuration](https://atlarge-research.github.io/opendt/docs/category/configuration) | Configuration file reference |
 
 ### Service Documentation
 
