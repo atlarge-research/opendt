@@ -4,8 +4,8 @@
 # services/grafana/dashboards/plots.py, or a fixed figure (`figure`, in this folder; make_figures.py renders it).
 # `question` is the notebooks' question the step comes from (questions.yaml), whose solution it takes unless it has its
 # own; hint and solution stay folded until asked for. `set`: the change of `do` for the twin's API; a step starts the
-# twin as the steps before it left it, so opening a step sets what they set. After a change, run
-# services/grafana/dashboards/build.py.
+# twin as the steps before it left it, then as its own `start` says, and opening a step sets that. After a change,
+# run services/grafana/dashboards/build.py.
 
 Dynamic autoscaling:
   - question: "1.1"
@@ -87,8 +87,7 @@ Dynamic autoscaling:
 
 Simulation calibration:
   - question: "2.1"
-    do: Datacenter, Hosts 277; Twin, Calibration On; then Apply
-    set: {hosts: 277, calibration: true}
+    start: {hosts: 277, calibration: true}
     ask: OpenDT under-estimates the ground truth; does the Self-Calibrator move r up or down?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
     hint: See r in Accuracy; at the same CPU utilization, a higher r gives a higher power draw.
@@ -100,7 +99,8 @@ Simulation calibration:
     answer: A
     plots: [r, power, error]
   - question: "2.4"
-    do: Day (top left), with Decisions On, to see the change of calibration on the graphs
+    do: Twin (top right), Calibration Off and then On again, to compare the MAPE with and without calibration
+    set: {calibration: true}
     ask: After an hour of calibration, how does the MAPE compare with the MAPE without calibration?
     hint: Compare the MAPE per hour before and after the change of r (the markers on the graphs).
     choices:
@@ -146,21 +146,21 @@ CO₂-aware workload migration:
     solution: >-
       The CO₂ only: the same energy on every grid, since the workload and the hosts are the same; the CO₂ emissions
       change with the carbon intensity of the grid.
-    plots: [co2, carbon, energy]
+    plots: [co2, power]
   - question: "3.1"
     do: Grid, CO₂ zone RO, then Apply
     set: {carbon_zone: RO}
     ask: Moving from PL to RO, how much do the CO₂ emissions per hour change?
     hint: Compare the carbon intensity of the two grids, in Sustainability.
     choices:
-      - They do not
-      - They drop by about a tenth
-      - They drop by half or more
-      - They drop to zero
+      - Almost no change
+      - About 10% less
+      - About 60% less
+      - Almost 100% less
     answer: C
     solution: >-
-      They drop by half or more: RO has the lowest carbon intensity of the four grids during the SURF week (343
-      gCO₂/kWh on average), PL the highest; over the week, 1,172 kg of CO₂ in RO vs. 2,959 kg in PL.
+      About 60% less: RO has the lowest carbon intensity of the four grids during the SURF week (343 gCO₂/kWh on
+      average), PL the highest (868); over the week, 1,172 kg of CO₂ in RO vs. 2,959 kg in PL.
     plots: [intensity, co2, carbon]
   - question: "3.6"
     do: Decisions On, then look at the Decisions log
@@ -173,8 +173,6 @@ CO₂-aware workload migration:
       - The CO₂ zone
     answer: C
     solution: >-
-      Only r: the Self-Calibrator changes it at every window, while the hosts, the CO₂ zone, and the scheduler change
-      only from the control panel. Before migrating, the human-in-the-loop considers, e.g., (1) the energy and time to
-      move data and jobs over the network, (2) the latency for the users, (3) the rules on where data may be stored,
-      (4) the free capacity and the cost of the remote datacenter, and (5) the CO₂ emitted to build new hardware.
+      Only r: the Self-Calibrator changes it at every window; the hosts, the CO₂ zone, and the scheduler change only
+      from the control panel, as major decisions stay with the human-in-the-loop.
     plots: [r, co2]

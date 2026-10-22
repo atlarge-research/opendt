@@ -1,14 +1,18 @@
-// Tell me what to change, Hint, and Solution unfold theirs; a wrong choice (in red) says to try another, as in the
-// notebooks; the right one (in green) unfolds the solution
+// Tell me what to change, Hint, and Solution show or hide theirs; a wrong choice (in red) says to try another, as in
+// the notebooks; the right one (in green) shows the solution
 const card = context.element;
 const solution = card.querySelector('.solution');
 const retry = card.querySelector('.retry');
+// each button says what a click does: show its part, or hide it again
+const labels = () => card.querySelectorAll('[data-show]').forEach((button) => {
+  const { show, folded, shown } = button.dataset;
+  button.textContent = card.querySelector('.' + show).hidden ? folded : shown;
+});
 card.onclick = ({ target }) => {
   const { show } = target.dataset;
-  if (show) card.querySelector('.' + show).hidden = false;
-  if ('once' in target.dataset) target.hidden = true;  // Tell me what to change gives way to the change
+  if (show) card.querySelector('.' + show).hidden ^= true;
   const option = target.closest('[data-choice]');
-  if (!option) return;
+  if (!option) return labels();
   const { choice } = option.dataset;
   card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));
   option.style.borderColor = colors[choice];
@@ -17,6 +21,7 @@ card.onclick = ({ target }) => {
     solution.querySelector('strong').textContent = 'Right. Solution:';
     solution.hidden = false;
   }
+  labels();
   (choice === 'right' ? solution : retry).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 };
 // opening a step sets the twin as the steps before it left it (`start`), once per visit, and says what it changed;

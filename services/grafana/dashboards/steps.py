@@ -18,12 +18,13 @@ PLOTS |= {key: plot for plots in ROWS.values() for key, plot in plots.items()}
 # step n is ORDER[n - 1]: (use case, step)
 ORDER = [(use_case, step) for use_case, items in STEPS.items() for step in items]
 # the twin as step n starts, STARTS[n - 1]: as the live twin's configuration starts it, then as the steps before
-# left it (their `set`); opening a step sets it (step.js)
+# left it (their `set`), then as its own `start` says; opening a step sets it (step.js)
 BASE = {"hosts": 277, "carbon_zone": "NL", "calibration": False, "calibration_min": 3, "calibration_max": 9}
-STARTS = [
-    BASE | {k: v for _, before in ORDER[: n - 1] for k, v in before.get("set", {}).items()}
-    for n in range(1, len(ORDER) + 1)
-]
+STARTS, state = [], dict(BASE)
+for _, step in ORDER:
+    state |= step.get("start", {})
+    STARTS.append(dict(state))
+    state |= step.get("set", {})
 
 # this screen as it is (time, full screen, ...), at another step; links.js fills in ${__url...}
 HERE = "${__url.path}${__url.params:exclude:var-step}&var-step="
@@ -62,11 +63,12 @@ def button(step, label):
     return f'<a data-href="{HERE}{step}" style="{BUTTON}">{label}</a>'
 
 
-def unfolds(name, label, once=False):
-    """A button that unfolds the hint, the solution, or what to change (`once`: the button gives way to it)."""
-    gone = " data-once" if once else ""
-    place = ";align-self:flex-start;margin-top:8px" if once else ""
-    return f'<a data-show="{name}"{gone} style="{BUTTON};cursor:pointer{place}">{label}</a>'
+def unfolds(name, label, shown, alone=False):
+    """A button that shows or hides the hint, the solution, or what to change: `label` while it is hidden, `shown`
+    while it shows (`alone`: on a line of its own)."""
+    place = ";align-self:flex-start;margin-top:8px" if alone else ""
+    data = f'data-show="{name}" data-folded="{label}" data-shown="{shown}"'
+    return f'<a {data} style="{BUTTON};cursor:pointer{place}">{label}</a>'
 
 
 def note(color, text, folded=""):
@@ -113,15 +115,18 @@ def card(n):
         lines.append(
             f'<p style="font-size:18px;margin:6px 0 0;font-family:serif">{step["formula"]}</p>'
         )
+    if "do" in step:  # what to change on the twin, hidden until asked for
+        lines += [
+            unfolds("change", "Tell me what to change", "Hide what to change", alone=True),
+            note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}.", "change"),
+        ]
     lines += [
-        unfolds("change", "Tell me what to change", once=True),
-        note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}.", "change"),
         choices(step["choices"], step["answer"]),
         note(RED, "<strong>Not quite;</strong> look at what the plots show, then try another.", "retry"),
         note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"),
         note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution"),
     ]
-    left = [unfolds("hint", "Hint"), unfolds("solution", "Solution")]
+    left = [unfolds("hint", "Hint", "Hide hint"), unfolds("solution", "Solution", "Hide solution")]
     right = [
         button(i, label) for i, label in [(n - 1, "Back"), (n + 1, "Next")] if 1 <= i <= len(ORDER)
     ]
