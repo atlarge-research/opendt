@@ -55,24 +55,6 @@ assert [round(self_calibrate(wide, grid).mean(), 1) for grid in [*GRIDS.values()
 assert wide.idxmin(axis=1).between(5, 9).sum() == 81
 assert [round(self_calibrate(wide, R_VALUES, every=hours).mean(), 1) for hours in [1, 6, 24, 48]] == [3.6, 4.0, 4.8, 5.7]
 """,
-    "3.co2_migration.ipynb": """
-average = intensity.mean()
-assert len(intensity) == 168 and list(average.sort_values().index) == ["RO", "NL", "DE", "PL"]
-assert [round(average["RO"]), round(average["NL"])] == [343, 372]
-assert (intensity["NL"] < intensity["RO"]).sum() == 57
-assert [round(intensity["NL"].min()), round(intensity["NL"].max())] == [123, 528]
-
-energy = table["energy_kwh"]
-assert energy.max() - energy.min() < 0.01 and round(energy.mean()) == 3424
-assert [round(co2[zone]) for zone in ["RO", "NL", "DE", "PL"]] == [1172, 1253, 1726, 2959]
-assert best == "RO" and round(saving) == 81 and round(saving / co2["NL"] * 100) == 6
-
-assert round(co2_per_hour.min(axis=1).sum()) == 1065 and switches == 11 and set(greenest) == {"NL", "RO"}
-assert [round((1 - 1065 / co2[zone]) * 100) for zone in ["NL", "RO"]] == [15, 9]
-half_co2 = half.summary()["co2_kg"]
-assert [round(half_co2), round((1 - half_co2 / co2["NL"]) * 100)] == [971, 23]
-assert [half.summary()["jobs_waited"], round(half.summary()["mean_wait_min"])] == [2631, 78]
-""",
 }
 
 

@@ -20,7 +20,7 @@ ASCI course on distributed systems, Friday 30 October 2026, 1 hour, fewer than 2
 | 0:00-0:10 | Talk | | |
 | 0:10-0:25 | Use case 1: dynamic autoscaling | 1.autoscaling.ipynb (10 min) | Tutorial steps 1-5 (5 min) |
 | 0:25-0:40 | Use case 2: simulation calibration | 2.calibration.ipynb (10 min) | Tutorial steps 6-8 (5 min) |
-| 0:40-0:52 | Use case 3: CO2-aware workload migration | 3.co2_migration.ipynb (8 min) | Tutorial steps 9-11 (4 min) |
+| 0:40-0:52 | Use case 3: CO2-aware workload migration | | Tutorial steps 9-11 (4 min) |
 | 0:52-1:00 | Wrap-up: the three questions and their answers | | |
 
 The students work in pairs, one laptop or codespace per pair. While the pairs start a notebook, we make the changes of

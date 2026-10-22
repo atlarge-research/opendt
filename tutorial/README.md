@@ -5,19 +5,21 @@ SURF-SARA cluster of SURF over one week of October 2022, with the OpenDC simulat
 
 1. [Dynamic autoscaling](1.autoscaling.ipynb): how many hosts does SURF need?
 2. [Simulation calibration](2.calibration.ipynb): can the digital twin correct itself?
-3. [Workload migration, CO2 aware](3.co2_migration.ipynb): where should SURF run its workload?
 
 ## Setup
 
-Open a [GitHub Codespace](https://codespaces.new/atlarge-research/opendt), or, locally (Python 3.11+, make):
+Open a [GitHub Codespace](https://codespaces.new/atlarge-research/opendt), or, locally (Python 3.11+, make, and Docker
+for the live twin):
 
 ```
 git clone https://github.com/atlarge-research/opendt.git
 cd opendt
 make setup
+make up config=tutorial/resources/configs/live_twin.yaml
 ```
 
-Then run the notebooks with the `.venv` kernel.
+Then run the notebooks with the `.venv` kernel, and open the dashboard of the live twin at http://localhost:3000;
+`make down` stops it.
 
 ## Data and Citation
 

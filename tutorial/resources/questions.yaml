@@ -216,19 +216,6 @@
     - RO
   answer: D
 
-"3.2":
-  question: |
-    Is the grid with the lowest average also the greenest in every one of the 168 hours?
-  solution: |
-    No. RO has the lowest average (343 gCO2/kWh), but NL is greener in 57 of the 168 hours; the carbon intensity of NL
-    changes more over the week (from 123 to 528 gCO2/kWh).
-  choices:
-    - No; NL is greener in about a third of the hours
-    - "Yes, in every hour"
-    - No; PL is greener in half of the hours
-    - "Yes, except at night"
-  answer: A
-
 "3.3":
   question: |
     Between the four simulations, which numbers change (energy, CO2, or both), and why?
@@ -257,33 +244,3 @@
     - "Not yet: the saving is small, and the network, the users, the rules, the capacity, and new hardware count too"
     - "Yes, as long as the jobs finish in time"
   answer: C
-
-"3.5":
-  question: |
-    With a workload that follows the greenest of the four grids, hour by hour (next cell), how much CO2 does SURF emit
-    in the week, and how many migrations does this take?
-  solution: |
-    1,065 kg, 15% less than in NL and 9% less than in RO; however, the workload migrates 11 times in one week, between
-    NL and RO, and each migration costs energy and time.
-  choices:
-    - About 15% less CO2 than in NL, with about a dozen migrations in the week
-    - About 15% less CO2 than in NL, with no migration
-    - About half the CO2 of NL, with hundreds of migrations
-    - More CO2 than in NL, as migrations cost energy
-  answer: A
-
-"3.6":
-  optional: true
-  question: |
-    Combining notebooks 1 and 3, SURF could run in RO with 1/2 of the hosts (138); compare its CO2 and waiting jobs
-    with NL and all 277 hosts.
-  solution: |
-    971 kg CO2, 23% less than NL with 277 hosts; however, 2,631 jobs wait for a free host, 78 minutes per job on
-    average.
-  choices:
-    - Half the CO2, and no job waits
-    - About a quarter less CO2, but thousands of jobs wait for a free host
-    - More CO2, as the jobs run longer
-    - The same CO2 and waiting as NL with 277 hosts
-  answer: B
-  explore: "Try `hosts=200` in the next cell: with how many hosts does RO emit less CO2 than NL, with few jobs waiting?"

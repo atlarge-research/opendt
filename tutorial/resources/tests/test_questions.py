@@ -35,7 +35,9 @@ def test_ask_question_shows_the_question(monkeypatch):
 
 
 def test_notebooks_and_questions_file_match():
-    asked = set()
+    """Each question is asked in a notebook or by a step of the Tutorial screen (tutorial.yaml)."""
+    steps = yaml.safe_load((TUTORIAL_DIR / "resources/tutorial.yaml").read_text()).values()
+    asked = {step["question"] for use_case in steps for step in use_case}
     for path in TUTORIAL_DIR.glob("[0-9].*.ipynb"):
         for cell in json.loads(path.read_text())["cells"]:
             if cell["cell_type"] == "code":
