@@ -22,7 +22,7 @@
                     "name": "Decisions",
                     "enable": true,
                     "hide": true,
-                    "iconColor": "rgba(255, 255, 255, 0.35)",
+                    "iconColor": "rgba(128, 128, 128, 0.6)",
                     "query": {
                         "kind": "DataQuery",
                         "group": "yesoreyeram-infinity-datasource",
@@ -129,8 +129,8 @@
                                 "renderMode": "everyRow",
                                 "content": "<div class=\"view\"><div style=\"gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"36\">OpenDT<span style=\"margin-left: auto; font-size: 14px; font-weight: 400\" data-time=\"{{twin_time}}\"></span><a class=\"theme\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\"></a></div><div><a data-href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap; background: #3d71d9; color: white\">Dashboard</a><a data-href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Topology</a><a data-href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Tutorial</a><a class=\"plots\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap; margin-left: auto\">☰ Plots</a></div><div><a data-var=\"window\" data-value=\"week\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Week</a><a data-var=\"window\" data-value=\"day\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Day</a><a data-var=\"window\" data-value=\"hours\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">6 h</a><small>Decisions</small><a data-var=\"markers\" data-value=\"on\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">On</a><a data-var=\"markers\" data-value=\"off\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Off</a><small>Interval</small><select data-var=\"period\"><option>minute</option><option>hour</option><option>day</option><option>week</option><option>month</option><option>year</option></select></div></div>",
                                 "defaultContent": "<div class=\"view\"><div style=\"gap: 12px; font-size: 22px; font-weight: 600\"><img src=\"/public/img/opendt.png\" height=\"36\">OpenDT<span style=\"margin-left: auto; font-size: 14px; font-weight: 400\" data-time=\"\"></span><a class=\"theme\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\"></a></div><div><a data-href=\"/d/opendt-overview?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap; background: #3d71d9; color: white\">Dashboard</a><a data-href=\"/d/opendt-topology?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Topology</a><a data-href=\"/d/opendt-tutorial?${__url_time_range}&${markers:queryparam}&kiosk\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Tutorial</a><a class=\"plots\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap; margin-left: auto\">☰ Plots</a></div><div><a data-var=\"window\" data-value=\"week\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Week</a><a data-var=\"window\" data-value=\"day\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Day</a><a data-var=\"window\" data-value=\"hours\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">6 h</a><small>Decisions</small><a data-var=\"markers\" data-value=\"on\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">On</a><a data-var=\"markers\" data-value=\"off\" style=\"padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap\">Off</a><small>Interval</small><select data-var=\"period\"><option>minute</option><option>hour</option><option>day</option><option>week</option><option>month</option><option>year</option></select></div></div>",
-                                "styles": ".view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }\n.view div { display: flex; align-items: center; gap: 4px; }\n.view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }\n.view .on { background: #3d71d9; color: white !important; }\n.view select { height: 26px; padding: 0 6px; background: transparent; color: inherit; border: 1px solid #8e8e8e;\n  border-radius: 2px; }",
-                                "afterRender": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst plots = [[\"Performance\", [[\"scheduling-now\", \"P1  Performance now\"], [\"completion\", \"P2  Total runtime\"], [\"queue\", \"P3  Time in queue\"], [\"jobs\", \"P4  Jobs\"], [\"jobs-left\", \"P5  Jobs waiting or running\"], [\"arrivals\", \"P6  Jobs arriving per hour\"]]], [\"Utilization\", [[\"utilization-now\", \"U1  Utilization now\"], [\"cpu\", \"U2  CPU utilization of the hosts\"], [\"demand\", \"U3  CPU demand vs. capacity\"], [\"cpu-hosts\", \"U4  Hosts per CPU utilization\"], [\"idle-hosts\", \"U5  Idle hosts\"]]], [\"Sustainability\", [[\"energy-now\", \"S1  This period\"], [\"energy\", \"S2  Energy per period\"], [\"carbon\", \"S3  CO\\u2082 per period\"], [\"intensity\", \"S4  Carbon intensity\"], [\"idle-power\", \"S5  Power draw of idle hosts\"]]], [\"Twin accuracy\", [[\"accuracy-now\", \"T1  Accuracy now\"], [\"mape\", \"T2  Power draw MAPE per hour\"], [\"r\", \"T3  Calibration parameter r\"], [\"error\", \"T4  Power draw error per hour\"], [\"energy-error\", \"T5  Energy error so far\"]]]];\nconst style = \".opendt-plots { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;\\n  justify-content: center; background: rgba(0, 0, 0, 0.6); }\\n.opendt-plots > div { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 24px;\\n  color: var(--ink); font-size: 14px; }\\n.opendt-plots section { display: grid; grid-template-columns: repeat(4, auto); gap: 40px; margin: 16px 0 24px; }\\n.opendt-plots label { display: flex; gap: 8px; margin-top: 10px; cursor: pointer; }\\n.opendt-plots button { float: right; background: #3d71d9; color: white; border: 0; border-radius: 2px;\\n  padding: 6px 16px; cursor: pointer; }\";\n// the links as Grafana fills them in now (the time, the markers, ...), again at every refresh\ncontext.element.querySelectorAll('[data-href]').forEach((a) => (a.href = context.grafana.replaceVariables(a.dataset.href)));\n// CSS for what lies outside the panel, added once to the page (the panel renders at every refresh), in the colours\n// of Grafana's theme: var(--panel), var(--canvas), var(--line), and var(--ink)\nconst css = (id, text) => {\n  const { background, border, text: ink } = context.grafana.theme.colors;\n  const theme = ':root { --panel: ' + background.primary + '; --canvas: ' + background.canvas + '; --line: ' + border.medium + '; --ink: ' + ink.primary + ' }\\n';\n  document.getElementById(id) || document.head.insertAdjacentHTML('beforeend', '<style id=\"' + id + '\">' + theme + text + '</style>');\n};\n// none of Grafana's own: no \"Powered by Grafana\" under the screen, no menus over the panels\nconst grafana = ['[data-testid=\"public-dashboard-footer\"]', '[data-testid=\"hover-header-container\"]', 'button[aria-label^=\"Menu for panel\"]'];\ncss('opendt-grafana', grafana.join(', ') + ' { display: none !important; }');\n// light or dark, as last chosen in this browser; Grafana takes its theme from the address, when the page loads\nconst light = document.body.classList.contains('theme-light');\nconst theme = (name) => {\n  const address = new URL(location.href);\n  address.searchParams.set('theme', name);\n  location.replace(address);\n};\nconst chosen = localStorage.getItem('opendt-theme');\nif (chosen && (chosen === 'light') !== light) theme(chosen);\n// the view: Week, Day, or 6 h, the markers, and the interval show at once on a click, kept in the address; Day and\n// 6 h follow the twin, to its last hours, at every refresh; always Grafana's kiosk mode (no menus, no bars)\nconst address = context.grafana.locationService;\nconst time = context.element.querySelector('[data-time]');\nconst twin = time.dataset.time;\ntime.textContent = twin.slice(0, 16).replace('T', ' ');\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week, to its next full\n// hour (the range moves, and the panels ask again, once an hour, not at every window)\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const to = Math.ceil(new Date(twin).getTime() / 3600000) * 3600000;\n  const from = Math.max(to - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\nconst shown = (key) => context.grafana.replaceVariables('$' + key);\ncontext.element.querySelectorAll('[data-var]').forEach((choice) => {\n  const { var: key, value } = choice.dataset;\n  if (choice.tagName === 'SELECT') {\n    choice.value = shown(key);\n    choice.onchange = () => address.partial({ ['var-' + key]: choice.value });\n  } else {\n    choice.classList.toggle('on', shown(key) === value);\n    choice.onclick = () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) });\n  }\n});\nif (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);\nconst { from = week.from, to = week.to } = address.getSearchObject();\nconst end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\nconst wholeWeek = from === week.from && to === week.to; // Day or 6 h before the twin's time was known\nif (twin && shown('window') !== 'week' && (Date.parse(twin) > end || wholeWeek)) {\n  address.partial(range(shown('window'), twin), true);\n}\n// ☀ or ☾, next to the twin's time: the other theme, kept in this browser (light and theme: grafana.js)\nconst toggle = context.element.querySelector('.theme');\ntoggle.textContent = light ? '☾' : '☀';\ntoggle.title = light ? 'Dark' : 'Light';\ntoggle.onclick = () => {\n  localStorage.setItem('opendt-theme', light ? 'dark' : 'light');\n  theme(light ? 'dark' : 'light');\n};\n// ☰ Plots opens the plots of the screen by row, ticked while shown: a tick shows or hides a plot at once, a row's tick\n// all of its plots. The address keeps the hidden plots, so a plot added later shows, even with an old address\nconst hidden = () => context.grafana.replaceVariables('$' + '{hidden:csv}').split(',');\ncss('opendt-plots', style);\nconst tick = (value, label, checked) =>\n  '<label><input type=\"checkbox\" value=\"' + value + '\"' + (checked ? ' checked' : '') + '>' + label + '</label>';\nconst rows = Object.fromEntries(plots.map(([row, shown]) => [row, shown.map(([key]) => key)]));\ncontext.element.onclick = ({ target }) => {\n  if (!target.closest('.plots')) return;\n  const dialog = document.createElement('div');\n  dialog.className = 'opendt-plots';\n  dialog.innerHTML =\n    '<div><b>Plots shown</b><section>' +\n    plots.map(([row, shown]) => '<div>' + tick(row, '<b>' + row + '</b>', false) +\n      shown.map(([key, title]) => tick(key, title, !hidden().includes(key))).join('') + '</div>').join('') +\n    '</section><button>Close</button></div>';\n  const box = (value) => dialog.querySelector('[value=\"' + value + '\"]');\n  // a row's tick: on while all its plots show, a dash while some do\n  const mark = () => Object.entries(rows).forEach(([row, keys]) => {\n    const on = keys.filter((key) => box(key).checked).length;\n    box(row).checked = on === keys.length;\n    box(row).indeterminate = on > 0 && on < keys.length;\n  });\n  mark();\n  dialog.onchange = ({ target }) => {\n    const keys = rows[target.value] ?? [target.value];\n    keys.forEach((key) => (box(key).checked = target.checked));\n    const others = hidden().filter((key) => !keys.includes(key));\n    context.grafana.locationService.partial({ 'var-hidden': target.checked ? others : [...others, ...keys] }, true);\n    mark();\n  };\n  dialog.onclick = ({ target }) => {\n    if (target === dialog || target.tagName === 'BUTTON') dialog.remove();\n  };\n  document.body.append(dialog);\n};\n"
+                                "styles": ".view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }\n.view div { display: flex; align-items: center; gap: 4px; }\n.view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }\n.view .on { background: #3d71d9; color: white !important; }\n.view select { width: auto; height: 26px; padding: 0 6px; background: transparent; color: inherit;\n  border: 1px solid #8e8e8e; border-radius: 2px; }",
+                                "afterRender": "const week = {\"from\": \"2022-10-06T22:00:00.000Z\", \"to\": \"2022-10-13T22:00:00.000Z\"};\nconst plots = [[\"Performance\", [[\"scheduling-now\", \"Now\"], [\"completion\", \"Total runtime\"], [\"queue\", \"Time in queue\"], [\"jobs\", \"Jobs\"], [\"jobs-left\", \"Jobs waiting or running\"], [\"arrivals\", \"Jobs arriving per hour\"]]], [\"Utilization\", [[\"utilization-now\", \"Now\"], [\"cpu\", \"CPU utilization of the hosts\"], [\"demand\", \"CPU demand vs. capacity\"], [\"cpu-hosts\", \"Hosts per CPU utilization\"], [\"idle-hosts\", \"Idle hosts\"]]], [\"Sustainability\", [[\"energy-now\", \"This period\"], [\"energy\", \"Energy per period\"], [\"intensity\", \"Carbon intensity\"], [\"idle-power\", \"Power draw of idle hosts\"]]], [\"Twin accuracy\", [[\"power\", \"Power draw\"], [\"mape\", \"Power draw MAPE per hour\"], [\"r\", \"Calibration parameter r\"], [\"error\", \"Power draw error per hour\"], [\"energy-error\", \"Energy error so far\"]]]];\nconst style = \".opendt-plots { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;\\n  justify-content: center; background: rgba(0, 0, 0, 0.6); }\\n.opendt-plots > div { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 24px;\\n  color: var(--ink); font-size: 14px; }\\n.opendt-plots section { display: grid; grid-template-columns: repeat(4, auto); gap: 40px; margin: 16px 0 24px; }\\n.opendt-plots label { display: flex; gap: 8px; margin-top: 10px; cursor: pointer; }\\n.opendt-plots button { float: right; background: #3d71d9; color: white; border: 0; border-radius: 2px;\\n  padding: 6px 16px; cursor: pointer; }\";\n// the links as Grafana fills them in now (the time, the markers, ...), again at every refresh\ncontext.element.querySelectorAll('[data-href]').forEach((a) => (a.href = context.grafana.replaceVariables(a.dataset.href)));\n// CSS for what lies outside the panel, added once to the page (the panel renders at every refresh), in the colours\n// of Grafana's theme: var(--panel), var(--canvas), var(--line), and var(--ink)\nconst css = (id, text) => {\n  const { background, border, text: ink } = context.grafana.theme.colors;\n  const theme = ':root { --panel: ' + background.primary + '; --canvas: ' + background.canvas + '; --line: ' + border.medium + '; --ink: ' + ink.primary + ' }\\n';\n  document.getElementById(id) || document.head.insertAdjacentHTML('beforeend', '<style id=\"' + id + '\">' + theme + text + '</style>');\n};\n// none of Grafana's own: no \"Powered by Grafana\" under the screen, no menus over the panels\nconst grafana = ['[data-testid=\"public-dashboard-footer\"]', '[data-testid=\"hover-header-container\"]', 'button[aria-label^=\"Menu for panel\"]'];\ncss('opendt-grafana', grafana.join(', ') + ' { display: none !important; }');\n// light or dark, as last chosen in this browser; Grafana takes its theme from the address, when the page loads\nconst light = document.body.classList.contains('theme-light');\nconst theme = (name) => {\n  const address = new URL(location.href);\n  address.searchParams.set('theme', name);\n  location.replace(address);\n};\nconst chosen = localStorage.getItem('opendt-theme');\nif (chosen && (chosen === 'light') !== light) theme(chosen);\n// the view: Week, Day, or 6 h, the markers, and the interval show at once on a click, kept in the address; Day and\n// 6 h follow the twin, to its last hours, at every refresh; always Grafana's kiosk mode (no menus, no bars)\nconst address = context.grafana.locationService;\nconst time = context.element.querySelector('[data-time]');\nconst twin = time.dataset.time;\ntime.textContent = twin.slice(0, 16).replace('T', ' ');\n// the time a window shows: Week, the SURF week; Day or 6 h, the twin's last ones, within the week, to its next full\n// hour (the range moves, and the panels ask again, once an hour, not at every window)\nconst range = (window, twin) => {\n  const hours = { day: 24, hours: 6 }[window];\n  if (!hours) return week;\n  const to = Math.ceil(new Date(twin).getTime() / 3600000) * 3600000;\n  const from = Math.max(to - hours * 3600000, new Date(week.from).getTime());\n  return { from, to: from + hours * 3600000 };\n};\nconst shown = (key) => context.grafana.replaceVariables('$' + key);\ncontext.element.querySelectorAll('[data-var]').forEach((choice) => {\n  const { var: key, value } = choice.dataset;\n  if (choice.tagName === 'SELECT') {\n    choice.value = shown(key);\n    choice.onchange = () => address.partial({ ['var-' + key]: choice.value });\n  } else {\n    choice.classList.toggle('on', shown(key) === value);\n    choice.onclick = () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) });\n  }\n});\nif (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);\nconst { from = week.from, to = week.to } = address.getSearchObject();\nconst end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date\nconst wholeWeek = from === week.from && to === week.to; // Day or 6 h before the twin's time was known\nif (twin && shown('window') !== 'week' && (Date.parse(twin) > end || wholeWeek)) {\n  address.partial(range(shown('window'), twin), true);\n}\n// ☀ or ☾, next to the twin's time: the other theme, kept in this browser (light and theme: grafana.js)\nconst toggle = context.element.querySelector('.theme');\ntoggle.textContent = light ? '☾' : '☀';\ntoggle.title = light ? 'Dark' : 'Light';\ntoggle.onclick = () => {\n  localStorage.setItem('opendt-theme', light ? 'dark' : 'light');\n  theme(light ? 'dark' : 'light');\n};\n// ☰ Plots opens the plots of the screen by row, ticked while shown: a tick shows or hides a plot at once, a row's tick\n// all of its plots. The address keeps the hidden plots, so a plot added later shows, even with an old address\nconst hidden = () => context.grafana.replaceVariables('$' + '{hidden:csv}').split(',');\ncss('opendt-plots', style);\nconst tick = (value, label, checked) =>\n  '<label><input type=\"checkbox\" value=\"' + value + '\"' + (checked ? ' checked' : '') + '>' + label + '</label>';\nconst rows = Object.fromEntries(plots.map(([row, shown]) => [row, shown.map(([key]) => key)]));\ncontext.element.onclick = ({ target }) => {\n  if (!target.closest('.plots')) return;\n  const dialog = document.createElement('div');\n  dialog.className = 'opendt-plots';\n  dialog.innerHTML =\n    '<div><b>Plots shown</b><section>' +\n    plots.map(([row, shown]) => '<div>' + tick(row, '<b>' + row + '</b>', false) +\n      shown.map(([key, title]) => tick(key, title, !hidden().includes(key))).join('') + '</div>').join('') +\n    '</section><button>Close</button></div>';\n  const box = (value) => dialog.querySelector('[value=\"' + value + '\"]');\n  // a row's tick: on while all its plots show, a dash while some do\n  const mark = () => Object.entries(rows).forEach(([row, keys]) => {\n    const on = keys.filter((key) => box(key).checked).length;\n    box(row).checked = on === keys.length;\n    box(row).indeterminate = on > 0 && on < keys.length;\n  });\n  mark();\n  dialog.onchange = ({ target }) => {\n    const keys = rows[target.value] ?? [target.value];\n    keys.forEach((key) => (box(key).checked = target.checked));\n    const others = hidden().filter((key) => !keys.includes(key));\n    context.grafana.locationService.partial({ 'var-hidden': target.checked ? others : [...others, ...keys] }, true);\n    mark();\n  };\n  dialog.onclick = ({ target }) => {\n    if (target === dialog || target.tagName === 'BUTTON') dialog.remove();\n  };\n  document.body.append(dialog);\n};\n"
                             },
                             "fieldConfig": {
                                 "defaults": {},
@@ -204,7 +204,7 @@
                                 "renderMode": "everyRow",
                                 "content": "<div class=\"lever\"><small>Datacenter <a>✎</a></small><p data-name=\"Hosts\"><small>Hosts</small><b><i data-key=\"hosts\" data-value=\"{{hosts}}\" data-min=\"1\">{{hosts}}</i></b></p><p data-name=\"Scheduler\"><small>Scheduler</small><b><i data-key=\"scheduler\" data-value=\"{{scheduler}}\" data-choices=\"Mem,CoreMem,ActiveServers,ActiveServersInv,ProvisionedCores,Random\" data-labels=\"Mem|CoreMem|ActiveServers|ActiveServersInv|ProvisionedCores|Random\">{{scheduler}}</i></b></p><a href=\"/d/opendt-topology?kiosk\">Infrastructure →</a></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Datacenter</small></div>",
-                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever > small { text-align: center; margin-bottom: 4px; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; text-align: center; }\n.lever:hover a { color: #6e9fff; }",
+                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever > small:first-child { margin-bottom: 2px; font-size: 14px; font-weight: 500; color: inherit; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }\n.lever:hover a { color: #6e9fff; }",
                                 "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: var(--panel); border: 1px solid #3d71d9; border-radius: 2px; color: var(--ink);\\n  font-size: 14px; }\\n.opendt-lever small { font-size: 12px; color: #8e8e8e; margin-top: 4px; }\\n.opendt-lever div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }\\n.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: var(--canvas); color: var(--ink);\\n  border: 1px solid var(--line); border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever input { width: 4em; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n/* a change sent, until the twin follows it (box.js) */\\n.lever i.pending { padding: 0 4px; border-radius: 2px; background: #3d71d9; color: white;\\n  animation: opendt-pending 1.6s ease-in-out infinite; }\\n@keyframes opendt-pending { 50% { opacity: 0.55; } }\";\n// CSS for what lies outside the panel, added once to the page (the panel renders at every refresh), in the colours\n// of Grafana's theme: var(--panel), var(--canvas), var(--line), and var(--ink)\nconst css = (id, text) => {\n  const { background, border, text: ink } = context.grafana.theme.colors;\n  const theme = ':root { --panel: ' + background.primary + '; --canvas: ' + background.canvas + '; --line: ' + border.medium + '; --ink: ' + ink.primary + ' }\\n';\n  document.getElementById(id) || document.head.insertAdjacentHTML('beforeend', '<style id=\"' + id + '\">' + theme + text + '</style>');\n};\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst rows = [...box.querySelectorAll('[data-name]')];\nconst levers = [...box.querySelectorAll('[data-key]')];\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] ?? value : Number(value).toLocaleString('en');\n// a change sent, shown (old → new, pulsing in white on blue) until the twin follows it: the hosts and the CO2 zone\n// from its next window, which takes longer with more hosts; kept over page reloads, for 10 minutes at most (a\n// restarted twin may never follow it), and shared by the boxes of every screen\nconst PENDING = 'opendt-pending';\nconst load = () => JSON.parse(sessionStorage.getItem(PENDING) || '{}');\nconst save = (sent) => sessionStorage.setItem(PENDING, JSON.stringify(sent));\nconst same = ({ dataset: { choices } }, a, b) => (choices ? a === b : Number(a) === Number(b));\nconst pending = load();\nlevers.forEach((lever) => {\n  const { key, value } = lever.dataset;\n  const done = pending[key] && (same(lever, pending[key].value, value) || Date.now() - pending[key].at > 600000);\n  if (done) delete pending[key];\n  const sent = key in pending;\n  lever.textContent = label(lever, value) + (sent ? ' → ' + label(lever, pending[key].value) : '');\n  lever.classList.toggle('pending', sent);\n  lever.title = sent ? 'Sent; the twin follows from its next window' : '';\n});\nsave(pending);\ncss('opendt-lever', style);\n// a lever's choices as buttons, or its number\nconst edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices\n  ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n  : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    rows.map((row) => '<small>' + row.dataset.name + '</small><div>' + [...row.querySelectorAll('[data-key]')].map((l) => edit(l, draft)).join('to') + '</div>').join('') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    const { key } = target.dataset;\n    if (target.classList.contains('choice')) {\n      draft[key] = target.value;\n      big.querySelectorAll('.choice[data-key=\"' + key + '\"]').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset }) => draft[dataset.key] !== dataset.value);\n    if (!changed.length) return big.remove();\n    // e.g., Hosts: 277 to 300; Range of r: 3-9 to 3-10\n    const text = rows.filter((row) => changed.some((l) => row.contains(l))).map((row) => {\n      const mine = [...row.querySelectorAll('[data-key]')];\n      const values = (value) => mine.map((l) => label(l, value(l))).join('-');\n      return row.dataset.name + ': ' + values((l) => l.dataset.value) + ' to ' + values((l) => draft[l.dataset.key]);\n    });\n    if (!confirm(text.join('; ') + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      const sent = load();  // other boxes may have changed it since this one rendered\n      changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));\n      save(sent);\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
@@ -274,7 +274,7 @@
                                 "renderMode": "everyRow",
                                 "content": "<div class=\"lever\"><small>Grid <a>✎</a></small><p data-name=\"CO₂ zone\"><small>CO₂ zone</small><b><i data-key=\"carbon_zone\" data-value=\"{{carbon_zone}}\" data-choices=\"NL,PL,DE,RO\" data-labels=\"NL|PL|DE|RO\">{{carbon_zone}}</i></b></p></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Grid</small></div>",
-                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever > small { text-align: center; margin-bottom: 4px; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; text-align: center; }\n.lever:hover a { color: #6e9fff; }",
+                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever > small:first-child { margin-bottom: 2px; font-size: 14px; font-weight: 500; color: inherit; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }\n.lever:hover a { color: #6e9fff; }",
                                 "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: var(--panel); border: 1px solid #3d71d9; border-radius: 2px; color: var(--ink);\\n  font-size: 14px; }\\n.opendt-lever small { font-size: 12px; color: #8e8e8e; margin-top: 4px; }\\n.opendt-lever div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }\\n.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: var(--canvas); color: var(--ink);\\n  border: 1px solid var(--line); border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever input { width: 4em; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n/* a change sent, until the twin follows it (box.js) */\\n.lever i.pending { padding: 0 4px; border-radius: 2px; background: #3d71d9; color: white;\\n  animation: opendt-pending 1.6s ease-in-out infinite; }\\n@keyframes opendt-pending { 50% { opacity: 0.55; } }\";\n// CSS for what lies outside the panel, added once to the page (the panel renders at every refresh), in the colours\n// of Grafana's theme: var(--panel), var(--canvas), var(--line), and var(--ink)\nconst css = (id, text) => {\n  const { background, border, text: ink } = context.grafana.theme.colors;\n  const theme = ':root { --panel: ' + background.primary + '; --canvas: ' + background.canvas + '; --line: ' + border.medium + '; --ink: ' + ink.primary + ' }\\n';\n  document.getElementById(id) || document.head.insertAdjacentHTML('beforeend', '<style id=\"' + id + '\">' + theme + text + '</style>');\n};\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst rows = [...box.querySelectorAll('[data-name]')];\nconst levers = [...box.querySelectorAll('[data-key]')];\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] ?? value : Number(value).toLocaleString('en');\n// a change sent, shown (old → new, pulsing in white on blue) until the twin follows it: the hosts and the CO2 zone\n// from its next window, which takes longer with more hosts; kept over page reloads, for 10 minutes at most (a\n// restarted twin may never follow it), and shared by the boxes of every screen\nconst PENDING = 'opendt-pending';\nconst load = () => JSON.parse(sessionStorage.getItem(PENDING) || '{}');\nconst save = (sent) => sessionStorage.setItem(PENDING, JSON.stringify(sent));\nconst same = ({ dataset: { choices } }, a, b) => (choices ? a === b : Number(a) === Number(b));\nconst pending = load();\nlevers.forEach((lever) => {\n  const { key, value } = lever.dataset;\n  const done = pending[key] && (same(lever, pending[key].value, value) || Date.now() - pending[key].at > 600000);\n  if (done) delete pending[key];\n  const sent = key in pending;\n  lever.textContent = label(lever, value) + (sent ? ' → ' + label(lever, pending[key].value) : '');\n  lever.classList.toggle('pending', sent);\n  lever.title = sent ? 'Sent; the twin follows from its next window' : '';\n});\nsave(pending);\ncss('opendt-lever', style);\n// a lever's choices as buttons, or its number\nconst edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices\n  ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n  : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    rows.map((row) => '<small>' + row.dataset.name + '</small><div>' + [...row.querySelectorAll('[data-key]')].map((l) => edit(l, draft)).join('to') + '</div>').join('') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    const { key } = target.dataset;\n    if (target.classList.contains('choice')) {\n      draft[key] = target.value;\n      big.querySelectorAll('.choice[data-key=\"' + key + '\"]').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset }) => draft[dataset.key] !== dataset.value);\n    if (!changed.length) return big.remove();\n    // e.g., Hosts: 277 to 300; Range of r: 3-9 to 3-10\n    const text = rows.filter((row) => changed.some((l) => row.contains(l))).map((row) => {\n      const mine = [...row.querySelectorAll('[data-key]')];\n      const values = (value) => mine.map((l) => label(l, value(l))).join('-');\n      return row.dataset.name + ': ' + values((l) => l.dataset.value) + ' to ' + values((l) => draft[l.dataset.key]);\n    });\n    if (!confirm(text.join('; ') + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      const sent = load();  // other boxes may have changed it since this one rendered\n      changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));\n      save(sent);\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
@@ -349,7 +349,7 @@
                                 "renderMode": "everyRow",
                                 "content": "<div class=\"lever\"><small>Twin <a>✎</a></small><p data-name=\"Speed\"><small>Speed</small><b><i data-key=\"speed_factor\" data-value=\"{{speed_factor}}\" data-choices=\"1,60,300,3600,-1\" data-labels=\"Real time|60x|300x|3,600x|Maximum\">{{speed_factor}}</i></b></p><p data-name=\"Calibration\"><small>Calibration</small><b><i data-key=\"calibration\" data-value=\"{{calibration}}\" data-choices=\"true,false\" data-labels=\"On|Off\">{{calibration}}</i></b></p></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Twin</small></div>",
-                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever > small { text-align: center; margin-bottom: 4px; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; text-align: center; }\n.lever:hover a { color: #6e9fff; }",
+                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever > small:first-child { margin-bottom: 2px; font-size: 14px; font-weight: 500; color: inherit; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }\n.lever:hover a { color: #6e9fff; }",
                                 "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: var(--panel); border: 1px solid #3d71d9; border-radius: 2px; color: var(--ink);\\n  font-size: 14px; }\\n.opendt-lever small { font-size: 12px; color: #8e8e8e; margin-top: 4px; }\\n.opendt-lever div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }\\n.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: var(--canvas); color: var(--ink);\\n  border: 1px solid var(--line); border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever input { width: 4em; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n/* a change sent, until the twin follows it (box.js) */\\n.lever i.pending { padding: 0 4px; border-radius: 2px; background: #3d71d9; color: white;\\n  animation: opendt-pending 1.6s ease-in-out infinite; }\\n@keyframes opendt-pending { 50% { opacity: 0.55; } }\";\n// CSS for what lies outside the panel, added once to the page (the panel renders at every refresh), in the colours\n// of Grafana's theme: var(--panel), var(--canvas), var(--line), and var(--ink)\nconst css = (id, text) => {\n  const { background, border, text: ink } = context.grafana.theme.colors;\n  const theme = ':root { --panel: ' + background.primary + '; --canvas: ' + background.canvas + '; --line: ' + border.medium + '; --ink: ' + ink.primary + ' }\\n';\n  document.getElementById(id) || document.head.insertAdjacentHTML('beforeend', '<style id=\"' + id + '\">' + theme + text + '</style>');\n};\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst rows = [...box.querySelectorAll('[data-name]')];\nconst levers = [...box.querySelectorAll('[data-key]')];\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] ?? value : Number(value).toLocaleString('en');\n// a change sent, shown (old → new, pulsing in white on blue) until the twin follows it: the hosts and the CO2 zone\n// from its next window, which takes longer with more hosts; kept over page reloads, for 10 minutes at most (a\n// restarted twin may never follow it), and shared by the boxes of every screen\nconst PENDING = 'opendt-pending';\nconst load = () => JSON.parse(sessionStorage.getItem(PENDING) || '{}');\nconst save = (sent) => sessionStorage.setItem(PENDING, JSON.stringify(sent));\nconst same = ({ dataset: { choices } }, a, b) => (choices ? a === b : Number(a) === Number(b));\nconst pending = load();\nlevers.forEach((lever) => {\n  const { key, value } = lever.dataset;\n  const done = pending[key] && (same(lever, pending[key].value, value) || Date.now() - pending[key].at > 600000);\n  if (done) delete pending[key];\n  const sent = key in pending;\n  lever.textContent = label(lever, value) + (sent ? ' → ' + label(lever, pending[key].value) : '');\n  lever.classList.toggle('pending', sent);\n  lever.title = sent ? 'Sent; the twin follows from its next window' : '';\n});\nsave(pending);\ncss('opendt-lever', style);\n// a lever's choices as buttons, or its number\nconst edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices\n  ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n  : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    rows.map((row) => '<small>' + row.dataset.name + '</small><div>' + [...row.querySelectorAll('[data-key]')].map((l) => edit(l, draft)).join('to') + '</div>').join('') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    const { key } = target.dataset;\n    if (target.classList.contains('choice')) {\n      draft[key] = target.value;\n      big.querySelectorAll('.choice[data-key=\"' + key + '\"]').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset }) => draft[dataset.key] !== dataset.value);\n    if (!changed.length) return big.remove();\n    // e.g., Hosts: 277 to 300; Range of r: 3-9 to 3-10\n    const text = rows.filter((row) => changed.some((l) => row.contains(l))).map((row) => {\n      const mine = [...row.querySelectorAll('[data-key]')];\n      const values = (value) => mine.map((l) => label(l, value(l))).join('-');\n      return row.dataset.name + ': ' + values((l) => l.dataset.value) + ' to ' + values((l) => draft[l.dataset.key]);\n    });\n    if (!confirm(text.join('; ') + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      const sent = load();  // other boxes may have changed it since this one rendered\n      changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));\n      save(sent);\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
@@ -439,7 +439,7 @@
                                 "renderMode": "everyRow",
                                 "content": "<div class=\"lever\"><small>Self-calibrator <a>✎</a></small><p data-name=\"Parallel runs\"><small>Parallel runs</small><b><i data-key=\"parallel_simulations\" data-value=\"{{parallel_simulations}}\" data-choices=\"1,2,3,4\" data-labels=\"1|2|3|4\">{{parallel_simulations}}</i></b></p><p data-name=\"Range of r\"><small>Range of r</small><b><i data-key=\"calibration_min\" data-value=\"{{calibration_min}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_min}}</i>-<i data-key=\"calibration_max\" data-value=\"{{calibration_max}}\" data-min=\"0.5\" data-max=\"20\" data-step=\"0.5\">{{calibration_max}}</i></b></p><p data-name=\"Values of r\"><small>Values of r</small><b><i data-key=\"calibration_points\" data-value=\"{{calibration_points}}\" data-min=\"2\" data-max=\"20\" data-step=\"1\">{{calibration_points}}</i></b></p><p data-name=\"MAPE window\"><small>MAPE window</small><b><i data-key=\"mape_window\" data-value=\"{{mape_window}}\" data-choices=\"60,360,1440\" data-labels=\"1 h|6 h|24 h\">{{mape_window}}</i></b></p><small>P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>)</small></div>",
                                 "defaultContent": "<div class=\"lever\"><small>Self-calibrator</small></div>",
-                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever > small { text-align: center; margin-bottom: 4px; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; text-align: center; }\n.lever:hover a { color: #6e9fff; }",
+                                "styles": ".lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;\n  padding: 0 8px; cursor: pointer; }\n.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }\n.lever > small:first-child { margin-bottom: 2px; font-size: 14px; font-weight: 500; color: inherit; }\n.lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;\n  line-height: 1.3; }\n.lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }\n.lever > small:last-child { margin: 4px 0 0; font-size: 11px; }\n.lever i { font-style: normal; }\n.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }\n.lever:hover a { color: #6e9fff; }",
                                 "afterRender": "const control = \"http://localhost:3001/api/control\";\nconst style = \".opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;\\n  padding: 12px; background: var(--panel); border: 1px solid #3d71d9; border-radius: 2px; color: var(--ink);\\n  font-size: 14px; }\\n.opendt-lever small { font-size: 12px; color: #8e8e8e; margin-top: 4px; }\\n.opendt-lever div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }\\n.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: var(--canvas); color: var(--ink);\\n  border: 1px solid var(--line); border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }\\n.opendt-lever input { width: 4em; }\\n.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }\\n/* a change sent, until the twin follows it (box.js) */\\n.lever i.pending { padding: 0 4px; border-radius: 2px; background: #3d71d9; color: white;\\n  animation: opendt-pending 1.6s ease-in-out infinite; }\\n@keyframes opendt-pending { 50% { opacity: 0.55; } }\";\n// CSS for what lies outside the panel, added once to the page (the panel renders at every refresh), in the colours\n// of Grafana's theme: var(--panel), var(--canvas), var(--line), and var(--ink)\nconst css = (id, text) => {\n  const { background, border, text: ink } = context.grafana.theme.colors;\n  const theme = ':root { --panel: ' + background.primary + '; --canvas: ' + background.canvas + '; --line: ' + border.medium + '; --ink: ' + ink.primary + ' }\\n';\n  document.getElementById(id) || document.head.insertAdjacentHTML('beforeend', '<style id=\"' + id + '\">' + theme + text + '</style>');\n};\n// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the\n// changes to the twin. Over the screen, the open box outlives the screen's refreshes\nconst box = context.element.querySelector('.lever');\nconst rows = [...box.querySelectorAll('[data-name]')];\nconst levers = [...box.querySelectorAll('[data-key]')];\n// a choice by its label, a number with its thousands separators\nconst label = ({ dataset: { choices, labels } }, value) =>\n  choices ? labels.split('|')[choices.split(',').indexOf(value)] ?? value : Number(value).toLocaleString('en');\n// a change sent, shown (old → new, pulsing in white on blue) until the twin follows it: the hosts and the CO2 zone\n// from its next window, which takes longer with more hosts; kept over page reloads, for 10 minutes at most (a\n// restarted twin may never follow it), and shared by the boxes of every screen\nconst PENDING = 'opendt-pending';\nconst load = () => JSON.parse(sessionStorage.getItem(PENDING) || '{}');\nconst save = (sent) => sessionStorage.setItem(PENDING, JSON.stringify(sent));\nconst same = ({ dataset: { choices } }, a, b) => (choices ? a === b : Number(a) === Number(b));\nconst pending = load();\nlevers.forEach((lever) => {\n  const { key, value } = lever.dataset;\n  const done = pending[key] && (same(lever, pending[key].value, value) || Date.now() - pending[key].at > 600000);\n  if (done) delete pending[key];\n  const sent = key in pending;\n  lever.textContent = label(lever, value) + (sent ? ' → ' + label(lever, pending[key].value) : '');\n  lever.classList.toggle('pending', sent);\n  lever.title = sent ? 'Sent; the twin follows from its next window' : '';\n});\nsave(pending);\ncss('opendt-lever', style);\n// a lever's choices as buttons, or its number\nconst edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices\n  ? choices.split(',').map((c, i) => '<button class=\"choice' + (c === draft[key] ? ' on' : '') + '\" data-key=\"' + key + '\" value=\"' + c + '\">' + labels.split('|')[i] + '</button>').join('')\n  : '<input type=\"number\" data-key=\"' + key + '\" min=\"' + min + '\" max=\"' + max + '\" step=\"' + step + '\" value=\"' + draft[key] + '\">';\nconst open = () => {\n  document.querySelector('.opendt-lever')?.remove();\n  const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));\n  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();\n  const big = document.createElement('div');\n  big.className = 'opendt-lever';\n  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';\n  big.innerHTML =\n    rows.map((row) => '<small>' + row.dataset.name + '</small><div>' + [...row.querySelectorAll('[data-key]')].map((l) => edit(l, draft)).join('to') + '</div>').join('') +\n    '<div><button class=\"apply\">Apply</button><button class=\"cancel\">Cancel</button></div>';\n  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);\n  big.onclick = async ({ target }) => {\n    const { key } = target.dataset;\n    if (target.classList.contains('choice')) {\n      draft[key] = target.value;\n      big.querySelectorAll('.choice[data-key=\"' + key + '\"]').forEach((c) => c.classList.toggle('on', c === target));\n    }\n    if (target.className === 'cancel') big.remove();\n    if (target.className !== 'apply') return;\n    const changed = levers.filter(({ dataset }) => draft[dataset.key] !== dataset.value);\n    if (!changed.length) return big.remove();\n    // e.g., Hosts: 277 to 300; Range of r: 3-9 to 3-10\n    const text = rows.filter((row) => changed.some((l) => row.contains(l))).map((row) => {\n      const mine = [...row.querySelectorAll('[data-key]')];\n      const values = (value) => mine.map((l) => label(l, value(l))).join('-');\n      return row.dataset.name + ': ' + values((l) => l.dataset.value) + ' to ' + values((l) => draft[l.dataset.key]);\n    });\n    if (!confirm(text.join('; ') + '? The twin follows from its next window.')) return;\n    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));\n    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });\n    if (response.ok) {\n      const sent = load();  // other boxes may have changed it since this one rendered\n      changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));\n      save(sent);\n      big.remove();\n      context.grafana.notifySuccess(['OpenDT', 'Applied']);\n      context.grafana.refresh();\n    } else {\n      const { detail } = await response.json();\n      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);\n    }\n  };\n  document.body.append(big);\n};\n// before the twin's first window, a box has no levers yet\nif (levers.length) {\n  box.onclick = ({ target }) => {\n    if (!target.href) open();\n  };\n}\n"
                             },
                             "fieldConfig": {
@@ -544,7 +544,8 @@
                         "version": "",
                         "spec": {
                             "options": {
-                                "showHeader": false
+                                "showHeader": false,
+                                "cellHeight": "md"
                             },
                             "fieldConfig": {
                                 "defaults": {
@@ -939,7 +940,8 @@
                                         "mode": "fixed",
                                         "fixedColor": "text"
                                     },
-                                    "decimals": 1
+                                    "unit": "percentunit",
+                                    "decimals": 0
                                 },
                                 "overrides": [
                                     {
@@ -973,14 +975,6 @@
                                                         }
                                                     ]
                                                 }
-                                            },
-                                            {
-                                                "id": "unit",
-                                                "value": "percentunit"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
                                             }
                                         ]
                                     },
@@ -1015,14 +1009,6 @@
                                                         }
                                                     ]
                                                 }
-                                            },
-                                            {
-                                                "id": "unit",
-                                                "value": "percentunit"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
                                             }
                                         ]
                                     },
@@ -1035,22 +1021,6 @@
                                             {
                                                 "id": "unit",
                                                 "value": "locale"
-                                            },
-                                            {
-                                                "id": "decimals",
-                                                "value": 0
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "CPU utilization"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "unit",
-                                                "value": "percentunit"
                                             }
                                         ]
                                     }
@@ -1273,6 +1243,42 @@
                                                 "value": 0
                                             }
                                         ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Energy [kWh]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "displayName",
+                                                "value": "Energy this ${period} [kWh]"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "CO₂ [kg]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "displayName",
+                                                "value": "CO₂ this ${period} [kg]"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Intensity [gCO₂/kWh]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "displayName",
+                                                "value": "Intensity (${zone}) [gCO₂/kWh]"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -1317,7 +1323,7 @@
                                                 "columns": [
                                                     {
                                                         "selector": "mape",
-                                                        "text": "MAPE, 5 min [%]",
+                                                        "text": "MAPE, 5 min",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -1350,12 +1356,12 @@
                                                 "columns": [
                                                     {
                                                         "selector": "mape",
-                                                        "text": "MAPE, 1 h [%]",
+                                                        "text": "MAPE, 1 h",
                                                         "type": "number"
                                                     },
                                                     {
                                                         "selector": "energy_error_pct",
-                                                        "text": "Energy error [%]",
+                                                        "text": "Energy error so far",
                                                         "type": "number"
                                                     },
                                                     {
@@ -1385,9 +1391,9 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "MAPE, 5 min [%]": 0,
-                                                "MAPE, 1 h [%]": 1,
-                                                "Energy error [%]": 2,
+                                                "MAPE, 5 min": 0,
+                                                "MAPE, 1 h": 1,
+                                                "Energy error so far": 2,
                                                 "r": 3
                                             }
                                         }
@@ -1431,7 +1437,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "MAPE, 5 min [%]"
+                                            "options": "MAPE, 5 min"
                                         },
                                         "properties": [
                                             {
@@ -1455,13 +1461,17 @@
                                                         }
                                                     ]
                                                 }
+                                            },
+                                            {
+                                                "id": "unit",
+                                                "value": "percent"
                                             }
                                         ]
                                     },
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "MAPE, 1 h [%]"
+                                            "options": "MAPE, 1 h"
                                         },
                                         "properties": [
                                             {
@@ -1485,6 +1495,22 @@
                                                         }
                                                     ]
                                                 }
+                                            },
+                                            {
+                                                "id": "unit",
+                                                "value": "percent"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Energy error so far"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "percent"
                                             }
                                         ]
                                     }
@@ -1583,7 +1609,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 12,
-                    "title": "P1  Performance now",
+                    "title": "Now",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -1626,7 +1652,7 @@
                                                     },
                                                     {
                                                         "selector": "started_in_10_min_pct",
-                                                        "text": "Started in 10 min [%]",
+                                                        "text": "Started in 10 min",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -1666,11 +1692,6 @@
                                                         "selector": "tasks_active",
                                                         "text": "Jobs running",
                                                         "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "tasks_completed",
-                                                        "text": "Jobs finished",
-                                                        "type": "number"
                                                     }
                                                 ]
                                             }
@@ -1696,10 +1717,9 @@
                                             "indexByName": {
                                                 "Total runtime [h]": 0,
                                                 "Queue time [min]": 1,
-                                                "Started in 10 min [%]": 2,
+                                                "Started in 10 min": 2,
                                                 "Jobs waiting": 3,
-                                                "Jobs running": 4,
-                                                "Jobs finished": 5
+                                                "Jobs running": 4
                                             }
                                         }
                                     }
@@ -1717,13 +1737,13 @@
                                 "reduceOptions": {
                                     "fields": "/.*/"
                                 },
-                                "colorMode": "background_solid",
+                                "colorMode": "value",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "auto",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "minVizWidth": 105,
+                                "minVizHeight": 48,
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -1734,7 +1754,7 @@
                                 "defaults": {
                                     "color": {
                                         "mode": "fixed",
-                                        "fixedColor": "rgba(128, 128, 128, 0.15)"
+                                        "fixedColor": "text"
                                     },
                                     "decimals": 1
                                 },
@@ -1774,12 +1794,12 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Jobs finished"
+                                            "options": "Started in 10 min"
                                         },
                                         "properties": [
                                             {
                                                 "id": "unit",
-                                                "value": "locale"
+                                                "value": "percent"
                                             },
                                             {
                                                 "id": "decimals",
@@ -1797,7 +1817,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 13,
-                    "title": "P2  Total runtime",
+                    "title": "Total runtime",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -1838,13 +1858,6 @@
                                                         "text": "Total runtime [h]",
                                                         "type": "number"
                                                     }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
                                                 ]
                                             }
                                         }
@@ -1858,8 +1871,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Total runtime [h]": 0,
-                                                "better": 1
+                                                "Total runtime [h]": 0
                                             }
                                         }
                                     }
@@ -1875,9 +1887,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -1886,7 +1898,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Total runtime [h]",
                                         "lineWidth": 2,
@@ -1912,53 +1923,6 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
                                             "options": "timestamp"
                                         },
                                         "properties": [
@@ -1978,7 +1942,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 14,
-                    "title": "P3  Time in queue",
+                    "title": "Time in queue",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -2019,13 +1983,6 @@
                                                         "text": "Median [min]",
                                                         "type": "number"
                                                     }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
                                                 ]
                                             }
                                         }
@@ -2039,8 +1996,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Median [min]": 0,
-                                                "better": 1
+                                                "Median [min]": 0
                                             }
                                         }
                                     }
@@ -2056,9 +2012,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -2067,7 +2023,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Time in queue [min]",
                                         "lineWidth": 2,
@@ -2093,53 +2048,6 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
                                             "options": "timestamp"
                                         },
                                         "properties": [
@@ -2159,7 +2067,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 15,
-                    "title": "P4  Jobs",
+                    "title": "Jobs",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -2241,9 +2149,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": true
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -2252,13 +2160,13 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 0,
                                     "custom": {
                                         "axisLabel": "Jobs",
                                         "lineWidth": 2,
                                         "showPoints": "never"
                                     },
-                                    "unit": "locale"
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
                                 "overrides": [
                                     {
@@ -2338,7 +2246,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 16,
-                    "title": "P5  Jobs waiting or running",
+                    "title": "Jobs waiting or running",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -2498,7 +2406,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 17,
-                    "title": "P6  Jobs arriving per hour",
+                    "title": "Jobs arriving per hour",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -2568,9 +2476,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -2579,7 +2487,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 0,
                                     "custom": {
                                         "axisLabel": "Arrivals [jobs/h]",
                                         "lineWidth": 2,
@@ -2588,7 +2495,8 @@
                                         "fillOpacity": 80,
                                         "barAlignment": 1
                                     },
-                                    "unit": "locale"
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
                                 "overrides": [
                                     {
@@ -2628,7 +2536,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 18,
-                    "title": "U1  Utilization now",
+                    "title": "Now",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -2736,13 +2644,13 @@
                                 "reduceOptions": {
                                     "fields": "/.*/"
                                 },
-                                "colorMode": "background_solid",
+                                "colorMode": "value",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "auto",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "minVizWidth": 105,
+                                "minVizHeight": 48,
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -2753,7 +2661,7 @@
                                 "defaults": {
                                     "color": {
                                         "mode": "fixed",
-                                        "fixedColor": "rgba(128, 128, 128, 0.15)"
+                                        "fixedColor": "text"
                                     },
                                     "unit": "locale",
                                     "decimals": 0
@@ -2801,7 +2709,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 19,
-                    "title": "U2  CPU utilization of the hosts",
+                    "title": "CPU utilization of the hosts",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -2847,13 +2755,6 @@
                                                         "text": "All hosts, mean",
                                                         "type": "number"
                                                     }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
                                                 ]
                                             }
                                         }
@@ -2868,8 +2769,7 @@
                                         "options": {
                                             "indexByName": {
                                                 "Busy hosts, median": 0,
-                                                "All hosts, mean": 1,
-                                                "better": 2
+                                                "All hosts, mean": 1
                                             }
                                         }
                                     }
@@ -2885,9 +2785,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": true
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -2896,7 +2796,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "CPU utilization [%]",
                                         "lineWidth": 2,
@@ -2948,53 +2847,6 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER ←"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
                                             "options": "timestamp"
                                         },
                                         "properties": [
@@ -3014,7 +2866,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 20,
-                    "title": "U3  CPU demand vs. capacity",
+                    "title": "CPU demand vs. capacity",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -3090,9 +2942,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": true
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -3101,13 +2953,13 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 0,
                                     "custom": {
                                         "axisLabel": "CPU [cores]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
                                     },
-                                    "unit": "locale"
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
                                 "overrides": [
                                     {
@@ -3172,7 +3024,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 21,
-                    "title": "U4  Hosts per CPU utilization",
+                    "title": "Hosts per CPU utilization",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -3315,7 +3167,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 22,
-                    "title": "U5  Idle hosts",
+                    "title": "Idle hosts",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -3367,11 +3219,6 @@
                                                         "selector": "hosts_up - hosts_in_use",
                                                         "text": "Running no job",
                                                         "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
                                                     }
                                                 ]
                                             }
@@ -3386,8 +3233,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Running no job": 0,
-                                                "better": 1
+                                                "Running no job": 0
                                             },
                                             "excludeByName": {
                                                 "hosts_up": true,
@@ -3407,9 +3253,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -3418,13 +3264,13 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 0,
                                     "custom": {
                                         "axisLabel": "Hosts",
                                         "lineWidth": 2,
                                         "showPoints": "never"
                                     },
-                                    "unit": "locale"
+                                    "unit": "locale",
+                                    "decimals": 0
                                 },
                                 "overrides": [
                                     {
@@ -3439,53 +3285,6 @@
                                                     "mode": "fixed",
                                                     "fixedColor": "#E69F00"
                                                 }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
                                             }
                                         ]
                                     },
@@ -3511,7 +3310,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 23,
-                    "title": "S1  This $period",
+                    "title": "This $period",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -3586,7 +3385,7 @@
                                                     },
                                                     {
                                                         "selector": "embodied_co2_kg * 100 / (co2_kg + embodied_co2_kg)",
-                                                        "text": "Embodied share [%]",
+                                                        "text": "Embodied share",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -3610,7 +3409,7 @@
                                                 "Embodied CO₂ [kg]": 5,
                                                 "CO₂ in total [kg]": 6,
                                                 "Intensity [gCO₂/kWh]": 7,
-                                                "Embodied share [%]": 8
+                                                "Embodied share": 8
                                             },
                                             "excludeByName": {
                                                 "energy_kwh": true,
@@ -3633,13 +3432,13 @@
                                 "reduceOptions": {
                                     "fields": "/.*/"
                                 },
-                                "colorMode": "background_solid",
+                                "colorMode": "value",
                                 "graphMode": "none",
                                 "textMode": "value_and_name",
                                 "orientation": "auto",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "auto",
+                                "minVizWidth": 105,
+                                "minVizHeight": 48,
+                                "justifyMode": "center",
                                 "wideLayout": false,
                                 "text": {
                                     "titleSize": 12,
@@ -3650,12 +3449,37 @@
                                 "defaults": {
                                     "color": {
                                         "mode": "fixed",
-                                        "fixedColor": "rgba(128, 128, 128, 0.15)"
+                                        "fixedColor": "text"
                                     },
                                     "unit": "locale",
                                     "decimals": 0
                                 },
-                                "overrides": []
+                                "overrides": [
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Embodied share"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "percent"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Intensity [gCO₂/kWh]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "displayName",
+                                                "value": "Intensity (${zone}) [gCO₂/kWh]"
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -3665,7 +3489,7 @@
                 "kind": "Panel",
                 "spec": {
                     "id": 24,
-                    "title": "S2  Energy per $period",
+                    "title": "Energy per $period",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -3706,13 +3530,6 @@
                                                         "text": "Energy [kWh]",
                                                         "type": "number"
                                                     }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
                                                 ]
                                             }
                                         }
@@ -3726,8 +3543,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Energy [kWh]": 0,
-                                                "better": 1
+                                                "Energy [kWh]": 0
                                             }
                                         }
                                     }
@@ -3743,9 +3559,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -3754,7 +3570,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Energy [kWh]",
                                         "lineWidth": 2,
@@ -3784,266 +3599,6 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "timestamp"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "Simulated time [UTC]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            },
-            "carbon": {
-                "kind": "Panel",
-                "spec": {
-                    "id": 25,
-                    "title": "S3  CO₂ per $period",
-                    "description": "",
-                    "transparent": false,
-                    "links": [],
-                    "data": {
-                        "kind": "QueryGroup",
-                        "spec": {
-                            "queries": [
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "A",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/totals?period=$period",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "timestamp",
-                                                        "text": "timestamp",
-                                                        "type": "timestamp"
-                                                    },
-                                                    {
-                                                        "selector": "co2_kg",
-                                                        "text": "Operational [kg]",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "embodied_co2_kg",
-                                                        "text": "Embodied [kg]",
-                                                        "type": "number"
-                                                    }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "transformations": [
-                                {
-                                    "kind": "organize",
-                                    "spec": {
-                                        "id": "organize",
-                                        "options": {
-                                            "indexByName": {
-                                                "Operational [kg]": 0,
-                                                "Embodied [kg]": 1,
-                                                "better": 2
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "queryOptions": {}
-                        }
-                    },
-                    "vizConfig": {
-                        "kind": "VizConfig",
-                        "group": "timeseries",
-                        "version": "",
-                        "spec": {
-                            "options": {
-                                "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
-                                },
-                                "tooltip": {
-                                    "mode": "multi"
-                                }
-                            },
-                            "fieldConfig": {
-                                "defaults": {
-                                    "min": 0,
-                                    "decimals": 1,
-                                    "custom": {
-                                        "axisLabel": "CO₂ [kg]",
-                                        "lineWidth": 2,
-                                        "showPoints": "never",
-                                        "stacking": {
-                                            "mode": "normal"
-                                        },
-                                        "drawStyle": "bars",
-                                        "fillOpacity": 80,
-                                        "barAlignment": 1
-                                    },
-                                    "unit": "locale"
-                                },
-                                "overrides": [
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Operational [kg]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "Embodied [kg]"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "color",
-                                                "value": {
-                                                    "mode": "fixed",
-                                                    "fixedColor": "#E69F00"
-                                                }
-                                            },
-                                            {
-                                                "id": "custom.fillOpacity",
-                                                "value": 35
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
                                             "options": "timestamp"
                                         },
                                         "properties": [
@@ -4062,8 +3617,8 @@
             "intensity": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 26,
-                    "title": "S4  Carbon intensity",
+                    "id": 25,
+                    "title": "Carbon intensity (${zone})",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -4101,14 +3656,7 @@
                                                     },
                                                     {
                                                         "selector": "carbon_intensity",
-                                                        "text": "Intensity [gCO₂/kWh]",
-                                                        "type": "number"
-                                                    }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
+                                                        "text": "Carbon intensity [gCO₂/kWh]",
                                                         "type": "number"
                                                     }
                                                 ]
@@ -4124,8 +3672,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Intensity [gCO₂/kWh]": 0,
-                                                "better": 1
+                                                "Carbon intensity [gCO₂/kWh]": 0
                                             }
                                         }
                                     }
@@ -4141,9 +3688,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -4152,9 +3699,8 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
-                                        "axisLabel": "Carbon intensity [gCO₂/kWh]",
+                                        "axisLabel": "Carbon intensity (${zone}) [gCO₂/kWh]",
                                         "lineWidth": 2,
                                         "showPoints": "never"
                                     }
@@ -4163,7 +3709,7 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Intensity [gCO₂/kWh]"
+                                            "options": "Carbon intensity [gCO₂/kWh]"
                                         },
                                         "properties": [
                                             {
@@ -4178,59 +3724,24 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
                                             "options": "timestamp"
                                         },
                                         "properties": [
                                             {
                                                 "id": "custom.axisLabel",
                                                 "value": "Simulated time [UTC]"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Carbon intensity [gCO₂/kWh]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "displayName",
+                                                "value": "Carbon intensity (${zone}) [gCO₂/kWh]"
                                             }
                                         ]
                                     }
@@ -4243,8 +3754,8 @@
             "idle-power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 27,
-                    "title": "S5  Power draw of idle hosts",
+                    "id": 26,
+                    "title": "Power draw of idle hosts",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -4285,13 +3796,6 @@
                                                         "text": "Idle hosts [kW]",
                                                         "type": "number"
                                                     }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
                                                 ]
                                             }
                                         }
@@ -4305,8 +3809,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "Idle hosts [kW]": 0,
-                                                "better": 1
+                                                "Idle hosts [kW]": 0
                                             }
                                         }
                                     }
@@ -4322,9 +3825,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "last"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -4333,7 +3836,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Power draw [kW]",
                                         "lineWidth": 2,
@@ -4359,53 +3861,6 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
                                             "options": "timestamp"
                                         },
                                         "properties": [
@@ -4421,12 +3876,12 @@
                     }
                 }
             },
-            "accuracy-now": {
+            "power": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 28,
-                    "title": "T1  Accuracy now",
-                    "description": "",
+                    "id": 27,
+                    "title": "Power draw",
+                    "description": "Actual power draw alongside OpenDT's predictions. When the predicted curve closely tracks the actual power draw, the twin accurately represents the physical infrastructure; when drift occurs, the operator can identify whether intervention is needed.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -4450,107 +3905,40 @@
                                                 "source": "url",
                                                 "parser": "backend",
                                                 "format": "table",
-                                                "url": "http://api:8000/api/accuracy",
+                                                "url": "http://api:8000/api/power?interval_seconds=60",
                                                 "url_options": {
                                                     "method": "GET"
                                                 },
                                                 "root_selector": "data",
                                                 "columns": [
                                                     {
-                                                        "selector": "mape",
-                                                        "text": "MAPE, 1 h [%]",
+                                                        "selector": "timestamp",
+                                                        "text": "timestamp",
+                                                        "type": "timestamp"
+                                                    },
+                                                    {
+                                                        "selector": "actual_power",
+                                                        "text": "actual_power",
                                                         "type": "number"
                                                     },
                                                     {
-                                                        "selector": "error_kw",
-                                                        "text": "Error, 1 h [kW]",
+                                                        "selector": "simulated_power",
+                                                        "text": "simulated_power",
                                                         "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "energy_error_pct",
-                                                        "text": "Energy error [%]",
-                                                        "type": "number"
-                                                    },
-                                                    {
-                                                        "selector": "r",
-                                                        "text": "r",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "B",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/accuracy?minutes=5",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "mape",
-                                                        "text": "MAPE, 5 min [%]",
-                                                        "type": "number"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "kind": "PanelQuery",
-                                    "spec": {
-                                        "refId": "C",
-                                        "hidden": false,
-                                        "query": {
-                                            "kind": "DataQuery",
-                                            "group": "yesoreyeram-infinity-datasource",
-                                            "version": "v0",
-                                            "datasource": {
-                                                "name": "df5tfgbpfeakgc"
-                                            },
-                                            "spec": {
-                                                "type": "json",
-                                                "source": "url",
-                                                "parser": "backend",
-                                                "format": "table",
-                                                "url": "http://api:8000/api/events?markers=on",
-                                                "url_options": {
-                                                    "method": "GET"
-                                                },
-                                                "root_selector": "data",
-                                                "columns": [
-                                                    {
-                                                        "selector": "text",
-                                                        "text": "text",
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "selector": "by",
-                                                        "text": "by",
-                                                        "type": "string"
                                                     }
                                                 ],
-                                                "filterExpression": "by == 'Automatic'",
-                                                "summarizeExpression": "count(text)",
-                                                "summarizeAlias": "Automatic decisions"
+                                                "computed_columns": [
+                                                    {
+                                                        "selector": "actual_power/1000",
+                                                        "text": "Ground truth [kW]",
+                                                        "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "simulated_power/1000",
+                                                        "text": "OpenDT [kW]",
+                                                        "type": "number"
+                                                    }
+                                                ]
                                             }
                                         }
                                     }
@@ -4558,27 +3946,17 @@
                             ],
                             "transformations": [
                                 {
-                                    "kind": "concatenate",
-                                    "spec": {
-                                        "id": "concatenate",
-                                        "options": {
-                                            "frameNameMode": "drop"
-                                        }
-                                    }
-                                },
-                                {
                                     "kind": "organize",
                                     "spec": {
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "MAPE, 1 h [%]": 0,
-                                                "Error, 1 h [kW]": 1,
-                                                "Energy error [%]": 2,
-                                                "r": 3,
-                                                "MAPE, 5 min [%]": 4,
-                                                "text": 5,
-                                                "by": 6
+                                                "Ground truth [kW]": 0,
+                                                "OpenDT [kW]": 1
+                                            },
+                                            "excludeByName": {
+                                                "actual_power": true,
+                                                "simulated_power": true
                                             }
                                         }
                                     }
@@ -4589,44 +3967,78 @@
                     },
                     "vizConfig": {
                         "kind": "VizConfig",
-                        "group": "stat",
+                        "group": "timeseries",
                         "version": "",
                         "spec": {
                             "options": {
-                                "reduceOptions": {
-                                    "fields": "/.*/"
+                                "legend": {
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": true
                                 },
-                                "colorMode": "background_solid",
-                                "graphMode": "none",
-                                "textMode": "value_and_name",
-                                "orientation": "auto",
-                                "minVizWidth": 100,
-                                "minVizHeight": 60,
-                                "justifyMode": "auto",
-                                "wideLayout": false,
-                                "text": {
-                                    "titleSize": 12,
-                                    "valueSize": 22
+                                "tooltip": {
+                                    "mode": "multi"
                                 }
                             },
                             "fieldConfig": {
                                 "defaults": {
-                                    "color": {
-                                        "mode": "fixed",
-                                        "fixedColor": "rgba(128, 128, 128, 0.15)"
-                                    },
-                                    "decimals": 1
+                                    "min": 0,
+                                    "custom": {
+                                        "axisLabel": "Power draw [kW]",
+                                        "lineWidth": 2,
+                                        "showPoints": "never"
+                                    }
                                 },
                                 "overrides": [
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "Automatic decisions"
+                                            "options": "Ground truth [kW]"
                                         },
                                         "properties": [
                                             {
-                                                "id": "decimals",
-                                                "value": 0
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#999999"
+                                                }
+                                            },
+                                            {
+                                                "id": "custom.lineStyle",
+                                                "value": {
+                                                    "fill": "dash",
+                                                    "dash": [
+                                                        8,
+                                                        4
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "OpenDT [kW]"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "color",
+                                                "value": {
+                                                    "mode": "fixed",
+                                                    "fixedColor": "#009E73"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "timestamp"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "custom.axisLabel",
+                                                "value": "Simulated time [UTC]"
                                             }
                                         ]
                                     }
@@ -4639,8 +4051,8 @@
             "mape": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 29,
-                    "title": "T2  Power draw MAPE per hour",
+                    "id": 28,
+                    "title": "Power draw MAPE per hour",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -4681,13 +4093,6 @@
                                                         "text": "MAPE [%]",
                                                         "type": "number"
                                                     }
-                                                ],
-                                                "computed_columns": [
-                                                    {
-                                                        "selector": "0",
-                                                        "text": "better",
-                                                        "type": "number"
-                                                    }
                                                 ]
                                             }
                                         }
@@ -4701,8 +4106,7 @@
                                         "id": "organize",
                                         "options": {
                                             "indexByName": {
-                                                "MAPE [%]": 0,
-                                                "better": 1
+                                                "MAPE [%]": 0
                                             }
                                         }
                                     }
@@ -4718,9 +4122,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -4729,7 +4133,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Power draw MAPE [%]",
                                         "lineWidth": 2,
@@ -4758,53 +4161,6 @@
                                     {
                                         "matcher": {
                                             "id": "byName",
-                                            "options": "better"
-                                        },
-                                        "properties": [
-                                            {
-                                                "id": "custom.axisPlacement",
-                                                "value": "right"
-                                            },
-                                            {
-                                                "id": "custom.axisLabel",
-                                                "value": "BETTER →"
-                                            },
-                                            {
-                                                "id": "custom.lineWidth",
-                                                "value": 0
-                                            },
-                                            {
-                                                "id": "custom.axisGridShow",
-                                                "value": false
-                                            },
-                                            {
-                                                "id": "custom.hideFrom",
-                                                "value": {
-                                                    "legend": true,
-                                                    "tooltip": true,
-                                                    "viz": false
-                                                }
-                                            },
-                                            {
-                                                "id": "mappings",
-                                                "value": [
-                                                    {
-                                                        "type": "range",
-                                                        "options": {
-                                                            "from": -1000000000000.0,
-                                                            "to": 1000000000000.0,
-                                                            "result": {
-                                                                "text": " "
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "matcher": {
-                                            "id": "byName",
                                             "options": "timestamp"
                                         },
                                         "properties": [
@@ -4823,8 +4179,8 @@
             "r": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 30,
-                    "title": "T3  Calibration parameter r",
+                    "id": 29,
+                    "title": "Calibration parameter r",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -4894,9 +4250,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -4905,7 +4261,6 @@
                             "fieldConfig": {
                                 "defaults": {
                                     "min": 0,
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "r",
                                         "lineWidth": 2,
@@ -4950,8 +4305,8 @@
             "error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 31,
-                    "title": "T4  Power draw error per hour",
+                    "id": 30,
+                    "title": "Power draw error per hour",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -5021,9 +4376,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -5031,7 +4386,6 @@
                             },
                             "fieldConfig": {
                                 "defaults": {
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Power draw error [kW]",
                                         "lineWidth": 2,
@@ -5080,8 +4434,8 @@
             "energy-error": {
                 "kind": "Panel",
                 "spec": {
-                    "id": 32,
-                    "title": "T5  Energy error so far",
+                    "id": 31,
+                    "title": "Energy error so far",
                     "description": "",
                     "transparent": false,
                     "links": [],
@@ -5151,9 +4505,9 @@
                         "spec": {
                             "options": {
                                 "legend": {
-                                    "calcs": [
-                                        "lastNotNull"
-                                    ]
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "showLegend": false
                                 },
                                 "tooltip": {
                                     "mode": "multi"
@@ -5161,7 +4515,6 @@
                             },
                             "fieldConfig": {
                                 "defaults": {
-                                    "decimals": 1,
                                     "custom": {
                                         "axisLabel": "Energy error [%]",
                                         "lineWidth": 2,
@@ -5334,7 +4687,7 @@
                                                 "x": 0,
                                                 "y": 4,
                                                 "width": 8,
-                                                "height": 5,
+                                                "height": 6,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "decisions"
@@ -5347,7 +4700,7 @@
                                                 "x": 8,
                                                 "y": 4,
                                                 "width": 4,
-                                                "height": 5,
+                                                "height": 6,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "power-group"
@@ -5360,7 +4713,7 @@
                                                 "x": 12,
                                                 "y": 4,
                                                 "width": 4,
-                                                "height": 5,
+                                                "height": 6,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "jobs-group"
@@ -5373,7 +4726,7 @@
                                                 "x": 16,
                                                 "y": 4,
                                                 "width": 4,
-                                                "height": 5,
+                                                "height": 6,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "sustainability-group"
@@ -5386,7 +4739,7 @@
                                                 "x": 20,
                                                 "y": 4,
                                                 "width": 4,
-                                                "height": 5,
+                                                "height": 6,
                                                 "element": {
                                                     "kind": "ElementReference",
                                                     "name": "accuracy-group"
@@ -5852,7 +5205,7 @@
                             "layout": {
                                 "kind": "AutoGridLayout",
                                 "spec": {
-                                    "maxColumnCount": 5,
+                                    "maxColumnCount": 4,
                                     "columnWidthMode": "narrow",
                                     "rowHeightMode": "standard",
                                     "fillScreen": false,
@@ -5902,32 +5255,6 @@
                                                                     "variable": "hidden",
                                                                     "operator": "notEquals",
                                                                     "value": "energy"
-                                                                }
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "kind": "AutoGridLayoutItem",
-                                            "spec": {
-                                                "element": {
-                                                    "kind": "ElementReference",
-                                                    "name": "carbon"
-                                                },
-                                                "conditionalRendering": {
-                                                    "kind": "ConditionalRenderingGroup",
-                                                    "spec": {
-                                                        "visibility": "show",
-                                                        "condition": "or",
-                                                        "items": [
-                                                            {
-                                                                "kind": "ConditionalRenderingVariable",
-                                                                "spec": {
-                                                                    "variable": "hidden",
-                                                                    "operator": "notEquals",
-                                                                    "value": "carbon"
                                                                 }
                                                             }
                                                         ]
@@ -6017,14 +5344,6 @@
                                             "spec": {
                                                 "variable": "hidden",
                                                 "operator": "notEquals",
-                                                "value": "carbon"
-                                            }
-                                        },
-                                        {
-                                            "kind": "ConditionalRenderingVariable",
-                                            "spec": {
-                                                "variable": "hidden",
-                                                "operator": "notEquals",
                                                 "value": "intensity"
                                             }
                                         },
@@ -6059,7 +5378,7 @@
                                             "spec": {
                                                 "element": {
                                                     "kind": "ElementReference",
-                                                    "name": "accuracy-now"
+                                                    "name": "power"
                                                 },
                                                 "conditionalRendering": {
                                                     "kind": "ConditionalRenderingGroup",
@@ -6072,7 +5391,7 @@
                                                                 "spec": {
                                                                     "variable": "hidden",
                                                                     "operator": "notEquals",
-                                                                    "value": "accuracy-now"
+                                                                    "value": "power"
                                                                 }
                                                             }
                                                         ]
@@ -6198,7 +5517,7 @@
                                             "spec": {
                                                 "variable": "hidden",
                                                 "operator": "notEquals",
-                                                "value": "accuracy-now"
+                                                "value": "power"
                                             }
                                         },
                                         {
@@ -6308,6 +5627,55 @@
             {
                 "kind": "QueryVariable",
                 "spec": {
+                    "name": "zone",
+                    "current": {
+                        "text": "",
+                        "value": ""
+                    },
+                    "query": {
+                        "kind": "DataQuery",
+                        "group": "yesoreyeram-infinity-datasource",
+                        "version": "v0",
+                        "datasource": {
+                            "name": "df5tfgbpfeakgc"
+                        },
+                        "spec": {
+                            "queryType": "infinity",
+                            "infinityQuery": {
+                                "refId": "A",
+                                "type": "json",
+                                "source": "url",
+                                "parser": "backend",
+                                "format": "table",
+                                "url": "http://api:8000/api/status",
+                                "url_options": {
+                                    "method": "GET"
+                                },
+                                "root_selector": "",
+                                "columns": [
+                                    {
+                                        "selector": "carbon_zone",
+                                        "text": "carbon_zone",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "refresh": "onTimeRangeChanged",
+                    "regex": "",
+                    "sort": "disabled",
+                    "options": [],
+                    "multi": false,
+                    "includeAll": false,
+                    "allowCustomValue": false,
+                    "hide": "hideVariable",
+                    "skipUrlSync": true
+                }
+            },
+            {
+                "kind": "QueryVariable",
+                "spec": {
                     "name": "twin",
                     "current": {
                         "text": "",
@@ -6408,7 +5776,7 @@
                 "spec": {
                     "name": "hidden",
                     "label": "Hidden plots",
-                    "query": "none,scheduling-now,completion,queue,jobs,jobs-left,arrivals,utilization-now,cpu,demand,cpu-hosts,idle-hosts,energy-now,energy,carbon,intensity,idle-power,accuracy-now,mape,r,error,energy-error",
+                    "query": "none,scheduling-now,completion,queue,jobs,jobs-left,arrivals,utilization-now,cpu,demand,cpu-hosts,idle-hosts,energy-now,energy,intensity,idle-power,power,mape,r,error,energy-error",
                     "current": {
                         "text": [
                             "none",
@@ -6419,7 +5787,6 @@
                             "idle-hosts",
                             "energy-now",
                             "energy",
-                            "carbon",
                             "intensity",
                             "idle-power"
                         ],
@@ -6432,7 +5799,6 @@
                             "idle-hosts",
                             "energy-now",
                             "energy",
-                            "carbon",
                             "intensity",
                             "idle-power"
                         ]
@@ -6509,11 +5875,6 @@
                             "selected": true
                         },
                         {
-                            "text": "carbon",
-                            "value": "carbon",
-                            "selected": true
-                        },
-                        {
                             "text": "intensity",
                             "value": "intensity",
                             "selected": true
@@ -6524,8 +5885,8 @@
                             "selected": true
                         },
                         {
-                            "text": "accuracy-now",
-                            "value": "accuracy-now",
+                            "text": "power",
+                            "value": "power",
                             "selected": false
                         },
                         {

@@ -75,21 +75,35 @@ power = timeseries(
     "Power draw [kW]",
     {"Ground truth": GREY, "OpenDT": GREEN},
     WATTS,
-    better="lower",
     computed=KW,
     hide=["actual_power", "simulated_power"],
     apart=["Ground truth"],
 )
-co2 = timeseries(
-    "CO₂ emissions vs. carbon intensity",
-    CO2,
-    "CO₂ emissions [kg/h]",
-    {"CO₂ emissions": ORANGE, "Carbon intensity": BLUE},
-    [("carbon_emission", "carbon_emission"), ("carbon_intensity", "Carbon intensity")],
-    computed=[("carbon_emission/1000", "CO₂ emissions")],
-    hide=["carbon_emission"],
-    right=("Carbon intensity", "Carbon intensity [gCO₂/kWh]"),
-    apart=["Carbon intensity"],
+# the carbon intensity of the CO₂ zone the twin runs on now (the screens' variable `zone`)
+ZONED = "(${zone}) [gCO₂/kWh]"
+
+
+def zoned(panel, *names):
+    """The panel's carbon intensities, `names`, shown with the zone: Grafana fills a variable in a name it shows,
+    not in the name of the API's column."""
+    shown = [override(n, displayName=n.replace("[gCO₂/kWh]", ZONED)) for n in names]
+    panel["fieldConfig"]["overrides"] += shown
+    return panel
+
+
+co2 = zoned(
+    timeseries(
+        "CO₂ emissions vs. carbon intensity (${zone})",
+        CO2,
+        "CO₂ emissions [kg/h]",
+        {"CO₂ emissions": ORANGE, "Carbon intensity": BLUE},
+        [("carbon_emission", "carbon_emission"), ("carbon_intensity", "Carbon intensity")],
+        computed=[("carbon_emission/1000", "CO₂ emissions")],
+        hide=["carbon_emission"],
+        right=("Carbon intensity", f"Carbon intensity {ZONED}"),
+        apart=["Carbon intensity"],
+    ),
+    "Carbon intensity [gCO₂/kWh]",
 )
 hosts = timeseries(
     "Hosts available vs. in use",
@@ -132,34 +146,24 @@ heatmap = {
         "legend": {"showLegend": True, "displayMode": "list"},
     },
 }
-# the calibrator's decisions, counted by the data source
-automatic = target(EVENTS, [("text", "text", "string"), ("by", "by", "string")]) | {
-    "filterExpression": "by == 'Automatic'",
-    "summarizeExpression": "count(text)",
-    "summarizeAlias": "Automatic decisions",
-}
 
 ROWS = {
     "Performance": {
         "scheduling-now": stat(
-            "Performance now",
+            "Now",
             SCHEDULING,
             [
                 ("completion_h", "Total runtime [h]"),
                 ("queue_median_min", "Queue time [min]"),
-                ("started_in_10_min_pct", "Started in 10 min [%]"),
+                ("started_in_10_min_pct", "Started in 10 min"),
             ],
-            units("locale", "Jobs waiting", "Jobs running", "Jobs finished", decimals=0),
+            [
+                *units("locale", "Jobs waiting", "Jobs running", decimals=0),
+                override("Started in 10 min", unit="percent", decimals=0),
+            ],
             decimals=1,
             more=[
-                target(
-                    NOW,
-                    [
-                        ("tasks_pending", "Jobs waiting"),
-                        ("tasks_active", "Jobs running"),
-                        ("tasks_completed", "Jobs finished"),
-                    ],
-                )
+                target(NOW, [("tasks_pending", "Jobs waiting"), ("tasks_active", "Jobs running")])
             ],
         ),
         "completion": timeseries(
@@ -168,8 +172,6 @@ ROWS = {
             "Total runtime [h]",
             {"Total runtime": BLUE},
             [("completion_h", "Total runtime")],
-            better="lower",
-            gaps=True,
         ),
         "queue": timeseries(
             "Time in queue",
@@ -177,8 +179,6 @@ ROWS = {
             "Time in queue [min]",
             {"Median": YELLOW},
             [("queue_median_min", "Median")],
-            better="lower",
-            gaps=True,
         ),
         "jobs": timeseries(
             "Jobs",
@@ -224,7 +224,7 @@ ROWS = {
     },
     "Utilization": {
         "utilization-now": stat(
-            "Utilization now",
+            "Now",
             NOW,
             [
                 ("cpu_utilization_busy_median", "CPU, busy hosts"),
@@ -249,7 +249,6 @@ ROWS = {
                 ("cpu_utilization_busy_median", "Busy hosts, median"),
                 ("cpu_utilization", "All hosts, mean"),
             ],
-            better="higher",
             unit="percentunit",
             apart=["All hosts, mean"],
         ),
@@ -270,7 +269,6 @@ ROWS = {
             "Hosts",
             {"Running no job": ORANGE},
             [("hosts_up", "hosts_up"), ("hosts_in_use", "hosts_in_use")],
-            better="lower",
             unit="locale",
             decimals=0,
             computed=[("hosts_up - hosts_in_use", "Running no job")],
@@ -278,21 +276,25 @@ ROWS = {
         ),
     },
     "Sustainability": {
-        "energy-now": stat(
-            "This $period",
-            TOTALS,
-            [(c, c) for c in ("energy_kwh", "co2_kg", "embodied_co2_kg")],
-            unit="locale",
-            decimals=0,
-            computed=[
-                ("energy_kwh", "Energy [kWh]"),
-                ("co2_kg", "CO₂ [kg]"),
-                ("embodied_co2_kg", "Embodied CO₂ [kg]"),
-                ("co2_kg + embodied_co2_kg", "CO₂ in total [kg]"),
-                ("co2_kg * 1000 / energy_kwh", "Intensity [gCO₂/kWh]"),  # the mean of the period
-                ("embodied_co2_kg * 100 / (co2_kg + embodied_co2_kg)", "Embodied share [%]"),
-            ],
-            hide=["energy_kwh", "co2_kg", "embodied_co2_kg"],
+        "energy-now": zoned(
+            stat(
+                "This $period",
+                TOTALS,
+                [(c, c) for c in ("energy_kwh", "co2_kg", "embodied_co2_kg")],
+                [override("Embodied share", unit="percent")],
+                unit="locale",
+                decimals=0,
+                computed=[
+                    ("energy_kwh", "Energy [kWh]"),
+                    ("co2_kg", "CO₂ [kg]"),
+                    ("embodied_co2_kg", "Embodied CO₂ [kg]"),
+                    ("co2_kg + embodied_co2_kg", "CO₂ in total [kg]"),
+                    ("co2_kg * 1000 / energy_kwh", "Intensity [gCO₂/kWh]"),  # the period's mean
+                    ("embodied_co2_kg * 100 / (co2_kg + embodied_co2_kg)", "Embodied share"),
+                ],
+                hide=["energy_kwh", "co2_kg", "embodied_co2_kg"],
+            ),
+            "Intensity [gCO₂/kWh]",
         ),
         "energy": timeseries(
             "Energy per $period",
@@ -300,29 +302,18 @@ ROWS = {
             "Energy [kWh]",
             {"Energy": BLUE},
             [("energy_kwh", "Energy")],
-            better="lower",
             unit="locale",
             **BARS,
         ),
-        "carbon": timeseries(
-            "CO₂ per $period",
-            TOTALS,
-            "CO₂ [kg]",
-            {"Operational": ORANGE, "Embodied": ORANGE},
-            [("co2_kg", "Operational"), ("embodied_co2_kg", "Embodied")],
-            better="lower",
-            unit="locale",
-            stacking={"mode": "normal"},  # together, the CO₂ of the period
-            apart=["Embodied"],
-            **BARS,
-        ),
-        "intensity": timeseries(
-            "Carbon intensity",
-            CO2,
+        "intensity": zoned(
+            timeseries(
+                "Carbon intensity (${zone})",
+                CO2,
+                f"Carbon intensity {ZONED}",
+                {"Carbon intensity": BLUE},
+                [("carbon_intensity", "Carbon intensity")],
+            ),
             "Carbon intensity [gCO₂/kWh]",
-            {"Intensity": BLUE},
-            [("carbon_intensity", "Intensity")],
-            better="lower",
         ),
         # what the idle hosts cost
         "idle-power": timeseries(
@@ -331,31 +322,17 @@ ROWS = {
             "Power draw [kW]",
             {"Idle hosts": ORANGE},
             [("idle_power_kw", "Idle hosts")],
-            better="lower",
         ),
     },
+    # its numbers now are on top (Accuracy); first, the power draw of the datacenter and of the twin instead
     "Twin accuracy": {
-        "accuracy-now": stat(
-            "Accuracy now",
-            ACCURACY,
-            [
-                ("mape", "MAPE, 1 h [%]"),
-                ("error_kw", "Error, 1 h [kW]"),
-                ("energy_error_pct", "Energy error [%]"),
-                ("r", "r"),
-            ],
-            [override("Automatic decisions", decimals=0)],
-            decimals=1,
-            more=[target(f"{ACCURACY}?minutes=5", [("mape", "MAPE, 5 min [%]")]), automatic],
-        ),
+        "power": power,
         "mape": timeseries(
             "Power draw MAPE per hour",
             ACCURACY,
             "Power draw MAPE [%]",
             {"MAPE": RED},
             [("mape", "MAPE")],
-            better="lower",
-            gaps=True,
             **BARS,
         ),
         "r": timeseries(
@@ -364,7 +341,6 @@ ROWS = {
             "r",
             {"r": BLUE},
             [("r", "r")],
-            gaps=True,
             lineInterpolation="stepAfter",
         ),
         # above 0, OpenDT predicts more power than measured; calibration brings it to 0
@@ -374,7 +350,6 @@ ROWS = {
             "Power draw error [kW]",
             {"Error": RED},
             [("error_kw", "Error")],
-            gaps=True,
             signed=True,
             **BARS,
         ),
@@ -384,15 +359,10 @@ ROWS = {
             "Energy error [%]",
             {"Error": RED},
             [("energy_error_pct", "Error")],
-            gaps=True,
             signed=True,
         ),
     },
 }
-# P1, U2, ...: the row's letter and the plot's place in it, for the tutorial and the talk to point at
-for row, plots in ROWS.items():
-    for i, (key, plot) in enumerate(plots.items(), 1):
-        plots[key] = plot | {"title": f"{row[0]}{i}  {plot['title']}"}
 
 decisions = table(
     "Decisions",
@@ -450,7 +420,9 @@ def prefabs(part, title, columns, info):
         save=f"{PREFABS}?kind={part}",
         delete=f"{PREFABS}?kind={part}&id=${{payload.id:percentencode}}&remove=true",
     )
-    panel["description"] = f"{info} Edit, add (+), or delete them; your changes are kept across runs."
+    panel["description"] = (
+        f"{info} Edit, add (+), or delete them; your changes are kept across runs."
+    )
     return panel
 
 
@@ -521,20 +493,6 @@ STARTING = {
 }
 
 
-def numbers(title, url, columns, computed=(), hide=(), more=(), overrides=(), decimals=1):
-    """The numbers of a category in one box, each its name over its value; coloured by `overrides`."""
-    panel = stat(title, url, columns, overrides, computed, hide=hide, more=more, decimals=decimals)
-    panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = "text"  # the theme's
-    # two by two, also on a 1440-pixel screen
-    panel["options"] |= {
-        "colorMode": "value",
-        "justifyMode": "center",
-        "minVizWidth": 105,
-        "minVizHeight": 48,
-    }
-    return panel
-
-
 def colored(name, colors, **props):
     """A number in the colour of each value of `colors` on ({value: name})."""
     return override(name, **thresholds(colors), **props)
@@ -544,53 +502,70 @@ def colored(name, colors, **props):
 SHARES = CONFIG["ratios"].values()
 COUNTS = sorted({c for r in SHARES for c in re.findall(r"[a-z_]+", f"{r['part']} {r['whole']}")})
 GROUPS = {
-    "power-group": numbers(
+    "power-group": stat(
         "Power [kW]",
         POWER,
         WATTS,
-        [*KW, ("(simulated_power - actual_power)/1000", "Gap")],
-        ["actual_power", "simulated_power"],
-        overrides=[  # in the colours of their lines
+        [  # in the colours of their lines
             override("Ground truth", color={"mode": "fixed", "fixedColor": GREY}),
             override("OpenDT", color={"mode": "fixed", "fixedColor": GREEN}),
         ],
+        [*KW, ("(simulated_power - actual_power)/1000", "Gap")],
+        hide=["actual_power", "simulated_power"],
+        decimals=1,
     ),
-    "jobs-group": numbers(
+    "jobs-group": stat(
         "Jobs and hosts",
         NOW,
         [(c, c) for c in COUNTS],
+        [colored(r["title"], r["colors"]) for r in SHARES] + units("locale", "Jobs finished"),
         [(f"({r['part']}) / ({r['whole']})", r["title"]) for r in SHARES],
-        COUNTS,
-        [
+        hide=COUNTS,
+        more=[
             target(
                 NOW, [("tasks_completed", "Jobs finished"), ("cpu_utilization", "CPU utilization")]
             )
         ],
-        [colored(r["title"], r["colors"], unit="percentunit", decimals=0) for r in SHARES]
-        + [override("Jobs finished", unit="locale", decimals=0)]
-        + [override("CPU utilization", unit="percentunit")],
+        unit="percentunit",
+        decimals=0,
     ),
-    "sustainability-group": numbers(
-        "Sustainability",
-        CO2,
-        [("carbon_emission", "carbon_emission"), ("carbon_intensity", "carbon_intensity")],
-        [("carbon_emission/1000", "CO₂ [kg/h]"), ("carbon_intensity", "Intensity [gCO₂/kWh]")],
-        ["carbon_emission", "carbon_intensity"],
-        [target(TOTALS, [("energy_kwh", "Energy [kWh]"), ("co2_kg", "CO₂ [kg]")])],
-        units("locale", "Intensity [gCO₂/kWh]", "Energy [kWh]", "CO₂ [kg]", decimals=0),
+    # the energy and the CO₂ of the interval shown, named by it
+    "sustainability-group": zoned(
+        stat(
+            "Sustainability",
+            CO2,
+            [("carbon_emission", "carbon_emission"), ("carbon_intensity", "carbon_intensity")],
+            [
+                *units("locale", "Intensity [gCO₂/kWh]", "Energy [kWh]", "CO₂ [kg]", decimals=0),
+                override("Energy [kWh]", displayName="Energy this ${period} [kWh]"),
+                override("CO₂ [kg]", displayName="CO₂ this ${period} [kg]"),
+            ],
+            [("carbon_emission/1000", "CO₂ [kg/h]"), ("carbon_intensity", "Intensity [gCO₂/kWh]")],
+            hide=["carbon_emission", "carbon_intensity"],
+            more=[target(TOTALS, [("energy_kwh", "Energy [kWh]"), ("co2_kg", "CO₂ [kg]")])],
+            decimals=1,
+        ),
+        "Intensity [gCO₂/kWh]",
     ),
     # 10% is the community-accepted error rate (question 1.1)
-    "accuracy-group": numbers(
+    "accuracy-group": stat(
         "Accuracy",
         f"{ACCURACY}?minutes=5",
-        [("mape", "MAPE, 5 min [%]")],
+        [("mape", "MAPE, 5 min")],
+        [
+            *(
+                colored(f"MAPE, {t}", {0: "green", 10: "red"}, unit="percent")
+                for t in ("5 min", "1 h")
+            ),
+            override("Energy error so far", unit="percent"),
+        ],
         more=[
             target(
                 ACCURACY,
-                [("mape", "MAPE, 1 h [%]"), ("energy_error_pct", "Energy error [%]"), ("r", "r")],
+                [("mape", "MAPE, 1 h"), ("energy_error_pct", "Energy error so far"), ("r", "r")],
             )
         ],
-        overrides=[colored(f"MAPE, {t} [%]", {0: "green", 10: "red"}) for t in ("5 min", "1 h")],
+        decimals=1,
     ),
 }
 # the (i) of each panel, by its name

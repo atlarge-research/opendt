@@ -17,7 +17,7 @@ WEEK = {"from": "2022-10-06T22:00:00.000Z", "to": "2022-10-13T22:00:00.000Z"}  #
 GREY, GREEN, BLUE = "#999999", "#009E73", "#338ec1"
 YELLOW, ORANGE, RED = "#F0E442", "#E69F00", "#D55E00"
 COLORS = {"red": RED, "orange": ORANGE, "yellow": YELLOW, "green": GREEN, "blue": BLUE}
-MARKERS = "rgba(255, 255, 255, 0.35)"  # light, so the data stays in front
+MARKERS = "rgba(128, 128, 128, 0.6)"  # faint, so the data stays in front; on both themes
 BOX = "rgba(128, 128, 128, 0.15)"  # a box in a panel, on the dark and the light theme
 # the theme's text, fainter, and lines, on the dark and the light theme
 INK, FAINT, LINE = "inherit", "rgba(128, 128, 128, 0.9)", "rgba(128, 128, 128, 0.4)"
@@ -92,41 +92,25 @@ def organize(order, hide=()):
     return {"id": "organize", "options": options}
 
 
-def better_axis(direction):
-    """A flat, invisible line on the right axis, only for its label: BETTER and an arrow."""
-    return {
-        "custom__axisPlacement": "right",
-        # the label reads top to bottom: ← points up, → down
-        "custom__axisLabel": "BETTER ←" if direction == "higher" else "BETTER →",
-        "custom__lineWidth": 0,
-        "custom__axisGridShow": False,
-        "custom__hideFrom": {"legend": True, "tooltip": True, "viz": False},
-        "mappings": [
-            {"type": "range", "options": {"from": -1e12, "to": 1e12, "result": {"text": " "}}}
-        ],
-    }
-
-
 def timeseries(
     title,
     url,
     axis,
     colors,
     columns,
-    better=None,
     unit=None,
     computed=(),
     hide=(),
     right=None,
-    gaps=False,
-    decimals=1,
+    decimals=None,
     apart=(),
     signed=False,
     csv=None,
     **custom,
 ):
-    """A time series of an API table; `colors` maps each shown field to its colour, in legend order; with `csv`, of
-    fixed data instead, over its hours since the trace start (column `hours`), the same at any time of the screen."""
+    """A time series of an API table; `colors` maps each shown field to its colour, in legend order; the key names
+    the lines (the tiles give the values), and only where there are two or more; with `csv`, of fixed data instead,
+    over its hours since the trace start (column `hours`), the same at any time of the screen."""
 
     # the legend gives each line its axis' unit, except a percentage, which shows its own %
     def named(name):
@@ -139,8 +123,10 @@ def timeseries(
     custom = {"axisLabel": axis, "lineWidth": 2, "showPoints": "never", **custom}
     if signed:  # below 0 too, and the axis still shows 0
         custom |= {"axisSoftMin": 0, "axisSoftMax": 0}
-    defaults = ({} if signed else {"min": 0}) | {"decimals": decimals, "custom": custom}
+    defaults = ({} if signed else {"min": 0}) | {"custom": custom}
     defaults |= {"unit": unit} if unit else {}
+    if decimals is not None:  # without, the ticks have no decimals they do not need (25, not 25.0)
+        defaults["decimals"] = decimals
     overrides = {names[n]: {"color": {"mode": "fixed", "fixedColor": c}} for n, c in colors.items()}
     for name in apart:  # dashed (bars: lighter), to tell them apart in grayscale
         bars = custom.get("drawStyle") == "bars"
@@ -152,17 +138,20 @@ def timeseries(
             "custom__axisPlacement": "right",
             "custom__axisLabel": right[1],
         }
-    if better:  # "higher" or "lower"
-        computed = [*computed, ("0", "better")]
-        overrides["better"] = better_axis(better)
-    # the latest value; with gaps, the latest there is
-    options = {"legend": {"calcs": ["lastNotNull" if gaps else "last"]}, "tooltip": {"mode": "multi"}}
-    if csv:  # a trend: a time series over a number, not over the screen's time; fixed data has no latest value
+    options = {
+        "legend": {"calcs": [], "displayMode": "list", "showLegend": len(colors) > 1},
+        "tooltip": {"mode": "multi"},
+    }
+    if csv:  # a trend: a time series over a number, not over the screen's time
         query = target("", [("hours", "hours"), *columns], computed)
         query |= {"type": "csv", "source": "inline", "data": csv, "root_selector": ""}
         # the hours without the one decimal of the other numbers: 0, 1, 2 on the axis
-        overrides["hours"] = {"custom__axisLabel": "Time since the trace start [h]", "min": 0, "decimals": None}
-        options |= {"xField": "hours", "legend": {"calcs": []}}
+        overrides["hours"] = {
+            "custom__axisLabel": "Time since the trace start [h]",
+            "min": 0,
+            "decimals": None,
+        }
+        options["xField"] = "hours"
     else:
         query = target(url, [TIME, *columns], computed)
         overrides["timestamp"] = {"custom__axisLabel": "Simulated time [UTC]"}
@@ -170,7 +159,7 @@ def timeseries(
         "type": "trend" if csv else "timeseries",
         "title": title,
         "targets": [query],
-        "transformations": [organize([*names.values(), *(["better"] if better else [])], hide)],
+        "transformations": [organize(list(names.values()), hide)],
         "fieldConfig": {
             "defaults": defaults,
             "overrides": [override(n, **p) for n, p in overrides.items()],
@@ -191,8 +180,8 @@ def stat(
     unit=None,
     decimals=None,
 ):
-    """The latest values of an API table (and of the `more` queries), one box each, the name over the value;
-    `unit` and `decimals` for all of them, `overrides` for the others."""
+    """The latest values of an API table (and of the `more` queries), each its name over its value, in the theme's
+    colour; `unit` and `decimals` for all of them, `overrides` for the others (a colour of meaning, a unit)."""
     queries = [target(url, columns, computed) | {"root_selector": root}, *more]
     for i, query in enumerate(queries):
         query["refId"] = "ABCDEF"[i]
@@ -205,21 +194,21 @@ def stat(
         "targets": queries,
         "transformations": [*merge, organize(names, hide)],
         "fieldConfig": {
-            "defaults": {"color": {"mode": "fixed", "fixedColor": BOX}}
+            "defaults": {"color": {"mode": "fixed", "fixedColor": "text"}}
             | ({"unit": unit} if unit else {})
             | ({} if decimals is None else {"decimals": decimals}),
             "overrides": list(overrides),
         },
         "options": {
             "reduceOptions": {"fields": "/.*/"},
-            "colorMode": "background_solid",
+            "colorMode": "value",
             "graphMode": "none",
             "textMode": "value_and_name",
-            # auto: a grid, two boxes per line in a row's first panel
+            # auto: a grid of the largest squares that fit (two by two in a summary group)
             "orientation": "auto",
-            "minVizWidth": 100,
-            "minVizHeight": 60,
-            "justifyMode": "auto",
+            "minVizWidth": 105,
+            "minVizHeight": 48,
+            "justifyMode": "center",
             "wideLayout": False,
             "text": TEXT,
         },
@@ -250,13 +239,11 @@ def tile(
     if scale:
         columns, computed, hide = [(key, key)], [(f"{key}{scale}", title)], [key]
     panel = stat("", url, columns, (), computed, root, hide, unit=unit, decimals=decimals)
-    panel["options"] |= {"orientation": "vertical", "colorMode": "none", "justifyMode": "center"}
+    panel["options"]["orientation"] = "vertical"
     if color:
         panel["fieldConfig"]["defaults"]["color"]["fixedColor"] = color
-        panel["options"]["colorMode"] = "value"
     if limit is not None:
         panel["fieldConfig"]["defaults"] |= thresholds({0: "green", limit: "red"})
-        panel["options"]["colorMode"] = "value"
     return panel
 
 
@@ -278,7 +265,7 @@ def table(title, url, columns, overrides=(), sort=None, header=True):
             {"id": "sortBy", "options": {"sort": [{"field": sort, "desc": True}]}}
         )
     if not header:
-        panel["options"] = {"showHeader": False}
+        panel["options"] = {"showHeader": False, "cellHeight": "md"}
     return panel
 
 

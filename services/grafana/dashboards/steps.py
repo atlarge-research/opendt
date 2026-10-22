@@ -6,7 +6,21 @@ from pathlib import Path
 
 import yaml
 from form import script
-from panels import BLUE, BOX, BROWSER_API, FAINT, GREEN, GREY, INK, LINE, RED, WHITE, YELLOW, text, timeseries
+from panels import (
+    BLUE,
+    BOX,
+    BROWSER_API,
+    FAINT,
+    GREEN,
+    GREY,
+    INK,
+    LINE,
+    RED,
+    WHITE,
+    YELLOW,
+    text,
+    timeseries,
+)
 from plots import ROWS, co2, hosts, power
 
 RESOURCES = Path(__file__).resolve().parents[3] / "tutorial" / "resources"
@@ -17,7 +31,11 @@ PLOTS |= {key: plot for plots in ROWS.values() for key, plot in plots.items()}
 # the trace's first day, as the notebooks simulate it (make_first_day.py): the same at any time of the twin
 DAY = (RESOURCES / "first_day_power.csv").read_text()
 CALIBRATION = (RESOURCES / "first_day_calibration.csv").read_text()
-NO, SELF, LIMIT = "No calibration (r = 4)", "Self-calibrating every hour", "Community-accepted threshold"
+NO, SELF, LIMIT = (
+    "No calibration (r = 4)",
+    "Self-calibrating every hour",
+    "Community-accepted threshold",
+)
 THRESHOLD = ("10", LIMIT)  # 10%, as notebook 1 draws it (question 1.1)
 PLOTS |= {
     "first-day-power": timeseries(
@@ -26,7 +44,6 @@ PLOTS |= {
         "Power draw [kW]",
         {"Ground truth": GREY, "OpenDT": GREEN},
         [("truth", "Ground truth"), ("opendt", "OpenDT")],
-        better="lower",
         apart=["Ground truth"],
         csv=DAY,
     ),
@@ -36,7 +53,6 @@ PLOTS |= {
         "Power draw MAPE [%]",
         {"MAPE": RED, LIMIT: GREY},
         [("mape", "MAPE")],
-        better="lower",
         computed=[THRESHOLD],
         apart=[LIMIT],
         csv=DAY,
@@ -47,7 +63,6 @@ PLOTS |= {
         "Power draw MAPE [%]",
         {NO: RED, SELF: GREEN, LIMIT: GREY},
         [("r4", NO), ("calibrated", SELF)],
-        better="lower",
         computed=[THRESHOLD],
         apart=[NO, LIMIT],
         csv=CALIBRATION,
@@ -172,7 +187,11 @@ def card(n):
         ]
     lines += [
         choices(step["choices"], step["answer"]),
-        note(RED, "<strong>Not quite;</strong> look at what the plots show, then try another.", "retry"),
+        note(
+            RED,
+            "<strong>Not quite;</strong> look at what the plots show, then try another.",
+            "retry",
+        ),
         note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"),
         note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution"),
     ]
