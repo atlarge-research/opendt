@@ -5,7 +5,7 @@ const rows = [...box.querySelectorAll('[data-name]')];
 const levers = [...box.querySelectorAll('[data-key]')];
 // a choice by its label, a number with its thousands separators
 const label = ({ dataset: { choices, labels } }, value) =>
-  choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');
+  choices ? labels.split('|')[choices.split(',').indexOf(value)] ?? value : Number(value).toLocaleString('en');
 // a change sent, shown (old → new, pulsing in white on blue) until the twin follows it: the hosts and the CO2 zone
 // from its next window, which takes longer with more hosts; kept over page reloads, for 10 minutes at most (a
 // restarted twin may never follow it), and shared by the boxes of every screen

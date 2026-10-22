@@ -1,11 +1,12 @@
-// Hint and Solution unfold theirs; a wrong choice (in red) says to try another, as in the notebooks; the right one
-// (in green) unfolds the solution
+// Tell me what to change, Hint, and Solution unfold theirs; a wrong choice (in red) says to try another, as in the
+// notebooks; the right one (in green) unfolds the solution
 const card = context.element;
 const solution = card.querySelector('.solution');
 const retry = card.querySelector('.retry');
 card.onclick = ({ target }) => {
   const { show } = target.dataset;
   if (show) card.querySelector('.' + show).hidden = false;
+  if ('once' in target.dataset) target.hidden = true;  // Tell me what to change gives way to the change
   const option = target.closest('[data-choice]');
   if (!option) return;
   const { choice } = option.dataset;
@@ -18,3 +19,22 @@ card.onclick = ({ target }) => {
   }
   (choice === 'right' ? solution : retry).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 };
+// opening a step sets the twin as the steps before it left it (`start`), once per visit, and says what it changed;
+// the boxes show the changes until the twin follows them (box.js)
+const LABELS = { hosts: 'Hosts', carbon_zone: 'CO₂ zone', calibration: 'Calibration', calibration_min: 'r from', calibration_max: 'r to' };
+const shown = (value) => (value === true ? 'On' : value === false ? 'Off' : Number.isFinite(value) ? value.toLocaleString('en') : value);
+if (context.grafana.replaceVariables('${step}') === step && sessionStorage.getItem('opendt-step') !== step) {
+  sessionStorage.setItem('opendt-step', step);
+  fetch(status).then((response) => response.json()).then(async (now) => {
+    const change = Object.fromEntries(Object.entries(start).filter(([key, value]) => String(now[key]) !== String(value)));
+    if (!Object.keys(change).length) return;
+    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
+    if (!response.ok) return context.grafana.notifyError(['OpenDT', 'Step ' + step + ' could not set the twin']);
+    const pending = JSON.parse(sessionStorage.getItem('opendt-pending') || '{}');
+    Object.entries(change).forEach(([key, value]) => (pending[key] = { value: String(value), at: Date.now() }));
+    sessionStorage.setItem('opendt-pending', JSON.stringify(pending));
+    const text = Object.entries(change).map(([key, value]) => LABELS[key] + ' ' + shown(value)).join(', ');
+    context.grafana.notifySuccess(['OpenDT', 'Step ' + step + ' starts from ' + text]);
+    context.grafana.refresh();
+  });
+}

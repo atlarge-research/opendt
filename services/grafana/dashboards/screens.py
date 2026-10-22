@@ -146,15 +146,19 @@ LEFT = [
     ("opendt-box", 3, 2, 3, 2),
     ("mape-box", 0, 4, 3, 2),
     ("co2-box", 3, 4, 3, 2),
-    ("decisions", 0, 6, 6, 14),  # what the markers on the step's graphs stand for
+    ("decisions", 0, 6, 6, 6),  # what the markers on the step's graphs stand for
 ]
-# the step's height, its question with room for its hint and solution, then its plots side by side
-CARD, PLOTS = 12, 8
+# the step's height, its question with room for its hint and solution (the twin's state beside it), then its plots
+# side by side across the screen (or its figure)
+CARD, PLOTS, FIGURE = 12, 10, 16
 
 
 def slide(value, step):
     """The row shown while the step variable has this value."""
-    plots = side_by_side([f"plot-{key}" for key in step["plots"]], 6, BAR + CARD, 18, PLOTS)
+    if "figure" in step:
+        plots = [(f"figure-{value}", 0, BAR + CARD, 24, FIGURE)]
+    else:
+        plots = side_by_side([f"plot-{key}" for key in step["plots"]], 0, BAR + CARD, 24, PLOTS)
     under = [(name, x, y + BAR, w, h) for name, x, y, w, h in LEFT]
     return row(
         "",
@@ -177,7 +181,8 @@ tutorial = dashboard(
     | BOXES
     | {"decisions": decisions}
     | {f"step-{value}": card for value, _, card in steps.SLIDES}
-    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step["plots"]}
+    | {f"plot-{key}": steps.PLOTS[key] for _, step in steps.ORDER for key in step.get("plots", [])}
+    | steps.FIGURES
     | STARTING,
     [STARTUP, *(slide(value, step) for value, step, _ in steps.SLIDES)],
     [

@@ -43,7 +43,8 @@ def test_steps_are_known():
     for use_case in steps.STEPS.values():
         for step in use_case:
             assert step["question"] in steps.QUESTIONS
-            assert set(step["plots"]) <= steps.PLOTS.keys()
+            assert set(step.get("plots", [])) <= steps.PLOTS.keys()
+            assert set(step.get("set", {})) <= {*steps.BASE}  # what the twin's API takes
 
 
 def test_one_step_at_a_time():
@@ -58,7 +59,8 @@ def test_one_step_at_a_time():
         names = [i["spec"]["element"]["name"] for i in rows[str(n)]["layout"]["spec"]["items"]]
         assert {"brand", f"step-{n}", *screens.BOXES} <= set(names)
         plots = [name.removeprefix("plot-") for name in names if name.startswith("plot-")]
-        assert plots == s["plots"]
+        assert plots == s.get("plots", [])
+        assert (f"figure-{n}" in names) == ("figure" in s)
 
 
 def test_card():

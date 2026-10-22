@@ -1,15 +1,18 @@
 # The steps of the twin's Tutorial screen, per use case, numbered 1, 2, 3 on the screen, each alike: what to change on
 # the twin (`do`), the question about what follows (`ask`, on one line; `formula`, HTML, under it), its hint, its
 # choices A-D (`answer`: the right one), its solution, and the plots to look at, by their names in
-# services/grafana/dashboards/plots.py. `question` is the notebooks' question the step comes from (questions.yaml),
-# whose solution it takes unless it has its own; hint and solution stay folded until asked for. After a change, run
+# services/grafana/dashboards/plots.py, or a fixed figure (`figure`, in this folder; make_figures.py renders it).
+# `question` is the notebooks' question the step comes from (questions.yaml), whose solution it takes unless it has its
+# own; hint and solution stay folded until asked for. `set`: the change of `do` for the twin's API; a step starts the
+# twin as the steps before it left it, so opening a step sets what they set. After a change, run
 # services/grafana/dashboards/build.py.
 
 Dynamic autoscaling:
   - question: "1.1"
     do: Datacenter, Hosts 277; Twin, Calibration Off; then Apply, and wait for the next window
+    set: {hosts: 277, calibration: false}
     ask: With 10% as the community-accepted error rate, is OpenDT accurate enough? When is it worst?
-    hint: See the MAPE in Accuracy, and its plot per hour; the first hours of the trace differ.
+    hint: See the MAPE per hour, in the figure; the first hours of the trace differ.
     choices:
       - Yes, OpenDT's MAPE is about 1%, the same in every hour
       - Yes, OpenDT's MAPE is about 6%, worst in the first 6 hours
@@ -20,9 +23,10 @@ Dynamic autoscaling:
       Yes, about 6% over the day, within the community-accepted error rate, and worst in the first 6 hours: OpenDT
       under-estimates the ground truth in almost every minute, more in the first 6 hours (MAPE 10.4% in notebook 1)
       than after (MAPE 4.6%). The OpenDT paper identifies the same underestimation trend.
-    plots: [power, accuracy-now, mape, error]
+    figure: images/tutorial_step1.png
   - question: "1.2"
     do: Datacenter, Hosts 2,770 (10x), then Apply
+    set: {hosts: 2770}
     ask: "Estimate: SURF draws about 22 kW with 277 hosts; how much with 2,770 hosts (10x)?"
     hint: The jobs stay the same; what does a host draw while it runs no job?
     choices:
@@ -48,9 +52,10 @@ Dynamic autoscaling:
       The jobs are identical, so the ~2,500 extra hosts sit idle; however, they still draw electricity: at 25 W per
       host, 2,493 x 25 W = 62 kW, just for staying idle. Over-provisioning could lead to sustainability concerns, both
       environmental and financial, where energy (and thus, money) is wasted by idle infrastructure.
-    plots: [power, hosts, idle-hosts, idle-power]
+    plots: [power, hosts]
   - question: "1.4"
     do: Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour
+    set: {hosts: 138}
     ask: Let's downscale to 138 hosts (half). How much power do we save?
     hint: Only idle hosts are switched off, and an idle host draws 25 W.
     choices:
@@ -65,6 +70,7 @@ Dynamic autoscaling:
     plots: [power, energy, idle-power]
   - question: "1.4"
     do: Datacenter, Hosts 69 (a quarter), then Apply
+    set: {hosts: 69}
     ask: Now 69 hosts (a quarter). How does downscaling affect the jobs?
     hint: Even at its quietest, how many jobs does SURF run at once?
     choices:
@@ -82,6 +88,7 @@ Dynamic autoscaling:
 Simulation calibration:
   - question: "2.1"
     do: Datacenter, Hosts 277; Twin, Calibration On; then Apply
+    set: {hosts: 277, calibration: true}
     ask: OpenDT under-estimates the ground truth; does the Self-Calibrator move r up or down?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
     hint: See r in Accuracy; at the same CPU utilization, a higher r gives a higher power draw.
@@ -108,6 +115,7 @@ Simulation calibration:
     plots: [mape, error, energy-error, r]
   - question: "2.6"
     do: Self-Calibrator, Range of r 3 to 12, then Apply
+    set: {calibration_max: 12}
     ask: With r up to 12, does the Self-Calibrator jump to 12, and why (not)?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
     hint: The Self-Calibrator picks the r with the lowest MAPE over the last hour; see the MAPE in Accuracy.
@@ -126,6 +134,7 @@ Simulation calibration:
 CO₂-aware workload migration:
   - question: "3.2"
     do: Grid, CO₂ zone PL, then Apply
+    set: {carbon_zone: PL}
     ask: Moving SURF's workload from NL to PL, which numbers change, energy, CO₂, or both?
     hint: See Sustainability; the workload and the hosts stay the same.
     choices:
@@ -140,6 +149,7 @@ CO₂-aware workload migration:
     plots: [co2, carbon, energy]
   - question: "3.1"
     do: Grid, CO₂ zone RO, then Apply
+    set: {carbon_zone: RO}
     ask: Moving from PL to RO, how much do the CO₂ emissions per hour change?
     hint: Compare the carbon intensity of the two grids, in Sustainability.
     choices:

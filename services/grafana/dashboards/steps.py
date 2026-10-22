@@ -1,12 +1,13 @@
 """What each step of the Tutorial screen shows: tutorial/resources/tutorial.yaml, with the solutions of the
 notebooks (questions.yaml)."""
 
+import base64
 from html import escape
 from pathlib import Path
 
 import yaml
 from form import script
-from panels import BLUE, BOX, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW, text
+from panels import BLUE, BOX, BROWSER_API, FAINT, GREEN, INK, LINE, RED, WHITE, YELLOW, text
 from plots import ROWS, co2, hosts, power
 
 RESOURCES = Path(__file__).resolve().parents[3] / "tutorial" / "resources"
@@ -16,6 +17,13 @@ PLOTS = {"power": power, "co2": co2, "hosts": hosts}
 PLOTS |= {key: plot for plots in ROWS.values() for key, plot in plots.items()}
 # step n is ORDER[n - 1]: (use case, step)
 ORDER = [(use_case, step) for use_case, items in STEPS.items() for step in items]
+# the twin as step n starts, STARTS[n - 1]: as the live twin's configuration starts it, then as the steps before
+# left it (their `set`); opening a step sets it (step.js)
+BASE = {"hosts": 277, "carbon_zone": "NL", "calibration": False, "calibration_min": 3, "calibration_max": 9}
+STARTS = [
+    BASE | {k: v for _, before in ORDER[: n - 1] for k, v in before.get("set", {}).items()}
+    for n in range(1, len(ORDER) + 1)
+]
 
 # this screen as it is (time, full screen, ...), at another step; links.js fills in ${__url...}
 HERE = "${__url.path}${__url.params:exclude:var-step}&var-step="
@@ -54,9 +62,11 @@ def button(step, label):
     return f'<a data-href="{HERE}{step}" style="{BUTTON}">{label}</a>'
 
 
-def unfolds(name, label):
-    """A button that unfolds the hint or the solution."""
-    return f'<a data-show="{name}" style="{BUTTON};cursor:pointer">{label}</a>'
+def unfolds(name, label, once=False):
+    """A button that unfolds the hint, the solution, or what to change (`once`: the button gives way to it)."""
+    gone = " data-once" if once else ""
+    place = ";align-self:flex-start;margin-top:8px" if once else ""
+    return f'<a data-show="{name}"{gone} style="{BUTTON};cursor:pointer{place}">{label}</a>'
 
 
 def note(color, text, folded=""):
@@ -104,7 +114,8 @@ def card(n):
             f'<p style="font-size:18px;margin:6px 0 0;font-family:serif">{step["formula"]}</p>'
         )
     lines += [
-        note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}."),
+        unfolds("change", "Tell me what to change", once=True),
+        note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}.", "change"),
         choices(step["choices"], step["answer"]),
         note(RED, "<strong>Not quite;</strong> look at what the plots show, then try another.", "retry"),
         note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"),
@@ -122,8 +133,25 @@ def card(n):
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
     colors = {"right": GREEN, "wrong": RED, "none": LINE}
-    return text(content, script("links.js", "step.js", colors=colors))
+    code = script(
+        "links.js",
+        "step.js",
+        colors=colors,
+        step=str(n),
+        start=STARTS[n - 1],
+        control=f"{BROWSER_API}/api/control",
+        status=f"{BROWSER_API}/api/status",
+    )
+    return text(content, code)
+
+
+def figure(path):
+    """A fixed figure in place of a step's plots (tutorial/resources/`path`), embedded in the screen."""
+    png = base64.b64encode((RESOURCES / path).read_bytes()).decode()
+    style = "width:100%;height:100%;object-fit:contain;background:white;border-radius:4px"
+    return text(f'<img src="data:image/png;base64,{png}" style="{style}">', "")
 
 
 # the values of the step variable, 1, 2, 3, ...: (value, step, card)
 SLIDES = [(str(n), step, card(n)) for n, (_, step) in enumerate(ORDER, 1)]
+FIGURES = {f"figure-{n}": figure(step["figure"]) for n, (_, step) in enumerate(ORDER, 1) if "figure" in step}
