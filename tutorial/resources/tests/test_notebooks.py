@@ -51,10 +51,9 @@ assert [round(hourly[4].mean(), 1), round((hourly[4] < 10).mean() * 100)] == [6.
 
 from resources.calibration import hourly_mape, self_calibrate
 wide = hourly_mape([*range(1, 21), 30, 40])
-assert [round(self_calibrate(wide, grid).mean(), 1) for grid in GRIDS.values()] == [3.7, 4.2, 3.6, 3.0]
+assert [round(self_calibrate(wide, grid).mean(), 1) for grid in [*GRIDS.values(), list(range(1, 21))]] == [3.7, 4.2, 3.0]
 assert wide.idxmin(axis=1).between(5, 9).sum() == 81
 assert [round(self_calibrate(wide, R_VALUES, every=hours).mean(), 1) for hours in [1, 6, 24, 48]] == [3.6, 4.0, 4.8, 5.7]
-assert round(self_calibrate(wide, R_VALUES, lookback=24).mean(), 1) == 4.3
 """,
     "3.co2_migration.ipynb": """
 average = intensity.mean()

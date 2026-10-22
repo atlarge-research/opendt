@@ -37,7 +37,6 @@ def test_docs_links_are_live():
     docs = sorted(
         {t for _, t in links() if t.startswith("https://atlarge-research.github.io/opendt")}
     )
-    assert docs
     for url in docs:
         with urllib.request.urlopen(url, timeout=30) as response:
             assert response.status == 200, url

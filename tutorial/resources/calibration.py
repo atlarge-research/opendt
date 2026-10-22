@@ -13,10 +13,10 @@ def hourly_mape(r_values) -> pd.DataFrame:
     return pd.DataFrame({r: error(run) for r, run in runs.items()}).resample("1h").mean()
 
 
-def self_calibrate(hourly: pd.DataFrame, grid, every: int = 1, lookback: int = 1) -> pd.Series:
-    """MAPE of each hour [%] when OpenDT simulates with the r of `grid` with the lowest MAPE over the last `lookback`
-    hours, recalibrating every `every` hours (r = 4 until the first calibration)."""
-    best_r = hourly[grid].rolling(lookback, min_periods=1).mean().idxmin(axis=1)
+def self_calibrate(hourly: pd.DataFrame, grid, every: int = 1) -> pd.Series:
+    """MAPE of each hour [%] when OpenDT simulates with the best r of `grid` in the last hour, recalibrating every
+    `every` hours (r = 4 until the first calibration)."""
+    best_r = hourly[grid].idxmin(axis=1)
     used_r = best_r.shift(1, fill_value=4).iloc[::every].reindex(best_r.index, method="ffill")
     return pd.Series([hourly.loc[h, r] for h, r in used_r.items()], index=hourly.index)
 
