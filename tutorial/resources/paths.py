@@ -63,13 +63,13 @@ def java_21(version: str | None) -> bool:
 
 
 def check_setup() -> None:
-    """Check the SURF trace and the precomputed simulations; Java 21 and OpenDC run any other."""
+    """Check the SURF trace and the precomputed simulations; Java 21 and OpenDC run any other simulation."""
     if not (PATHS.workload / "fragments.parquet").is_file():
         raise RuntimeError(f"The SURF workload trace is missing in {PATHS.workload}.")
     runs = len(list(PATHS.results.glob("*/DONE")))
     version = java_version()
     if java_21(version) and os.access(PATHS.opendc_bin, os.X_OK):
-        others = f"Java {version} and OpenDC run any other"
+        others = f"Java {version} and OpenDC run any other simulation"
     else:
         others = "any other would need Java 21 (https://adoptium.net)"
     print(f"Setup OK: SURF trace, {runs} simulations of OpenDT precomputed; {others}")

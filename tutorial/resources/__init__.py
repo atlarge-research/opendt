@@ -5,6 +5,7 @@ OpenDT's `odt_common` models) on the SURF workload trace, so every number in the
 notebooks comes from the same machinery as the live digital twin.
 """
 
+from .calibration import compare_frequencies, compare_grids
 from .data import (
     CARBON_ZONES,
     TRACE_END,
@@ -32,6 +33,8 @@ __all__ = [
     "carbon_intensity",
     "carbon_trace_path",
     "check_setup",
+    "compare_frequencies",
+    "compare_grids",
     "legend_above",
     "default_workers",
     "load_surf",

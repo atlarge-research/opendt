@@ -13,17 +13,14 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # the tutorial folder, for `resources`
-from resources import CARBON_ZONES, TRACE_END, TRACE_START, sim  # noqa: E402
+from resources import TRACE_END, TRACE_START, sim  # noqa: E402
 
 DAY = TRACE_START + pd.Timedelta("24h")
 RUNS = [
     # notebook 1: the first day with 1/4 to 10x the hosts (and 160 to 1,000 to explore)
     *((DAY, {"hosts": hosts}) for hosts in (69, 138, 160, 200, 277, 500, 1000, 2770)),
-    # notebook 2: the week with r from 2 to 12
-    *((TRACE_END, {"r": r}) for r in range(2, 13)),
-    # notebook 3: the week on each grid, and in RO with 138, 200, and 2,770 hosts
-    *((TRACE_END, {"carbon": zone}) for zone in CARBON_ZONES),
-    *((TRACE_END, {"hosts": hosts, "carbon": "RO"}) for hosts in (138, 200, 2770)),
+    # notebook 2: the week with r from 1 to 20, 30, and 40
+    *((TRACE_END, {"r": r}) for r in (*range(1, 21), 30, 40)),
 ]
 
 if __name__ == "__main__":

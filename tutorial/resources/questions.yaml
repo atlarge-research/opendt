@@ -116,42 +116,55 @@
   answer: B
 
 "2.2":
-  optional: true
   question: |
-    For r > 2, the curves exceed $P_{max}$ (174 W) before full load; can a SURF host draw more than its maximum power?
+    Where does r change the power draw most: at low or at high CPU utilization?
   solution: |
-    No; the formula is an empirical model (Fan et al., ISCA 2007), and with r > 2 it exceeds $P_{max}$ below full load
-    (e.g., 202 W at 80% utilization with r = 4).
+    At high utilization: at 80%, 168 W with r = 2 vs. 243 W with r = 9. At 20%, the curves almost overlap (79 vs. 85 W),
+    as u^r is tiny there, and at full load they all meet at 174 W. Calibration matters most when the hosts are busy.
   choices:
-    - "Yes, at full load, when it boosts its clock"
-    - "Yes, at any load above 50%"
-    - Only with GPUs
-    - No; the formula is an empirical model, which overshoots for r > 2
-  answer: D
+    - At low utilization, below 20%
+    - At high utilization, over 80%
+    - The same at every utilization
+    - Only at full load
+  answer: B
   explore: "Add r = 1 and r = 20 to the list in the cell with the curves: what does r do to the shape of the curve?"
 
 "2.3":
   question: |
-    Which r has the lowest MAPE over the week, and is it the r = 4 of the SURF topology?
+    Which r would OpenDT pick, from the table above?
   solution: |
     r = 7, with a MAPE of 4.5% (vs. 6.4% for r = 4).
   choices:
-    - r = 4, the r of the SURF topology
-    - r = 3
-    - r = 7, not the r = 4 of the SURF topology
-    - r = 9
+    - r = 3 (lowest end)
+    - r = 4 (starting value)
+    - r = 7 (intermediate value)
+    - r = 9 (highest end)
   answer: C
-  explore: "Add 2 and 10 to `R_VALUES` (each one more simulation of the week): does the best r move?"
+  explore: "Add 2 and 10 to `R_VALUES` (each one more simulation of the week): does the best r move? Then set it back to
+    3 to 9, as the cells below use it."
 
 "2.4":
+  question: |
+    In 12:00-13:00, the best r is 7, but OpenDT simulates this window with r = 6. Why?
+  choices:
+    - "A bug: OpenDT should use r = 7"
+    - OpenDT learns a window's best r only after the window ends, so it uses the best r of the window before
+    - r = 6 is faster to simulate
+    - The Self-Calibrator only runs every two hours
+  answer: B
+  solution: |
+    OpenDT calibrates from the telemetry it has: the best r of 11:00-12:00 (r = 6) is the r of 12:00-13:00. The lag, however,
+    costs little: 1.5% MAPE vs. 0.8% with the window's own best r, yet far below no calibration (4.8%, r = 4).
+
+"2.5":
   question: |
     Does the best r stay the same from one day to the next, and what does this mean for a digital twin that runs for
     weeks?
   solution: |
     No; the best r changes between 5 and 9 from day to day.
     Static simulation models can drift and introduce errors as the time horizon increases: hardware behavior varies
-    with temperature, aging, and firmware updates, while workload characteristics evolve over time.
-    Therefore, OpenDT recalibrates continuously.
+    with temperature, aging, software stack, and many other factors, while workload characteristics evolve over time.
+    Therefore, OpenDT recalibrates (need to recalibrate) continuously.
   choices:
     - "No, it changes between 5 and 9 from day to day"
     - "Yes, r = 7 every day"
@@ -159,95 +172,35 @@
     - "No, it changes between 1 and 2 from day to day"
   answer: A
 
-"2.5":
-  question: |
-    The Self-Calibrator only sees the last hour, while r = 7 is the best r for the whole week in hindsight; which of the
-    two has the lower MAPE?
-  solution: |
-    The Self-Calibrator: MAPE 3.6% (vs. 4.5% with r = 7, and 6.4% with r = 4).
-  choices:
-    - r = 7, with the hindsight of the whole week
-    - The Self-Calibrator, with only the last hour
-    - Both have the same MAPE
-    - Neither does better than r = 4
-  answer: B
-
 "2.6":
   question: |
-    In the OpenDT paper, calibration improves the MAPE from 5.13% to 4.39%, and the time within 10% from 86% to 92%;
-    how close are the numbers here, and why do they differ?
+    With a budget of 5 simulations per window, which grid gives the better MAPE: depth (5 to 9) or breadth (1, 10, 20,
+    30, 40)?
   solution: |
-    Same trend; the self-calibrating twin even beats the best fixed r (3.6% vs. 4.5%).
-    The numbers differ because of the method: the paper computes the MAPE on 5-minute averages, after aligning the two
-    series in time, with 10 values of r; here, 1-minute samples (as in the Self-Calibrator) and 7 values of r.
-    As in the paper, calibration alleviates underestimation bias, reducing the frequency of underestimated predictions
-    (here, from 93% to 69% of the minutes; in the paper, from 85% to 66%).
-    Below, MAPE over time with and without calibration, SURF week (OpenDT paper, Figure 6).
-  image: images/paper_mape_over_time.png
+    Depth: MAPE 3.7% vs. 4.2%. The best r is between 5 and 9 in 81 of 168 hours, where depth puts all its simulations,
+    while the coarse steps of breadth skip this range. Breadth and depth together (1 to 20) give 3.0%, but with 20
+    simulations per window (4x the cost).
   choices:
-    - "Opposite trends: here, calibration makes OpenDT worse"
-    - The same numbers, as the method is the same
-    - The same trend; the numbers differ with the method (samples, alignment, values of r)
-    - "None: the paper does not calibrate"
-  answer: C
+    - "Depth: its values are where the best r is in most hours"
+    - Breadth, as it covers more values of r
+    - The same, as both run 5 simulations
+    - Neither does better than no calibration (6.4%)
+  answer: A
 
 "2.7":
   question: |
-    The calibrated twin has the lower MAPE over the week; is it also better in every single hour?
+    Recalibrating every 6 hours instead of every hour cuts the simulations from 168 to 28 per day; how much accuracy
+    does the twin lose?
   solution: |
-    No; in 5 of 168 hours, the r picked over the last hour does not fit the next one.
-    It would be tempting to conclude that using calibration is always beneficial; however, there exist significant
-    simulation-periods when the no-calibration technique performs better than the OpenDT calibration.
-    This suggests calibration is important but its technique requires further attention.
+    A little: MAPE 4.0% vs. 3.6%, still far below no calibration (6.4%); recalibrating every 24 hours gives 4.8%, and
+    every 48 hours, 5.7%. On a laptop with a few cores, the twin can trade a little accuracy for six times fewer
+    simulations.
   choices:
-    - No; in a few of the 168 hours, the r of the last hour does not fit the next one
-    - "Yes, in every hour"
-    - No; in about half of the hours
-    - Only at night
-  answer: A
-
-"2.8":
-  question: |
-    The default `mape_window_minutes` in the code of OpenDT is 1,440 (24 hours), while experiment E2 uses 60; the next
-    cell replays the self-calibrating twin with the 24-hour window, so which window gives the lower MAPE?
-  solution: |
-    Worse: MAPE 4.3% (vs. 3.6%), and worse than no calibration in 20 hours (vs. 5); a longer window reacts later to
-    drift.
-  choices:
-    - The 24-hour window, as it sees more data
-    - Both have the same MAPE
-    - "Neither: the calibrator stops with a 24-hour window"
-    - "The 1-hour window: a longer window reacts later to drift"
-  answer: D
-  explore: "Replace \"24h\" by \"6h\" in the next cell: is any window better than the last hour?"
-
-"2.9":
-  optional: true
-  question: |
-    In how many of the 168 hours does each r win (next cell), and is the grid from 3 to 9 wide enough?
-  solution: |
-    r = 9, the edge of the grid, in 75 of 168 hours; the grid may be too narrow.
-  choices:
-    - Each r wins about equally often
-    - "r = 9, the edge of the grid, wins most often: the grid may be too narrow"
-    - r = 3, the other edge, wins most often
-    - r = 7, the best over the week, wins most often
+    - Nothing
+    - A little; it stays far below no calibration
+    - All it gained from calibration
+    - It becomes worse than no calibration
   answer: B
-
-"2.10":
-  optional: true
-  question: |
-    With three more simulations of the full week (r = 10, 11, and 12), does the self-calibrating twin improve, and
-    where is the best r now?
-  solution: |
-    A little: MAPE 3.3% (vs. 3.6%), but now r = 12 is the best in 69 hours, again at the edge; in these hours, OpenDT
-    under-estimates the power draw even with r = 12.
-  choices:
-    - Much better, and the best r stays inside the grid
-    - Worse, as more values of r add noise
-    - A little better, but now r = 12, the new edge, wins most often
-    - The same, as r never goes above 9
-  answer: C
 
 # 3. CO2-Aware Workload Migration
 
@@ -262,19 +215,6 @@
     - DE
     - RO
   answer: D
-
-"3.2":
-  question: |
-    Is the grid with the lowest average also the greenest in every one of the 168 hours?
-  solution: |
-    No. RO has the lowest average (343 gCO2/kWh), but NL is greener in 57 of the 168 hours; the carbon intensity of NL
-    changes more over the week (from 123 to 528 gCO2/kWh).
-  choices:
-    - No; NL is greener in about a third of the hours
-    - "Yes, in every hour"
-    - No; PL is greener in half of the hours
-    - "Yes, except at night"
-  answer: A
 
 "3.3":
   question: |
@@ -304,61 +244,3 @@
     - "Not yet: the saving is small, and the network, the users, the rules, the capacity, and new hardware count too"
     - "Yes, as long as the jobs finish in time"
   answer: C
-
-"3.5":
-  question: |
-    With a workload that follows the greenest of the four grids, hour by hour (next cell), how much CO2 does SURF emit
-    in the week, and how many migrations does this take?
-  solution: |
-    1,065 kg, 15% less than in NL and 9% less than in RO; however, the workload migrates 11 times in one week, between
-    NL and RO, and each migration costs energy and time.
-  choices:
-    - About 15% less CO2 than in NL, with about a dozen migrations in the week
-    - About 15% less CO2 than in NL, with no migration
-    - About half the CO2 of NL, with hundreds of migrations
-    - More CO2 than in NL, as migrations cost energy
-  answer: A
-
-"3.6":
-  optional: true
-  question: |
-    Combining notebooks 1 and 3, SURF could run in RO with 1/2 of the hosts (138); compare its CO2 and waiting jobs
-    with NL and all 277 hosts.
-  solution: |
-    971 kg CO2, 23% less than NL with 277 hosts; however, 2,631 jobs wait for a free host, 78 minutes per job on
-    average.
-  choices:
-    - Half the CO2, and no job waits
-    - About a quarter less CO2, but thousands of jobs wait for a free host
-    - More CO2, as the jobs run longer
-    - The same CO2 and waiting as NL with 277 hosts
-  answer: B
-  explore: "Try `hosts=200` in the next cell: with how many hosts does RO emit less CO2 than NL, with few jobs waiting?"
-
-# 4. The Live Digital Twin
-
-"4.1":
-  question: |
-    After the change, how do the predicted power draw and the ground truth on the dashboard move?
-  solution: |
-    From the next window of operation, OpenDT twins 2,770 hosts: the predicted power draw goes up about 4x (as in
-    notebook 1), while the ground truth stays the same.
-  choices:
-    - Both go up about 4x
-    - The predicted power draw goes up about 4x; the ground truth stays the same
-    - The ground truth goes up; the prediction stays the same
-    - Neither moves
-  answer: B
-
-"4.2":
-  question: |
-    Which values of r does the Self-Calibrator pick in the first hours, compared with the best r per day in notebook 2?
-  choices:
-    - Always 4, the r of the SURF topology
-    - Values between 5 and 9, as the best r per day in notebook 2
-    - Often 9, the edge of the grid
-    - Values below 3
-  answer: B
-  solution: |
-    Values between 5 and 9 (in a test run, 9, then 7, then 8), as the best r per day in notebook 2: the
-    Self-Calibrator fits r to the last hour.

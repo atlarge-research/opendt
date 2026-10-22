@@ -1,4 +1,4 @@
-"""The live-twin configs and topology of notebook 4 are valid OpenDT inputs."""
+"""The live-twin configs and topology are valid OpenDT inputs."""
 
 import json
 

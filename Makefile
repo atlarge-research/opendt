@@ -18,7 +18,7 @@ build ?= false
 VENV := .venv
 PYTHON := $(VENV)/bin/python
 PYTEST := $(VENV)/bin/pytest
-UV := $(shell command -v uv 2> /dev/null)
+UV_BIN ?= $(shell command -v uv 2> /dev/null || echo "$(HOME)/.local/bin/uv")
 
 # =============================================================================
 # Core Commands
@@ -87,16 +87,16 @@ clean-volumes:
 setup:
 	@echo ""
 	@echo "Setting up development environment..."
-	@if [ -z "$(UV)" ]; then \
-		echo "Error: uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
-		exit 1; \
+	@if ! command -v $(UV_BIN) >/dev/null 2>&1; then \
+		echo "uv not found. Installing uv..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
 	fi
 	@echo "Creating virtual environment..."
-	@uv venv
+	@$(UV_BIN) venv --allow-existing
 	@echo "Installing dependencies..."
-	@uv pip install -e libs/common
-	@uv pip install -e "libs/common[test]"
-	@uv pip install -e ".[dev]"
+	@$(UV_BIN) pip install -e libs/common
+	@$(UV_BIN) pip install -e "libs/common[test]"
+	@$(UV_BIN) pip install -e ".[dev]"
 	@echo ""
 	@echo "Done. Activate with: source .venv/bin/activate"
 	@echo ""
@@ -127,10 +127,10 @@ lint:
 	@echo ""
 	@echo "Running Ruff linter..."
 	@if [ "$(fix)" = "true" ]; then \
-		uv run ruff check . --fix; \
-		uv run ruff format .; \
+		$(UV_BIN) run ruff check . --fix; \
+		$(UV_BIN) run ruff format .; \
 	else \
-		uv run ruff check .; \
+		$(UV_BIN) run ruff check .; \
 	fi
 	@echo ""
 
