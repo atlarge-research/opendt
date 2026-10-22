@@ -124,7 +124,7 @@ Simulation calibration:
     plots: [r, mape]
 
 CO₂-aware workload migration:
-  - question: "3.3"
+  - question: "3.2"
     do: Grid, CO₂ zone PL, then Apply
     ask: Moving SURF's workload from NL to PL, which numbers change, energy, CO₂, or both?
     hint: See Sustainability; the workload and the hosts stay the same.
@@ -152,7 +152,7 @@ CO₂-aware workload migration:
       They drop by half or more: RO has the lowest carbon intensity of the four grids during the SURF week (343
       gCO₂/kWh on average), PL the highest; over the week, 1,172 kg of CO₂ in RO vs. 2,959 kg in PL.
     plots: [intensity, co2, carbon]
-  - question: "3.4"
+  - question: "3.6"
     do: Decisions On, then look at the Decisions log
     ask: Which changes did the twin make by itself, without a human-in-the-loop?
     hint: Each change has its author in the Decisions log; Automatic is the twin's.

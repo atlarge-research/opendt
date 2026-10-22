@@ -11,6 +11,7 @@ repository (`carbon/traces/<ZONE>_2021-2024.parquet`). They were produced with
 | `DE.parquet` | Germany | gCO2eq/kWh |
 | `RO.parquet` | Romania | gCO2eq/kWh |
 | `PL.parquet` | Poland | gCO2eq/kWh |
+| `SE.parquet` | Sweden | gCO2eq/kWh |
 
 ## License
 
@@ -28,3 +29,5 @@ Electricity Maps, and share adapted versions under the ODbL.
 > Electricity Maps (2025). Romania 2022 hourly Carbon Intensity Data (Version January 27, 2025). Electricity Maps. https://www.electricitymaps.com
 >
 > Electricity Maps (2025). Poland 2022 hourly Carbon Intensity Data (Version January 27, 2025). Electricity Maps. https://www.electricitymaps.com
+>
+> Electricity Maps (2025). Sweden 2022 hourly Carbon Intensity Data (Version January 27, 2025). Electricity Maps. https://www.electricitymaps.com

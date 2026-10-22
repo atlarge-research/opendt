@@ -55,6 +55,33 @@ assert [round(self_calibrate(wide, grid).mean(), 1) for grid in [*GRIDS.values()
 assert wide.idxmin(axis=1).between(5, 9).sum() == 81
 assert [round(self_calibrate(wide, R_VALUES, every=hours).mean(), 1) for hours in [1, 6, 24, 48]] == [3.6, 4.0, 4.8, 5.7]
 """,
+    "3.co2_migration.ipynb": """
+gwh = pd.read_csv("resources/electricity_mix_2022.csv", index_col="source")
+share = gwh / gwh.sum() * 100
+assert [round(share.loc["Coal", "PL"]), round(share.loc[["Hydropower", "Nuclear"], "RO"].sum())] == [70, 45]
+
+average = intensity.mean()
+assert len(intensity) == 168 and [round(average[z]) for z in ["RO", "NL", "DE", "PL"]] == [343, 372, 508, 868]
+assert (intensity["NL"] < intensity["RO"]).sum() == 57
+
+energy, co2 = table["energy_kwh"], table["co2_kg"]
+assert energy.max() - energy.min() < 0.01 and round(energy.mean()) == 3424
+assert [round(co2[z]) for z in ["RO", "NL", "DE", "PL"]] == [1172, 1253, 1726, 2959]
+assert [round(co2["NL"] - co2["RO"]), round((1 - co2["RO"] / co2["NL"]) * 100)] == [81, 6]
+assert round((1 - co2["RO"] / co2["PL"]) * 100) == 60
+
+assert list(monday.idxmin(axis=1)) == ["RO"] * 3 + ["NL"] * 7 + ["RO"] * 3
+assert len(co2_per_hour) == 168 and round(greenest_kg) == 1065 and migrations == 11
+assert [round((1 - greenest_kg / co2[z]) * 100) for z in ["NL", "RO"]] == [15, 9]
+
+kg = compare["co2_kg"]
+assert [round(kg[o]) for o in options] == [1253, 1133, 1061, 971]
+assert [round(kg["NL, 277 hosts"] - kg["NL, 200 hosts"]), round(kg["NL, 200 hosts"] - kg["RO, 200 hosts"])] == [120, 71]
+assert round((1 - kg["RO, 200 hosts"] / kg["NL, 277 hosts"]) * 100) == 15
+assert compare["jobs_waited"]["RO, 200 hosts"] == 0
+assert [round(co2_kg["SE"]), round((1 - co2_kg["SE"] / co2_kg["NL"]) * 100), round(co2_kg["NL"] / co2_kg["SE"])] == [62, 95, 20]
+assert [compare["jobs_waited"]["RO, 138 hosts"], round(compare["mean_wait_min"]["RO, 138 hosts"])] == [2631, 78]
+""",
 }
 
 

@@ -5,6 +5,7 @@ SURF-SARA cluster of SURF over one week of October 2022, with the OpenDC simulat
 
 1. [Dynamic autoscaling](1.autoscaling.ipynb): how many hosts does SURF need?
 2. [Simulation calibration](2.calibration.ipynb): can the digital twin correct itself?
+3. [Workload migration, CO2 aware](3.co2_migration.ipynb): where should SURF run its workload?
 
 ## Setup
 
