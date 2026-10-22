@@ -76,14 +76,6 @@ assert [half.summary()["jobs_waited"], round(half.summary()["mean_wait_min"])] =
 }
 
 
-def test_live_twin_notebook_compiles():
-    """Notebook 4 needs the Docker twin to run; here we only check that its code is valid Python."""
-    notebook = nbformat.read(TUTORIAL_DIR / "4.live_twin.ipynb", as_version=4)
-    for cell in notebook.cells:
-        if cell.cell_type == "code":
-            compile(cell.source, "4.live_twin.ipynb", "exec")
-
-
 @pytest.mark.notebooks
 @pytest.mark.parametrize("name", sorted(CHECKS))
 def test_notebook_runs_and_tells_the_truth(name):

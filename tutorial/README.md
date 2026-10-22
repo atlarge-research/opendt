@@ -12,8 +12,6 @@ everything has to be covered:
 2. [Simulation calibration](2.calibration.ipynb): can the digital twin correct itself? (20 minutes)
 3. [Workload migration, CO2 aware](3.co2_migration.ipynb): where should SURF run its workload? (10 minutes)
 
-The [bonus notebook](4.live_twin.ipynb) runs the live digital twin of the demo, with Docker.
-
 Each question comes with four choices, A to D: we guess first, then click a choice to see whether it holds, and
 reason about why; the right choice opens the solution.
 
@@ -50,7 +48,7 @@ With Docker (at least 8 GB of memory for Docker), `make up config=tutorial/resou
 live digital twin of the demo; the first start builds its images, for a few minutes.
 Its dashboard opens at http://localhost:3000, and its Tutorial screen goes through the three use cases on the running
 twin, in 11 steps: each step changes the twin and asks what follows, with four choices, a hint, and a solution.
-`make down` stops the twin; the bonus notebook does the same from Python.
+`make down` stops the twin.
 
 ## What Is Where
 
