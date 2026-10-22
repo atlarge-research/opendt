@@ -106,6 +106,7 @@ def card(n):
     lines += [
         note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}."),
         choices(step["choices"], step["answer"]),
+        note(RED, "<strong>Not quite;</strong> look at what the plots show, then try another.", "retry"),
         note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"),
         note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution"),
     ]

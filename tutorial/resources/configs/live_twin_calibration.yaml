@@ -19,7 +19,7 @@ services:
     min_value: 3
     max_value: 9
     linspace_points: 7  # r = 3, 4, ..., 9
-    max_parallel_workers: 4
+    max_parallel_workers: 3
     mape_window_minutes: 60
 
 kafka:

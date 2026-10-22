@@ -6,18 +6,24 @@ const levers = [...box.querySelectorAll('[data-key]')];
 // a choice by its label, a number with its thousands separators
 const label = ({ dataset: { choices, labels } }, value) =>
   choices ? labels.split('|')[choices.split(',').indexOf(value)] : Number(value).toLocaleString('en');
-// a change sent, shown (old → new, in blue) until the twin follows it: the hosts and the CO2 zone from its next
-// window, which takes longer with more hosts; shared by the boxes of every screen
-const pending = (window.opendtPending ??= {});
+// a change sent, shown (old → new, pulsing in white on blue) until the twin follows it: the hosts and the CO2 zone
+// from its next window, which takes longer with more hosts; kept over page reloads, for 10 minutes at most (a
+// restarted twin may never follow it), and shared by the boxes of every screen
+const PENDING = 'opendt-pending';
+const load = () => JSON.parse(sessionStorage.getItem(PENDING) || '{}');
+const save = (sent) => sessionStorage.setItem(PENDING, JSON.stringify(sent));
 const same = ({ dataset: { choices } }, a, b) => (choices ? a === b : Number(a) === Number(b));
+const pending = load();
 levers.forEach((lever) => {
   const { key, value } = lever.dataset;
-  if (key in pending && same(lever, pending[key], value)) delete pending[key];
+  const done = pending[key] && (same(lever, pending[key].value, value) || Date.now() - pending[key].at > 600000);
+  if (done) delete pending[key];
   const sent = key in pending;
-  lever.textContent = label(lever, value) + (sent ? ' → ' + label(lever, pending[key]) : '');
-  lever.style.color = sent ? '#6e9fff' : '';
+  lever.textContent = label(lever, value) + (sent ? ' → ' + label(lever, pending[key].value) : '');
+  lever.classList.toggle('pending', sent);
   lever.title = sent ? 'Sent; the twin follows from its next window' : '';
 });
+save(pending);
 css('opendt-lever', style);
 // a lever's choices as buttons, or its number
 const edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices
@@ -54,7 +60,9 @@ const open = () => {
     const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));
     const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
     if (response.ok) {
-      changed.forEach(({ dataset: { key } }) => (pending[key] = draft[key]));
+      const sent = load();  // other boxes may have changed it since this one rendered
+      changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));
+      save(sent);
       big.remove();
       context.grafana.notifySuccess(['OpenDT', 'Applied']);
       context.grafana.refresh();
