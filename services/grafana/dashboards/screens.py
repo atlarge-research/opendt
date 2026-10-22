@@ -61,7 +61,7 @@ LEVERS = {
     "lever-grid": group("Grid", [("CO₂ zone", [ZONE])]),
     "lever-twin": group("Twin", [("Speed", [SPEED]), ("Calibration", [CALIBRATION])]),
     "lever-calibrator": group(
-        "Self-Calibrator",
+        "Self-calibrator",
         [
             ("Parallel runs", [PARALLEL]),
             ("Range of r", [R_FROM, R_TO]),
@@ -88,11 +88,20 @@ def top(uid, plots=(), period=True):
     return [("brand", brand(uid, plots, period), 0, 0, 8, BAR), *levers]
 
 
+# the rows of this screen: all but the CO₂ per period, which only the Tutorial screen's step 10 still shows
+ROWS = {row: {k: p for k, p in plots.items() if k != "carbon"} for row, plots in ROWS.items()}
 # the rows a fresh screen shows; ☰ Plots shows the others
 SHOWN = ("Performance", "Twin accuracy")
+
+
+def listed(title):
+    """A plot's title in ☰ Plots, which fills in no variable: Energy per period, Carbon intensity."""
+    return title.replace(" (${zone})", "").replace("$period", "period")
+
+
 # the plots of each row, by their titles, to show or hide
 ROW_PLOTS = [
-    (title, [(key, plot["title"].replace("$period", "period")) for key, plot in plots.items()])
+    (title, [(key, listed(plot["title"])) for key, plot in plots.items()])
     for title, plots in ROWS.items()
 ]
 
@@ -101,8 +110,9 @@ detailed = screen(
     "OpenDT, detailed",
     [
         # the top third: what the screen shows and the decisions, the twin now; then the plots
-        ("decisions", decisions, 0, 0, 8, 5),  # what the markers on the graphs stand for
-        *[(name, GROUPS[name], *place) for name, *place in side_by_side(list(GROUPS), 8, 0, 16, 5)],
+        ("decisions", decisions, 0, 0, 8, 6),  # what the markers on the graphs stand for
+        # 6 high: four numbers two by two, also on a 1920-pixel screen
+        *[(name, GROUPS[name], *place) for name, *place in side_by_side(list(GROUPS), 8, 0, 16, 6)],
     ],
     rows=[
         # a row shows while one of its plots is not hidden
