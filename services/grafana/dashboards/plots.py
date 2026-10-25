@@ -147,6 +147,12 @@ heatmap = {
     },
 }
 
+
+def colored(name, colors, **props):
+    """A number in the colour of each value of `colors` on ({value: name})."""
+    return override(name, **thresholds(colors), **props)
+
+
 ROWS = {
     "Performance": {
         "scheduling-now": stat(
@@ -324,8 +330,31 @@ ROWS = {
             [("idle_power_kw", "Idle hosts")],
         ),
     },
-    # its numbers now are on top (Accuracy); first, the power draw of the datacenter and of the twin instead
     "Twin accuracy": {
+        "accuracy-now": stat(
+            "Overview",
+            f"{ACCURACY}?minutes=5",
+            [("mape", "MAPE, 5 min")],
+            [
+                *(
+                    colored(f"MAPE, {t}", {0: "green", 10: "red"}, unit="percent")
+                    for t in ("5 min", "1 h")
+                ),
+                override("Energy error so far", unit="percent"),
+            ],
+            more=[
+                target(
+                    ACCURACY,
+                    [
+                        ("mape", "MAPE, 1 h"),
+                        ("error_kw", "Error, 1 h [kW]"),
+                        ("energy_error_pct", "Energy error so far"),
+                        ("r", "r"),
+                    ],
+                )
+            ],
+            decimals=1,
+        ),
         "power": power,
         "mape": timeseries(
             "Power draw MAPE per hour",
@@ -494,11 +523,6 @@ STARTING = {
     )
     | {"transparent": True},
 }
-
-
-def colored(name, colors, **props):
-    """A number in the colour of each value of `colors` on ({value: name})."""
-    return override(name, **thresholds(colors), **props)
 
 
 # the top of the Dashboard screen: the twin's numbers now, by category, as the rows under it
