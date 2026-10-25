@@ -164,12 +164,19 @@ ROWS = {
                 ("started_in_10_min_pct", "Started in 10 min"),
             ],
             [
-                *units("locale", "Jobs waiting", "Jobs running", decimals=0),
+                *units("locale", "Jobs waiting", "Jobs running", "Jobs finished", decimals=0),
                 override("Started in 10 min", unit="percent", decimals=0),
             ],
             decimals=1,
             more=[
-                target(NOW, [("tasks_pending", "Jobs waiting"), ("tasks_active", "Jobs running")])
+                target(
+                    NOW,
+                    [
+                        ("tasks_pending", "Jobs waiting"),
+                        ("tasks_active", "Jobs running"),
+                        ("tasks_completed", "Jobs finished"),
+                    ],
+                )
             ],
         ),
         "completion": timeseries(
@@ -331,10 +338,11 @@ ROWS = {
         ),
     },
     "Twin accuracy": {
+        # six numbers, as each Overview: the MAPE and the error over 5 minutes, then over the hour
         "accuracy-now": stat(
             "Overview",
             f"{ACCURACY}?minutes=5",
-            [("mape", "MAPE, 5 min")],
+            [("mape", "MAPE, 5 min"), ("error_kw", "Error, 5 min [kW]")],
             [
                 *(
                     colored(f"MAPE, {t}", {0: "green", 10: "red"}, unit="percent")

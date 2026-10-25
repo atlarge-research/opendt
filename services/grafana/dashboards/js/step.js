@@ -48,11 +48,14 @@ const shown = (value) => (value === true ? 'On' : value === false ? 'Off' : Numb
 if (context.grafana.replaceVariables('${step}') === step && sessionStorage.getItem('opendt-step') !== step) {
   sessionStorage.setItem('opendt-step', step);
   fetch(status).then((response) => response.json()).then(async (now) => {
-    const change = Object.fromEntries(Object.entries(start).filter(([key, value]) => String(now[key]) !== String(value)));
+    // what the twin is about to run: a change sent and not yet followed (box.js, at most 10 minutes old) counts, so
+    // going back a step undoes the change of the step after it
+    const pending = JSON.parse(sessionStorage.getItem('opendt-pending') || '{}');
+    const next = (key) => (Date.now() - (pending[key]?.at ?? 0) < 600000 ? pending[key].value : now[key]);
+    const change = Object.fromEntries(Object.entries(start).filter(([key, value]) => String(next(key)) !== String(value)));
     if (!Object.keys(change).length) return;
     const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
     if (!response.ok) return context.grafana.notifyError(['OpenDT', 'Step ' + step + ' could not set the twin']);
-    const pending = JSON.parse(sessionStorage.getItem('opendt-pending') || '{}');
     Object.entries(change).forEach(([key, value]) => (pending[key] = { value: String(value), at: Date.now() }));
     sessionStorage.setItem('opendt-pending', JSON.stringify(pending));
     const text = Object.entries(change).map(([key, value]) => LABELS[key] + ' ' + shown(value)).join(', ');

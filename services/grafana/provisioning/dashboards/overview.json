@@ -1691,6 +1691,11 @@
                                                         "selector": "tasks_active",
                                                         "text": "Jobs running",
                                                         "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "tasks_completed",
+                                                        "text": "Jobs finished",
+                                                        "type": "number"
                                                     }
                                                 ]
                                             }
@@ -1718,7 +1723,8 @@
                                                 "Queue time [min]": 1,
                                                 "Started in 10 min": 2,
                                                 "Jobs waiting": 3,
-                                                "Jobs running": 4
+                                                "Jobs running": 4,
+                                                "Jobs finished": 5
                                             }
                                         }
                                     }
@@ -1778,6 +1784,22 @@
                                         "matcher": {
                                             "id": "byName",
                                             "options": "Jobs running"
+                                        },
+                                        "properties": [
+                                            {
+                                                "id": "unit",
+                                                "value": "locale"
+                                            },
+                                            {
+                                                "id": "decimals",
+                                                "value": 0
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "matcher": {
+                                            "id": "byName",
+                                            "options": "Jobs finished"
                                         },
                                         "properties": [
                                             {
@@ -3914,6 +3936,11 @@
                                                         "selector": "mape",
                                                         "text": "MAPE, 5 min",
                                                         "type": "number"
+                                                    },
+                                                    {
+                                                        "selector": "error_kw",
+                                                        "text": "Error, 5 min [kW]",
+                                                        "type": "number"
                                                     }
                                                 ]
                                             }
@@ -3986,10 +4013,11 @@
                                         "options": {
                                             "indexByName": {
                                                 "MAPE, 5 min": 0,
-                                                "MAPE, 1 h": 1,
-                                                "Error, 1 h [kW]": 2,
-                                                "Energy error so far": 3,
-                                                "r": 4
+                                                "Error, 5 min [kW]": 1,
+                                                "MAPE, 1 h": 2,
+                                                "Error, 1 h [kW]": 3,
+                                                "Energy error so far": 4,
+                                                "r": 5
                                             }
                                         }
                                     }
