@@ -44,7 +44,8 @@ def test_steps_are_known():
         for step in use_case:
             assert step["question"] in steps.QUESTIONS
             assert set(step["plots"]) <= steps.PLOTS.keys()
-            assert {*step.get("set", {}), *step.get("start", {})} <= {*steps.BASE}  # what the twin's API takes
+            # what the twin's API takes
+            assert {*step.get("set", {}), *step.get("start", {})} <= {*steps.BASE}
 
 
 def test_one_step_at_a_time():

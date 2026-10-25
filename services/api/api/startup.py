@@ -15,7 +15,7 @@ TIPS = [
     "In one week, SURF's datacenter runs 7,850 jobs.",
     "Half of the jobs end within 48 seconds; the longest one runs for 5 days.",
     "82% of the jobs end within an hour.",
-    "Thursday is the busiest day: 2,382 jobs, almost a third of the week.",
+    "Thursday is the busiest day: 2,259 jobs, more than a quarter of the week.",
     "At 15:00 on Thursday, 902 jobs arrive within a single hour.",
     "Together, the jobs take 310,238 CPU-hours: a single core would need 35 years.",
     "Over the week, the datacenter uses 3,644 kWh of electricity.",
@@ -27,8 +27,8 @@ TIPS = [
 
 
 def progress(run: Path, now: float) -> list[dict]:
-    """The step of the start, as one row, with a tip picked at random every 15 s, time to read it; no rows once a window is
-    complete."""
+    """The step of the start, as one row, with a tip picked at random every 15 s, time to read it; no rows once a
+    window is complete."""
     if twin.windows(run):
         return []
     simulator = run / "simulator"
