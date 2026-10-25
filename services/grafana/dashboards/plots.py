@@ -463,8 +463,10 @@ WAITING = """<div class="opendt-start" data-step="1" data-steps="3">
   <div class="doing">The services start</div>
   <div class="bar"><div></div></div>
 </div>"""  # before the API answers
-STYLE = """.opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display: flex; flex-direction: column;
-  justify-content: center; gap: 18px; }
+# over the whole screen, in its colour, so the rows under it stay out of sight (start.js)
+STYLE = """#opendt-start { position: fixed; inset: 0; z-index: 1000; background: var(--canvas); color: var(--ink);
+  display: flex; align-items: center; justify-content: center; }
+.opendt-start { width: 56%; display: flex; flex-direction: column; gap: 18px; }
 .opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;
   white-space: nowrap; }
 .opendt-start .bar { aspect-ratio: 24 / 1; background: rgba(128, 128, 128, 0.2); border-radius: 999px; overflow: hidden; }
@@ -475,7 +477,9 @@ STYLE = """.opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display
 STARTING = {
     "start": text(
         CARD,
-        script("css.js", "grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress"),
+        script(
+            "css.js", "grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress", style=STYLE
+        ),
         [
             target(
                 PROGRESS,
@@ -487,7 +491,6 @@ STARTING = {
             )
         ],
         WAITING,
-        STYLE,
     )
     | {"transparent": True},
 }
