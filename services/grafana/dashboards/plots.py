@@ -487,8 +487,7 @@ racks = prefabs(
     "as SURF-SARA, to compare like with like).",
 )
 
-# while the twin starts, the whole screen: what it does, a bar that never stands still, and a fact from SURF's week
-# or the paper
+# while the twin starts, the whole screen: what it does, a bar that never stands still, and a tip
 PROGRESS = f"{API}/api/progress"
 CARD = """<div class="opendt-start" data-step="{{step}}" data-steps="{{steps}}">
   <div class="doing">{{doing}}</div>

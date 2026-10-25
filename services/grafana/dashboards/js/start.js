@@ -5,10 +5,14 @@
 css('opendt-start-css', 'html, body { overflow: hidden }\n' + style);
 const screen = document.getElementById('opendt-start') ?? document.body.appendChild(document.createElement('div'));
 screen.id = 'opendt-start';
-const width = screen.querySelector('.bar div')?.style.width;  // the bar where it was, not back at 0
-screen.innerHTML = context.element.innerHTML;
-if (width) screen.querySelector('.bar div').style.width = width;
 const state = (window.opendtStart ??= { step: 0, since: Date.now() });
+// never a step back: once the twin's first window is done, the panel shows the card of before the API answered (step
+// 1) until the page reloads
+if (Number(context.element.querySelector('.opendt-start').dataset.step) >= state.step) {
+  const width = screen.querySelector('.bar div')?.style.width;  // the bar where it was, not back at 0
+  screen.innerHTML = context.element.innerHTML;
+  if (width) screen.querySelector('.bar div').style.width = width;
+}
 const card = () => document.querySelector('#opendt-start .opendt-start');
 const step = Number(card()?.dataset.step || 1);
 if (step !== state.step) Object.assign(state, { step, since: Date.now() });
