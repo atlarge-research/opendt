@@ -55,7 +55,7 @@ Dynamic autoscaling:
     start: {hosts: 277}
     do: Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour
     set: {hosts: 138}
-    ask: Let's downscale to 138 hosts (half). How much power do we save?
+    ask: Let's downscale to 138 hosts (half). How much power do we save compared to 277 hosts?
     hint: Only idle hosts are switched off, and an idle host draws 25 W.
     choices:
       - About 50%
