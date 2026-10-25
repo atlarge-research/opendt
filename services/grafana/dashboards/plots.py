@@ -150,7 +150,7 @@ heatmap = {
 ROWS = {
     "Performance": {
         "scheduling-now": stat(
-            "Now",
+            "Overview",
             SCHEDULING,
             [
                 ("completion_h", "Total runtime [h]"),
@@ -224,7 +224,7 @@ ROWS = {
     },
     "Utilization": {
         "utilization-now": stat(
-            "Now",
+            "Overview",
             NOW,
             [
                 ("cpu_utilization_busy_median", "CPU, busy hosts"),
@@ -278,7 +278,7 @@ ROWS = {
     "Sustainability": {
         "energy-now": zoned(
             stat(
-                "This $period",
+                "Overview",
                 TOTALS,
                 [(c, c) for c in ("energy_kwh", "co2_kg", "embodied_co2_kg")],
                 [override("Embodied share", unit="percent")],

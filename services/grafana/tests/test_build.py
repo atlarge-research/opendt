@@ -87,15 +87,15 @@ def test_side_by_side():
     assert screens.side_by_side(["a", "b", "c", "d"], 6, 9, 18, 8) == four
 
 
-def test_tutorial_starts_on_day():
+def test_screens_start_on_day():
     def window(board):
         [time] = [v["spec"] for v in board["spec"]["variables"] if v["spec"]["name"] == "window"]
         view = board["spec"]["elements"]["brand"]["spec"]["vizConfig"]["spec"]["options"]
         assert 'data-var="window"' in view["content"]  # the view shows it, from the address
         return time["current"]["value"]
 
-    assert window(screens.tutorial) == "day"
-    assert window(screens.detailed) == window(screens.topology) == "week"
+    # the twin's last day: a week shows mostly the days the twin has not reached yet
+    assert window(screens.tutorial) == window(screens.detailed) == window(screens.topology) == "day"
 
 
 def test_starting_first():

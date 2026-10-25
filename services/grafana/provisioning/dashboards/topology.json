@@ -2938,19 +2938,19 @@
                     "label": "Time",
                     "query": "week,day,hours",
                     "current": {
-                        "text": "week",
-                        "value": "week"
+                        "text": "day",
+                        "value": "day"
                     },
                     "options": [
                         {
                             "text": "week",
                             "value": "week",
-                            "selected": true
+                            "selected": false
                         },
                         {
                             "text": "day",
                             "value": "day",
-                            "selected": false
+                            "selected": true
                         },
                         {
                             "text": "hours",

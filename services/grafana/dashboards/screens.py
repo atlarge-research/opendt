@@ -200,5 +200,4 @@ tutorial = dashboard(
         custom("period", "Interval", PERIODS, current="day"),
         custom("step", "Step", [value for value, *_ in steps.SLIDES], current="1"),
     ],
-    window="day",
 )

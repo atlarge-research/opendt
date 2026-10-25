@@ -106,8 +106,9 @@ Simulation calibration:
       - Zero
     answer: A
     solution: >-
-      Lower: in notebook 2, the self-calibrator has a MAPE of 3.6% over the week, vs. 6.4% with r = 4. Calibration
-      alleviates underestimation bias, reducing the frequency of underestimated predictions.
+      Lower: on the first day, from the first change of r on, the self-calibrator has a MAPE of 2.4%, vs. 5.7% with
+      r = 4, and is lower in every hour. Calibration alleviates underestimation bias, reducing the frequency of
+      underestimated predictions.
     plots: [first-day-calibration, first-day-r]
   - question: "2.6"
     do: Self-calibrator, Range of r 3 to 12 and Values of r 10, then Apply
