@@ -16,7 +16,7 @@ Authentication is disabled by default (anonymous admin access).
 
 ## Dashboards
 
-Three screens, each with the levers of the twin on top: Detailed (the home page), Topology, and Tutorial; see
+Three screens, each with the levers of the twin on top: Dashboard (the home page), Topology, and Tutorial; see
 `services/grafana/README.md`. They always run in Grafana's kiosk mode (no menus). The classic OpenDT Dashboard
 (`power_dashboard.json`) still shows power and CO₂.
 

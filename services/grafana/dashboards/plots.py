@@ -44,8 +44,6 @@ NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
 WATTS = [("actual_power", "actual_power"), ("simulated_power", "simulated_power")]
 KW = [("actual_power/1000", "Ground truth"), ("simulated_power/1000", "OpenDT")]
 
-# the top of the Dashboard screen
-
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {
     "time-box": tile(
@@ -116,7 +114,7 @@ hosts = timeseries(
     apart=["Available"],
 )
 
-# the rows of the Dashboard screen, each plot shown or hidden in the Plots row
+# the rows of the Dashboard screen, each plot shown or hidden in ☰ Plots
 
 # the hosts in each CPU-utilization bucket over time, the busiest bucket on top; the key gives each step
 BUCKETS = [(f"cpu_{low}_{low + 20}", f"{low}-{low + 20}%") for low in range(80, -1, -20)]
@@ -489,7 +487,8 @@ racks = prefabs(
     "as SURF-SARA, to compare like with like).",
 )
 
-# while the twin starts, the whole screen: what it does, a bar that never stands still, and a fact from the paper
+# while the twin starts, the whole screen: what it does, a bar that never stands still, and a fact from SURF's week
+# or the paper
 PROGRESS = f"{API}/api/progress"
 CARD = """<div class="opendt-start" data-step="{{step}}" data-steps="{{steps}}">
   <div class="doing">{{doing}}</div>

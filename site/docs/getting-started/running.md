@@ -23,7 +23,7 @@ The first `make up` builds the Docker images, which takes a few minutes; `make u
 | http://localhost:3000 | Grafana Dashboard |
 | http://localhost:3001 | API Documentation |
 
-Grafana opens on the Detailed screen; its tabs at the top left switch to the Topology and Tutorial screens. See
+Grafana opens on the Dashboard screen; its tabs at the top left switch to the Topology and Tutorial screens. See
 [grafana](/docs/services/grafana).
 
 ## Monitor Progress
