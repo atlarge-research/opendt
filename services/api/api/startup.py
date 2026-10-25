@@ -1,5 +1,5 @@
-"""While the twin starts: the step it is at, and facts to read meanwhile, from SURF's week (workload/SURF) and the
-OpenDT paper (ICPE Companion '26), none of them an answer to a tutorial question."""
+"""While the twin starts: the step it is at, and tips to read meanwhile, on the screens and on OpenDT (from its
+paper, ICPE Companion '26), none tied to a workload and none an answer to a tutorial question."""
 
 import random
 from pathlib import Path
@@ -12,17 +12,19 @@ STEPS = [
     "OpenDC simulates the first 5 minutes of the trace",
 ]
 TIPS = [
-    "In one week, SURF's datacenter runs 7,850 jobs.",
-    "Half of the jobs end within 48 seconds; the longest one runs for 5 days.",
-    "82% of the jobs end within an hour.",
-    "Thursday is the busiest day: 2,259 jobs, more than a quarter of the week.",
-    "At 15:00 on Thursday, 902 jobs arrive within a single hour.",
-    "Together, the jobs take 310,238 CPU-hours: a single core would need 35 years.",
-    "Over the week, the datacenter uses 3,644 kWh of electricity.",
-    "OpenDT twins 7 days of datacenter operation within 46 minutes, on a common machine.",
+    "Click a box on top (Datacenter, Grid, Twin, Self-calibrator) to change the twin; nothing changes before Apply.",
+    "A change pulses, old → new, until the twin follows it.",
+    "Hover the triangle under a dashed line, on a plot, to see the decision it marks.",
+    "Week, Day, and 6 h set how much of the trace the plots show.",
+    "☰ Plots picks the plots the Dashboard shows.",
+    "☀ and ☾, next to the twin's time, switch between the light and the dark theme.",
+    "In the Decisions log, Automatic changes come from the self-calibrator, Manual ones from the operator.",
+    "Infrastructure →, in the Datacenter box, opens the Topology screen, with the hardware of the hosts.",
+    "Stuck on a Tutorial question? Each one has a Hint and a Solution.",
     "OpenDT builds on OpenDC, an open-source datacenter simulator.",
     "OpenDT's data source, simulator, calibrator, and API talk through Apache Kafka.",
     "Every 5 minutes of operation, OpenDT simulates the trace again, from its start.",
+    "OpenDT recalibrates its predictions in real time, from the difference between prediction and measurement.",
 ]
 
 
