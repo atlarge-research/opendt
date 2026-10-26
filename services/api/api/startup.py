@@ -8,8 +8,7 @@ from api import twin
 
 STEPS = [
     "The services start: Kafka, the replay, the simulator, and the calibrator",
-    "The replay sends SURF's jobs and the datacenter's telemetry on power draw (ground truth); the simulator "
-    "collects the first 5 minutes",
+    "The replay starts; the simulator collects the first 5 minutes",
     "OpenDC simulates the first 5 minutes of the trace",
 ]
 TIPS = [

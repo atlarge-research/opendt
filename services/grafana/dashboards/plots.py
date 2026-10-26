@@ -502,8 +502,7 @@ WAITING = """<div class="opendt-start" data-step="1" data-steps="3">
 STYLE = """#opendt-start { position: fixed; inset: 0; z-index: 1000; background: var(--canvas); color: var(--ink);
   display: flex; align-items: center; justify-content: center; }
 .opendt-start { width: 56%; display: flex; flex-direction: column; gap: 18px; }
-.opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;
-  white-space: nowrap; }
+.opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em; }
 .opendt-start .bar { aspect-ratio: 24 / 1; background: rgba(128, 128, 128, 0.2); border-radius: 999px; overflow: hidden; }
 .opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;
   background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }
