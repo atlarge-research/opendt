@@ -506,7 +506,7 @@ STYLE = """#opendt-start { position: fixed; inset: 0; z-index: 1000; background:
 .opendt-start .bar { aspect-ratio: 24 / 1; background: rgba(128, 128, 128, 0.2); border-radius: 999px; overflow: hidden; }
 .opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;
   background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }
-.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;
+.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; opacity: 0.65;
   font-size: 17px; white-space: nowrap; }"""
 STARTING = {
     "start": text(

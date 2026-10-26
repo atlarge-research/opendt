@@ -19,6 +19,15 @@ if (step !== state.step) Object.assign(state, { step, since: Date.now() });
 state.bar ??= setInterval(() => {
   const el = card();
   if (!el) return;
+  // the card is gone from the page: the twin's time came after the panel had rendered, and hid its row, so the twin
+  // runs and the screen goes
+  if (document.querySelectorAll('.opendt-start').length < 2) {
+    clearInterval(state.bar);
+    clearInterval(state.ready);
+    delete window.opendtStart;
+    document.getElementById('opendt-start-css').remove();
+    return screen.remove();
+  }
   const near = 1 - Math.exp(-(Date.now() - state.since) / 20000); // toward the end of the step, never at it
   el.querySelector('.bar div').style.width = (100 * (state.step - 1 + 0.9 * near)) / Number(el.dataset.steps) + '%';
 }, 200);
