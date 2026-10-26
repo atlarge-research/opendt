@@ -19,9 +19,8 @@ if (step !== state.step) Object.assign(state, { step, since: Date.now() });
 state.bar ??= setInterval(() => {
   const el = card();
   if (!el) return;
-  // the card is gone from the page: the twin's time came after the panel had rendered, and hid its row, so the twin
-  // runs and the screen goes
-  if (document.querySelectorAll('.opendt-start').length < 2) {
+  // the twin's time came after the panel had rendered, and hid its row: the twin runs, and the screen goes
+  if (context.grafana.replaceVariables('$twin')) {
     clearInterval(state.bar);
     clearInterval(state.ready);
     delete window.opendtStart;
