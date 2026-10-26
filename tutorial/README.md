@@ -19,15 +19,21 @@ make setup
 make up config=tutorial/resources/configs/live_twin.yaml
 ```
 
-Then run the notebooks with the `.venv` kernel, and open the dashboard of the live twin at http://localhost:3000;
-`make down` stops it.
+The live twin needs Docker on the laptop (a codespace has none): Docker Desktop with at least 8 GB, and port 9092 (the
+host port of OpenDT's Kafka) free; the first `make up` builds the Docker images, which takes a few minutes.
+Then run the notebooks with the `.venv` kernel, in VS Code or PyCharm (or in JupyterLab, with
+`env -u VIRTUAL_ENV uv run --with jupyterlab jupyter lab tutorial/`), and open the live twin in Grafana
+(http://localhost:3000); `make down` stops it.
+The notebooks' simulations ship precomputed, so they need no Java; a simulation of our own (e.g., with 333 hosts) runs
+OpenDC, which needs Java 21 (e.g., from [Adoptium](https://adoptium.net), with `JAVA_HOME` set).
 
 ## Doing the Tutorial
 
 1. Run the three notebooks in order, in pairs; each takes about 10 minutes, and each question unfolds its answer
    when a choice is clicked.
-2. Then, on the dashboard of the live twin (http://localhost:3000, Tutorial screen), go through its 11 steps: each
-   changes the running twin (e.g., the hosts, the CO2 zone) and asks a question of the notebooks about what follows.
+2. Then, on the live twin in Grafana (http://localhost:3000, Tutorial screen), set Speed to 60x in the Twin box and go
+   through its 11 steps: each changes the running twin (e.g., the hosts, the CO2 zone) and asks one of the notebooks'
+   questions about what follows.
    In a classroom, the instructor can run the twin on the projector.
 
 ## Data and Citation

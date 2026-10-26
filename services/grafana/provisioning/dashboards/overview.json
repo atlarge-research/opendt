@@ -455,7 +455,7 @@
                 "spec": {
                     "id": 6,
                     "title": "Decisions",
-                    "description": "OpenDT operates autonomously, yet a human can (optionally) intervene and dictate major decisions; Automatic changes come from the self-calibrator, Manual ones from the operator. The dashed markers on the graphs show the same changes.",
+                    "description": "OpenDT operates autonomously, yet a human can intervene and dictate major decisions; Automatic changes come from the self-calibrator, Manual ones from the operator. The dashed markers on the graphs show the same changes.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -609,7 +609,7 @@
                 "spec": {
                     "id": 7,
                     "title": "Power [kW]",
-                    "description": "Datacenter's telemetry on power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample; below 0, OpenDT underestimates.",
+                    "description": "The datacenter's telemetry on power draw (ground truth), OpenDT's prediction, and their gap, in the latest sample; below 0, OpenDT under-estimates.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -768,7 +768,7 @@
                 "spec": {
                     "id": 8,
                     "title": "Jobs and hosts",
-                    "description": "Few hosts in use means overprovisioning, where energy (and thus, money) is wasted by idle infrastructure. Few jobs running means under-provisioning, which could lead to performance concerns, system faults, and, ultimately, system failures.",
+                    "description": "Few hosts in use means over-provisioning, where energy (and thus, money) is wasted by idle infrastructure. Many jobs waiting (a low share running) means under-provisioning, which could lead to performance concerns, system faults, and, ultimately, system failures.",
                     "transparent": false,
                     "links": [],
                     "data": {
@@ -4148,7 +4148,7 @@
                 "spec": {
                     "id": 28,
                     "title": "Power draw",
-                    "description": "Actual power draw alongside OpenDT's predictions. When the predicted curve closely tracks the actual power draw, the twin accurately represents the physical infrastructure; when drift occurs, the operator can identify whether intervention is needed.",
+                    "description": "Ground truth alongside OpenDT's predictions. When the predicted curve closely tracks the ground truth, the twin accurately represents the physical infrastructure; when drift occurs, the operator can identify whether intervention is needed.",
                     "transparent": false,
                     "links": [],
                     "data": {

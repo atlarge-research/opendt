@@ -1160,7 +1160,7 @@
                 "spec": {
                     "id": 7,
                     "title": "Hosts available vs. in use",
-                    "description": "The gap between the two lines is underutilized compute infrastructure, yet consuming electricity while being idle.",
+                    "description": "The gap between the two lines is underutilized compute infrastructure, which still consumes electricity while idle.",
                     "transparent": false,
                     "links": [],
                     "data": {

@@ -7,12 +7,14 @@ const retry = card.querySelector('.retry');
 const parts = card.querySelectorAll('.change, .retry, .hint, .solution');
 const only = (part, shown = true) => parts.forEach((p) => (p.hidden = p !== part || !shown));
 // how each step was answered, kept over steps and reloads, its circle ringed in its colour: right at once (green), right
-// after a wrong choice (yellow), or wrong so far (red)
+// after a wrong choice or the solution (yellow; darker on the light theme, grafana.js), or wrong so far (red)
 const ANSWERS = 'opendt-answers';
+const light = document.body.classList.contains('theme-light');
+let peeked = false; // the solution was opened before a choice
 const answered = () => JSON.parse(sessionStorage.getItem(ANSWERS) || '{}');
 const rings = (answers) => card.querySelectorAll('[data-step]').forEach((circle) => {
   const outcome = answers[circle.dataset.step];
-  if (outcome) circle.style.outline = '2px solid ' + colors[outcome];
+  if (outcome) circle.style.outline = '2px solid ' + colors[light && outcome === 'late' ? 'late-light' : outcome];
 });
 rings(answered());
 // each button says what a click does: show its part, or hide it again
@@ -24,6 +26,7 @@ card.onclick = ({ target }) => {
   const { show } = target.dataset;
   if (show) {
     const part = card.querySelector('.' + show);
+    if (show === 'solution' && part.hidden) peeked = true;
     only(part, part.hidden);
   }
   const option = target.closest('[data-choice]');
@@ -32,7 +35,7 @@ card.onclick = ({ target }) => {
   card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));
   option.style.borderColor = colors[choice];
   const answers = answered();
-  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] ? 'late' : 'right';
+  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] || peeked ? 'late' : 'right';
   sessionStorage.setItem(ANSWERS, JSON.stringify(answers));
   rings(answers);
   if (choice === 'right') solution.querySelector('strong').textContent = 'Right. Solution:';
@@ -55,11 +58,11 @@ if (context.grafana.replaceVariables('${step}') === step && sessionStorage.getIt
     const change = Object.fromEntries(Object.entries(start).filter(([key, value]) => String(next(key)) !== String(value)));
     if (!Object.keys(change).length) return;
     const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
-    if (!response.ok) return context.grafana.notifyError(['OpenDT', 'Step ' + step + ' could not set the twin']);
+    if (!response.ok) throw Error(response.status);
     Object.entries(change).forEach(([key, value]) => (pending[key] = { value: String(value), at: Date.now() }));
     sessionStorage.setItem('opendt-pending', JSON.stringify(pending));
     const text = Object.entries(change).map(([key, value]) => LABELS[key] + ' ' + shown(value)).join(', ');
     context.grafana.notifySuccess(['OpenDT', 'Step ' + step + ' starts from ' + text]);
     context.grafana.refresh();
-  });
+  }).catch(() => context.grafana.notifyError(['OpenDT', 'Step ' + step + ' could not set the twin']));
 }

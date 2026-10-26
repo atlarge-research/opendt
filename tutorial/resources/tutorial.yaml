@@ -10,7 +10,7 @@
 Dynamic autoscaling:
   - question: "1.1"
     ask: With 10% as the community-accepted error rate, is OpenDT accurate enough? When is it worst?
-    hint: See the MAPE per hour, in the plots; the first hours of the trace differ.
+    hint: See the MAPE per hour, in the plots, against the community-accepted threshold.
     choices:
       - Yes, OpenDT's MAPE is about 1%, the same in every hour
       - Yes, OpenDT's MAPE is about 6%, worst in the first 6 hours
@@ -48,15 +48,14 @@ Dynamic autoscaling:
     answer: C
     solution: >-
       The jobs are identical, so the ~2,500 extra hosts sit idle; however, they still draw electricity: at 25 W per
-      host, 2,493 x 25 W = 62 kW, just for staying idle. Over-provisioning could lead to sustainability concerns, both
-      environmental and financial, where energy (and thus, money) is wasted by idle infrastructure.
+      host, 2,493 x 25 W = 62 kW, just for staying idle.
     plots: [power, hosts]
   - question: "1.4"
     start: {hosts: 277}
     do: Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour
     set: {hosts: 138}
     ask: Let's downscale to 138 hosts (half). How much power do we save compared to 277 hosts?
-    hint: Only idle hosts are switched off, and an idle host draws 25 W.
+    hint: An idle host draws 25 W.
     choices:
       - About 50%
       - Under 20%
@@ -64,7 +63,7 @@ Dynamic autoscaling:
       - Over 80%
     answer: B
     solution: >-
-      Under 20% (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW.
+      Under 20% (16% over the day in notebook 1): switching off 139 hosts saves 139 x 25 W, about 3.5 kW.
     plots: [power, energy, idle-power]
   - question: "1.4"
     do: Datacenter, Hosts 69 (a quarter), then Apply
@@ -79,8 +78,6 @@ Dynamic autoscaling:
     answer: B
     solution: >-
       Many jobs wait: SURF runs more than 69 jobs at once in 96% of the week (at least 99 on the first day).
-      Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system
-      failures.
     plots: [jobs, queue, completion, hosts]
 
 Simulation calibration:
@@ -115,7 +112,9 @@ Simulation calibration:
     set: {calibration_max: 12, calibration_points: 10}
     ask: With r up to 12, does the self-calibrator jump to 12, and why (not)?
     formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
-    hint: The self-calibrator picks the r with the lowest MAPE over the last hour; see Power draw MAPE per hour.
+    hint: >-
+      At every window, the self-calibrator picks the r with the lowest MAPE over the last hour; see Power draw MAPE per
+      hour.
     choices:
       - Yes, at once, as 12 is the new edge
       - No, only when the last hour needs r above 9
@@ -132,7 +131,7 @@ CO₂-aware workload migration:
     do: Grid, CO₂ zone PL, then Apply
     set: {carbon_zone: PL}
     ask: "Moving SURF's workload from NL to PL, which numbers change: energy, CO₂, or both?"
-    hint: See Power draw and CO₂ emissions vs. carbon intensity; the workload and the hosts stay the same.
+    hint: See Power draw and CO₂ emissions vs. carbon intensity, before and after the change.
     choices:
       - Energy
       - CO₂
@@ -159,9 +158,9 @@ CO₂-aware workload migration:
       average), PL the highest (868); over the week, 1,172 kg of CO₂ in RO vs. 2,959 kg in PL.
     plots: [intensity, co2]
   - question: "3.6"
-    do: Decisions On, then look at the Decisions log
+    do: Decisions On, then see the Decisions panel
     ask: Which changes did the twin make by itself, without a human-in-the-loop?
-    hint: Each change has its author in the Decisions log; Automatic is the twin's.
+    hint: See the By column of the Decisions panel.
     choices:
       - None
       - The hosts
@@ -170,5 +169,5 @@ CO₂-aware workload migration:
     answer: C
     solution: >-
       Only r: the self-calibrator changes it at every window; the hosts, the CO₂ zone, and the scheduler change only
-      from the control panel, as major decisions stay with the human-in-the-loop.
+      from the boxes on top, as major decisions stay with the human-in-the-loop.
     plots: [r, co2]
