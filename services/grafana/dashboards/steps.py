@@ -210,6 +210,7 @@ def card(n):
     colors = {"right": GREEN, "late": YELLOW, "late-light": "#998A00", "wrong": RED, "none": LINE}
     code = script(
         "links.js",
+        "warn.js",
         "step.js",
         colors=colors,
         step=str(n),

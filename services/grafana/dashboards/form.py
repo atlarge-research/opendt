@@ -118,7 +118,7 @@ def group(title, levers, link=None, note=""):
     keys = [e["id"] for _, elements in levers for e in elements]
     return text(
         f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}{note}</div>',
-        script("css.js", "box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
+        script("css.js", "warn.js", "box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
         [status(*keys)],
         f'<div class="lever"><small>{title}</small></div>',
         BOX,
