@@ -64,5 +64,8 @@ if (context.grafana.replaceVariables('${step}') === step && sessionStorage.getIt
     const text = Object.entries(change).map(([key, value]) => LABELS[key] + ' ' + shown(value)).join(', ');
     context.grafana.notifySuccess(['OpenDT', 'Step ' + step + ' starts from ' + text]);
     context.grafana.refresh();
-  }).catch(() => warn('Step ' + step + ' could not set the twin'));
+  }).catch(() => {
+    sessionStorage.removeItem('opendt-step'); // a reload tries again
+    warn('Step ' + step + ' could not set the twin');
+  });
 }
