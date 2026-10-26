@@ -27,6 +27,8 @@ def choices(entry: dict) -> str:
     lines = []
     for letter, choice in zip("ABCD", entry["choices"], strict=True):
         verdict = "<i>Not quite; look at what the cells print or plot, then try another.</i>"
+        if entry["question"].startswith("Estimate"):  # asked before the cell that answers it
+            verdict = "<i>Not quite; run the next cell, then try another.</i>"
         if letter == entry["answer"]:
             verdict = f"<i>Right.</i> {html(entry['solution'])}"
             if "image" in entry:
@@ -41,7 +43,8 @@ def choices(entry: dict) -> str:
 
 
 def html(text: str) -> str:
-    """Text of questions.yaml in a fold, on one line as in Markdown: `code` as code, and $P_{max}$
-    as P<sub>max</sub>."""
+    """Text of questions.yaml in a fold, on one line as in Markdown: `code` as code, $P_{max}$ as
+    P<sub>max</sub>, and $u^{r}$ as u<sup>r</sup>."""
     text = re.sub(r"`([^`]+)`", r"<code>\1</code>", escape(" ".join(text.split())))
-    return re.sub(r"\$(\w)_\{(\w+)\}\$", r"\1<sub>\2</sub>", text)
+    text = re.sub(r"\$(\w)_\{(\w+)\}\$", r"\1<sub>\2</sub>", text)
+    return re.sub(r"\$(\w)\^\{(\w+)\}\$", r"\1<sup>\2</sup>", text)

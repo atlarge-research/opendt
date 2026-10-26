@@ -203,7 +203,7 @@ def _read_output(run_dir: Path, until: pd.Timestamp):
     origin_ms = power["timestamp_absolute"].iloc[0] - power["timestamp"].iloc[0]
 
     def utc(ms):
-        return pd.to_datetime(ms + origin_ms, unit="ms", utc=True)
+        return pd.to_datetime(ms + origin_ms, unit="ms", utc=True).astype("datetime64[ms, UTC]")
 
     for frame in (power, service):
         frame.index = pd.DatetimeIndex(utc(frame.pop("timestamp")), name="timestamp")
