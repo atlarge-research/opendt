@@ -137,9 +137,10 @@ DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: f
   padding: 6px 16px; cursor: pointer; }"""
 VIEW = """.view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .view div { display: flex; align-items: center; gap: 4px; }
-.view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }
+.view small { color: #8e8e8e; margin-left: 8px; margin-right: 2px; }
 .view .on { background: #3d71d9; color: white !important; }
-.view select { width: auto; height: 26px; padding: 0 6px; background: transparent; color: inherit;
+/* narrower on a laptop, so the row stays in its panel */
+.view select { width: auto; min-width: 0; height: 26px; padding: 0 6px; background: transparent; color: inherit;
   border: 1px solid #8e8e8e; border-radius: 2px; }"""
 
 
