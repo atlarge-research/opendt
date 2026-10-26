@@ -24,6 +24,10 @@ context.element.querySelectorAll('[data-var]').forEach((choice) => {
     choice.onclick = () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) });
   }
 });
+// the Tutorial at the step last opened in this browser tab (step.js), not back at step 1, which would set the twin anew
+const last = sessionStorage.getItem('opendt-step');
+const tutorial = context.element.querySelector('[data-href^="/d/opendt-tutorial"]');
+if (last && tutorial) tutorial.href += '&var-step=' + last;
 if (!('kiosk' in address.getSearchObject())) address.partial({ kiosk: true }, true);
 const { from = week.from, to = week.to } = address.getSearchObject();
 const end = Number(to) || Date.parse(to); // the address has milliseconds or an ISO date
