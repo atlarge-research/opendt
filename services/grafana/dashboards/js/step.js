@@ -48,8 +48,11 @@ card.onclick = ({ target }) => {
 // the boxes show the changes until the twin follows them (box.js)
 const LABELS = { hosts: 'Hosts', carbon_zone: 'CO₂ zone', calibration: 'Calibration', calibration_min: 'r from', calibration_max: 'r to', calibration_points: 'Values of r' };
 const shown = (value) => (value === true ? 'On' : value === false ? 'Off' : Number.isFinite(value) ? value.toLocaleString('en') : value);
-if (context.grafana.replaceVariables('${step}') === step && sessionStorage.getItem('opendt-step') !== step) {
+// a step that could not set the twin tries again at the next refresh (this code runs again) or reload, until it can
+const failed = sessionStorage.getItem('opendt-failed') === step;
+if (context.grafana.replaceVariables('${step}') === step && (sessionStorage.getItem('opendt-step') !== step || failed)) {
   sessionStorage.setItem('opendt-step', step);
+  sessionStorage.removeItem('opendt-failed');
   fetch(status).then((response) => response.json()).then(async (now) => {
     // what the twin is about to run: a change sent and not yet followed (box.js, at most 10 minutes old) counts, so
     // going back a step undoes the change of the step after it
@@ -65,7 +68,7 @@ if (context.grafana.replaceVariables('${step}') === step && sessionStorage.getIt
     context.grafana.notifySuccess(['OpenDT', 'Step ' + step + ' starts from ' + text]);
     context.grafana.refresh();
   }).catch(() => {
-    sessionStorage.removeItem('opendt-step'); // a reload tries again
-    warn('Step ' + step + ' could not set the twin');
+    sessionStorage.setItem('opendt-failed', step);
+    if (!failed) warn('Step ' + step + ' could not set the twin'); // once, not at every try
   });
 }
