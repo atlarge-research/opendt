@@ -26,14 +26,15 @@ TIPS = [
     "Every 5 minutes of operation, OpenDT simulates the trace again, from its start.",
     "OpenDT recalibrates its predictions in real time, from the difference between prediction and measurement.",
 ]
+ORDER = random.Random(0).sample(TIPS, len(TIPS))  # shuffled once, so a tip never follows itself
 
 
 def progress(run: Path, now: float) -> list[dict]:
-    """The step of the start, as one row, with a tip picked at random every 15 s, time to read it; no rows once a
-    window is complete."""
+    """The step of the start, as one row, with the next tip every 15 s, time to read it; no rows once a window is
+    complete."""
     if twin.windows(run):
         return []
     simulator = run / "simulator"
     step = 3 if (simulator / "opendc" / "run_1").exists() else 2 if simulator.exists() else 1
-    tip = random.Random(int(now // 15)).choice(TIPS)
+    tip = ORDER[int(now // 15) % len(ORDER)]
     return [{"step": step, "steps": len(STEPS), "doing": STEPS[step - 1], "tip": tip}]

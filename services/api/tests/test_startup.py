@@ -25,3 +25,8 @@ def test_ready(run_dir):
 def test_all_tips(tmp_path):
     tips = {startup.progress(tmp_path, now=15 * i)[0]["tip"] for i in range(200)}
     assert tips == set(startup.TIPS)
+
+
+def test_new_tip(tmp_path):
+    tips = [startup.progress(tmp_path, now=15 * i)[0]["tip"] for i in range(30)]
+    assert all(a != b for a, b in zip(tips, tips[1:]))
