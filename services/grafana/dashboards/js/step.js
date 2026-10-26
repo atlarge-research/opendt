@@ -10,7 +10,6 @@ const only = (part, shown = true) => parts.forEach((p) => (p.hidden = p !== part
 // after a wrong choice or the solution (yellow; darker on the light theme, grafana.js), or wrong so far (red)
 const ANSWERS = 'opendt-answers';
 const light = document.body.classList.contains('theme-light');
-let peeked = false; // the solution was opened before a choice
 const answered = () => JSON.parse(sessionStorage.getItem(ANSWERS) || '{}');
 const rings = (answers) => card.querySelectorAll('[data-step]').forEach((circle) => {
   const outcome = answers[circle.dataset.step];
@@ -26,7 +25,8 @@ card.onclick = ({ target }) => {
   const { show } = target.dataset;
   if (show) {
     const part = card.querySelector('.' + show);
-    if (show === 'solution' && part.hidden) peeked = true;
+    // the solution opened before a choice, kept on the card, as this code runs again at every refresh
+    if (show === 'solution' && part.hidden) solution.dataset.peeked = 'yes';
     only(part, part.hidden);
   }
   const option = target.closest('[data-choice]');
@@ -35,7 +35,7 @@ card.onclick = ({ target }) => {
   card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));
   option.style.borderColor = colors[choice];
   const answers = answered();
-  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] || peeked ? 'late' : 'right';
+  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] || solution.dataset.peeked ? 'late' : 'right';
   sessionStorage.setItem(ANSWERS, JSON.stringify(answers));
   rings(answers);
   if (choice === 'right') solution.querySelector('strong').textContent = 'Right. Solution:';
