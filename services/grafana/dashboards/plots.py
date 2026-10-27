@@ -487,25 +487,21 @@ racks = prefabs(
     "as SURF-SARA, to compare like with like).",
 )
 
-# while the twin starts, the whole screen: what it does, a bar that never stands still, and a tip
+# while the twin starts, the whole screen: what it does, Grafana's loading bar (start.js), and a tip
 PROGRESS = f"{API}/api/progress"
-CARD = """<div class="opendt-start" data-step="{{step}}" data-steps="{{steps}}">
+CARD = """<div class="opendt-start" data-step="{{step}}">
   <div class="doing">{{doing}}</div>
-  <div class="bar"><div></div></div>
   <div class="tip">{{tip}}</div>
 </div>"""
-WAITING = """<div class="opendt-start" data-step="1" data-steps="3">
+WAITING = """<div class="opendt-start" data-step="1">
   <div class="doing">The services start</div>
-  <div class="bar"><div></div></div>
 </div>"""  # before the API answers
 # over the whole screen, in its colour, so the rows under it stay out of sight (start.js)
 STYLE = """#opendt-start { position: fixed; inset: 0; z-index: 1000; background: var(--canvas); color: var(--ink);
-  display: flex; align-items: center; justify-content: center; }
-.opendt-start { width: 56%; display: flex; flex-direction: column; gap: 18px; }
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+#opendt-start > div { width: 56%; }
+#opendt-start .bar [role="status"] { height: 4px; }
 .opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em; }
-.opendt-start .bar { aspect-ratio: 24 / 1; background: rgba(128, 128, 128, 0.2); border-radius: 999px; overflow: hidden; }
-.opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;
-  background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }
 .opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; opacity: 0.65;
   font-size: 17px; white-space: nowrap; }"""
 STARTING = {
@@ -517,11 +513,7 @@ STARTING = {
         [
             target(
                 PROGRESS,
-                [
-                    ("step", "step"),
-                    ("steps", "steps"),
-                    *((k, k, "string") for k in ("doing", "tip")),
-                ],
+                [("step", "step"), *((k, k, "string") for k in ("doing", "tip"))],
             )
         ],
         WAITING,
