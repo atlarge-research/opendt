@@ -52,9 +52,9 @@ SCHEDULER = select(
 )
 SPEED = select("speed_factor", "Speed", SPEEDS)
 CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
-# the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
+# the calibrator's; each OpenDC run takes up to about 1.3 GB, so 4 or 8 parallel runs need more memory for Docker
 PARALLEL = select(
-    "parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 3, 4)], "radio"
+    "parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 4, 8)], "radio"
 )
 R_FROM = field("calibration_min", "r from", "slider", min=0.5, max=20, step=0.5)
 R_TO = field("calibration_max", "r to", "slider", min=0.5, max=20, step=0.5)
