@@ -8,11 +8,15 @@ import hashlib
 import json
 import shutil
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from odt_common.models import Topology
-from odt_common.odc_runner import HORIZON
+
+# How long past its time a run simulates the tasks (odc_runner): a run also serves the windows of
+# the next hour, while no task arrives and the topology stays; here, not in odc_runner, as every
+# service imports this module and not all have pyarrow
+HORIZON = timedelta(hours=1)
 
 
 @dataclass

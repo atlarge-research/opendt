@@ -14,6 +14,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from odt_common.models import Fragment, Task, Topology
+from odt_common.result_cache import HORIZON
 
 from .java_home import detect_java_home
 
@@ -39,9 +40,6 @@ FRAGMENT_SCHEMA = pa.schema(
         ("cpu_usage", pa.float64(), False),
     ]
 )
-# How long past its time a run simulates the tasks: a run also serves the windows of the next hour,
-# while no task arrives and the topology stays (ResultCache)
-HORIZON = timedelta(hours=1)
 # the columns the API reads (services/api/api/twin.py); OpenDC writes only these
 COLUMNS = {
     "hostExportColumns": [
