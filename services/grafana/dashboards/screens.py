@@ -69,7 +69,8 @@ LEVERS = {
             ("MAPE window", [MAPE_WINDOW]),
         ],
         # what r is: the exponent of OpenDC's power model, of the CPU utilization u (Fan et al., ISCA 2007)
-        note="<small>P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>)</small>",
+        note="<small><var>P</var>(<var>u</var>) = <var>P</var><sub>idle</sub> + (<var>P</var><sub>max</sub> − "
+        "<var>P</var><sub>idle</sub>)(2<var>u</var> − <var>u</var><sup><var>r</var></sup>)</small>",
     ),
 }
 

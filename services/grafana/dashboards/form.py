@@ -170,7 +170,8 @@ def brand(uid, plots=(), period=True):
         view += f'<small>Interval</small><select data-var="period">{options}</select>'
     logo = (
         '<div style="gap: 12px; font-size: 22px; font-weight: 600"><img src="/public/img/opendt.png" height="36">'
-        'OpenDT<span style="margin-left: auto; font-size: 14px; font-weight: 400" data-time="{{twin_time}}">'
+        'OpenDT<span style="margin-left: auto; font-size: 14px; font-weight: 400; font-variant-numeric: tabular-nums"'
+        ' data-time="{{twin_time}}">'
         f'</span><a class="theme" style="{TAB}"></a></div>'  # light or dark, grafana.js
     )
     html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'

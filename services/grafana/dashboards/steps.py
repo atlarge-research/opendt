@@ -177,9 +177,7 @@ def card(n):
         f"<strong>Question {n}:</strong> {escape(step['ask'])}</p>",
     ]
     if "formula" in step:  # OpenDC's power model, for the steps on r
-        lines.append(
-            f'<p style="font-size:18px;margin:6px 0 0;font-family:serif">{step["formula"]}</p>'
-        )
+        lines.append(f'<p style="font-size:18px;margin:6px 0 0">{step["formula"]}</p>')
     if "do" in step:  # what to change on the twin, hidden until asked for
         lines += [
             unfolds("change", "Tell me what to change", "Hide what to change", alone=True),
