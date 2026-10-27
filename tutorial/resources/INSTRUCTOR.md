@@ -51,7 +51,7 @@ the previous one.
    `curl -X PUT -H "Content-Type: application/json" --data @tutorial/resources/configs/topology_2770_hosts.json http://localhost:3001/api/topology`.
    The predicted power draw jumps to about 4x; notebook 1 explains why. A dashed marker shows the change on every graph.
 3. Calibration: Hosts 277 in the Datacenter box and Calibration On in the Twin box, each then Apply (the range of r, the
-   values of r, the parallel runs, and the MAPE window are in the Self-calibrator box); the Twin accuracy row shows r
+   values of r, and the MAPE window are in the Self-calibrator box); the Twin accuracy row shows r
    and the hourly MAPE (in the test run, r 4, then 9, then 6, and the MAPE from 14% to about 1% within six trace hours);
    `make logs-calibrator` shows the MAPE of each candidate.
 4. `make down`.
@@ -62,8 +62,8 @@ Known issues:
   setting in `libs/common/odt_common/utils/kafka.py`: fixed on the tutorial branch; images built before
   the fix need `make up build=true`.
 - Docker Desktop needs at least 8 GB: with calibration and 2 parallel runs, the calibrator peaks at about 2.7 GB (on
-  a fresh twin, October 2026), and each OpenDC run within 1 GB; keep Parallel runs at 2 or lower in the
-  Self-calibrator box.
+  a fresh twin, October 2026), and each OpenDC run within 1 GB; keep the calibrator's `max_parallel_workers` at 2 or lower in
+  the config (the Self-calibrator box shows it as Parallel runs).
 - Port 9092: on the demo laptop, a local Java service listens on 127.0.0.1:9092, the host port of OpenDT's Kafka;
   stop it before `make up`.
 - `make up` deletes the Kafka and Grafana volumes of the previous run.

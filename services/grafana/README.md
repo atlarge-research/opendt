@@ -9,9 +9,9 @@ Visualization dashboards for OpenDT metrics.
 
 Three screens, each with a control panel on top, in place of Grafana's time picker: at the top left, the view (the
 screen, the time window, the decisions markers, and the interval of the totals); on the right, the twin's levers
-(hosts, scheduler, CO₂ zone, speed, calibration, parallel runs, range and values of r, and MAPE window). The view
-changes at once; the levers, after Apply. The screens always run in Grafana's kiosk mode (no menus, no bars), and
-start on Day.
+(hosts, scheduler, CO₂ zone, speed, calibration, range and values of r, and MAPE window; the parallel runs are only
+shown). The view changes at once; the levers, after Apply. The screens always run in Grafana's kiosk mode (no menus,
+no bars), and start on Day.
 
 - **OpenDT, dashboard** (the home page): the decisions and four groups of the twin's numbers now (power, jobs and
   hosts, sustainability, accuracy); then a row each for performance, utilization, sustainability (per interval), and

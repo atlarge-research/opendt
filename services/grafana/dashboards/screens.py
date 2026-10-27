@@ -5,7 +5,6 @@ from form import (
     CALIBRATION,
     HOSTS,
     MAPE_WINDOW,
-    PARALLEL,
     R_FROM,
     R_TO,
     R_VALUES,
@@ -63,7 +62,6 @@ LEVERS = {
     "lever-calibrator": group(
         "Self-calibrator",
         [
-            ("Parallel runs", [PARALLEL]),
             ("Range of r", [R_FROM, R_TO]),
             ("Values of r", [R_VALUES]),
             ("MAPE window", [MAPE_WINDOW]),
@@ -71,6 +69,8 @@ LEVERS = {
         # what r is: the exponent of OpenDC's power model, of the CPU utilization u (Fan et al., ISCA 2007)
         note="<small><var>P</var>(<var>u</var>) = <var>P</var><sub>idle</sub> + (<var>P</var><sub>max</sub> − "
         "<var>P</var><sub>idle</sub>)(2<var>u</var> − <var>u</var><sup><var>r</var></sup>)</small>",
+        # of the calibrator, and its memory: in the config, not on screen, so a laptop does not run out
+        shown=[("Parallel runs", "parallel_simulations")],
     ),
 }
 

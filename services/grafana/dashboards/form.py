@@ -52,10 +52,6 @@ SCHEDULER = select(
 )
 SPEED = select("speed_factor", "Speed", SPEEDS)
 CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
-# the calibrator's; each OpenDC run takes up to about 1.3 GB, so 4 or 8 parallel runs need more memory for Docker
-PARALLEL = select(
-    "parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 4, 8)], "radio"
-)
 R_FROM = field("calibration_min", "r from", "slider", min=0.5, max=20, step=0.5)
 R_TO = field("calibration_max", "r to", "slider", min=0.5, max=20, step=0.5)
 R_VALUES = field("calibration_points", "Values of r", "slider", min=2, max=20, step=1)
@@ -106,16 +102,18 @@ def value(element):
     return "<i" + "".join(f' data-{k}="{v}"' for k, v in data.items()) + f">{{{{{key}}}}}</i>"
 
 
-def group(title, levers, link=None, note=""):
+def group(title, levers, link=None, note="", shown=()):
     """Levers of a category in a box, as values of the twin's: each its name and its value now (two: from-to); a
     click opens the box larger, with what they take, and Apply, once confirmed, sends the changes to the twin (from
-    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under them."""
-    lines = "".join(
+    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under them;
+    `shown`: (name, key), the twin's values shown first, set in its config only."""
+    lines = "".join(f"<p><small>{name}</small><b>{{{{{key}}}}}</b></p>" for name, key in shown)
+    lines += "".join(
         f'<p data-name="{name}"><small>{name}</small><b>{"-".join(map(value, elements))}</b></p>'
         for name, elements in levers
     )
     more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
-    keys = [e["id"] for _, elements in levers for e in elements]
+    keys = [key for _, key in shown] + [e["id"] for _, elements in levers for e in elements]
     return text(
         f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}{note}</div>',
         script("css.js", "warn.js", "box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
