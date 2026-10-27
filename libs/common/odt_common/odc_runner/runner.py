@@ -6,13 +6,14 @@ import json
 import logging
 import os
 import subprocess
-from datetime import UTC, datetime
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from odt_common.models import Task, Topology
+from odt_common.models import Fragment, Task, Topology
 
 from .java_home import detect_java_home
 
@@ -38,23 +39,62 @@ FRAGMENT_SCHEMA = pa.schema(
         ("cpu_usage", pa.float64(), False),
     ]
 )
+# How long past its time a run simulates the tasks: a run also serves the windows of the next hour,
+# while no task arrives and the topology stays (ResultCache)
+HORIZON = timedelta(hours=1)
+# the columns the API reads (services/api/api/twin.py); OpenDC writes only these
+COLUMNS = {
+    "hostExportColumns": [
+        "core_count",
+        "cpu_capacity",
+        "cpu_demand",
+        "cpu_utilization",
+        "tasks_running",
+        "power_draw",
+        "embodied_carbon",
+    ],
+    "taskExportColumns": ["task_id", "submission_time", "schedule_time", "finish_time"],
+}
 
 
 def experiment(
-    name: str, inputs: Path, output: Path, exports: list[str], scheduler: str | None = None
+    name: str,
+    inputs: Path,
+    output: Path,
+    exports: list[str],
+    scheduler: str | None = None,
+    workload: str = "workload",
+    columns: dict | None = None,
 ) -> dict:
-    """OpenDC's experiment: the topology.json and workload/ in `inputs`, a sample of the `exports`
-    every 150 s into `output`; without a scheduler, OpenDC's default."""
+    """OpenDC's experiment: the topology.json and the `workload` folder in `inputs`, a sample of the
+    `exports` every 150 s into `output`, only the `columns` given (e.g., COLUMNS); without a
+    scheduler, OpenDC's default."""
+    export = {"exportInterval": 150, "filesToExport": exports}
+    if columns:
+        export["computeExportConfig"] = columns
     experiment = {
         "name": name,
         "topologies": [{"pathToFile": str(inputs / "topology.json")}],
-        "workloads": [{"pathToFile": str(inputs / "workload"), "type": "ComputeWorkload"}],
+        "workloads": [{"pathToFile": str(inputs / workload), "type": "ComputeWorkload"}],
         "outputFolder": str(output),
-        "exportModels": [{"exportInterval": 150, "filesToExport": exports}],
+        "exportModels": [export],
     }
     if scheduler:
         experiment["allocationPolicies"] = [{"type": "prefab", "policyName": scheduler}]
     return experiment
+
+
+def cut(task: Task, until: datetime) -> list[Fragment]:
+    """The task's fragments up to `until`, at most as long as since its submission: by then, the
+    task has not run longer, so OpenDC's output up to `until` stays the same, while OpenDC stops
+    soon after `until` instead of at the end of the last task, days later."""
+    fragments, left = [], int((until - task.submission_time) / timedelta(milliseconds=1))
+    for f in task.fragments:
+        if left <= 0:
+            break
+        fragments.append(f if f.duration <= left else f.model_copy(update={"duration": left}))
+        left -= f.duration
+    return fragments
 
 
 def environment() -> dict[str, str]:
@@ -106,9 +146,14 @@ class OpenDCRunner:
         pq.write_table(pa.Table.from_pydict(data, schema=TASK_SCHEMA), output_path)
         logger.debug(f"Created tasks.parquet with {len(tasks)} tasks")
 
-    def _create_fragments_parquet(self, tasks: list[Task], output_path: Path) -> None:
-        """Create fragments.parquet file from Task models."""
-        all_fragments = [f for task in tasks for f in task.fragments]
+    def _create_fragments_parquet(
+        self, tasks: list[Task], output_path: Path, until: datetime | None = None
+    ) -> None:
+        """Create fragments.parquet file from Task models; with `until`, only the fragments up to
+        then (see `cut`)."""
+        all_fragments = [
+            f for task in tasks for f in (cut(task, until) if until else task.fragments)
+        ]
         data = {
             "id": [f.task_id for f in all_fragments],
             "duration": [f.duration for f in all_fragments],
@@ -137,8 +182,13 @@ class OpenDCRunner:
         simulated_time: datetime,
         timeout_seconds: int = 120,
         scheduler: str | None = None,
+        exports: tuple[str, ...] = ("powerSource",),
+        future: bool = False,
     ) -> tuple[bool, Path]:
-        """Run OpenDC simulation with given tasks and topology."""
+        """Run OpenDC on the tasks cut HORIZON after `simulated_time` (see `cut`), its `exports`
+        into output/now/: up to the cut, the same as for the whole tasks. With `future`, a second
+        OpenDC runs at once on the whole tasks, for their real start and finish times
+        (output/future/task.parquet)."""
 
         logger.info(f"Starting OpenDC simulation: run_{run_number}")
         logger.debug(f"Tasks: {len(tasks)}, Fragments: {sum(len(t.fragments) for t in tasks)}")
@@ -146,32 +196,39 @@ class OpenDCRunner:
         input_dir, output_dir = run_dir / "input", run_dir / "output"
         input_dir.mkdir(parents=True, exist_ok=True)
         output_dir.mkdir(parents=True, exist_ok=True)
-
-        workload_dir = input_dir / "workload"
-        workload_dir.mkdir(exist_ok=True)
-
-        topology_file = input_dir / "topology.json"
-        experiment_file = input_dir / "experiment.json"
         metadata_file = run_dir / "metadata.json"
+
+        # the run up to now (in experiment.json, where the API reads the scheduler), and with
+        # `future`, the whole tasks' run: per experiment, its name, exports, and cut
+        runs = {"experiment.json": ("now", list(exports), simulated_time + HORIZON)}
+        if future:
+            runs["future.json"] = ("future", ["task"], None)
 
         try:
             # Create input files
-            self._create_tasks_parquet(tasks, workload_dir / "tasks.parquet")
-            self._create_fragments_parquet(tasks, workload_dir / "fragments.parquet")
-            self._create_topology_json(topology, topology_file)
+            self._create_topology_json(topology, input_dir / "topology.json")
+            for file, (name, files, until) in runs.items():
+                workload_dir = input_dir / name
+                workload_dir.mkdir(parents=True, exist_ok=True)
+                self._create_tasks_parquet(tasks, workload_dir / "tasks.parquet")
+                self._create_fragments_parquet(tasks, workload_dir / "fragments.parquet", until)
+                run = experiment(name, input_dir, output_dir, files, scheduler, name, COLUMNS)
+                (input_dir / file).write_text(json.dumps(run, indent=2))
 
-            exports = ["powerSource", "host", "task", "service"]
-            run = experiment(f"run_{run_number}", input_dir, output_dir, exports, scheduler)
-            experiment_file.write_text(json.dumps(run, indent=2))
+            # Run OpenDC, the runs at once
+            with ThreadPoolExecutor() as pool:
+                results = list(
+                    pool.map(
+                        lambda file: self._execute_opendc(input_dir / file, timeout_seconds), runs
+                    )
+                )
 
-            # Run OpenDC
-            result = self._execute_opendc(experiment_file, timeout_seconds)
-
-            if result.returncode != 0:
-                logger.error(f"OpenDC simulation failed with exit code {result.returncode}")
-                logger.error(f"stdout: {result.stdout[:500] if result.stdout else '(empty)'}")
-                logger.error(f"stderr: {result.stderr[:500] if result.stderr else '(empty)'}")
-                return False, output_dir
+            for result in results:
+                if result.returncode != 0:
+                    logger.error(f"OpenDC simulation failed with exit code {result.returncode}")
+                    logger.error(f"stdout: {result.stdout[:500] if result.stdout else '(empty)'}")
+                    logger.error(f"stderr: {result.stderr[:500] if result.stderr else '(empty)'}")
+                    return False, output_dir
 
             # Write metadata
             metadata = {

@@ -179,7 +179,9 @@ class SimulationService:
         run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
         was_cached = False
 
-        if self.result_cache.can_reuse(topology_to_use, self.scheduler, len(all_tasks)):
+        if self.result_cache.can_reuse(
+            topology_to_use, self.scheduler, len(all_tasks), aligned_simulated_time
+        ):
             logger.info(
                 f"Reusing cached results for run {self.run_number} "
                 f"(topology unchanged, {len(all_tasks)} tasks)"
@@ -215,6 +217,9 @@ class SimulationService:
                 simulated_time=aligned_simulated_time,
                 timeout_seconds=120,
                 scheduler=self.scheduler,
+                # what the API reads: the cluster up to now, and the jobs' finish times
+                exports=("powerSource", "host", "service"),
+                future=True,
             )
 
             if not success:
@@ -222,7 +227,9 @@ class SimulationService:
                 return
 
             # Update cache with run directory (not output directory)
-            self.result_cache.update(topology_to_use, self.scheduler, len(all_tasks), run_dir)
+            self.result_cache.update(
+                topology_to_use, self.scheduler, len(all_tasks), aligned_simulated_time, run_dir
+            )
             logger.info(f"Simulation {self.run_number} complete, results cached")
 
         output_dir = run_dir / "output"
