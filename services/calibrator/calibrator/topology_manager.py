@@ -36,7 +36,7 @@ class TopologyManager:
 
         # Thread control
         self._stop_event = threading.Event()
-        self._consumer_thread: threading.Thread | None = None
+        self._consumer_threads: list[threading.Thread] = []
 
         # Kafka producer
         self._producer = get_kafka_producer(kafka_bootstrap_servers)
@@ -46,40 +46,53 @@ class TopologyManager:
         )
 
     def start(self) -> None:
-        """Start consuming topology updates in background thread."""
-        if self._consumer_thread and self._consumer_thread.is_alive():
+        """Start consuming topology updates in background threads, one per topic."""
+        if any(thread.is_alive() for thread in self._consumer_threads):
             logger.warning("TopologyManager already running")
             return
 
         self._stop_event.clear()
-        self._consumer_thread = threading.Thread(target=self._consume_topology_updates, daemon=True)
-        self._consumer_thread.start()
+        # the simulated topology apart: at maximum speed, the real topologies of the replay ran
+        # minutes ahead, and a change from the control panel (e.g., the CO2 zone) waited behind
+        # them, so the calibrator sent the old one
+        self._consumer_threads = [
+            threading.Thread(
+                target=self._consume_topology_updates, args=(topic, group), daemon=True
+            )
+            for topic, group in [
+                (self.dc_topology_topic, self.consumer_group),
+                (self.sim_topology_topic, f"{self.consumer_group}-sim"),
+            ]
+        ]
+        for thread in self._consumer_threads:
+            thread.start()
         logger.info("TopologyManager started")
 
     def stop(self) -> None:
         """Stop consuming topology updates."""
-        if not self._consumer_thread:
+        if not self._consumer_threads:
             return
 
         logger.info("Stopping TopologyManager...")
         self._stop_event.set()
 
-        if self._consumer_thread.is_alive():
-            self._consumer_thread.join(timeout=5.0)
+        for thread in self._consumer_threads:
+            if thread.is_alive():
+                thread.join(timeout=5.0)
 
         if self._producer:
             self._producer.close()
 
         logger.info("TopologyManager stopped")
 
-    def _consume_topology_updates(self) -> None:
-        """Background thread that consumes topology updates from Kafka."""
+    def _consume_topology_updates(self, topic: str, group: str) -> None:
+        """Background thread that consumes the topology updates of one topic from Kafka."""
         consumer = None
 
         try:
             consumer = get_kafka_consumer(
-                topics=[self.dc_topology_topic, self.sim_topology_topic],
-                group_id=self.consumer_group,
+                topics=[topic],
+                group_id=group,
                 bootstrap_servers=self.kafka_bootstrap_servers,
             )
 
