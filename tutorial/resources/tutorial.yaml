@@ -183,6 +183,6 @@ CO₂-aware workload migration:
       - PL's grid relies more on green sources than RO
     answer: A
     solution: >-
-      Coal: in 2022, PL produced about 70% of its electricity from coal, while RO produced about 45% from hydropower
+      Brown sources: in 2022, PL produced about 70% of its electricity from coal, while RO produced about 45% from hydropower
       and nuclear power.
     plots: [intensity, co2]
