@@ -93,8 +93,8 @@ for _, step in ORDER:
 # this screen as it is (time, full screen, ...), at another step; links.js fills in ${__url...}
 HERE = "${__url.path}${__url.params:exclude:var-step}&var-step="
 CIRCLE = (
-    "display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;"
-    "border-radius:50%;font-size:16px;font-weight:500;text-decoration:none"
+    "display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;box-sizing:border-box;"
+    "border-radius:50%;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;text-decoration:none"
 )
 BUTTON = (
     f"padding:5px 16px;border:1px solid {LINE};border-radius:4px;color:{INK};font-size:16px;"
@@ -119,7 +119,7 @@ def navigator(current):
         circles = "".join(circled(n, current) for n in numbers)
         groups.append(
             f'<div><div style="font-size:14px;color:{color}">{escape(use_case)}</div>'
-            f'<div style="display:flex;gap:6px;margin-top:4px">{circles}</div></div>'
+            f'<div style="display:flex;gap:8px;margin-top:4px">{circles}</div></div>'
         )
     return f'<div style="display:flex;flex-wrap:wrap;gap:12px 36px">{"".join(groups)}</div>'
 
