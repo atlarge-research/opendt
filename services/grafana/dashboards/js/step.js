@@ -13,7 +13,7 @@ const light = document.body.classList.contains('theme-light');
 const answered = () => JSON.parse(sessionStorage.getItem(ANSWERS) || '{}');
 const rings = (answers) => card.querySelectorAll('[data-step]').forEach((circle) => {
   const outcome = answers[circle.dataset.step];
-  if (outcome) circle.style.outline = '2px solid ' + colors[light && outcome === 'late' ? 'late-light' : outcome];
+  if (outcome) circle.style.border = '2px solid ' + colors[light && outcome === 'late' ? 'late-light' : outcome];
 });
 rings(answered());
 // each button says what a click does: show its part, or hide it again
