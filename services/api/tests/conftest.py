@@ -33,10 +33,14 @@ def write_window(
     scheduler=None,
     r=4.0,
 ):
-    """Window n ends `minutes` after T0; OpenDC output every 150 s, up to one sample past the end."""
+    """Window n ends `minutes` after T0; OpenDC output every 150 s, up to one sample past the end;
+    the jobs' times from the run of the whole jobs (future/)."""
     window = run_dir / "simulator" / "opendc" / f"run_{n}"
-    out = window / "output" / f"run_{n}" / "raw-output" / "0" / "seed=0"
+    out, future = (
+        window / "output" / run / "raw-output" / "0" / "seed=0" for run in ("now", "future")
+    )
     out.mkdir(parents=True)
+    future.mkdir(parents=True)
     times = [T0 + 150_000 * (i + 1) for i in range(len(active))]
     base = {"timestamp": [t - T0 for t in times], "timestamp_absolute": times}
     pd.DataFrame(
@@ -78,7 +82,7 @@ def write_window(
     rows = [(i, s, None, None) for i, s, *_ in jobs] + jobs
     tasks = pd.DataFrame(rows, columns=["task_id", *times])
     tasks[times] = tasks[times].astype(float) * MIN
-    tasks.assign(timestamp=0, timestamp_absolute=T0).to_parquet(out / "task.parquet")
+    tasks.assign(timestamp=0, timestamp_absolute=T0).to_parquet(future / "task.parquet")
     topology = {
         "clusters": [
             {

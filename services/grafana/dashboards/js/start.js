@@ -1,14 +1,35 @@
-// the bar creeps toward the end of its step, so it never stands still; once the twin's first window is done, the
-// page reloads to show the twin (the rows follow a variable read at load)
-const state = (window.opendtStart ??= { step: 0, since: Date.now() });
-const card = () => document.querySelector('.opendt-start');
-const step = Number(card()?.dataset.step || 1);
-if (step !== state.step) Object.assign(state, { step, since: Date.now() });
-state.bar ??= setInterval(() => {
-  const el = card();
-  if (!el) return;
-  const near = 1 - Math.exp(-(Date.now() - state.since) / 20000); // toward the end of the step, never at it
-  el.querySelector('.bar div').style.width = (100 * (state.step - 1 + 0.9 * near)) / Number(el.dataset.steps) + '%';
+// Grafana's own loading bar (@grafana/ui's LoadingBar, as over a loading panel) moves while the twin starts; once the
+// twin's first window is done, the page reloads to show the twin (the rows follow a variable read at load)
+// the card, copied over the whole screen, which does not scroll until the page reloads: on the page, as a fixed
+// element inside the panel would stay in the panel; the bar beside the copy, so a new copy does not restart it
+css('opendt-start-css', 'html, body { overflow: hidden }\n' + style);
+let screen = document.getElementById('opendt-start');
+if (!screen) {
+  screen = document.body.appendChild(document.createElement('div'));
+  screen.id = 'opendt-start';
+  screen.innerHTML = '<div></div><div class="bar"></div>';
+  const bar = screen.lastChild;
+  Promise.all(['react', 'react-dom', '@grafana/ui'].map((name) => System.import(name))).then(([React, ReactDOM, ui]) =>
+    ReactDOM.createRoot(bar).render(React.createElement(ui.LoadingBar, { width: bar.clientWidth, delay: 0 }))
+  );
+}
+const state = (window.opendtStart ??= { step: 0 });
+// never a step back: once the twin's first window is done, the panel shows the card of before the API answered (step
+// 1) until the page reloads
+const step = Number(context.element.querySelector('.opendt-start').dataset.step);
+if (step >= state.step) {
+  state.step = step;
+  screen.firstChild.innerHTML = context.element.innerHTML;
+}
+state.done ??= setInterval(() => {
+  // the twin's time came after the panel had rendered, and hid its row: the twin runs, and the screen goes
+  if (context.grafana.replaceVariables('$twin')) {
+    clearInterval(state.done);
+    clearInterval(state.ready);
+    delete window.opendtStart;
+    document.getElementById('opendt-start-css').remove();
+    screen.remove();
+  }
 }, 200);
 state.ready ??= setInterval(async () => {
   try {

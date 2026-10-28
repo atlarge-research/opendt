@@ -44,7 +44,8 @@ def test_steps_are_known():
         for step in use_case:
             assert step["question"] in steps.QUESTIONS
             assert set(step["plots"]) <= steps.PLOTS.keys()
-            assert {*step.get("set", {}), *step.get("start", {})} <= {*steps.BASE}  # what the twin's API takes
+            # what the twin's API takes
+            assert {*step.get("set", {}), *step.get("start", {})} <= {*steps.BASE}
 
 
 def test_one_step_at_a_time():
@@ -68,7 +69,7 @@ def test_card():
         card = steps.card(n)["options"]["content"]
         linked = {int(i) for i in re.findall(r'var-step=(\d+)"', card)}
         assert linked == set(range(1, last + 1)) - {n}  # every other step
-        assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 95  # on one line
+        assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 190  # on two lines at most
         # each step alike: four choices, the right one; a hint and a solution, folded; what to change, if any, too
         assert len(step["choices"]) == 4 and step["answer"] in "ABCD"
         assert '<p class="hint" hidden' in card and '<p class="solution" hidden' in card
@@ -87,15 +88,15 @@ def test_side_by_side():
     assert screens.side_by_side(["a", "b", "c", "d"], 6, 9, 18, 8) == four
 
 
-def test_tutorial_starts_on_day():
+def test_screens_start_on_day():
     def window(board):
         [time] = [v["spec"] for v in board["spec"]["variables"] if v["spec"]["name"] == "window"]
         view = board["spec"]["elements"]["brand"]["spec"]["vizConfig"]["spec"]["options"]
         assert 'data-var="window"' in view["content"]  # the view shows it, from the address
         return time["current"]["value"]
 
-    assert window(screens.tutorial) == "day"
-    assert window(screens.detailed) == window(screens.topology) == "week"
+    # the twin's last day: a week shows mostly the days the twin has not reached yet
+    assert window(screens.tutorial) == window(screens.detailed) == window(screens.topology) == "day"
 
 
 def test_starting_first():

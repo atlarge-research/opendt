@@ -1,4 +1,4 @@
-<a href="atlarge-research.github.io/opendt/">
+<a href="https://atlarge-research.github.io/opendt/">
     <img src="logo/logo-128.png" alt="OpenDT logo" title="OpenDT" align="right" height="100" />
 </a>
 
@@ -6,7 +6,7 @@
 
 **Open Digital Twin for Datacenters**
 
-OpenDT is a distributed system that creates a real-time digital twin of datacenter infrastructure. It replays historical workload data through the [OpenDC](https://opendc.org/) simulator to predict power consumption, enabling What-If analysis without touching live hardware.
+OpenDT is a distributed system that creates a real-time digital twin of datacenter infrastructure. It replays historical workload data through the [OpenDC](https://opendc.org/) simulator to predict power consumption, enabling what-if analysis without touching live hardware.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://www.docker.com/)
@@ -35,7 +35,7 @@ opendt/
 │   ├── default.yaml           # Default configuration
 │   └── experiments/           # Experiment-specific configs
 ├── data/                      # Run outputs (timestamped directories)
-├── docs/                      # Documentation
+├── site/                      # Documentation
 ├── libs/common/               # Shared library (Pydantic models, utilities)
 ├── opendc/                    # OpenDC simulator binary
 ├── reproducibility-capsule/   # Experiment reproduction scripts
@@ -46,6 +46,7 @@ opendt/
 │   ├── grafana/               # Dashboards (built by grafana/dashboards/build.py)
 │   ├── kafka-init/            # Kafka topic initialization
 │   └── simulator/             # OpenDC simulation engine
+├── tutorial/                  # Tutorial notebooks
 └── workload/                  # Workload datasets
     └── SURF/                  # SURF datacenter workload
 ```

@@ -17,7 +17,7 @@ plt.rcParams.update(
     {
         "axes.prop_cycle": plt.cycler(
             color=["#009E73", "#E69F00", "#338ec1", "#D55E00", "#9557a5", "#56B4E9", "#CC79A7"],
-            linestyle=["-", "--", ":", "-.", (0, (5, 1)), (0, (3, 1, 1, 1, 1, 1)), (0, (1, 1))],
+            linestyle=["-", "--", (0, (5, 1)), "-.", ":", (0, (3, 1, 1, 1, 1, 1)), (0, (1, 1))],
         ),
         "figure.figsize": (10, 4),
         "axes.grid": True,
@@ -29,6 +29,16 @@ plt.rcParams.update(
         "legend.borderpad": 0.3,
     }
 )
+
+# One colour per run across notebook 1; OpenDT's own run has SURF's 277 hosts.
+RUNS = {
+    "OpenDT": ("#009E73", "-"),
+    "hosts = 277": ("#009E73", "-"),
+    "hosts = 69": ("#E69F00", "--"),
+    "hosts = 138": ("#9557a5", ":"),
+    "hosts = 2,770": ("#D55E00", "-."),
+    "OpenDT, 2,770 hosts from 08:00": ("#338ec1", "-"),
+}
 
 
 def legend_above(ax):
@@ -59,13 +69,17 @@ def plot_power(*results, hourly_mape=False, energy=False):
         ax=ax, color="#999999", linestyle="-", label="Ground Truth"
     )
     for line in lines:
-        (line / 1000).plot(ax=ax, label=line.name)
+        color, linestyle = RUNS.get(line.name, (None, None))
+        (line / 1000).plot(ax=ax, label=line.name, color=color, linestyle=linestyle)
     ax.set(xlabel="Time [UTC]", ylabel="Power Draw [kW]", ylim=(0, None))
     legend_above(ax)
     if hourly_mape:
         xlim = ax.get_xlim()  # pandas fits the shared time axis to each plot's data
         for line in lines:
-            error(line).resample("1h").transform("mean").plot(ax=below, label=line.name)
+            color, linestyle = RUNS.get(line.name, (None, None))
+            error(line).resample("1h").transform("mean").plot(
+                ax=below, label=line.name, color=color, linestyle=linestyle
+            )
         below.axhline(
             10,
             color="red",
@@ -106,12 +120,13 @@ def plot_electricity_mix():
     mix = gwh.loc[list(SOURCES)].rename(index=SOURCES)
     mix.loc["Other"] = gwh.drop(SOURCES).sum()
     share = (mix / mix.sum() * 100).T  # one row per country
-    colors = ["#000000", "#D55E00", "#9557a5", "#338ec1", "#56B4E9", "#E69F00", "#BBBBBB"]
+    # none of the colours the countries have in the carbon intensity plot
+    colors = ["#000000", "#CC79A7", "#9557a5", "#56B4E9", "#777777", "#F0E442", "#BBBBBB"]
     ax = share.plot.barh(stacked=True, color=colors, width=0.6, edgecolor="white", figsize=(10, 2.5))
     for bars, hatch in zip(ax.containers, ["", "//", "..", "xx", "\\\\", "--", ""]):  # readable in grayscale
         for bar in bars:
             bar.set_hatch(hatch)
-    ax.set(xlabel="Share of Electricity Generation, as of Oct 2022, based on IEA [%]", xlim=(0, 100))
+    ax.set(xlabel="Share of Electricity Generation in 2022 [%]", xlim=(0, 100))
     ax.invert_yaxis()  # NL on top, as in the other plots
     ax.grid(axis="y", visible=False)
     legend_above(ax)

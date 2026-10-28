@@ -5,7 +5,7 @@
 
 "1.1":
   question: |
-    With 10% as the community-accepted error rate, is OpenDT accurate enough for what-if analysis on SURF? In which hours is OpenDT the least accurate and why?
+    With 10% as the community-accepted error rate, is OpenDT accurate enough for what-if analysis on SURF? In which hours is OpenDT the least accurate?
   solution: |
     OpenDT has ~6% MAPE, thus, within the community-accepted limits. However, OpenDT tends to drift in the first few hours, 
     and then its MAPE drops to under 5%.
@@ -32,33 +32,28 @@
   question: |
     Interesting, 10x infrastructure, but only 4x more power! Why is that?
   solution: |
-    The jobs are identical, so the ~2,500 hosts sit idle. However, they still draw electricity! At 25W per host, we 
-    it leads to 62kW (2,493 x 25 W = 62 kW), just for staying idle.
-    Over-provisioning could lead to sustainability concerns, both environmental and financial, where energy (and thus,
-    money) is wasted by idle infrastructure.
+    The jobs are identical, so the ~2,500 hosts sit idle. However, they still draw electricity! At 25 W per host, this
+    leads to 62 kW (2,493 x 25 W = 62 kW), just for staying idle.
   choices:
-    - "About 10x: each extra host runs jobs too"
-    - "About the same: idle hosts draw nothing"
-    - "About 4x: the extra hosts are idle, but draw power"
-    - "About 2x: the jobs spread over more hosts and end sooner"
+    - Each extra host runs jobs too
+    - Idle hosts draw nothing
+    - The extra hosts are idle, but still draw power
+    - The jobs spread over more hosts and end sooner
   answer: C
-  explore: "Add 500 and 1,000 to `sizes` and run the cell again: how many watts does each extra host add, and why this number?"
 
 "1.4":
   question: |
     Let's downscale to 138 and 69 hosts. How much power do we save? How does downscaling affect the jobs?
   solution: |
-    See the table above: 138 hosts (half), but only 3.5 kW better, and queueing time to 13.7 minutes. 69 hosts (quarter), 
-    halves power draw, but at the cost of 28 hours in the queue.
-    Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system
-    failures.
+    See the table above: 138 hosts (half), but only 3.5 kW better, and the queueing time rises to 13.7 minutes. 69 hosts
+    (quarter), halves power draw, but at the cost of 28.6 hours in the queue, on average.
   choices:
     - With 138, half the power; with 69, a quarter; no job waits
     - With 138, no power saved; with 69, the jobs fail
     - With 138, about 16% less power and no job waits; with 69, about half
     - With 138, about 16% less power and some jobs wait; with 69, jobs wait more than a day
   answer: D
-  explore: "Add 160 and 200 to `sizes`: what is the smallest number of hosts with which no job waits?"
+  explore: "Add 160 and 200 to `sizes`: is 160 enough, so that no job waits?"
 
 "1.5":
   question: |
@@ -81,7 +76,7 @@
   choices:
     - The energy of the jobs themselves
     - The carbon intensity of the grid
-    - The boot time, and a human-in-the-loop overseeing the decisions
+    - The boot time and the energy of booting
     - "None: switching hosts off and on is free"
   answer: C
 
@@ -120,10 +115,10 @@
     Where does r change the power draw most: at low or at high CPU utilization?
   solution: |
     At high utilization: at 80%, 168 W with r = 2 vs. 243 W with r = 9. At 20%, the curves almost overlap (79 vs. 85 W),
-    as u^r is tiny there, and at full load they all meet at 174 W. Calibration matters most when the hosts are busy.
+    as $u^{r}$ is tiny there, and at full load they all meet at 174 W.
   choices:
     - At low utilization, below 20%
-    - At high utilization, over 80%
+    - At high utilization, around 80%
     - The same at every utilization
     - Only at full load
   answer: B
@@ -154,17 +149,16 @@
   answer: B
   solution: |
     OpenDT calibrates from the telemetry it has: the best r of 11:00-12:00 (r = 6) is the r of 12:00-13:00. The lag, however,
-    costs little: 1.5% MAPE vs. 0.8% with the window's own best r, yet far below no calibration (4.8%, r = 4).
+    costs little: 1.5% MAPE vs. 0.8% with the window's own best r, and still far below no calibration (4.8%, r = 4).
 
 "2.5":
   question: |
-    Does the best r stay the same from one day to the next, and what does this mean for a digital twin that runs for
-    weeks?
+    Does the best r stay the same from one day to the next?
   solution: |
-    No; the best r changes between 5 and 9 from day to day.
+    No; within the grid of 3 to 9, the best r changes from day to day, and on days 5 to 7 it sits at the edge (9).
     Static simulation models can drift and introduce errors as the time horizon increases: hardware behavior varies
     with temperature, aging, software stack, and many other factors, while workload characteristics evolve over time.
-    Therefore, OpenDT recalibrates (need to recalibrate) continuously.
+    Therefore, OpenDT needs to recalibrate continuously.
   choices:
     - "No, it changes between 5 and 9 from day to day"
     - "Yes, r = 7 every day"
@@ -181,7 +175,7 @@
     while the coarse steps of breadth skip this range. Breadth and depth together (1 to 20) give 3.0%, but with 20
     simulations per window (4x the cost).
   choices:
-    - "Depth: its values are where the best r is in most hours"
+    - "Depth: its values are where the best r is in about half of the hours"
     - Breadth, as it covers more values of r
     - The same, as both run 5 simulations
     - Neither does better than no calibration (6.4%)
@@ -193,8 +187,7 @@
     does the twin lose?
   solution: |
     A little: MAPE 4.0% vs. 3.6%, still far below no calibration (6.4%); recalibrating every 24 hours gives 4.8%, and
-    every 48 hours, 5.7%. On a laptop with a few cores, the twin can trade a little accuracy for six times fewer
-    simulations.
+    every 48 hours, 5.7%.
   choices:
     - Nothing
     - A little; it stays far below no calibration
@@ -206,8 +199,8 @@
 
 "3.1":
   question: |
-    SURF runs in NL; which of the four countries has the grid with the lowest carbon intensity, on average, during the
-    SURF week?
+    The company runs the SURF workload in NL; which of the four countries has the grid with the lowest carbon
+    intensity, on average, during the SURF week?
   solution: |
     RO has the lowest carbon intensity, with 343 gCO2/kWh on average, then NL (372), DE (508), and PL (868). For the
     same kWh, the grid of PL emits about 2.5x more CO2 than the grid of RO: in 2022, PL produced about 70% of its
@@ -221,13 +214,12 @@
 
 "3.2":
   question: |
-    Estimate: we run SURF's workload in PL, instead of NL, on the same 277 hosts; what changes considerably: the energy, the CO2
-    emissions, or both?
+    Estimate: the company runs the SURF workload in PL, instead of NL, on the same 277 hosts; what changes considerably:
+    the energy, the CO2 emissions, or both?
   solution: |
     The CO2 emissions only. In the simulation, which models the hosts but not the cooling (which also depends on the
     climate), the energy is the same in every country (3,424 kWh), since the workload and the hosts are the same; the
-    CO2 emissions change with the carbon intensity of the grid, from 1,172 kg (RO) to 2,959 kg (PL). The same energy can
-    lead to very different CO2 emissions, depending on how the grid produces it.
+    CO2 emissions change with the carbon intensity of the grid, from 1,172 kg (RO) to 2,959 kg (PL).
   choices:
     - The energy
     - The CO2 emissions
@@ -237,11 +229,11 @@
 
 "3.3":
   question: |
-    Moving from NL to RO, the grid with the lowest carbon intensity on average, how much CO2 does SURF save in one week?
+    Moving from NL to RO, the grid with the lowest carbon intensity on average, how much CO2 does the company save in one
+    week?
   solution: |
-    About 6%: SURF emits 1,172 kg in RO vs. 1,253 kg in NL (81 kg less), as the carbon intensities of NL and RO are
-    close on average. From PL to RO, the saving is much larger, about 60% (1,172 vs. 2,959 kg). Location influences CO2
-    emissions, yet a migration between two similar grids saves little.
+    About 6%: the company emits 1,172 kg in RO vs. 1,253 kg in NL (81 kg less), as the carbon intensities of NL and RO
+    are close on average. From PL to RO, the saving is much larger, about 60% (1,172 vs. 2,959 kg).
   choices:
     - Nothing
     - About 6%
@@ -266,11 +258,11 @@
 
 "3.5":
   question: |
-    Following the greenest grid every hour, how much CO2 does SURF emit in one week, and at what cost?
+    Following the greenest grid every hour, how much CO2 does the company emit in one week, and at what cost?
   solution: |
-    SURF emits 1,065 kg, 15% less than in NL and 9% less than in RO. It would be tempting to conclude that following the
-    greenest grid is always beneficial; however, the company keeps free hosts in both datacenters (switched off when
-    unused), and the workload migrates 11 times in one week, each migration costing energy and time (e.g., to move the
+    The company emits 1,065 kg, 15% less than in NL and 9% less than in RO. It would be tempting to conclude that
+    following the greenest grid is always beneficial; however, the company pays for free capacity in both datacenters,
+    enough hosts in each to run the whole workload, and the workload migrates 11 times in one week, each migration costing energy and time (e.g., to move the
     jobs and their data over the network).
   choices:
     - About 15% less CO2 than in NL, with about a dozen migrations in the week
@@ -281,7 +273,7 @@
 
 "3.6":
   question: |
-    Should SURF migrate its workload to RO, from what we have seen so far?
+    Should the company migrate the SURF workload to RO, from what we have seen so far?
   solution: |
     Not yet. Moving to RO saves only 6% of the CO2 of NL, and NL is greener than RO in 57 of 168 hours; a migration also
     has costs of its own, which the human-in-the-loop weighs before such a major decision (see 4.2).
@@ -289,33 +281,32 @@
     - Yes, as RO has the lowest carbon intensity on average
     - No, as a migration saves no CO2
     - Not yet, as the saving is small and a migration has costs of its own
-    - Yes, but only at night
+    - Yes, to PL
   answer: C
 
 "3.7":
   question: |
     Of the CO2 that RO with 200 hosts saves, compared with NL with 277 hosts, how much comes from the migration to RO?
   solution: |
-    About a third. RO with 200 hosts emits 1,061 kg, 192 kg (15%) less than NL with 277 hosts: 120 kg less from
-    switching off 77 idle hosts (NL with 200 hosts emits 1,133 kg), and only 71 kg less from the migration to RO. With
-    138 hosts in RO, the CO2 drops further (971 kg), but 2,631 jobs wait for a free host (78 minutes on average, over
-    all jobs); under-provisioning ICT infrastructure could lead to performance concerns, as in notebook 1.
+    About a third. RO with 200 hosts emits 1,061 kg, 192 kg (15%) less than NL with 277 hosts: about 120 kg less from
+    switching off 77 idle hosts (NL with 200 hosts emits 1,133 kg), and only about 72 kg less from the migration to RO.
+    With 138 hosts in RO, the CO2 drops further (971 kg), but 2,631 jobs wait for a free host (78 minutes on average,
+    over all jobs).
   choices:
     - All of it
-    - About a third; the rest comes from switching off idle hosts
+    - About a third
     - About half
     - None of it
   answer: B
-  explore: "Add RO with 161 hosts (the most hosts in use at once over the week) to `options`: does any job wait?"
+  explore: "Add RO with 161 hosts (the most hosts in use at once, sampled every 150 s) to `options`: does any job wait?"
 
 "3.8":
   question: |
     Estimate: if the company ran the SURF workload in SE, how much less CO2 would it emit in one week, compared with NL?
   solution: |
-    About 95%: SURF would emit 62 kg in SE vs. 1,253 kg in NL, 20x less CO2 for the same energy, and far less than the
-    1,065 kg of following the greenest of the company's four grids every hour. Location influences CO2 emissions more
-    than any operational choice between similar grids; however, operating in SE means building (or renting) a new
-    datacenter, with the trade-offs of section 4 (e.g., the CO2 emitted to build new hardware, the latency for the users).
+    About 95%: the company would emit 62 kg in SE vs. 1,253 kg in NL, 20x less CO2 for the same energy, and far less
+    than the 1,065 kg of following the greenest of the company's four grids every hour. However, operating in SE means
+    building (or renting) a new datacenter, with the trade-offs of section 4 (e.g., the CO2 emitted to build new hardware, the latency for the users).
   choices:
     - About 6%, as in RO
     - About 15%, as when following the greenest grid every hour

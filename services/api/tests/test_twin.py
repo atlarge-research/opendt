@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 from api import twin
 from conftest import JOBS, write_window
+from odt_common.odc_runner import COLUMNS
 
 
 def test_windows(run_dir):
@@ -141,3 +142,8 @@ def test_status(run_dir):
 def test_carbon_zone(tmp_path):
     write_window(tmp_path, 1, 5, hosts=277, active=[1], zone_path=twin.CARBON_TRACES["RO"])
     assert twin.status(tmp_path)["carbon_zone"] == "RO"
+
+
+def test_opendc_writes_the_columns_read():
+    """The simulator's OpenDC writes only some columns: the host ones read here among them."""
+    assert set(twin.HOST) <= set(COLUMNS["hostExportColumns"])

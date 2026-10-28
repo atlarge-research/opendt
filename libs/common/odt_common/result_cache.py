@@ -8,9 +8,15 @@ import hashlib
 import json
 import shutil
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from odt_common.models import Topology
+
+# How long past its time a run simulates the tasks (odc_runner): a run also serves the windows of
+# the next hour, while no task arrives and the topology stays; here, not in odc_runner, as every
+# service imports this module and not all have pyarrow
+HORIZON = timedelta(hours=1)
 
 
 @dataclass
@@ -20,10 +26,12 @@ class SimulationState:
     Attributes:
         topology_hash: SHA256 hash of the topology JSON and the scheduler
         task_count: Number of tasks in the simulation
+        simulated_time: The run's time; it simulated the tasks up to HORIZON later
     """
 
     topology_hash: str
     task_count: int
+    simulated_time: datetime
 
 
 class ResultCache:
@@ -45,8 +53,11 @@ class ResultCache:
         inputs = {"topology": topology.model_dump(mode="json"), "scheduler": scheduler}
         return hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
 
-    def can_reuse(self, topology: Topology, scheduler: str | None, task_count: int) -> bool:
-        """Check if cached results can be reused for given inputs."""
+    def can_reuse(
+        self, topology: Topology, scheduler: str | None, task_count: int, simulated_time: datetime
+    ) -> bool:
+        """Check if cached results can be reused for given inputs, up to `simulated_time`: before
+        the cached run's HORIZON."""
         if self.last_state is None or self.last_run_dir is None:
             return False
 
@@ -58,6 +69,7 @@ class ResultCache:
         return (
             current_hash == self.last_state.topology_hash
             and task_count == self.last_state.task_count
+            and simulated_time < self.last_state.simulated_time + HORIZON
         )
 
     def get_cached_run_dir(self) -> Path | None:
@@ -84,9 +96,14 @@ class ResultCache:
         )
 
     def update(
-        self, topology: Topology, scheduler: str | None, task_count: int, run_dir: Path
+        self,
+        topology: Topology,
+        scheduler: str | None,
+        task_count: int,
+        simulated_time: datetime,
+        run_dir: Path,
     ) -> None:
         """Update cache with new simulation state and run directory."""
         topology_hash = self._compute_topology_hash(topology, scheduler)
-        self.last_state = SimulationState(topology_hash=topology_hash, task_count=task_count)
+        self.last_state = SimulationState(topology_hash, task_count, simulated_time)
         self.last_run_dir = run_dir

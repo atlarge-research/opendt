@@ -58,18 +58,21 @@ const open = () => {
     });
     if (!confirm(text.join('; ') + '? The twin follows from its next window.')) return;
     const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));
-    const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
-    if (response.ok) {
-      const sent = load();  // other boxes may have changed it since this one rendered
-      changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));
-      save(sent);
-      big.remove();
-      context.grafana.notifySuccess(['OpenDT', 'Applied']);
-      context.grafana.refresh();
-    } else {
-      const { detail } = await response.json();
-      context.grafana.notifyError(['OpenDT', typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; ')]);
+    try {
+      const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
+      if (!response.ok) {
+        const { detail } = await response.json();
+        return warn(typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; '));
+      }
+    } catch {
+      return warn('The twin did not answer; try again');
     }
+    const sent = load();  // other boxes may have changed it since this one rendered
+    changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));
+    save(sent);
+    big.remove();
+    context.grafana.notifySuccess(['OpenDT', 'Applied']);
+    context.grafana.refresh();
   };
   document.body.append(big);
 };

@@ -4,7 +4,7 @@ ASCI course on distributed systems, Friday 30 October 2026, 1 hour, fewer than 2
 
 ## Before Class
 
-- One week before: send the students the README (Option 1) and ask them to create the codespace and run the first cell
+- One week before: send the students the README (Setup, GitHub Codespace) and ask them to create the codespace and run the first cell
   of notebook 1 (`Setup OK`) at least one day before class.
 - One day before: run notebooks 1-3 on the laptop (a few seconds each: their simulations ship precomputed in
   `resources/results/`, so they need no Java).
@@ -28,7 +28,7 @@ its Tutorial steps on the live twin (the Change line of each step), so the twin 
 at it together; a change shows from the next windows of operation, and calibration needs a few more. If time runs out,
 the instructor goes through the steps alone.
 
-Each notebook is self-contained: at 0:25 and 0:45, all students open the next notebook, also those who did not finish
+Each notebook is self-contained: at 0:25 and 0:40, all students open the next notebook, also those who did not finish
 the previous one.
 
 ## Talk: Three Use Cases, Three Questions
@@ -51,7 +51,7 @@ the previous one.
    `curl -X PUT -H "Content-Type: application/json" --data @tutorial/resources/configs/topology_2770_hosts.json http://localhost:3001/api/topology`.
    The predicted power draw jumps to about 4x; notebook 1 explains why. A dashed marker shows the change on every graph.
 3. Calibration: Hosts 277 in the Datacenter box and Calibration On in the Twin box, each then Apply (the range of r, the
-   values of r, the parallel runs, and the MAPE window are in the Self-calibrator box); the Twin accuracy row shows r
+   values of r, and the MAPE window are in the Self-calibrator box); the Twin accuracy row shows r
    and the hourly MAPE (in the test run, r 4, then 9, then 6, and the MAPE from 14% to about 1% within six trace hours);
    `make logs-calibrator` shows the MAPE of each candidate.
 4. `make down`.
@@ -59,26 +59,24 @@ the previous one.
 Known issues:
 
 - Freshly built images get kafka-python 3.x (`kafka-python>=2.0.2` is not pinned), which rejected the `buffer_memory`
-  setting in `libs/common/odt_common/utils/kafka.py`: fixed on the tutorial branch (commit c2df7c5); images built before
+  setting in `libs/common/odt_common/utils/kafka.py`: fixed on the tutorial branch; images built before
   the fix need `make up build=true`.
 - Docker Desktop needs at least 8 GB: with calibration and 2 parallel runs, the calibrator peaks at about 2.7 GB (on
-  a fresh twin, October 2026), and each OpenDC run within 1 GB; keep Parallel runs at 2 or lower in the
-  Self-calibrator box.
+  a fresh twin, October 2026), and each OpenDC run within 1 GB; keep the calibrator's `max_parallel_workers` at 2 or lower in
+  the config (the Self-calibrator box shows it as Parallel runs).
 - Port 9092: on the demo laptop, a local Java service listens on 127.0.0.1:9092, the host port of OpenDT's Kafka;
   stop it before `make up`.
 - `make up` deletes the Kafka and Grafana volumes of the previous run.
 - The time left of each job is foreknowledge: in the replay, each job arrives with its whole CPU trace; a real twin
   needs runtime estimates (e.g., the walltime users request).
-- With other servers than SURF's and the calibrator on, the calibrator fits r so that the other servers match SURF's
-  measured power; show what-ifs with the calibrator off.
+- With other servers than SURF's and the calibrator on, the calibrator fits r so that the other servers match the
+  measured power (ground truth); show what-ifs with the calibrator off.
 - The dashboards use Grafana's new layout (public preview in 12.4); if a screen misbehaves, the classic dashboard
   ("OpenDT Dashboard") still shows power and CO₂.
 - The screens are checked at 1,440 x 900 pixels and up, in Grafana's kiosk mode (no menus); ☀/☾ next to the twin's
   time switches to the light theme, which a projector may show better.
 - When every candidate's MAPE is infinite, the calibrator still picks r = 3.0 and publishes it (seen in stored runs
   after about 1.5 trace days); keep the calibration demo within the first trace day.
-- The local `config/default.yaml` spells `linespace_points`; OpenDT ignores this field and tests 9 values (the
-  tutorial configs spell `linspace_points`).
 
 ## Plan B
 

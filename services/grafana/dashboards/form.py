@@ -52,10 +52,6 @@ SCHEDULER = select(
 )
 SPEED = select("speed_factor", "Speed", SPEEDS)
 CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
-# the calibrator's; each OpenDC run takes about 1.3 GB, so 4 or more parallel runs need more memory for Docker
-PARALLEL = select(
-    "parallel_simulations", "Parallel runs", [(n, str(n)) for n in (1, 2, 3, 4)], "radio"
-)
 R_FROM = field("calibration_min", "r from", "slider", min=0.5, max=20, step=0.5)
 R_TO = field("calibration_max", "r to", "slider", min=0.5, max=20, step=0.5)
 R_VALUES = field("calibration_points", "Values of r", "slider", min=2, max=20, step=1)
@@ -106,19 +102,21 @@ def value(element):
     return "<i" + "".join(f' data-{k}="{v}"' for k, v in data.items()) + f">{{{{{key}}}}}</i>"
 
 
-def group(title, levers, link=None, note=""):
+def group(title, levers, link=None, note="", shown=()):
     """Levers of a category in a box, as values of the twin's: each its name and its value now (two: from-to); a
     click opens the box larger, with what they take, and Apply, once confirmed, sends the changes to the twin (from
-    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under them."""
-    lines = "".join(
+    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under them;
+    `shown`: (name, key), the twin's values shown first, set in its config only."""
+    lines = "".join(f"<p><small>{name}</small><b>{{{{{key}}}}}</b></p>" for name, key in shown)
+    lines += "".join(
         f'<p data-name="{name}"><small>{name}</small><b>{"-".join(map(value, elements))}</b></p>'
         for name, elements in levers
     )
     more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
-    keys = [e["id"] for _, elements in levers for e in elements]
+    keys = [key for _, key in shown] + [e["id"] for _, elements in levers for e in elements]
     return text(
         f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}{note}</div>',
-        script("css.js", "box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
+        script("css.js", "warn.js", "box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
         [status(*keys)],
         f'<div class="lever"><small>{title}</small></div>',
         BOX,
@@ -137,9 +135,10 @@ DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: f
   padding: 6px 16px; cursor: pointer; }"""
 VIEW = """.view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .view div { display: flex; align-items: center; gap: 4px; }
-.view small { color: #8e8e8e; margin-left: 12px; margin-right: 2px; }
+.view small { color: #8e8e8e; margin-left: 8px; margin-right: 2px; }
 .view .on { background: #3d71d9; color: white !important; }
-.view select { width: auto; height: 26px; padding: 0 6px; background: transparent; color: inherit;
+/* narrower on a laptop, so the row stays in its panel */
+.view select { width: auto; min-width: 0; height: 26px; padding: 0 6px; background: transparent; color: inherit;
   border: 1px solid #8e8e8e; border-radius: 2px; }"""
 
 
@@ -169,7 +168,8 @@ def brand(uid, plots=(), period=True):
         view += f'<small>Interval</small><select data-var="period">{options}</select>'
     logo = (
         '<div style="gap: 12px; font-size: 22px; font-weight: 600"><img src="/public/img/opendt.png" height="36">'
-        'OpenDT<span style="margin-left: auto; font-size: 14px; font-weight: 400" data-time="{{twin_time}}">'
+        'OpenDT<span style="margin-left: auto; font-size: 14px; font-weight: 400; font-variant-numeric: tabular-nums"'
+        ' data-time="{{twin_time}}">'
         f'</span><a class="theme" style="{TAB}"></a></div>'  # light or dark, grafana.js
     )
     html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'

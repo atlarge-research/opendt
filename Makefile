@@ -94,9 +94,9 @@ setup:
 	@echo "Creating virtual environment..."
 	@$(UV_BIN) venv --allow-existing
 	@echo "Installing dependencies..."
-	@$(UV_BIN) pip install -e libs/common
-	@$(UV_BIN) pip install -e "libs/common[test]"
-	@$(UV_BIN) pip install -e ".[dev]"
+	@$(UV_BIN) pip install --python $(VENV) -e libs/common
+	@$(UV_BIN) pip install --python $(VENV) -e "libs/common[test]"
+	@$(UV_BIN) pip install --python $(VENV) -e ".[dev]"
 	@echo ""
 	@echo "Done. Activate with: source .venv/bin/activate"
 	@echo ""

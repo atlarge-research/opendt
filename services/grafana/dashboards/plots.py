@@ -44,8 +44,6 @@ NOW = f"{CLUSTER}?points=1"  # the latest sample, for the tiles and boxes
 WATTS = [("actual_power", "actual_power"), ("simulated_power", "simulated_power")]
 KW = [("actual_power/1000", "Ground truth"), ("simulated_power/1000", "OpenDT")]
 
-# the top of the Dashboard screen
-
 # the Tutorial screen's boxes, one value each, in the colour of its line in the plots
 BOXES = {
     "time-box": tile(
@@ -116,7 +114,7 @@ hosts = timeseries(
     apart=["Available"],
 )
 
-# the rows of the Dashboard screen, each plot shown or hidden in the Plots row
+# the rows of the Dashboard screen, each plot shown or hidden in ☰ Plots
 
 # the hosts in each CPU-utilization bucket over time, the busiest bucket on top; the key gives each step
 BUCKETS = [(f"cpu_{low}_{low + 20}", f"{low}-{low + 20}%") for low in range(80, -1, -20)]
@@ -147,10 +145,16 @@ heatmap = {
     },
 }
 
+
+def colored(name, colors, **props):
+    """A number in the colour of each value of `colors` on ({value: name})."""
+    return override(name, **thresholds(colors), **props)
+
+
 ROWS = {
     "Performance": {
         "scheduling-now": stat(
-            "Now",
+            "Overview",
             SCHEDULING,
             [
                 ("completion_h", "Total runtime [h]"),
@@ -158,12 +162,19 @@ ROWS = {
                 ("started_in_10_min_pct", "Started in 10 min"),
             ],
             [
-                *units("locale", "Jobs waiting", "Jobs running", decimals=0),
+                *units("locale", "Jobs waiting", "Jobs running", "Jobs finished", decimals=0),
                 override("Started in 10 min", unit="percent", decimals=0),
             ],
             decimals=1,
             more=[
-                target(NOW, [("tasks_pending", "Jobs waiting"), ("tasks_active", "Jobs running")])
+                target(
+                    NOW,
+                    [
+                        ("tasks_pending", "Jobs waiting"),
+                        ("tasks_active", "Jobs running"),
+                        ("tasks_completed", "Jobs finished"),
+                    ],
+                )
             ],
         ),
         "completion": timeseries(
@@ -224,7 +235,7 @@ ROWS = {
     },
     "Utilization": {
         "utilization-now": stat(
-            "Now",
+            "Overview",
             NOW,
             [
                 ("cpu_utilization_busy_median", "CPU, busy hosts"),
@@ -278,7 +289,7 @@ ROWS = {
     "Sustainability": {
         "energy-now": zoned(
             stat(
-                "This $period",
+                "Overview",
                 TOTALS,
                 [(c, c) for c in ("energy_kwh", "co2_kg", "embodied_co2_kg")],
                 [override("Embodied share", unit="percent")],
@@ -324,8 +335,32 @@ ROWS = {
             [("idle_power_kw", "Idle hosts")],
         ),
     },
-    # its numbers now are on top (Accuracy); first, the power draw of the datacenter and of the twin instead
     "Twin accuracy": {
+        # six numbers, as each Overview: the MAPE and the error over 5 minutes, then over the hour
+        "accuracy-now": stat(
+            "Overview",
+            f"{ACCURACY}?minutes=5",
+            [("mape", "MAPE, 5 min"), ("error_kw", "Error, 5 min [kW]")],
+            [
+                *(
+                    colored(f"MAPE, {t}", {0: "green", 10: "red"}, unit="percent")
+                    for t in ("5 min", "1 h")
+                ),
+                override("Energy error so far", unit="percent"),
+            ],
+            more=[
+                target(
+                    ACCURACY,
+                    [
+                        ("mape", "MAPE, 1 h"),
+                        ("error_kw", "Error, 1 h [kW]"),
+                        ("energy_error_pct", "Energy error so far"),
+                        ("r", "r"),
+                    ],
+                )
+            ],
+            decimals=1,
+        ),
         "power": power,
         "mape": timeseries(
             "Power draw MAPE per hour",
@@ -452,50 +487,39 @@ racks = prefabs(
     "as SURF-SARA, to compare like with like).",
 )
 
-# while the twin starts, the whole screen: what it does, a bar that never stands still, and a fact from the paper
+# while the twin starts, the whole screen: what it does, Grafana's loading bar (start.js), and a tip
 PROGRESS = f"{API}/api/progress"
-CARD = """<div class="opendt-start" data-step="{{step}}" data-steps="{{steps}}">
+CARD = """<div class="opendt-start" data-step="{{step}}">
   <div class="doing">{{doing}}</div>
-  <div class="bar"><div></div></div>
   <div class="tip">{{tip}}</div>
 </div>"""
-WAITING = """<div class="opendt-start" data-step="1" data-steps="3">
+WAITING = """<div class="opendt-start" data-step="1">
   <div class="doing">The services start</div>
-  <div class="bar"><div></div></div>
 </div>"""  # before the API answers
-STYLE = """.opendt-start { min-height: 70vh; width: 56%; margin: 0 auto; display: flex; flex-direction: column;
-  justify-content: center; gap: 18px; }
-.opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em;
-  white-space: nowrap; }
-.opendt-start .bar { aspect-ratio: 24 / 1; background: rgba(128, 128, 128, 0.2); border-radius: 999px; overflow: hidden; }
-.opendt-start .bar div { width: 0; height: 100%; border-radius: 999px; transition: width 0.2s linear;
-  background: linear-gradient(90deg, #1f5f86, #338ec1 70%, #6cc0ee); box-shadow: 0 0 18px rgba(51, 142, 193, 0.55); }
-.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; color: #8e8e9e;
+# over the whole screen, in its colour, so the rows under it stay out of sight (start.js)
+STYLE = """#opendt-start { position: fixed; inset: 0; z-index: 1000; background: var(--canvas); color: var(--ink);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+#opendt-start > div { width: 56%; }
+#opendt-start .bar [role="status"] { height: 4px; }
+.opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
+.opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; opacity: 0.65;
   font-size: 17px; white-space: nowrap; }"""
 STARTING = {
     "start": text(
         CARD,
-        script("css.js", "grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress"),
+        script(
+            "css.js", "grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress", style=STYLE
+        ),
         [
             target(
                 PROGRESS,
-                [
-                    ("step", "step"),
-                    ("steps", "steps"),
-                    *((k, k, "string") for k in ("doing", "tip")),
-                ],
+                [("step", "step"), *((k, k, "string") for k in ("doing", "tip"))],
             )
         ],
         WAITING,
-        STYLE,
     )
     | {"transparent": True},
 }
-
-
-def colored(name, colors, **props):
-    """A number in the colour of each value of `colors` on ({value: name})."""
-    return override(name, **thresholds(colors), **props)
 
 
 # the top of the Dashboard screen: the twin's numbers now, by category, as the rows under it

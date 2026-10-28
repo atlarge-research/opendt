@@ -10,7 +10,7 @@
 Dynamic autoscaling:
   - question: "1.1"
     ask: With 10% as the community-accepted error rate, is OpenDT accurate enough? When is it worst?
-    hint: See the MAPE per hour, in the plots; the first hours of the trace differ.
+    hint: See the MAPE per hour, in the plots, against the community-accepted threshold.
     choices:
       - Yes, OpenDT's MAPE is about 1%, the same in every hour
       - Yes, OpenDT's MAPE is about 6%, worst in the first 6 hours
@@ -25,7 +25,7 @@ Dynamic autoscaling:
   - question: "1.2"
     do: Datacenter, Hosts 2,770 (10x), then Apply
     set: {hosts: 2770}
-    ask: "Estimate: SURF draws about 22 kW with 277 hosts; how much with 2,770 hosts (10x)?"
+    ask: "Estimate: SURF draws about 22 kW with 277 hosts; how much with 2,770 hosts (10x)? (it may take up to 1 minute to reflect the change on the dashboard)"
     hint: The jobs stay the same; what does a host draw while it runs no job?
     choices:
       - About 22 kW, the same
@@ -38,25 +38,24 @@ Dynamic autoscaling:
     plots: [power, hosts]
   - question: "1.3"
     do: 6 h (top left), to see the hosts in use up close
-    ask: 10x infrastructure, but only 4x more power! Why is that?
+    ask: 10x infrastructure, same workload, but only 4x more power! Why is that?
     hint: See Hosts available vs. in use; how many of the 2,770 hosts run a job?
     choices:
-      - Each extra host runs jobs too
+      - Each extra host runs jobs too!
       - Idle hosts draw nothing
       - The extra hosts are idle, but still draw power
       - The jobs spread over more hosts and end sooner
     answer: C
     solution: >-
       The jobs are identical, so the ~2,500 extra hosts sit idle; however, they still draw electricity: at 25 W per
-      host, 2,493 x 25 W = 62 kW, just for staying idle. Over-provisioning could lead to sustainability concerns, both
-      environmental and financial, where energy (and thus, money) is wasted by idle infrastructure.
+      host, 2,493 x 25 W = 62 kW, just for staying idle.
     plots: [power, hosts]
   - question: "1.4"
     start: {hosts: 277}
     do: Datacenter, Hosts 138 (half), then Apply; Interval hour (top left), to see the energy per hour
     set: {hosts: 138}
-    ask: Let's downscale to 138 hosts (half). How much power do we save?
-    hint: Only idle hosts are switched off, and an idle host draws 25 W.
+    ask: Let's downscale to 138 hosts (half). How much power do we save compared to 277 hosts?
+    hint: An idle host draws 25 W.
     choices:
       - About 50%
       - Under 20%
@@ -64,7 +63,7 @@ Dynamic autoscaling:
       - Over 80%
     answer: B
     solution: >-
-      Under 20% (16% over the day in notebook 1): switching off 139 idle hosts saves 139 x 25 W, about 3.5 kW.
+      Under 20% (16% over the day in notebook 1): switching off 139 hosts saves 139 x 25 W, about 3.5 kW.
     plots: [power, energy, idle-power]
   - question: "1.4"
     do: Datacenter, Hosts 69 (a quarter), then Apply
@@ -79,15 +78,13 @@ Dynamic autoscaling:
     answer: B
     solution: >-
       Many jobs wait: SURF runs more than 69 jobs at once in 96% of the week (at least 99 on the first day).
-      Under-provisioning ICT infrastructure could lead to performance concerns, system faults, and, ultimately, system
-      failures.
     plots: [jobs, queue, completion, hosts]
 
 Simulation calibration:
   - question: "2.1"
     start: {hosts: 277, calibration: true}
     ask: OpenDT under-estimates the ground truth; does the self-calibrator move r up or down?
-    formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
+    formula: <var>P</var>(<var>u</var>) = <var>P</var><sub>idle</sub> + (<var>P</var><sub>max</sub> − <var>P</var><sub>idle</sub>)(2<var>u</var> − <var>u</var><sup><var>r</var></sup>), with <var>u</var> the CPU utilization and <var>r</var> the calibration parameter
     hint: See Calibration parameter r; at the same CPU utilization, what does a higher r do to P(u)?
     choices:
       - Up
@@ -106,17 +103,20 @@ Simulation calibration:
       - Zero
     answer: A
     solution: >-
-      Lower: in notebook 2, the self-calibrator has a MAPE of 3.6% over the week, vs. 6.4% with r = 4. Calibration
-      alleviates underestimation bias, reducing the frequency of underestimated predictions.
+      Lower: on the first day, from the first change of r on, the self-calibrator has a MAPE of 2.4%, vs. 5.7% with
+      r = 4, and is lower in every hour. Calibration alleviates underestimation bias, reducing the frequency of
+      underestimated predictions.
     plots: [first-day-calibration, first-day-r]
   - question: "2.6"
     do: Self-calibrator, Range of r 3 to 12 and Values of r 10, then Apply
     set: {calibration_max: 12, calibration_points: 10}
-    ask: With r up to 12, does the self-calibrator jump to 12, and why (not)?
-    formula: P(u) = P<sub>idle</sub> + (P<sub>max</sub> − P<sub>idle</sub>)(2u − u<sup>r</sup>), with u the CPU utilization and r the calibration parameter
-    hint: The self-calibrator picks the r with the lowest MAPE over the last hour; see Power draw MAPE per hour.
+    ask: With r up to 12, does the self-calibrator jump to 12 immediately, and why (not)?
+    formula: <var>P</var>(<var>u</var>) = <var>P</var><sub>idle</sub> + (<var>P</var><sub>max</sub> − <var>P</var><sub>idle</sub>)(2<var>u</var> − <var>u</var><sup><var>r</var></sup>), with <var>u</var> the CPU utilization and <var>r</var> the calibration parameter
+    hint: >-
+      At every window, the self-calibrator picks the r with the lowest MAPE over the last hour; see Power draw MAPE per
+      hour.
     choices:
-      - Yes, at once, as 12 is the new edge
+      - Yes, immediately, as 12 is the new edge
       - No, only when the last hour needs r above 9
       - No, r goes down to 3, the other edge
       - No, calibration stops
@@ -130,8 +130,8 @@ CO₂-aware workload migration:
   - question: "3.2"
     do: Grid, CO₂ zone PL, then Apply
     set: {carbon_zone: PL}
-    ask: "Moving SURF's workload from NL to PL, which numbers change: energy, CO₂, or both?"
-    hint: See Power draw and CO₂ emissions vs. carbon intensity; the workload and the hosts stay the same.
+    ask: "We want to move SURF's workload on identical ICT infrastructure, from NL to PL, but with differing power grid. What metric changes?"
+    hint: See Power draw and CO₂ emissions vs. carbon intensity, before and after the change.
     choices:
       - Energy
       - CO₂
@@ -148,19 +148,21 @@ CO₂-aware workload migration:
     ask: Moving from PL to RO, how much do the CO₂ emissions per hour change?
     hint: Compare the carbon intensity of the two grids, in Carbon intensity.
     choices:
-      - Almost no change
-      - About 10% less
-      - About 60% less
-      - Almost 100% less
+      - About 60% more in RO than in PL
+      - About the same in RO as in PL
+      - About 60% less in RO than in PL
+      - About 90% less in RO than in PL
     answer: C
     solution: >-
-      About 60% less: RO has the lowest carbon intensity of the four grids during the SURF week (343 gCO₂/kWh on
+      About 60% less in RO than in PL: RO has the lowest carbon intensity of the four grids during the SURF week (343 gCO₂/kWh on
       average), PL the highest (868); over the week, 1,172 kg of CO₂ in RO vs. 2,959 kg in PL.
     plots: [intensity, co2]
+
+General:
   - question: "3.6"
-    do: Decisions On, then look at the Decisions log
+    do: Decisions On, then see the Decisions panel
     ask: Which changes did the twin make by itself, without a human-in-the-loop?
-    hint: Each change has its author in the Decisions log; Automatic is the twin's.
+    hint: See the By column of the Decisions panel.
     choices:
       - None
       - The hosts
@@ -169,5 +171,5 @@ CO₂-aware workload migration:
     answer: C
     solution: >-
       Only r: the self-calibrator changes it at every window; the hosts, the CO₂ zone, and the scheduler change only
-      from the control panel, as major decisions stay with the human-in-the-loop.
+      from the boxes on top, as major decisions stay with the human-in-the-loop.
     plots: [r, co2]

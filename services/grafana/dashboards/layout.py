@@ -191,7 +191,7 @@ ANNOTATION = {
 }
 
 
-def dashboard(uid, title, panels, layout, variables=(), window="week"):
+def dashboard(uid, title, panels, layout, variables=(), window="day"):
     """A screen; `window`, its time at the start (week, day, or hours, the last 6)."""
     return {
         "apiVersion": "dashboard.grafana.app/v2beta1",

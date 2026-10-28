@@ -105,6 +105,8 @@ def zone(path: str) -> str:
 
 
 def output(window: Path, name: str) -> Path:
+    """One OpenDC output file of the window: host, powerSource, and service in output/now/ (up to
+    the window's end), task in output/future/ (the jobs to their end); in an older run, one folder."""
     return next(window.glob(f"output/*/raw-output/0/seed=0/{name}.parquet"))
 
 

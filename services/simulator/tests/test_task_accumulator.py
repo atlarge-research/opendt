@@ -42,7 +42,7 @@ def test_task_accumulator_basic():
 
 
 def test_should_simulate_first_run():
-    """Test that first simulation is triggered when tasks are available."""
+    """The first simulation runs once a window (the frequency) has passed since the first task."""
     accumulator = TaskAccumulator()
     frequency = timedelta(minutes=15)
 
@@ -58,9 +58,13 @@ def test_should_simulate_first_run():
     )
     accumulator.add_task(task)
 
-    # First heartbeat after task should trigger simulation
-    heartbeat_time = datetime(2024, 1, 1, 22, 1, 0, tzinfo=UTC)
-    assert accumulator.should_simulate(heartbeat_time, frequency) is True
+    # a heartbeat within the first window does not trigger it; the one at its end does
+    assert (
+        accumulator.should_simulate(datetime(2024, 1, 1, 22, 1, 0, tzinfo=UTC), frequency) is False
+    )
+    assert (
+        accumulator.should_simulate(datetime(2024, 1, 1, 22, 15, 0, tzinfo=UTC), frequency) is True
+    )
 
 
 def test_should_simulate_frequency_based():
@@ -80,25 +84,25 @@ def test_should_simulate_frequency_based():
     )
     accumulator.add_task(task)
 
-    first_sim_time = datetime(2024, 1, 1, 22, 1, 0, tzinfo=UTC)
+    first_sim_time = datetime(2024, 1, 1, 22, 15, 0, tzinfo=UTC)
     assert accumulator.should_simulate(first_sim_time, frequency) is True
     accumulator.update_simulation_time(first_sim_time)
 
-    # Heartbeat at 22:10 (9 minutes after) - should NOT trigger
-    heartbeat_time = datetime(2024, 1, 1, 22, 10, 0, tzinfo=UTC)
+    # Heartbeat at 22:24 (9 minutes after) - should NOT trigger
+    heartbeat_time = datetime(2024, 1, 1, 22, 24, 0, tzinfo=UTC)
     assert accumulator.should_simulate(heartbeat_time, frequency) is False
 
-    # Heartbeat at 22:16 (15 minutes after) - should trigger
-    heartbeat_time = datetime(2024, 1, 1, 22, 16, 0, tzinfo=UTC)
+    # Heartbeat at 22:30 (15 minutes after) - should trigger
+    heartbeat_time = datetime(2024, 1, 1, 22, 30, 0, tzinfo=UTC)
     assert accumulator.should_simulate(heartbeat_time, frequency) is True
     accumulator.update_simulation_time(heartbeat_time)
 
-    # Heartbeat at 22:20 (4 minutes after last sim) - should NOT trigger
-    heartbeat_time = datetime(2024, 1, 1, 22, 20, 0, tzinfo=UTC)
+    # Heartbeat at 22:34 (4 minutes after last sim) - should NOT trigger
+    heartbeat_time = datetime(2024, 1, 1, 22, 34, 0, tzinfo=UTC)
     assert accumulator.should_simulate(heartbeat_time, frequency) is False
 
-    # Heartbeat at 22:31 (15 minutes after last sim) - should trigger
-    heartbeat_time = datetime(2024, 1, 1, 22, 31, 0, tzinfo=UTC)
+    # Heartbeat at 22:45 (15 minutes after last sim) - should trigger
+    heartbeat_time = datetime(2024, 1, 1, 22, 45, 0, tzinfo=UTC)
     assert accumulator.should_simulate(heartbeat_time, frequency) is True
 
 
@@ -158,8 +162,8 @@ def test_multiple_simulations():
     )
     accumulator.add_task(task1)
 
-    # First simulation
-    sim_time_1 = datetime(2024, 1, 1, 22, 1, 0, tzinfo=UTC)
+    # First simulation, at the end of the first window
+    sim_time_1 = datetime(2024, 1, 1, 22, 15, 0, tzinfo=UTC)
     assert accumulator.should_simulate(sim_time_1, frequency) is True
     accumulator.update_simulation_time(sim_time_1)
     assert len(accumulator.get_all_tasks()) == 1
@@ -177,7 +181,7 @@ def test_multiple_simulations():
     accumulator.add_task(task2)
 
     # Second simulation (after 15 minutes)
-    sim_time_2 = datetime(2024, 1, 1, 22, 16, 0, tzinfo=UTC)
+    sim_time_2 = datetime(2024, 1, 1, 22, 30, 0, tzinfo=UTC)
     assert accumulator.should_simulate(sim_time_2, frequency) is True
     accumulator.update_simulation_time(sim_time_2)
     assert len(accumulator.get_all_tasks()) == 2  # Accumulates all tasks

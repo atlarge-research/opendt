@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from kafka import TopicPartition
 from odt_common import ResultCache, TaskAccumulator, load_config_from_env
 from odt_common.config import SCHEDULER, DynamicConfigEvent
 from odt_common.models import Task, Topology, TopologySnapshot
@@ -65,11 +66,26 @@ class SimulationService:
         self.result_processor = SimulationResultProcessor(self.output_base_dir)
         logger.info("Initialized result processor")
 
-        topics = [workload_topic, topology_topic, sim_topology_topic, system_topic]
         self.consumer = get_kafka_consumer(
-            topics=topics,
+            topics=[workload_topic, topology_topic],
             group_id=consumer_group,
             bootstrap_servers=kafka_bootstrap_servers,
+        )
+        # the changes from the control panel (the simulated topology, the scheduler) apart, all of
+        # them from the start, read before each window: behind the workload of a fast replay, which
+        # runs far ahead of the simulator, a change waited minutes
+        self.changes = get_kafka_consumer(
+            topics=[],
+            group_id=None,
+            bootstrap_servers=kafka_bootstrap_servers,
+            enable_auto_commit=False,
+        )
+        self.changes.assign(
+            [
+                TopicPartition(topic, partition)
+                for topic in (sim_topology_topic, system_topic)
+                for partition in self.changes.partitions_for_topic(topic)
+            ]
         )
 
         self.task_accumulator = TaskAccumulator()
@@ -93,7 +109,9 @@ class SimulationService:
 
         logger.info(f"Initialized SimulationService with run ID: {run_id}")
         logger.info(f"Consumer group: {consumer_group}")
-        logger.info(f"Subscribed: {workload_topic}, {topology_topic}, {sim_topology_topic}")
+        logger.info(
+            f"Subscribed: {workload_topic}, {topology_topic}; changes: {sim_topology_topic}"
+        )
         logger.info(
             f"Simulation frequency: {simulation_frequency_minutes} minutes (simulated time)"
         )
@@ -179,7 +197,9 @@ class SimulationService:
         run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
         was_cached = False
 
-        if self.result_cache.can_reuse(topology_to_use, self.scheduler, len(all_tasks)):
+        if self.result_cache.can_reuse(
+            topology_to_use, self.scheduler, len(all_tasks), aligned_simulated_time
+        ):
             logger.info(
                 f"Reusing cached results for run {self.run_number} "
                 f"(topology unchanged, {len(all_tasks)} tasks)"
@@ -215,6 +235,9 @@ class SimulationService:
                 simulated_time=aligned_simulated_time,
                 timeout_seconds=120,
                 scheduler=self.scheduler,
+                # what the API reads: the cluster up to now, and the jobs' finish times
+                exports=("powerSource", "host", "service"),
+                future=True,
             )
 
             if not success:
@@ -222,7 +245,9 @@ class SimulationService:
                 return
 
             # Update cache with run directory (not output directory)
-            self.result_cache.update(topology_to_use, self.scheduler, len(all_tasks), run_dir)
+            self.result_cache.update(
+                topology_to_use, self.scheduler, len(all_tasks), aligned_simulated_time, run_dir
+            )
             logger.info(f"Simulation {self.run_number} complete, results cached")
 
         output_dir = run_dir / "output"
@@ -254,6 +279,9 @@ class SimulationService:
         elif message_type == "heartbeat":
             heartbeat_time = datetime.fromisoformat(message_data["timestamp"])
             if self.task_accumulator.should_simulate(heartbeat_time, self.simulation_frequency):
+                for records in self.changes.poll(timeout_ms=100).values():
+                    for message in records:
+                        self.process_message(message)
                 self._run_simulation()
         else:
             logger.warning(f"Unknown message_type: {message_type}")
@@ -308,6 +336,7 @@ class SimulationService:
         finally:
             logger.info("Closing Kafka connections...")
             self.consumer.close()
+            self.changes.close()
             logger.info("Simulation service stopped")
 
 

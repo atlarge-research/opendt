@@ -1,5 +1,6 @@
 """The calibrator: fits the power model's r to the measured power with parallel OpenDC runs."""
 
+import json
 import logging
 import os
 import threading
@@ -30,6 +31,18 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+def twin_time(run_dir: Path) -> datetime | None:
+    """The twin's time: the end of the simulator's latest complete window (as the API's); None before
+    the first. The calibration follows it, not the replay, which at maximum speed is days ahead."""
+    folder = run_dir / "simulator" / "opendc"
+    names = os.listdir(folder) if folder.exists() else []
+    for n in sorted((int(name[4:]) for name in names if name.startswith("run_")), reverse=True):
+        metadata = folder / f"run_{n}" / "metadata.json"
+        if metadata.exists():
+            return datetime.fromisoformat(json.loads(metadata.read_text())["simulated_time"])
+    return None
 
 
 class CalibrationService:
@@ -215,7 +228,16 @@ class CalibrationService:
                     time.sleep(1)
                     continue
 
-                all_tasks = self.task_accumulator.get_all_tasks()
+                now = twin_time(self.output_base_dir.parent)
+                if now is None:
+                    logger.debug("No window of the twin yet, waiting...")
+                    time.sleep(1)
+                    continue
+
+                # the tasks and the power up to the twin's time, not the replay's
+                all_tasks = [
+                    t for t in self.task_accumulator.get_all_tasks() if t.submission_time <= now
+                ]
                 if not all_tasks:
                     logger.debug("No tasks accumulated yet, waiting...")
                     time.sleep(1)
@@ -232,7 +254,7 @@ class CalibrationService:
 
                 # Determine MAPE comparison window (intersection of task and power data)
                 # This is ONLY for comparison - ALL tasks are still sent to OpenDC
-                mape_end_time = min(latest_task_time, latest_power_time)
+                mape_end_time = min(latest_task_time, latest_power_time, now)
                 mape_span_minutes = (mape_end_time - first_task_time).total_seconds() / 60
                 min_required_minutes = min(30, self.mape_comparator.mape_window_minutes)
 

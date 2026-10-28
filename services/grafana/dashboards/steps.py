@@ -167,19 +167,17 @@ def choices(options, answer):
 
 
 def card(n):
-    """Step n as text: the steps, its question (on one line), what to change, and its choices; under them, its hint
+    """Step n as text: the steps, its question, what to change, and its choices; under them, its hint
     and its solution, folded until asked for; at the bottom, Hint and Solution, then Back and Next."""
     _, step = ORDER[n - 1]
     solution = step.get("solution", QUESTIONS[step["question"]]["solution"])
     lines = [
         navigator(n),
-        f'<p style="font-size:20px;margin:12px 0 0;white-space:nowrap">'
+        f'<p style="font-size:20px;margin:12px 0 0">'
         f"<strong>Question {n}:</strong> {escape(step['ask'])}</p>",
     ]
     if "formula" in step:  # OpenDC's power model, for the steps on r
-        lines.append(
-            f'<p style="font-size:18px;margin:6px 0 0;font-family:serif">{step["formula"]}</p>'
-        )
+        lines.append(f'<p style="font-size:18px;margin:6px 0 0">{step["formula"]}</p>')
     if "do" in step:  # what to change on the twin, hidden until asked for
         lines += [
             unfolds("change", "Tell me what to change", "Hide what to change", alone=True),
@@ -206,9 +204,11 @@ def card(n):
     )
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
-    colors = {"right": GREEN, "late": YELLOW, "wrong": RED, "none": LINE}
+    # late: yellow, darker on the light theme, as #F0E442 hardly shows on white
+    colors = {"right": GREEN, "late": YELLOW, "late-light": "#998A00", "wrong": RED, "none": LINE}
     code = script(
         "links.js",
+        "warn.js",
         "step.js",
         colors=colors,
         step=str(n),

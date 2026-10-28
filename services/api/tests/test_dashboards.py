@@ -68,7 +68,9 @@ def queries(board):
             ):
                 targets = [*targets, request["payload"]]
         for t in targets:
-            yield title, "api:8000", t["url"], t["url_options"]["method"]
+            # fixed data, as the Tutorial's first day, asks for nothing
+            if t.get("source") != "inline":
+                yield title, "api:8000", t["url"], t["url_options"]["method"]
     for target in markers(board):
         yield "markers", "api:8000", target["url"], target["url_options"]["method"]
 

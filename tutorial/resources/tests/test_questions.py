@@ -64,8 +64,8 @@ def test_the_right_choice_unfolds_the_solution(monkeypatch):
 
 
 def test_explore_comes_with_the_solution(monkeypatch):
-    explore = questions.html(entries()["1.3"]["explore"])
-    assert explore in folds(monkeypatch, "1.3")["C"]
+    explore = questions.html(entries()["1.4"]["explore"])
+    assert explore in folds(monkeypatch, "1.4")["D"]
 
 
 def test_code_and_symbols_in_a_fold():
