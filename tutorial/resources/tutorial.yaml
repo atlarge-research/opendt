@@ -148,12 +148,12 @@ CO₂-aware workload migration:
     hint: See Power draw and CO₂ emissions vs. carbon intensity, before and after the change.
     choices:
       - Energy
-      - CO₂
+      - CO₂ emissions
       - Both
       - Neither
     answer: B
     solution: >-
-      The CO₂ only: the same energy on every grid, since the workload and the hosts are the same; the CO₂ emissions
+      The CO₂ emissions only: the same energy on every grid, since the workload and the hosts are the same; the CO₂ emissions
       change with the carbon intensity of the grid.
     plots: [co2, power]
   - question: "3.1"
