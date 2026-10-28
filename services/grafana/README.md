@@ -21,7 +21,7 @@ no bars), and start on Day.
   picking a rack prefab, the bin to delete one); the hosts available and in use; and the prefabs the racks come from:
   racks, CPUs, and GPUs, as OpenDT ships them at first (SURF's node, OpenDC web's host templates, the Dell servers of
   OpenDC's RADiCe experiments) and then the user's, kept in `data/prefabs.json` (without it, as shipped again).
-- **OpenDT, tutorial:** the 11 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
+- **OpenDT, tutorial:** the 14 steps of the tutorial (`tutorial/resources/tutorial.yaml`), one at a time, chosen by
   its number or by Back and Next: a change to the twin, a question with four choices (a click says if it holds), a
   hint, and a solution, folded, then the step's plots; the twin's state in boxes on the left.
 - **OpenDT Dashboard** (classic, no control panel): power and carbon emissions.
