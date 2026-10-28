@@ -501,7 +501,7 @@ STYLE = """#opendt-start { position: fixed; inset: 0; z-index: 1000; background:
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
 #opendt-start > div { width: 56%; }
 #opendt-start .bar [role="status"] { height: 4px; }
-.opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em; }
+.opendt-start .doing { font-size: 17px; text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
 .opendt-start .tip { position: fixed; bottom: 12%; left: 0; right: 0; text-align: center; opacity: 0.65;
   font-size: 17px; white-space: nowrap; }"""
 STARTING = {
