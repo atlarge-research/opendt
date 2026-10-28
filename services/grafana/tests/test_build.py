@@ -69,7 +69,7 @@ def test_card():
         card = steps.card(n)["options"]["content"]
         linked = {int(i) for i in re.findall(r'var-step=(\d+)"', card)}
         assert linked == set(range(1, last + 1)) - {n}  # every other step
-        assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 95  # on one line
+        assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 190  # on two lines at most
         # each step alike: four choices, the right one; a hint and a solution, folded; what to change, if any, too
         assert len(step["choices"]) == 4 and step["answer"] in "ABCD"
         assert '<p class="hint" hidden' in card and '<p class="solution" hidden' in card
