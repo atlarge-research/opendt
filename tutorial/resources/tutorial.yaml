@@ -125,8 +125,6 @@ Simulation calibration:
       No, only when the last hour needs r above 9; while an r of 3 to 9 fits, the self-calibrator keeps it. Over the
       week, r = 12 wins in 69 of 168 hours, mostly in the last 3 days, when OpenDT under-estimates even with r = 9.
     plots: [r, mape]
-
-General:
   - question: "3.6"
     do: Decisions On, then see the Decisions panel
     ask: Which changes did the twin make by itself, without a human-in-the-loop?
