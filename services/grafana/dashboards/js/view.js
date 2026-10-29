@@ -35,7 +35,7 @@ const toggle = () => {
 };
 render(context.element.querySelector('.view'), (h, ui) => {
   // a setting's choices; Week, Day, or 6 h also moves the time shown
-  const choose = (key, choices) => h(ui.ButtonGroup, null, ...choices.map(([value, label]) => h(ui.Button,
+  const choose = (key, choices) => h(ui.Stack, { gap: 0.5 }, ...choices.map(([value, label]) => h(ui.Button,
     { ...look(shown(key) === value), onClick: () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) }) }, label)));
   const small = (text) => h(ui.Text, { variant: 'bodySmall', color: 'secondary' }, text);
   return h(ui.Stack, { direction: 'column' },
