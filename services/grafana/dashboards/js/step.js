@@ -23,7 +23,7 @@ const show = (part) => {
 const choose = (letter) => {
   const choice = letter === answer ? 'right' : 'wrong';
   const answers = answered();
-  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] || state.peeked ? 'late' : 'right';
+  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : (answers[step] || state.peeked) ? 'late' : 'right';
   sessionStorage.setItem(ANSWERS, JSON.stringify(answers));
   rings(answers);
   state.chosen = letter;
