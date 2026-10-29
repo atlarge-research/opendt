@@ -53,8 +53,7 @@ const draw = () => render(node, (h, ui) => {
     state.part !== 'change' && alert,
     h(ui.Stack, { justifyContent: 'space-between' },
       h(ui.Stack, null, unfolds('hint', 'Hint', 'Hide hint'), unfolds('solution', 'Solution', 'Hide solution')),
-      // in the button's colour, not in that of the links in a Business Text panel
-      h(ui.Stack, null, around.map(([i, label]) => h(ui.LinkButton, { key: label, variant: 'secondary', href: context.grafana.replaceVariables(here + i), style: { color: context.grafana.theme.colors.secondary.contrastText } }, label)))));
+      h(ui.Stack, null, around.map(([i, label]) => h(ui.Button, { key: label, variant: 'secondary', onClick: () => context.grafana.locationService.push(context.grafana.replaceVariables(here + i)) }, label)))));
 });
 draw();
 // opening a step sets the twin as the steps before it left it (`start`), once per visit, and says what it changed;
