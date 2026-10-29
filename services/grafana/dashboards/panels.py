@@ -18,7 +18,6 @@ GREY, GREEN, BLUE = "#999999", "#009E73", "#338ec1"
 YELLOW, ORANGE, RED = "#F0E442", "#E69F00", "#D55E00"
 COLORS = {"red": RED, "orange": ORANGE, "yellow": YELLOW, "green": GREEN, "blue": BLUE}
 MARKERS = "rgba(128, 128, 128, 0.6)"  # faint, so the data stays in front; on both themes
-BOX = "rgba(128, 128, 128, 0.15)"  # a box in a panel, on the dark and the light theme
 # the theme's text, fainter, and lines, on the dark and the light theme
 INK, FAINT, LINE = "inherit", "rgba(128, 128, 128, 0.9)", "rgba(128, 128, 128, 0.4)"
 WHITE = "#ffffff"
