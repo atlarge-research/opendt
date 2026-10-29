@@ -88,11 +88,10 @@ def group(title, levers, link=None, note="", shown=()):
     twin (from the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under
     them; `shown`: (name, key), the twin's values shown first, set in its config only."""
     lines = "".join(f"<p><small>{name}</small><b>{{{{{key}}}}}</b></p>" for name, key in shown)
-    for name, elements in levers:
-        tooltip = elements[0].get("tooltip")  # under the name, in the dialog
-        info = f' data-info="{tooltip}"' if tooltip else ""
-        lines += f'<p data-name="{name}"{info}><small>{name}</small>'
-        lines += f"<b>{'-'.join(map(value, elements))}</b></p>"
+    lines += "".join(
+        f'<p data-name="{name}"><small>{name}</small><b>{"-".join(map(value, elements))}</b></p>'
+        for name, elements in levers
+    )
     more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
     keys = [key for _, key in shown] + [e["id"] for _, elements in levers for e in elements]
     return text(

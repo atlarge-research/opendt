@@ -69,7 +69,7 @@ const open = () => {
       : h(ui.Input, { type: 'number', min, max, step, defaultValue: draft[key], onChange: ({ target }) => (draft[key] = target.value) });
     const fields = rows.map((row) => {
       const [first, second] = [...row.querySelectorAll('[data-key]')].map(edit);
-      return h(ui.Field, { label: row.dataset.name, description: row.dataset.info }, h(ui.Stack, { alignItems: 'center' }, first, second && 'to', second));
+      return h(ui.Field, { label: row.dataset.name }, h(ui.Stack, { alignItems: 'center' }, first, second && 'to', second));
     });
     const apply = () => (changed().length ? draw(true) : close());
     return h(ui.Modal, { title, isOpen: true, onDismiss: close }, ...fields,
