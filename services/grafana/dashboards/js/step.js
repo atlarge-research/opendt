@@ -44,12 +44,12 @@ const draw = () => render(node, (h, ui) => {
   return h(ui.Stack, { direction: 'column' },
     change && h('div', null, unfolds('change', 'Tell me what to change', 'Hide what to change')), // on a line of its own
     state.part === 'change' && alert,
-    h(ui.RadioButtonList, {
+    // on a click, not a change, so a click on the choice already made shows its part again
+    h('div', { onClick: ({ target }) => target.type === 'radio' && choose(target.value) }, h(ui.RadioButtonList, {
       name: 'step-' + step,
       options: choices.map((text, i) => ({ value: 'ABCD'[i], label: 'ABCD'[i] + '. ' + text })),
       value: state.chosen,
-      onChange: choose,
-    }),
+    })),
     state.part !== 'change' && alert,
     h(ui.Stack, { justifyContent: 'space-between' },
       h(ui.Stack, null, unfolds('hint', 'Hint', 'Hide hint'), unfolds('solution', 'Solution', 'Hide solution')),
