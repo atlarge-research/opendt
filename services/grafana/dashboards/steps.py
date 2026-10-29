@@ -141,7 +141,7 @@ def card(n):
         "ui.js",
         "warn.js",
         "step.js",
-        change=f"{step['do']}." if "do" in step else None,
+        todo=f"{step['do']}." if "do" in step else None,
         choices=step["choices"],
         answer=step["answer"],
         hint=step["hint"],

@@ -34,7 +34,7 @@ const draw = () => render(node, (h, ui) => {
   // each button says what a click does: show its part, or hide it again
   const unfolds = (part, label, hide) => h(ui.Button, { variant: 'secondary', onClick: () => show(part) }, state.part === part ? hide : label);
   const [severity, prefix, text] = {
-    change: ['info', 'Change:', change],
+    change: ['info', 'Change:', todo],
     retry: ['error', 'Not quite;', 'look at what the plots show, then try another.'],
     hint: ['warning', 'Hint:', hint],
     solution: ['success', state.chosen === answer ? 'Right. Solution:' : 'Solution:', solution],
@@ -42,12 +42,12 @@ const draw = () => render(node, (h, ui) => {
   // the part shown under its button or the choices, its prefix in bold and its text in one line (no title)
   const alert = state.part && h(ui.Alert, { key: state.part, ref: state.scroll, severity, title: '', bottomSpacing: 0 }, h('strong', null, prefix), ' ', text);
   return h(ui.Stack, { direction: 'column' },
-    change && h('div', null, unfolds('change', 'Tell me what to change', 'Hide what to change')), // on a line of its own
+    todo && h('div', null, unfolds('change', 'Tell me what to change', 'Hide what to change')), // on a line of its own
     state.part === 'change' && alert,
     // on a click, not a change, so a click on the choice already made shows its part again
     h('div', { onClick: ({ target }) => target.type === 'radio' && choose(target.value) }, h(ui.RadioButtonList, {
       name: 'step-' + step,
-      options: choices.map((text, i) => ({ value: 'ABCD'[i], label: 'ABCD'[i] + '. ' + text })),
+      options: choices.map((option, i) => ({ value: 'ABCD'[i], label: 'ABCD'[i] + '. ' + option })),
       value: state.chosen,
     })),
     state.part !== 'change' && alert,
@@ -76,8 +76,8 @@ if (context.grafana.replaceVariables('${step}') === step && (sessionStorage.getI
     if (!response.ok) throw Error(response.status);
     Object.entries(change).forEach(([key, value]) => (pending[key] = { value: String(value), at: Date.now() }));
     sessionStorage.setItem('opendt-pending', JSON.stringify(pending));
-    const text = Object.entries(change).map(([key, value]) => LABELS[key] + ' ' + shown(value)).join(', ');
-    context.grafana.notifySuccess(['OpenDT', 'Step ' + step + ' starts from ' + text]);
+    const settings = Object.entries(change).map(([key, value]) => LABELS[key] + ' ' + shown(value)).join(', ');
+    context.grafana.notifySuccess(['OpenDT', 'Step ' + step + ' starts from ' + settings]);
     context.grafana.refresh();
   }).catch(() => {
     sessionStorage.setItem('opendt-failed', step);

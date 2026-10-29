@@ -81,7 +81,7 @@ def test_card():
         code = given(n)
         assert len(code["choices"]) == 4 and code["answer"] in "ABCD"
         assert code["hint"] and code["solution"]
-        assert ("do" in step) == (code["change"] is not None)
+        assert ("do" in step) == (code["todo"] is not None)
     assert [label for _, label in given(1)["around"]] == ["Next"]
     assert [label for _, label in given(last)["around"]] == ["Back"]
     assert [label for _, label in given(2)["around"]] == ["Back", "Next"]
