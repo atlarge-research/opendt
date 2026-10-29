@@ -9,9 +9,7 @@ if (!screen) {
   screen.id = 'opendt-start';
   screen.innerHTML = '<div></div><div class="bar"></div>';
   const bar = screen.lastChild;
-  Promise.all(['react', 'react-dom', '@grafana/ui'].map((name) => System.import(name))).then(([React, ReactDOM, ui]) =>
-    ReactDOM.createRoot(bar).render(React.createElement(ui.LoadingBar, { width: bar.clientWidth, delay: 0 }))
-  );
+  render(bar, (h, ui) => h(ui.LoadingBar, { width: bar.clientWidth, delay: 0 }));
 }
 const state = (window.opendtStart ??= { step: 0 });
 // never a step back: once the twin's first window is done, the panel shows the card of before the API answered (step

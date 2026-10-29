@@ -508,7 +508,12 @@ STARTING = {
     "start": text(
         CARD,
         script(
-            "css.js", "grafana.js", "start.js", progress=f"{BROWSER_API}/api/progress", style=STYLE
+            "css.js",
+            "grafana.js",
+            "ui.js",
+            "start.js",
+            progress=f"{BROWSER_API}/api/progress",
+            style=STYLE,
         ),
         [
             target(
