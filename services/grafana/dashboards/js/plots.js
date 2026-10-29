@@ -20,7 +20,7 @@ const pick = () => {
     };
     const rows = plots.map(([row, shown]) => h(ui.Stack, { direction: 'column', alignItems: 'flex-start' },
       tick(h(ui.Text, { weight: 'bold' }, row), shown.map(([key]) => key)), ...shown.map(([key, title]) => tick(title, [key]))));
-    return h(ui.Modal, { title: 'Plots shown', isOpen: true, onDismiss: close }, h(ui.Stack, { wrap: 'wrap', gap: 5 }, ...rows),
+    return h(ui.Modal, { title: 'Plots shown', isOpen: true, onDismiss: close }, h(ui.Grid, { columns: 2, gap: 3 }, ...rows),
       h(ui.Modal.ButtonRow, null, h(ui.Button, { onClick: close }, 'Close')));
   });
   draw();
