@@ -38,15 +38,16 @@ render(context.element.querySelector('.view'), (h, ui) => {
   const choose = (key, choices) => h(ui.Stack, { gap: 0.5 }, ...choices.map(([value, label]) => h(ui.Button,
     { ...look(shown(key) === value), onClick: () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) }) }, label)));
   const small = (text) => h(ui.Text, { variant: 'bodySmall', color: 'secondary' }, text);
+  // the rows of buttons as tall as ☰ Plots and the interval, so they stay in place on every screen
   return h(ui.Stack, { direction: 'column' },
     h(ui.Stack, { justifyContent: 'space-between', alignItems: 'center' },
       h(ui.Stack, { alignItems: 'center', gap: 1.5 }, h('img', { src: '/public/img/opendt.png', height: 36 }), h(ui.Text, { variant: 'h3' }, 'OpenDT')),
       h(ui.Stack, { alignItems: 'center' }, h(ui.Text, { tabular: true }, twin.slice(0, 16).replace('T', ' ')),
         h(ui.ToolbarButton, { tooltip: light ? 'Dark' : 'Light', onClick: toggle }, light ? '☾' : '☀'))),
-    h(ui.Stack, { justifyContent: 'space-between', alignItems: 'center' },
+    h(ui.Stack, { justifyContent: 'space-between', alignItems: 'center', minHeight: 4 },
       h(ui.Stack, null, ...screens.map(([key, name]) => h(ui.Button, { ...look(key === uid), onClick: () => address.push(href(key)) }, name))),
       plots.length > 0 && h(ui.ToolbarButton, { onClick: pick }, '☰ Plots')),
-    h(ui.Stack, { alignItems: 'center' }, choose('window', windows), small('Decisions'), choose('markers', decisions),
+    h(ui.Stack, { alignItems: 'center', minHeight: 4 }, choose('window', windows), small('Decisions'), choose('markers', decisions),
       periods.length > 0 && small('Interval'),
       // ${period} in full, so a new interval runs this code again at once (Business Text runs it again for the
       // variables its code names), not only at the next refresh
