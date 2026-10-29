@@ -1,8 +1,10 @@
 """The screens: the provisioned JSON is what dashboards/ writes (change a plot there, run build.py)."""
 
+import json
 import re
 
 import build
+import form
 import screens
 import steps
 
@@ -92,11 +94,13 @@ def test_screens_start_on_day():
     def window(board):
         [time] = [v["spec"] for v in board["spec"]["variables"] if v["spec"]["name"] == "window"]
         view = board["spec"]["elements"]["brand"]["spec"]["vizConfig"]["spec"]["options"]
-        assert 'data-var="window"' in view["content"]  # the view shows it, from the address
+        # the view shows it, from the address
+        assert f"const windows = {json.dumps(form.WINDOWS)};" in view["afterRender"]
         return time["current"]["value"]
 
     # the twin's last day: a week shows mostly the days the twin has not reached yet
     assert window(screens.tutorial) == window(screens.detailed) == window(screens.topology) == "day"
+    assert "day" in dict(form.WINDOWS)
 
 
 def test_starting_first():

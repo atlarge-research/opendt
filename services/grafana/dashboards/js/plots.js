@@ -1,36 +1,27 @@
-// ☰ Plots opens the plots of the screen by row, ticked while shown: a tick shows or hides a plot at once, a row's tick
-// all of its plots. The address keeps the hidden plots, so a plot added later shows, even with an old address
-const hidden = () => context.grafana.replaceVariables('$' + '{hidden:csv}').split(',');
-css('opendt-plots', style);
-const tick = (value, label, checked) =>
-  '<label><input type="checkbox" value="' + value + '"' + (checked ? ' checked' : '') + '>' + label + '</label>';
-const rows = Object.fromEntries(plots.map(([row, shown]) => [row, shown.map(([key]) => key)]));
-context.element.onclick = ({ target }) => {
-  if (!target.closest('.plots')) return;
-  const dialog = document.createElement('div');
-  dialog.className = 'opendt-plots';
-  dialog.innerHTML =
-    '<div><b>Plots shown</b><section>' +
-    plots.map(([row, shown]) => '<div>' + tick(row, '<b>' + row + '</b>', false) +
-      shown.map(([key, title]) => tick(key, title, !hidden().includes(key))).join('') + '</div>').join('') +
-    '</section><button>Close</button></div>';
-  const box = (value) => dialog.querySelector('[value="' + value + '"]');
-  // a row's tick: on while all its plots show, a dash while some do
-  const mark = () => Object.entries(rows).forEach(([row, keys]) => {
-    const on = keys.filter((key) => box(key).checked).length;
-    box(row).checked = on === keys.length;
-    box(row).indeterminate = on > 0 && on < keys.length;
+// ☰ Plots opens the plots of the screen by row, ticked while shown, in Grafana's dialog: a tick shows or hides a plot
+// at once, a row's tick all of its plots. The address keeps the hidden plots, so a plot added later shows, even with
+// an old address. On the page, the dialog outlives the view's refreshes
+const pick = () => {
+  document.getElementById('opendt-plots') || document.body.insertAdjacentHTML('beforeend', '<div id="opendt-plots"></div>');
+  const node = document.getElementById('opendt-plots');
+  // kept here: Grafana's $hidden follows the address only at the view's next run
+  let hidden = context.grafana.replaceVariables('$' + '{hidden:csv}').split(',');
+  const close = () => render(node, () => null);
+  const draw = () => render(node, (h, ui) => {
+    // a tick for these plots: on while all of them show, a dash while some do
+    const tick = (label, keys) => {
+      const on = keys.filter((key) => !hidden.includes(key)).length;
+      const show = ({ target }) => {
+        hidden = hidden.filter((key) => !keys.includes(key)).concat(target.checked ? [] : keys);
+        context.grafana.locationService.partial({ 'var-hidden': hidden }, true);
+        draw();
+      };
+      return h(ui.Checkbox, { label, value: on === keys.length, indeterminate: on > 0 && on < keys.length, onChange: show });
+    };
+    const rows = plots.map(([row, shown]) => h(ui.Stack, { direction: 'column', alignItems: 'flex-start' },
+      tick(h(ui.Text, { weight: 'bold' }, row), shown.map(([key]) => key)), ...shown.map(([key, title]) => tick(title, [key]))));
+    return h(ui.Modal, { title: 'Plots shown', isOpen: true, onDismiss: close }, h(ui.Stack, { wrap: 'wrap', gap: 5 }, ...rows),
+      h(ui.Modal.ButtonRow, null, h(ui.Button, { onClick: close }, 'Close')));
   });
-  mark();
-  dialog.onchange = ({ target }) => {
-    const keys = rows[target.value] ?? [target.value];
-    keys.forEach((key) => (box(key).checked = target.checked));
-    const others = hidden().filter((key) => !keys.includes(key));
-    context.grafana.locationService.partial({ 'var-hidden': target.checked ? others : [...others, ...keys] }, true);
-    mark();
-  };
-  dialog.onclick = ({ target }) => {
-    if (target === dialog || target.tagName === 'BUTTON') dialog.remove();
-  };
-  document.body.append(dialog);
+  draw();
 };

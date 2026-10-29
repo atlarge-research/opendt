@@ -104,64 +104,27 @@ def group(title, levers, link=None, note="", shown=()):
     )
 
 
-TAB = "padding: 2px 8px; border-radius: 2px; color: inherit; cursor: pointer; white-space: nowrap"
-# the window of the plots shown, over the screen
-DIALOG = """.opendt-plots { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center;
-  justify-content: center; background: rgba(0, 0, 0, 0.6); }
-.opendt-plots > div { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 24px;
-  color: var(--ink); font-size: 14px; }
-.opendt-plots section { display: grid; grid-template-columns: repeat(4, auto); gap: 40px; margin: 16px 0 24px; }
-.opendt-plots label { display: flex; gap: 8px; margin-top: 10px; cursor: pointer; }
-.opendt-plots button { float: right; background: #3d71d9; color: white; border: 0; border-radius: 2px;
-  padding: 6px 16px; cursor: pointer; }"""
-VIEW = """.view { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
-.view div { display: flex; align-items: center; gap: 4px; }
-.view small { color: #8e8e8e; margin-left: 8px; margin-right: 2px; }
-.view .on { background: #3d71d9; color: white !important; }
-/* narrower on a laptop, so the row stays in its panel */
-.view select { width: auto; min-width: 0; height: 26px; padding: 0 6px; background: transparent; color: inherit;
-  border: 1px solid #8e8e8e; border-radius: 2px; }"""
-
-
-def choose(key, choices):
-    """A setting of the view as buttons; the one shown in blue."""
-    return "".join(
-        f'<a data-var="{key}" data-value="{v}" style="{TAB}">{label}</a>' for v, label in choices
-    )
+# the time shown (view.js): the window variable's values, and their buttons
+WINDOWS = [("week", "Week"), ("day", "Day"), ("hours", "6 h")]
 
 
 def brand(uid, plots=(), period=True):
-    """The view: the logo, the twin's time, and the screens (a click on one shows it, with the same time and
-    markers); then the time shown, the markers, the interval (`period`), and the theme, at once on a click; `plots`:
-    (row, [(key, title)]) to show or hide, in a window that ☰ Plots opens."""
-    tabs = "".join(
-        f'<a data-href="/d/{key}?${{__url_time_range}}&${{markers:queryparam}}&kiosk" style="{TAB}'
-        + ('; background: #3d71d9; color: white">' if key == uid else '">')
-        + f"{name}</a>"
-        for key, name in SCREENS
-    )
-    if plots:
-        tabs += f'<a class="plots" style="{TAB}; margin-left: auto">☰ Plots</a>'
-    view = choose("window", [("week", "Week"), ("day", "Day"), ("hours", "6 h")])
-    view += "<small>Decisions</small>" + choose("markers", [("on", "On"), ("off", "Off")])
-    if period:
-        options = "".join(f"<option>{p}</option>" for p in PERIODS)
-        view += f'<small>Interval</small><select data-var="period">{options}</select>'
-    logo = (
-        '<div style="gap: 12px; font-size: 22px; font-weight: 600"><img src="/public/img/opendt.png" height="36">'
-        'OpenDT<span style="margin-left: auto; font-size: 14px; font-weight: 400; font-variant-numeric: tabular-nums"'
-        ' data-time="{{twin_time}}">'
-        f'</span><a class="theme" style="{TAB}"></a></div>'  # light or dark, grafana.js
-    )
-    html = f'<div class="view">{logo}<div>{tabs}</div><div>{view}</div></div>'
+    """The view, in Grafana's buttons (view.js): the logo, the twin's time, and the theme; the screens (a click on
+    one shows it, with the same time and markers); then the time shown, the markers, and the interval (`period`), at
+    once on a click; `plots`: (row, [(key, title)]) to show or hide, in Grafana's dialog that ☰ Plots opens."""
     code = script(
-        "links.js",
+        "ui.js",
         "css.js",
         "grafana.js",
-        "view.js",
         "plots.js",
-        week=WEEK,
+        "view.js",
+        uid=uid,
+        screens=SCREENS,
+        windows=WINDOWS,
+        decisions=[("on", "On"), ("off", "Off")],
+        periods=PERIODS if period else [],
         plots=plots,
-        style=DIALOG,
+        week=WEEK,
     )
-    return text(html, code, [status("twin_time")], html.replace("{{twin_time}}", ""), VIEW)
+    # fixed, so Grafana's components in it stay over the refreshes (ui.js)
+    return text('<div class="view"></div>', code, [status("twin_time")])
