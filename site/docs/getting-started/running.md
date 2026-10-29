@@ -51,4 +51,4 @@ make clean-volumes
 ```
 
 This stops the containers and deletes the Kafka and Grafana volumes. `make up` runs it first; each run's results stay in
-`data/<RUN_ID>/`.
+`data/<RUN_ID>/` until the next `make up`, which deletes them.

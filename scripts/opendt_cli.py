@@ -36,7 +36,8 @@ def init(
         help="Path to configuration file",
     ),
 ) -> None:
-    """Start a new run: data/<run id>/ with the configuration, its metadata, and the .env docker compose reads."""
+    """Start a new run: data/<run id>/ with the configuration, its metadata, and the .env docker compose reads;
+    the previous run's folder is deleted."""
     console.print()
     console.print(Panel.fit("OpenDT Initialization", style="bold cyan"))
     console.print()
@@ -45,6 +46,11 @@ def init(
     if not config_path.exists():
         console.print(f"[red]Error:[/red] Config file not found: {config_path}")
         raise typer.Exit(code=1)
+
+    # the previous run goes, as each keeps gigabytes of OpenDC output; the other folders in data/ stay
+    previous = RUN_ID_FILE.read_text().strip() if RUN_ID_FILE.exists() else ""
+    if previous:
+        shutil.rmtree(ROOT / "data" / previous, ignore_errors=True)
 
     now = datetime.now(UTC)
     run_id = now.strftime("%Y_%m_%d_%H_%M_%S")
