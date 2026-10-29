@@ -1,5 +1,5 @@
-// a click opens the box larger, over the screen, with what its levers take; Apply, once confirmed, sends the
-// changes to the twin. Over the screen, the open box outlives the screen's refreshes
+// a click opens Grafana's dialog with what the box's levers take; Apply, once confirmed in Grafana's confirm dialog,
+// sends the changes to the twin. On the page, the dialog outlives the box's refreshes
 const box = context.element.querySelector('.lever');
 const rows = [...box.querySelectorAll('[data-name]')];
 const levers = [...box.querySelectorAll('[data-key]')];
@@ -24,40 +24,21 @@ levers.forEach((lever) => {
   lever.title = sent ? 'Sent; the twin follows from its next window' : '';
 });
 save(pending);
-css('opendt-lever', style);
-// a lever's choices as buttons, or its number
-const edit = ({ dataset: { key, choices, labels, min = '', max = '', step = 'any' } }, draft) => choices
-  ? choices.split(',').map((c, i) => '<button class="choice' + (c === draft[key] ? ' on' : '') + '" data-key="' + key + '" value="' + c + '">' + labels.split('|')[i] + '</button>').join('')
-  : '<input type="number" data-key="' + key + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + draft[key] + '">';
 const open = () => {
-  document.querySelector('.opendt-lever')?.remove();
+  // on a node of the page, shared by the four boxes
+  document.getElementById('opendt-lever') || document.body.insertAdjacentHTML('beforeend', '<div id="opendt-lever"></div>');
+  const node = document.getElementById('opendt-lever');
   const draft = Object.fromEntries(levers.map(({ dataset: { key, value } }) => [key, value]));
-  const { left, top, width } = (box.closest('section') ?? box).getBoundingClientRect();
-  const big = document.createElement('div');
-  big.className = 'opendt-lever';
-  big.style.cssText = 'left: ' + (left + scrollX) + 'px; top: ' + (top + scrollY) + 'px; width: ' + width + 'px';
-  big.innerHTML =
-    rows.map((row) => '<small>' + row.dataset.name + '</small><div>' + [...row.querySelectorAll('[data-key]')].map((l) => edit(l, draft)).join('to') + '</div>').join('') +
-    '<div><button class="apply">Apply</button><button class="cancel">Cancel</button></div>';
-  big.oninput = ({ target }) => (draft[target.dataset.key] = target.value);
-  big.onclick = async ({ target }) => {
-    const { key } = target.dataset;
-    if (target.classList.contains('choice')) {
-      draft[key] = target.value;
-      big.querySelectorAll('.choice[data-key="' + key + '"]').forEach((c) => c.classList.toggle('on', c === target));
-    }
-    if (target.className === 'cancel') big.remove();
-    if (target.className !== 'apply') return;
-    const changed = levers.filter(({ dataset }) => draft[dataset.key] !== dataset.value);
-    if (!changed.length) return big.remove();
-    // e.g., Hosts: 277 to 300; Range of r: 3-9 to 3-10
-    const text = rows.filter((row) => changed.some((l) => row.contains(l))).map((row) => {
-      const mine = [...row.querySelectorAll('[data-key]')];
-      const values = (value) => mine.map((l) => label(l, value(l))).join('-');
-      return row.dataset.name + ': ' + values((l) => l.dataset.value) + ' to ' + values((l) => draft[l.dataset.key]);
-    });
-    if (!confirm(text.join('; ') + '? The twin follows from its next window.')) return;
-    const change = Object.fromEntries(changed.map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));
+  const changed = () => levers.filter(({ dataset }) => draft[dataset.key] !== dataset.value);
+  const close = () => render(node, () => null);
+  // e.g., Hosts: 277 to 300; Range of r: 3-9 to 3-10
+  const question = () => rows.filter((row) => changed().some((l) => row.contains(l))).map((row) => {
+    const mine = [...row.querySelectorAll('[data-key]')];
+    const values = (value) => mine.map((l) => label(l, value(l))).join('-');
+    return row.dataset.name + ': ' + values((l) => l.dataset.value) + ' to ' + values((l) => draft[l.dataset.key]);
+  }).join('; ') + '? The twin follows from its next window.';
+  const send = async () => {
+    const change = Object.fromEntries(changed().map(({ dataset: { key, choices } }) => [key, choices ? draft[key] : Number(draft[key])]));
     try {
       const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
       if (!response.ok) {
@@ -68,13 +49,31 @@ const open = () => {
       return warn('The twin did not answer; try again');
     }
     const sent = load();  // other boxes may have changed it since this one rendered
-    changed.forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));
+    changed().forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));
     save(sent);
-    big.remove();
+    close();
     context.grafana.notifySuccess(['OpenDT', 'Applied']);
     context.grafana.refresh();
   };
-  document.body.append(big);
+  // the levers, or, after Apply with a change, the question; drawn anew after each click
+  const draw = (confirming) => render(node, (h, ui) => {
+    if (confirming) {
+      return h(ui.ConfirmModal, { isOpen: true, title, body: question(), confirmText: 'Apply', confirmButtonVariant: 'primary', onConfirm: send, onDismiss: () => draw() });
+    }
+    // a lever's choices as buttons, the draft's in blue, or its number
+    const edit = ({ dataset: { key, choices, labels, min, max, step } }) => choices
+      ? h(ui.ButtonGroup, null, ...choices.split(',').map((choice, i) =>
+        h(ui.Button, { variant: choice === draft[key] ? 'primary' : 'secondary', onClick: () => { draft[key] = choice; draw(); } }, labels.split('|')[i])))
+      : h(ui.Input, { type: 'number', min, max, step, defaultValue: draft[key], onChange: ({ target }) => (draft[key] = target.value) });
+    const fields = rows.map((row) => {
+      const [first, second] = [...row.querySelectorAll('[data-key]')].map(edit);
+      return h(ui.Field, { label: row.dataset.name, description: row.dataset.info }, h(ui.Stack, { alignItems: 'center' }, first, second && 'to', second));
+    });
+    const apply = () => (changed().length ? draw(true) : close());
+    return h(ui.Modal, { title, isOpen: true, onDismiss: close }, ...fields,
+      h(ui.Modal.ButtonRow, null, h(ui.Button, { variant: 'secondary', onClick: close }, 'Cancel'), h(ui.Button, { onClick: apply }, 'Apply')));
+  });
+  draw();
 };
 // before the twin's first window, a box has no levers yet
 if (levers.length) {

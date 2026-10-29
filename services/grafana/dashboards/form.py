@@ -23,43 +23,33 @@ def script(*names, **consts):
     return head + "".join((JS / name).read_text() for name in names)
 
 
-def option(value, label):
-    return {"id": str(value), "label": label, "value": value}
+def field(key, **more):
+    return {"id": key, **more}
 
 
-def field(key, title, kind, **more):
-    return {"uid": key, "id": key, "title": title, "type": kind, "labelWidth": 14, **more}
+def select(key, choices, **more):
+    return field(key, options=[{"label": label, "value": v} for v, label in choices], **more)
 
 
-def select(key, title, choices, kind="select", **more):
-    return field(key, title, kind, options=[option(v, label) for v, label in choices], **more)
-
-
-# the widgets: buttons for a few short choices, a list for many or long ones, a slider for a small range,
-# a number for an exact one
+# the widgets (box.js): buttons for choices, a number otherwise
 ZONE = select(
     "carbon_zone",
-    "CO₂ zone",
     [(z, z) for z in ZONES],
-    "radio",
     tooltip="Electricity Maps zones: Netherlands, Poland, Germany, Romania",
 )
 SCHEDULER = select(
     "scheduler",
-    "Scheduler",
     [(s, s) for s in SCHEDULERS],
     tooltip="OpenDC's placement policy; Mem is OpenDC's default",
 )
-SPEED = select("speed_factor", "Speed", SPEEDS)
-CALIBRATION = select("calibration", "Calibration", [(True, "On"), (False, "Off")], "radio")
-R_FROM = field("calibration_min", "r from", "slider", min=0.5, max=20, step=0.5)
-R_TO = field("calibration_max", "r to", "slider", min=0.5, max=20, step=0.5)
-R_VALUES = field("calibration_points", "Values of r", "slider", min=2, max=20, step=1)
-MAPE_WINDOW = select(
-    "mape_window", "MAPE window", [(60, "1 h"), (360, "6 h"), (1440, "24 h")], "radio"
-)
+SPEED = select("speed_factor", SPEEDS)
+CALIBRATION = select("calibration", [(True, "On"), (False, "Off")])
+R_FROM = field("calibration_min", min=0.5, max=20, step=0.5)
+R_TO = field("calibration_max", min=0.5, max=20, step=0.5)
+R_VALUES = field("calibration_points", min=2, max=20, step=1)
+MAPE_WINDOW = select("mape_window", [(60, "1 h"), (360, "6 h"), (1440, "24 h")])
 # the first group of hosts: SURF's, until changed on Topology
-HOSTS = field("hosts", "Hosts", "number", min=1)
+HOSTS = field("hosts", min=1)
 
 
 BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;
@@ -72,17 +62,7 @@ BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-c
 .lever > small:last-child { margin: 4px 0 0; font-size: 11px; }
 .lever i { font-style: normal; }
 .lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }
-.lever:hover a { color: #6e9fff; }"""
-# a box, once clicked: larger, over the screen, with what its levers take; and a change sent, pulsing
-OPEN = """.opendt-lever { position: absolute; z-index: 1000; display: flex; flex-direction: column; gap: 6px;
-  padding: 12px; background: var(--panel); border: 1px solid #3d71d9; border-radius: 2px; color: var(--ink);
-  font-size: 14px; }
-.opendt-lever small { font-size: 12px; color: #8e8e8e; margin-top: 4px; }
-.opendt-lever div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.opendt-lever button, .opendt-lever input { flex: 1; padding: 6px; background: var(--canvas); color: var(--ink);
-  border: 1px solid var(--line); border-radius: 2px; font-size: 14px; text-align: center; cursor: pointer; }
-.opendt-lever input { width: 4em; }
-.opendt-lever .on, .opendt-lever .apply { background: #3d71d9; border-color: #3d71d9; color: white; }
+.lever:hover a { color: #6e9fff; }
 /* a change sent, until the twin follows it (box.js) */
 .lever i.pending { padding: 0 4px; border-radius: 2px; background: #3d71d9; color: white;
   animation: opendt-pending 1.6s ease-in-out infinite; }
@@ -104,19 +84,20 @@ def value(element):
 
 def group(title, levers, link=None, note="", shown=()):
     """Levers of a category in a box, as values of the twin's: each its name and its value now (two: from-to); a
-    click opens the box larger, with what they take, and Apply, once confirmed, sends the changes to the twin (from
-    the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under them;
-    `shown`: (name, key), the twin's values shown first, set in its config only."""
+    click opens them in Grafana's dialog, with what they take, and Apply, once confirmed, sends the changes to the
+    twin (from the browser, to the API's port); `levers`: (name, elements); `link`: (text, address); `note`: under
+    them; `shown`: (name, key), the twin's values shown first, set in its config only."""
     lines = "".join(f"<p><small>{name}</small><b>{{{{{key}}}}}</b></p>" for name, key in shown)
-    lines += "".join(
-        f'<p data-name="{name}"><small>{name}</small><b>{"-".join(map(value, elements))}</b></p>'
-        for name, elements in levers
-    )
+    for name, elements in levers:
+        tooltip = elements[0].get("tooltip")  # under the name, in the dialog
+        info = f' data-info="{tooltip}"' if tooltip else ""
+        lines += f'<p data-name="{name}"{info}><small>{name}</small>'
+        lines += f"<b>{'-'.join(map(value, elements))}</b></p>"
     more = f'<a href="{link[1]}">{link[0]}</a>' if link else ""
     keys = [key for _, key in shown] + [e["id"] for _, elements in levers for e in elements]
     return text(
         f'<div class="lever"><small>{title} <a>✎</a></small>{lines}{more}{note}</div>',
-        script("css.js", "warn.js", "box.js", control=f"{BROWSER_API}/api/control", style=OPEN),
+        script("ui.js", "warn.js", "box.js", control=f"{BROWSER_API}/api/control", title=title),
         [status(*keys)],
         f'<div class="lever"><small>{title}</small></div>',
         BOX,
