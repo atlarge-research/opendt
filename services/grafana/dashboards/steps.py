@@ -8,7 +8,6 @@ import yaml
 from form import script
 from panels import (
     BLUE,
-    BOX,
     BROWSER_API,
     FAINT,
     GREEN,
@@ -90,15 +89,11 @@ for _, step in ORDER:
     STARTS.append(dict(state))
     state |= step.get("set", {})
 
-# this screen as it is (time, full screen, ...), at another step; links.js fills in ${__url...}
+# this screen as it is (time, full screen, ...), at another step; links.js and step.js fill in ${__url...}
 HERE = "${__url.path}${__url.params:exclude:var-step}&var-step="
 CIRCLE = (
     "display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;box-sizing:border-box;"
     "border-radius:50%;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;text-decoration:none"
-)
-BUTTON = (
-    f"padding:5px 16px;border:1px solid {LINE};border-radius:4px;color:{INK};font-size:16px;"
-    "text-decoration:none"
 )
 
 
@@ -124,51 +119,9 @@ def navigator(current):
     return f'<div style="display:flex;flex-wrap:wrap;gap:12px 36px">{"".join(groups)}</div>'
 
 
-def button(step, label):
-    return f'<a data-href="{HERE}{step}" style="{BUTTON}">{label}</a>'
-
-
-def unfolds(name, label, shown, alone=False):
-    """A button that shows or hides the hint, the solution, or what to change: `label` while it is hidden, `shown`
-    while it shows (`alone`: on a line of its own)."""
-    place = ";align-self:flex-start;margin-top:8px" if alone else ""
-    data = f'data-show="{name}" data-folded="{label}" data-shown="{shown}"'
-    return f'<a {data} style="{BUTTON};cursor:pointer{place}">{label}</a>'
-
-
-def note(color, text, folded=""):
-    """A box of text with a rule on its left, in a colour of meaning; `folded`: hidden until its button."""
-    hidden = f' class="{folded}" hidden' if folded else ""
-    return (
-        f'<p{hidden} style="font-size:17px;margin:8px 0 0;padding:8px 14px;border-left:4px solid {color};'
-        f'background:{BOX}">{text}</p>'
-    )
-
-
-# a choice: its letter in a circle, then its text, across the card
-CHOICE = (
-    f"display:flex;align-items:center;gap:12px;padding:2px 12px;border:1px solid {LINE};border-radius:4px;"
-    f"color:{INK};font-size:16px;cursor:pointer"
-)
-LETTER = (
-    f"display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;"
-    f"border:1px solid {LINE};border-radius:50%;font-size:13px"
-)
-
-
-def choices(options, answer):
-    """The choices of a question, A to D, one under the other; `answer`: the right one's letter."""
-    rows = "".join(
-        f'<a data-choice="{"right" if letter == answer else "wrong"}" '
-        f'style="{CHOICE}"><span style="{LETTER}">{letter}</span>{escape(option)}</a>'
-        for letter, option in zip("ABCD", options, strict=True)
-    )
-    return f'<div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">{rows}</div>'
-
-
 def card(n):
-    """Step n as text: the steps, its question, what to change, and its choices; under them, its hint
-    and its solution, folded until asked for; at the bottom, Hint and Solution, then Back and Next."""
+    """Step n: the steps, its question, and its formula, as text; under them, drawn by step.js, what to change, its
+    choices, and one of its parts at a time, then Hint and Solution, Back and Next."""
     _, step = ORDER[n - 1]
     solution = step.get("solution", QUESTIONS[step["question"]]["solution"])
     lines = [
@@ -178,38 +131,26 @@ def card(n):
     ]
     if "formula" in step:  # OpenDC's power model, for the steps on r
         lines.append(f'<p style="font-size:18px;margin:6px 0 0">{step["formula"]}</p>')
-    if "do" in step:  # what to change on the twin, hidden until asked for
-        lines += [
-            unfolds("change", "Tell me what to change", "Hide what to change", alone=True),
-            note(BLUE, f"<strong>Change:</strong> {escape(step['do'])}.", "change"),
-        ]
-    lines += [
-        choices(step["choices"], step["answer"]),
-        note(
-            RED,
-            "<strong>Not quite;</strong> look at what the plots show, then try another.",
-            "retry",
-        ),
-        note(YELLOW, f"<strong>Hint:</strong> {escape(step['hint'])}", "hint"),
-        note(GREEN, f"<strong>Solution:</strong> {escape(solution.strip())}", "solution"),
-    ]
-    left = [unfolds("hint", "Hint", "Hide hint"), unfolds("solution", "Solution", "Hide solution")]
-    right = [
-        button(i, label) for i, label in [(n - 1, "Back"), (n + 1, "Next")] if 1 <= i <= len(ORDER)
-    ]
-    # the buttons at the card's bottom, in the same place at every step
-    lines.append(
-        f'<div style="display:flex;gap:8px;margin-top:auto;padding-top:6px">{"".join(left)}'
-        f'<div style="display:flex;gap:8px;margin-left:auto">{"".join(right)}</div></div>'
-    )
+    # the rest of the card's column, drawn by step.js
+    lines.append('<div class="answer" style="display:flex;flex-grow:1;margin-top:8px"></div>')
     column = "display:flex;flex-direction:column;min-height:100%"
     content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
     # late: yellow, darker on the light theme, as #F0E442 hardly shows on white
-    colors = {"right": GREEN, "late": YELLOW, "late-light": "#998A00", "wrong": RED, "none": LINE}
+    colors = {"right": GREEN, "late": YELLOW, "late-light": "#998A00", "wrong": RED}
     code = script(
         "links.js",
+        "ui.js",
         "warn.js",
         "step.js",
+        change=f"{step['do']}." if "do" in step else None,
+        choices=step["choices"],
+        answer=step["answer"],
+        hint=step["hint"],
+        solution=solution.strip(),
+        around=[
+            (i, label) for i, label in [(n - 1, "Back"), (n + 1, "Next")] if 1 <= i <= len(ORDER)
+        ],
+        here=HERE,
         colors=colors,
         step=str(n),
         start=STARTS[n - 1],

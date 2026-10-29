@@ -1,5 +1,6 @@
 """The screens: the provisioned JSON is what dashboards/ writes (change a plot there, run build.py)."""
 
+import json
 import re
 
 import build
@@ -64,20 +65,25 @@ def test_one_step_at_a_time():
 
 
 def test_card():
+    def given(n):
+        """What step.js gets of step n: the constants before the code (form.script)."""
+        head = steps.card(n)["options"]["afterRender"].split("\n//")[0]
+        return {k: json.loads(v) for k, v in re.findall(r"const (\w+) = (.*);", head)}
+
     last = len(steps.ORDER)
     for n, (_, step) in enumerate(steps.ORDER, 1):
         card = steps.card(n)["options"]["content"]
         linked = {int(i) for i in re.findall(r'var-step=(\d+)"', card)}
         assert linked == set(range(1, last + 1)) - {n}  # every other step
         assert f"Question {n}:</strong>" in card and len(step["ask"]) <= 190  # on two lines at most
-        # each step alike: four choices, the right one; a hint and a solution, folded; what to change, if any, too
-        assert len(step["choices"]) == 4 and step["answer"] in "ABCD"
-        assert '<p class="hint" hidden' in card and '<p class="solution" hidden' in card
-        assert ("do" in step) == ('<p class="change" hidden' in card)
-    assert ">Back<" not in steps.card(1)["options"]["content"]
-    assert ">Next<" not in steps.card(last)["options"]["content"]
-    middle = steps.card(2)["options"]["content"]
-    assert middle.index(">Back<") < middle.index(">Next<")
+        # each step alike: four choices, the right one; a hint and a solution; what to change, if any, too
+        code = given(n)
+        assert len(code["choices"]) == 4 and code["answer"] in "ABCD"
+        assert code["hint"] and code["solution"]
+        assert ("do" in step) == (code["change"] is not None)
+    assert [label for _, label in given(1)["around"]] == ["Next"]
+    assert [label for _, label in given(last)["around"]] == ["Back"]
+    assert [label for _, label in given(2)["around"]] == ["Back", "Next"]
 
 
 def test_side_by_side():
