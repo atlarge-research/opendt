@@ -50,6 +50,7 @@ render(context.element.querySelector('.view'), (h, ui) => {
     h(ui.Stack, { alignItems: 'center', minHeight: 4 }, choose('window', windows), small('Decisions'), choose('markers', decisions),
       periods.length > 0 && small('Interval'),
       // ${period} in full, so a new interval runs this code again at once (Business Text runs it again for the
-      // variables its code names), not only at the next refresh
-      periods.length > 0 && h(ui.Combobox, { options: periods.map((value) => ({ value })), value: context.grafana.replaceVariables('${period}'), width: 'auto', onChange: ({ value }) => address.partial({ 'var-period': value }) })));
+      // variables its code names), not only at the next refresh; 88 px wide, so the row fits the view on a 1366 px
+      // screen and "minute" its box
+      periods.length > 0 && h(ui.Combobox, { options: periods.map((value) => ({ value })), value: context.grafana.replaceVariables('${period}'), width: 11, onChange: ({ value }) => address.partial({ 'var-period': value }) })));
 });
