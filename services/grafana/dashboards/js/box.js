@@ -43,10 +43,12 @@ const open = () => {
       const response = await fetch(control, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
       if (!response.ok) {
         const { detail } = await response.json();
-        return warn(typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; '));
+        warn(typeof detail === 'string' ? detail : detail.map((d) => d.msg).join('; '));
+        return draw(); // the levers again, with the draft, to change it
       }
     } catch {
-      return warn('The twin did not answer; try again');
+      warn('The twin did not answer; try again');
+      return draw();
     }
     const sent = load();  // other boxes may have changed it since this one rendered
     changed().forEach(({ dataset: { key } }) => (sent[key] = { value: draft[key], at: Date.now() }));
