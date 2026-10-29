@@ -131,10 +131,9 @@ def card(n):
     ]
     if "formula" in step:  # OpenDC's power model, for the steps on r
         lines.append(f'<p style="font-size:18px;margin:6px 0 0">{step["formula"]}</p>')
-    # the rest of the card's column, drawn by step.js
-    lines.append('<div class="answer" style="display:flex;flex-grow:1;margin-top:8px"></div>')
-    column = "display:flex;flex-direction:column;min-height:100%"
-    content = f'<div style="{column}">' + "\n".join(lines) + "</div>"
+    # the rest of the card, drawn by step.js
+    lines.append('<div class="answer" style="margin-top:8px"></div>')
+    content = "\n".join(lines)
     # late: yellow, darker on the light theme, as #F0E442 hardly shows on white
     colors = {"right": GREEN, "late": YELLOW, "late-light": "#998A00", "wrong": RED}
     code = script(

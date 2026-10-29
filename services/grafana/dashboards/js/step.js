@@ -41,18 +41,16 @@ const draw = () => render(node, (h, ui) => {
   }[state.part] ?? [];
   // the part shown under its button or the choices, its prefix in bold and its text in one line (no title)
   const alert = state.part && h(ui.Alert, { key: state.part, ref: state.scroll, severity, title: '', bottomSpacing: 0 }, h('strong', null, prefix), ' ', text);
-  // the buttons at the card's bottom, in the same place at every step
-  return h(ui.Stack, { direction: 'column', justifyContent: 'space-between', grow: 1 },
-    h(ui.Stack, { direction: 'column' },
-      change && h('div', null, unfolds('change', 'Tell me what to change', 'Hide what to change')), // on a line of its own
-      state.part === 'change' && alert,
-      h(ui.RadioButtonList, {
-        name: 'step-' + step,
-        options: choices.map((text, i) => ({ value: 'ABCD'[i], label: 'ABCD'[i] + '. ' + text })),
-        value: state.chosen,
-        onChange: choose,
-      }),
-      state.part !== 'change' && alert),
+  return h(ui.Stack, { direction: 'column' },
+    change && h('div', null, unfolds('change', 'Tell me what to change', 'Hide what to change')), // on a line of its own
+    state.part === 'change' && alert,
+    h(ui.RadioButtonList, {
+      name: 'step-' + step,
+      options: choices.map((text, i) => ({ value: 'ABCD'[i], label: 'ABCD'[i] + '. ' + text })),
+      value: state.chosen,
+      onChange: choose,
+    }),
+    state.part !== 'change' && alert,
     h(ui.Stack, { justifyContent: 'space-between' },
       h(ui.Stack, null, unfolds('hint', 'Hint', 'Hide hint'), unfolds('solution', 'Solution', 'Hide solution')),
       // in the button's colour, not in that of the links in a Business Text panel
