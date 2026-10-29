@@ -1,49 +1,64 @@
-// Tell me what to change, Hint, and Solution show or hide theirs; a wrong choice (in red) says to try another, as in
-// the notebooks; the right one (in green) shows the solution
-const card = context.element;
-const solution = card.querySelector('.solution');
-const retry = card.querySelector('.retry');
-// one part at a time, so the card fits its panel: this one shown (or, `shown` false, hidden too), the others hidden
-const parts = card.querySelectorAll('.change, .retry, .hint, .solution');
-const only = (part, shown = true) => parts.forEach((p) => (p.hidden = p !== part || !shown));
+// the step's answer, in Grafana's own components (ui.js): Tell me what to change, the choices, and one part at a time,
+// so the card fits its panel; then Hint and Solution, which show or hide theirs, and Back and Next. A wrong choice (in
+// red) says to try another, as in the notebooks; the right one (in green) shows the solution
+const node = context.element.querySelector('.answer');
+// kept on the node, as this code runs again at every refresh: the part shown, the choice, and whether the solution
+// opened before it; a part scrolls into view as it opens (`scroll`, made once, so a refresh does not scroll again)
+const state = (node.state ??= { part: null, chosen: null, peeked: false, scroll: (alert) => alert?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) });
 // how each step was answered, kept over steps and reloads, its circle ringed in its colour: right at once (green), right
 // after a wrong choice or the solution (yellow; darker on the light theme, grafana.js), or wrong so far (red)
 const ANSWERS = 'opendt-answers';
 const light = document.body.classList.contains('theme-light');
 const answered = () => JSON.parse(sessionStorage.getItem(ANSWERS) || '{}');
-const rings = (answers) => card.querySelectorAll('[data-step]').forEach((circle) => {
+const rings = (answers) => context.element.querySelectorAll('[data-step]').forEach((circle) => {
   const outcome = answers[circle.dataset.step];
   if (outcome) circle.style.border = '2px solid ' + colors[light && outcome === 'late' ? 'late-light' : outcome];
 });
 rings(answered());
-// each button says what a click does: show its part, or hide it again
-const labels = () => card.querySelectorAll('[data-show]').forEach((button) => {
-  const { show, folded, shown } = button.dataset;
-  button.textContent = card.querySelector('.' + show).hidden ? folded : shown;
-});
-card.onclick = ({ target }) => {
-  const { show } = target.dataset;
-  if (show) {
-    const part = card.querySelector('.' + show);
-    // the solution opened before a choice, kept on the card, as this code runs again at every refresh
-    if (show === 'solution' && part.hidden) solution.dataset.peeked = 'yes';
-    only(part, part.hidden);
-  }
-  const option = target.closest('[data-choice]');
-  if (!option) return labels();
-  const { choice } = option.dataset;
-  card.querySelectorAll('[data-choice]').forEach((c) => (c.style.borderColor = colors.none));
-  option.style.borderColor = colors[choice];
+const show = (part) => {
+  if (part === 'solution' && state.part !== part) state.peeked = true;
+  state.part = state.part === part ? null : part;
+  draw();
+};
+const choose = (letter) => {
+  const choice = letter === answer ? 'right' : 'wrong';
   const answers = answered();
-  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] || solution.dataset.peeked ? 'late' : 'right';
+  if (!answers[step] || answers[step] === 'wrong') answers[step] = choice === 'wrong' ? 'wrong' : answers[step] || state.peeked ? 'late' : 'right';
   sessionStorage.setItem(ANSWERS, JSON.stringify(answers));
   rings(answers);
-  if (choice === 'right') solution.querySelector('strong').textContent = 'Right. Solution:';
-  const part = choice === 'right' ? solution : retry;
-  only(part);
-  labels();
-  part.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  state.chosen = letter;
+  state.part = choice === 'right' ? 'solution' : 'retry';
+  draw();
 };
+const draw = () => render(node, (h, ui) => {
+  // each button says what a click does: show its part, or hide it again
+  const unfolds = (part, label, hide) => h(ui.Button, { variant: 'secondary', onClick: () => show(part) }, state.part === part ? hide : label);
+  const [severity, prefix, text] = {
+    change: ['info', 'Change:', change],
+    retry: ['error', 'Not quite;', 'look at what the plots show, then try another.'],
+    hint: ['warning', 'Hint:', hint],
+    solution: ['success', state.chosen === answer ? 'Right. Solution:' : 'Solution:', solution],
+  }[state.part] ?? [];
+  // the part shown under its button or the choices, its prefix in bold and its text in one line (no title)
+  const alert = state.part && h(ui.Alert, { key: state.part, ref: state.scroll, severity, title: '', bottomSpacing: 0 }, h('strong', null, prefix), ' ', text);
+  // the buttons at the card's bottom, in the same place at every step
+  return h(ui.Stack, { direction: 'column', justifyContent: 'space-between', grow: 1 },
+    h(ui.Stack, { direction: 'column' },
+      change && h('div', null, unfolds('change', 'Tell me what to change', 'Hide what to change')), // on a line of its own
+      state.part === 'change' && alert,
+      h(ui.RadioButtonList, {
+        name: 'step-' + step,
+        options: choices.map((text, i) => ({ value: 'ABCD'[i], label: 'ABCD'[i] + '. ' + text })),
+        value: state.chosen,
+        onChange: choose,
+      }),
+      state.part !== 'change' && alert),
+    h(ui.Stack, { justifyContent: 'space-between' },
+      h(ui.Stack, null, unfolds('hint', 'Hint', 'Hide hint'), unfolds('solution', 'Solution', 'Hide solution')),
+      // in the button's colour, not in that of the links in a Business Text panel
+      h(ui.Stack, null, around.map(([i, label]) => h(ui.LinkButton, { key: label, variant: 'secondary', href: context.grafana.replaceVariables(here + i), style: { color: context.grafana.theme.colors.secondary.contrastText } }, label)))));
+});
+draw();
 // opening a step sets the twin as the steps before it left it (`start`), once per visit, and says what it changed;
 // the boxes show the changes until the twin follows them (box.js)
 const LABELS = { hosts: 'Hosts', carbon_zone: 'CO₂ zone', calibration: 'Calibration', calibration_min: 'r from', calibration_max: 'r to', calibration_points: 'Values of r' };
