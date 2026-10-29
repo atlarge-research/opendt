@@ -52,19 +52,22 @@ MAPE_WINDOW = select("mape_window", [(60, "1 h"), (360, "6 h"), (1440, "24 h")])
 HOSTS = field("hosts", min=1)
 
 
+# the boxes in HTML, in the colours of Grafana's theme (Business Text fills in ${theme...}): in Grafana's own text
+# (22 px lines), the Self-calibrator's lines and formula do not fit the bar
 BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 2px;
   padding: 0 8px; cursor: pointer; }
-.lever small { font-size: 12px; color: #8e8e8e; white-space: nowrap; }
+.lever small { font-size: 12px; color: ${theme.colors.text.secondary}; white-space: nowrap; }
 .lever > small:first-child { margin-bottom: 2px; font-size: 14px; font-weight: 500; color: inherit; }
 .lever p { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0;
   line-height: 1.3; }
 .lever b { font-size: 15px; font-weight: 500; white-space: nowrap; }
 .lever > small:last-child { margin: 4px 0 0; font-size: 11px; }
 .lever i { font-style: normal; }
-.lever a { font-size: 11px; color: #8e8e8e; white-space: nowrap; }
-.lever:hover a { color: #6e9fff; }
+.lever a { font-size: 11px; color: ${theme.colors.text.secondary}; white-space: nowrap; }
+.lever:hover a { color: ${theme.colors.text.link}; }
 /* a change sent, until the twin follows it (box.js) */
-.lever i.pending { padding: 0 4px; border-radius: 2px; background: #3d71d9; color: white;
+.lever i.pending { padding: 0 4px; border-radius: 2px; background: ${theme.colors.primary.main};
+  color: ${theme.colors.primary.contrastText};
   animation: opendt-pending 1.6s ease-in-out infinite; }
 @keyframes opendt-pending { 50% { opacity: 0.55; } }"""
 
