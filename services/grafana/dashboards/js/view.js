@@ -48,5 +48,7 @@ render(context.element.querySelector('.view'), (h, ui) => {
       plots.length > 0 && h(ui.ToolbarButton, { onClick: pick }, '☰ Plots')),
     h(ui.Stack, { alignItems: 'center' }, choose('window', windows), small('Decisions'), choose('markers', decisions),
       periods.length > 0 && small('Interval'),
-      periods.length > 0 && h(ui.Combobox, { options: periods.map((value) => ({ value })), value: shown('period'), width: 'auto', onChange: ({ value }) => address.partial({ 'var-period': value }) })));
+      // ${period} in full, so a new interval runs this code again at once (Business Text runs it again for the
+      // variables its code names), not only at the next refresh
+      periods.length > 0 && h(ui.Combobox, { options: periods.map((value) => ({ value })), value: context.grafana.replaceVariables('${period}'), width: 'auto', onChange: ({ value }) => address.partial({ 'var-period': value }) })));
 });
