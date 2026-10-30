@@ -56,3 +56,9 @@ def test_max_speed(replay):
     producer = replay(-1)
     assert producer.wait_until(T0 + timedelta(hours=1)) is False
     assert producer.wall == 0
+
+
+def test_stop_when_due(replay):
+    producer = replay(10)
+    producer._stop_event.set()
+    assert producer.wait_until(T0) is True  # a stop shows also when there is nothing to wait for

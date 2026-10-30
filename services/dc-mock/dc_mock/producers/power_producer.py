@@ -4,7 +4,7 @@ Streams historical power consumption data to Kafka with proper timing.
 """
 
 import logging
-from datetime import UTC
+from datetime import UTC, datetime
 
 import pandas as pd
 from odt_common import Consumption, WorkloadContext
@@ -37,7 +37,6 @@ class PowerProducer(BaseProducer):
         )
         self.workload_context = workload_context
         self.earliest_task_time_ms = earliest_task_time_ms
-        self.consumption_records: list[Consumption] = []
 
         logger.info(f"  Consumption file: {workload_context.consumption_file}")
         logger.info(f"  Earliest task time: {earliest_task_time_ms}ms")
@@ -71,65 +70,13 @@ class PowerProducer(BaseProducer):
         return consumption_records
 
     def run(self) -> None:
-        """Run the power producer (streams consumption events)."""
-        logger.info("PowerProducer running")
-
-        try:
-            # Load consumption data
-            self.consumption_records = self.load_consumption_data()
-
-            if not self.consumption_records:
-                logger.warning("No consumption data to stream")
+        """Replay the measured power at its times, on the trace's clock, which starts at the first task."""
+        records = self.load_consumption_data()
+        self.start_clock(datetime.fromtimestamp(self.earliest_task_time_ms / 1000, tz=UTC))
+        for i, consumption in enumerate(records, 1):
+            if self.wait_until(consumption.timestamp):
                 return
-
-            logger.info(f"Streaming {len(self.consumption_records)} consumption events...")
-
-            # the trace's clock starts at the first task, as the workload's
-            from datetime import datetime
-
-            sim_start_time = datetime.fromtimestamp(self.earliest_task_time_ms / 1000.0, tz=UTC)
-            self.start_clock(sim_start_time)
-
-            logger.info(f"PowerProducer starts at {sim_start_time}")
-
-            for i, consumption in enumerate(self.consumption_records):
-                if self.should_stop():
-                    logger.info("PowerProducer interrupted")
-                    break
-
-                if self.wait_until(consumption.timestamp):
-                    logger.info("PowerProducer interrupted during sleep")
-                    break
-
-                # Emit consumption event
-                consumption_msg = consumption.model_dump(mode="json")
-
-                # Debug: Log first few power emissions
-                if i < 5 or (i + 1) % 100 == 0:
-                    logger.info(
-                        f"PowerProducer sending power #{i + 1}: "
-                        f"timestamp={consumption.timestamp.isoformat()}"
-                    )
-
-                self.emit_message(
-                    message=consumption_msg,
-                    key=None,  # No key for consumption
-                )
-
-                # Periodic flush and logging
-                if (i + 1) % 100 == 0:
-                    progress = (i + 1) / len(self.consumption_records) * 100
-                    logger.info(
-                        f"PowerProducer progress: {i + 1}/"
-                        f"{len(self.consumption_records)} ({progress:.1f}%)"
-                    )
-                    self.flush()
-
-            # Final flush
-            logger.info("PowerProducer flushing remaining messages...")
-            self.flush()
-            logger.info("PowerProducer finished streaming")
-
-        except Exception as e:
-            logger.error(f"Fatal error in PowerProducer: {e}", exc_info=True)
-            raise
+            self.emit_message(consumption.model_dump(mode="json"))
+            if i % 500 == 0:
+                logger.info(f"PowerProducer progress: {i}/{len(records)}")
+        logger.info("PowerProducer finished streaming")

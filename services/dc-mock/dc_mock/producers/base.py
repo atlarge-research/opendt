@@ -51,22 +51,8 @@ class BaseProducer(ABC):
         return self._producer
 
     def emit_message(self, message: dict[str, Any], key: str | None = None) -> None:
-        """Emit a message to Kafka."""
-        try:
-            send_message(
-                self._get_producer(),
-                topic=self.topic,
-                message=message,
-                key=key,
-            )
-        except Exception as e:
-            logger.error(f"Failed to emit message to {self.topic}: {e}", exc_info=True)
-            raise
-
-    def flush(self) -> None:
-        """Flush buffered messages to Kafka."""
-        if self._producer:
-            self._producer.flush()
+        """Send a message to the producer's topic, and wait until Kafka has it."""
+        send_message(self._get_producer(), topic=self.topic, message=message, key=key)
 
     def start_clock(self, trace_start: datetime) -> None:
         """Start replaying: `trace_start` of the trace is now."""
@@ -93,7 +79,7 @@ class BaseProducer(ABC):
             due = (trace_time - self._trace_start).total_seconds() / self._factor
             delay = due - (time.time() - self._wall_start)
             if delay <= 0:
-                return False
+                return self.should_stop()
             if self.wait_interruptible(min(delay, 1.0)):
                 return True
 

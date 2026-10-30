@@ -4,7 +4,6 @@ Streams task/workload events to Kafka with proper timing.
 """
 
 import logging
-import time
 from datetime import timedelta
 
 import pandas as pd
@@ -59,120 +58,32 @@ class WorkloadProducer(BaseProducer):
         return tasks
 
     def run(self) -> None:
-        """Run the workload producer (streams task events)."""
-        logger.info("WorkloadProducer running")
-
-        try:
-            # Load and aggregate tasks
-            logger.info("WorkloadProducer loading tasks...")
-            self.tasks = self.load_and_aggregate_tasks()
-
-            if not self.tasks:
-                logger.warning("No tasks to stream")
+        """Replay the tasks at their submission times, on the trace's clock, with a heartbeat every
+        `heartbeat_frequency_minutes` of the trace, as only heartbeats close the simulator's windows."""
+        self.tasks = self.load_and_aggregate_tasks()
+        start = self.tasks[0].submission_time
+        self.start_clock(start)
+        every = timedelta(minutes=self.heartbeat_frequency_minutes)
+        heartbeat = start.replace(second=0, microsecond=0)
+        heartbeats = 0
+        for i, task in enumerate(self.tasks, 1):
+            while heartbeat <= task.submission_time:  # the heartbeats due before the task
+                if self.wait_until(heartbeat):
+                    return
+                message = {"message_type": "heartbeat", "timestamp": heartbeat.isoformat()}
+                self.emit_message(message, key="heartbeat")
+                heartbeats += 1
+                heartbeat += every
+            if self.wait_until(task.submission_time):
                 return
-
-            logger.info(f"Streaming {len(self.tasks)} task events with heartbeats...")
-
-            # the trace's clock starts at the first task
-            sim_start_time = self.tasks[0].submission_time
-            self.start_clock(sim_start_time)
-            logger.info(f"WorkloadProducer starts at {sim_start_time}")
-            logger.info(f"WorkloadProducer real start time: {time.time()}")
-
-            # Initialize heartbeat tracking
-            heartbeat_frequency = timedelta(minutes=self.heartbeat_frequency_minutes)
-            # Round down to the nearest minute for first heartbeat
-            next_heartbeat_time = sim_start_time.replace(second=0, microsecond=0)
-            heartbeats_sent = 0
-
-            logger.info(
-                f"First heartbeat scheduled at: {next_heartbeat_time}, "
-                f"first task at: {self.tasks[0].submission_time}"
-            )
-
-            for i, task in enumerate(self.tasks):
-                if self.should_stop():
-                    logger.info("WorkloadProducer interrupted")
-                    break
-
-                # Debug: Log when we're about to process a task
-                if i < 5:
-                    logger.info(
-                        f"Processing task #{i + 1}: submission_time={task.submission_time.isoformat()}, "
-                        f"next_heartbeat_time={next_heartbeat_time.isoformat()}"
-                    )
-
-                # Emit any pending heartbeats before this task
-                heartbeats_to_send = 0
-                temp_heartbeat_time = next_heartbeat_time
-                while temp_heartbeat_time <= task.submission_time:
-                    heartbeats_to_send += 1
-                    temp_heartbeat_time += heartbeat_frequency
-
-                if i < 5 and heartbeats_to_send > 0:
-                    logger.info(f"Will send {heartbeats_to_send} heartbeat(s) before this task")
-
-                while next_heartbeat_time <= task.submission_time:
-                    if self.wait_until(next_heartbeat_time):
-                        logger.info("WorkloadProducer interrupted during heartbeat sleep")
-                        break
-
-                    # Emit heartbeat message
-                    heartbeat_msg = {
-                        "message_type": "heartbeat",
-                        "timestamp": next_heartbeat_time.isoformat(),
-                    }
-
-                    # Debug: Log first few heartbeat emissions
-                    if heartbeats_sent < 5:
-                        logger.info(
-                            f"WorkloadProducer sending heartbeat #{heartbeats_sent + 1}: "
-                            f"timestamp={next_heartbeat_time.isoformat()}"
-                        )
-
-                    self.emit_message(message=heartbeat_msg, key="heartbeat")
-                    heartbeats_sent += 1
-
-                    # Move to next heartbeat time
-                    next_heartbeat_time += heartbeat_frequency
-
-                if self.wait_until(task.submission_time):
-                    logger.info("WorkloadProducer interrupted during sleep")
-                    break
-
-                # Emit task event wrapped with message_type
-                task_msg = {
-                    "message_type": "task",
-                    "timestamp": task.submission_time.isoformat(),
-                    "task": task.model_dump(mode="json"),
-                }
-
-                # Debug: Log first few task emissions
-                if i < 5 or (i + 1) % 100 == 0:
-                    logger.info(
-                        f"WorkloadProducer sending task #{i + 1}: id={task.id}, "
-                        f"timestamp={task.submission_time.isoformat()}"
-                    )
-
-                self.emit_message(message=task_msg, key=str(task.id))
-
-                # Periodic flush and logging
-                if (i + 1) % 100 == 0:
-                    progress = (i + 1) / len(self.tasks) * 100
-                    logger.info(
-                        f"WorkloadProducer progress: {i + 1}/{len(self.tasks)} tasks, "
-                        f"{heartbeats_sent} heartbeats ({progress:.1f}%)"
-                    )
-                    self.flush()
-
-            # Final flush
-            logger.info("WorkloadProducer flushing remaining messages...")
-            self.flush()
-            logger.info(
-                f"WorkloadProducer finished streaming: "
-                f"{len(self.tasks)} tasks, {heartbeats_sent} heartbeats"
-            )
-
-        except Exception as e:
-            logger.error(f"Fatal error in WorkloadProducer: {e}", exc_info=True)
-            raise
+            message = {
+                "message_type": "task",
+                "timestamp": task.submission_time.isoformat(),
+                "task": task.model_dump(mode="json"),
+            }
+            self.emit_message(message, key=str(task.id))
+            if i % 500 == 0:
+                logger.info(f"WorkloadProducer progress: {i}/{len(self.tasks)} tasks")
+        logger.info(
+            f"WorkloadProducer finished streaming: {len(self.tasks)} tasks, {heartbeats} heartbeats"
+        )
