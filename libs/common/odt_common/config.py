@@ -27,11 +27,29 @@ class KafkaTopicConfig(Strict):
     )
 
 
+# the topics the services talk through, by their logical name; a config's kafka.topics replaces them
+TOPICS = {
+    "workload": {"name": "dc.workload", "config": {"retention.ms": "86400000"}},  # 24 hours
+    "power": {"name": "dc.power", "config": {"retention.ms": "3600000"}},  # 1 hour
+    # compacted: the latest topology, kept at least an hour
+    "topology": {
+        "name": "dc.topology",
+        "config": {"cleanup.policy": "compact", "min.compaction.lag.ms": "3600000"},
+    },
+    "system": {"name": "sys.config", "config": {"cleanup.policy": "compact"}},
+    "sim_topology": {
+        "name": "sim.topology",
+        "config": {"cleanup.policy": "compact", "min.compaction.lag.ms": "0"},
+    },
+}
+
+
 class KafkaConfig(Strict):
     """Kafka infrastructure configuration."""
 
     topics: dict[str, KafkaTopicConfig] = Field(
-        default_factory=dict, description="Topic configurations keyed by logical name"
+        default_factory=lambda: {key: KafkaTopicConfig(**topic) for key, topic in TOPICS.items()},
+        description="Topic configurations keyed by logical name",
     )
 
 
