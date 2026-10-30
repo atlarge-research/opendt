@@ -8,12 +8,6 @@ from pathlib import Path
 import pandas as pd
 
 
-def last_best(output_dir: Path) -> float | None:
-    """The best value of the last sweep, so a restarted calibrator does not publish it again."""
-    path = output_dir / "agg_results.parquet"
-    return float(pd.read_parquet(path)["best_value"].iloc[-1]) if path.exists() else None
-
-
 def record(
     output_dir: Path,
     run_dir: Path,

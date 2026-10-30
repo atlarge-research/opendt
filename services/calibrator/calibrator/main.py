@@ -6,6 +6,7 @@ import os
 import threading
 import time
 from datetime import datetime, timedelta
+from functools import reduce
 from pathlib import Path
 
 import numpy as np
@@ -25,7 +26,7 @@ from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_consumer
 from calibrator.calibration_engine import sweep
 from calibrator.mape_comparator import mape
 from calibrator.power_tracker import PowerTracker
-from calibrator.result_processor import last_best, record
+from calibrator.result_processor import record
 from calibrator.topology_manager import TopologyManager
 
 logging.basicConfig(
@@ -109,8 +110,6 @@ class CalibrationService:
             sim_topology_topic=sim_topology_topic,
             consumer_group=f"{consumer_group}-topology",
         )
-
-        self.last_best = last_best(self.output_base_dir)
 
         self.power_tracker.start()
         self.topology_manager.start()
@@ -258,10 +257,12 @@ class CalibrationService:
             logger.error("No OpenDC run to compare with the measured power; r stays")
             return
         logger.info(f"Best: {self.calibrated_property}={best:.2f} (MAPE={best_mape:.2f}%)")
-        changed = best != self.last_best
+        # sent whenever the twin runs another value: a change from the control panel, made before a
+        # window ran the value sent last, carries the value of that window
+        host = self.topology_manager.get_current_topology().clusters[0].hosts[0]
+        changed = best != reduce(getattr, self.calibrated_property.split("."), host)
         if changed:
             self.topology_manager.publish_topology(variant(self.calibrated_property, best))
-            self.last_best = best
         mapes = {v: m for v, (m, _) in results.items()}
         record(
             self.output_base_dir,
