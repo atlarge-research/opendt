@@ -68,6 +68,8 @@ ipython-pygments-lexers==1.1.1
     # via ipython
 jedi==0.20.1
     # via ipython
+jinja2==3.1.6
+    # via opendt (pyproject.toml)
 jsonschema==4.26.0
     # via nbformat
 jsonschema-specifications==2025.9.1
@@ -92,6 +94,8 @@ librt==0.16.0 ; platform_python_implementation != 'PyPy'
     # via mypy
 markdown-it-py==4.2.0
     # via rich
+markupsafe==3.0.4
+    # via jinja2
 matplotlib==3.11.2
     # via opendt (pyproject.toml)
 matplotlib-inline==0.2.2
