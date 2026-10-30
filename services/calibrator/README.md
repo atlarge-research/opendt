@@ -29,11 +29,11 @@ The calibrator sets one numeric parameter, by its path from the host, on all hos
 | File | Purpose |
 |------|---------|
 | main.py | Service orchestration |
-| calibration_engine.py | Parallel OpenDC simulations |
-| mape_comparator.py | Error calculation |
+| calibration_engine.py | The sweep: one OpenDC run per value, in parallel |
+| mape_comparator.py | The MAPE of a run against the measured power |
 | power_tracker.py | Actual power tracking |
 | topology_manager.py | Topology subscription and publishing |
-| result_processor.py | Results aggregation |
+| result_processor.py | Each sweep's metadata.json and agg_results.parquet row |
 
 ## Configuration
 
