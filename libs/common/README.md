@@ -37,7 +37,7 @@ from odt_common import load_config_from_env
 
 config = load_config_from_env()
 print(config.workload)  # "SURF"
-print(config.kafka.bootstrap_servers)  # "kafka:29092"
+print(config.kafka.topics["workload"].name)  # "dc.workload"
 ```
 
 ### Utilities (`odt_common.utils`)
@@ -56,8 +56,8 @@ OpenDC binary invocation and result parsing.
 ```python
 from odt_common.odc_runner import OpenDCRunner
 
-runner = OpenDCRunner()
-results = runner.run_simulation(tasks, topology)
+runner = OpenDCRunner()  # OpenDC at /app/opendc, as mounted in the containers
+ok, output_dir = runner.run_simulation(tasks, topology, run_dir, run_number=1, simulated_time=end)
 ```
 
 ### Task Accumulator (`odt_common.task_accumulator`)
