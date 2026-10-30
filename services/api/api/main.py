@@ -27,9 +27,9 @@ from odt_common.models.topology import (
 from odt_common.utils import get_kafka_producer
 from odt_common.utils.kafka import send_message
 
-from api import data_dir, hosts, levers, prefabs, startup, twin
-from api.carbon_query import CarbonDataQuery, CarbonDataResponse
-from api.power_query import PowerDataQuery, PowerDataResponse
+from api import carbon_query, data_dir, hosts, levers, power_query, prefabs, startup, twin
+from api.carbon_query import CarbonDataResponse
+from api.power_query import PowerDataResponse
 
 
 @asynccontextmanager
@@ -162,14 +162,14 @@ def results() -> int | None:
 def power(
     version: int | None, interval_seconds: int, start_time: datetime | None
 ) -> PowerDataResponse:
-    return PowerDataQuery(run_dir(), workload()).query(interval_seconds, start_time)
+    return power_query.query(run_dir(), workload(), interval_seconds, start_time)
 
 
 @lru_cache(maxsize=8)
 def carbon(
     version: int | None, interval_seconds: int, start_time: datetime | None
 ) -> CarbonDataResponse:
-    return CarbonDataQuery(run_dir()).query(interval_seconds, start_time)
+    return carbon_query.query(run_dir(), interval_seconds, start_time)
 
 
 def answer(query, interval_seconds: int, start_time: datetime | None):

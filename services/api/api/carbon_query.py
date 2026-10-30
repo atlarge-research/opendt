@@ -24,87 +24,31 @@ class CarbonDataResponse(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata about the query")
 
 
-class CarbonDataQuery:
-    """Query carbon emission data from simulation results."""
-
-    def __init__(self, run: Path):
-        """The CO2 emissions of a run (its folder)."""
-        self.run_id = run.name
-        self.sim_results_path = run / "simulator" / "agg_results.parquet"
-
-    def query(
-        self, interval_seconds: int = 60, start_time: datetime | None = None
-    ) -> CarbonDataResponse:
-        """Query carbon emission data at specified interval."""
-        # Load simulated data
-        if not self.sim_results_path.exists():
-            raise FileNotFoundError(f"Simulation results not found: {self.sim_results_path}")
-
-        df = pd.read_parquet(self.sim_results_path)
-
-        # Validate required columns
-        required_cols = ["timestamp", "power_draw", "carbon_intensity"]
-        missing = [col for col in required_cols if col not in df.columns]
-        if missing:
-            raise ValueError(f"Missing required columns: {missing}")
-
-        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-
-        # Calculate carbon emission: power_draw (W) * carbon_intensity (gCO2/kWh) / 1000
-        # This gives gCO2/h (grams of CO2 per hour at current power draw)
-        df["carbon_emission"] = df["power_draw"] * df["carbon_intensity"] / 1000
-
-        # Sort by timestamp
-        df = df.sort_values("timestamp", ignore_index=True)
-
-        # Filter by start time if provided
-        if start_time:
-            df = df.loc[df["timestamp"] >= start_time].copy()
-
-        # Resample to specified interval
-        df = self._resample_data(df, interval_seconds)
-
-        # Convert to response model
-        data_points = []
-        for _, row in df.iterrows():
-            timestamp = row["timestamp"]
-            if isinstance(timestamp, pd.Timestamp):
-                timestamp_dt = timestamp.to_pydatetime()
-            else:
-                timestamp_dt = pd.to_datetime(timestamp).to_pydatetime()  # type: ignore[union-attr]
-
-            data_points.append(
-                CarbonDataPoint(
-                    timestamp=timestamp_dt,
-                    carbon_intensity=float(row["carbon_intensity"]),
-                    power_draw=float(row["power_draw"]),
-                    carbon_emission=float(row["carbon_emission"]),
-                )
-            )
-
-        metadata = {
-            "run_id": self.run_id,
-            "interval_seconds": interval_seconds,
-            "count": len(data_points),
-            "start_time": df["timestamp"].min().isoformat() if not df.empty else None,
-            "end_time": df["timestamp"].max().isoformat() if not df.empty else None,
-        }
-
-        return CarbonDataResponse(data=data_points, metadata=metadata)
-
-    def _resample_data(self, df: pd.DataFrame, interval_seconds: int) -> pd.DataFrame:
-        """Resample data to specified interval."""
-        # Set timestamp as index
-        df = df.set_index("timestamp")
-
-        # Resample and take mean of numeric columns
-        resampled = (
-            df[["power_draw", "carbon_intensity", "carbon_emission"]]
-            .resample(f"{interval_seconds}s")
-            .mean()
+def query(run: Path, interval_seconds: int, start_time: datetime | None) -> CarbonDataResponse:
+    """The simulated power, carbon intensity, and CO2 emissions of a run (its agg_results.parquet), as means
+    every `interval_seconds`, from `start_time` on."""
+    df = pd.read_parquet(
+        run / "simulator" / "agg_results.parquet",
+        columns=["timestamp", "power_draw", "carbon_intensity"],
+    )
+    df = df.set_index(pd.to_datetime(df["timestamp"], utc=True))[["power_draw", "carbon_intensity"]]
+    # power draw [W] x carbon intensity [gCO2/kWh] / 1000 = gCO2/h
+    df["carbon_emission"] = df["power_draw"] * df["carbon_intensity"] / 1000
+    df = df.sort_index()
+    if start_time:
+        df = df[df.index >= start_time]
+    df = df.resample(f"{interval_seconds}s").mean().dropna()
+    data = [
+        CarbonDataPoint(
+            timestamp=t.to_pydatetime(), power_draw=p, carbon_intensity=i, carbon_emission=e
         )
-
-        # Remove NaN rows and reset index
-        resampled = resampled.dropna().reset_index()
-
-        return resampled
+        for t, p, i, e in df[["power_draw", "carbon_intensity", "carbon_emission"]].itertuples()
+    ]
+    metadata = {
+        "run_id": run.name,
+        "interval_seconds": interval_seconds,
+        "count": len(data),
+        "start_time": df.index.min().isoformat() if data else None,
+        "end_time": df.index.max().isoformat() if data else None,
+    }
+    return CarbonDataResponse(data=data, metadata=metadata)
