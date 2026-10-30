@@ -16,11 +16,11 @@ for the live twin):
 git clone https://github.com/atlarge-research/opendt.git
 cd opendt
 make setup
-make up config=tutorial/resources/configs/live_twin.yaml
+make up
 ```
 
-The live twin needs Docker on the laptop (a codespace has none): Docker Desktop with at least 8 GB, and port 9092 (the
-host port of OpenDT's Kafka) free; the first `make up` builds the Docker images, which takes a few minutes.
+The live twin needs Docker on the laptop (a codespace has none): Docker Desktop with at least 8 GB; the first
+`make up` builds the Docker images, which takes a few minutes.
 Then run the notebooks with the `.venv` kernel, in VS Code or PyCharm (or in JupyterLab, with
 `env -u VIRTUAL_ENV uv run --with jupyterlab jupyter lab tutorial/`), and open the live twin in Grafana
 (http://localhost:3000); `make down` stops it.

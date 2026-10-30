@@ -8,9 +8,9 @@ ASCI course on distributed systems, Friday 30 October 2026, 1 hour, fewer than 2
   of notebook 1 (`Setup OK`) at least one day before class.
 - One day before: run notebooks 1-3 on the laptop (a few seconds each: their simulations ship precomputed in
   `resources/results/`, so they need no Java).
-- For the live demo: start Docker Desktop, run `make up config=tutorial/resources/configs/live_twin.yaml` once (the
+- For the live demo: start Docker Desktop, run `make up` once (the
   first start builds the Docker images), then `make down`.
-- Before the session: `make up config=tutorial/resources/configs/live_twin.yaml`, and let the twin run past its first
+- Before the session: `make up`, and let the twin run past its first
   trace hours (its MAPE is about 10% in the first 6 hours, then lower).
 
 ## Timeline
@@ -41,7 +41,7 @@ the previous one.
 
 ## Live Demo (about 5 minutes)
 
-1. `make up config=tutorial/resources/configs/live_twin.yaml`, then open http://localhost:3000: the Dashboard screen,
+1. `make up`, then open http://localhost:3000: the Dashboard screen,
    with the screens at the top left (Dashboard, Topology, Tutorial). The Tutorial screen asks the questions of
    the three use cases on the live twin, one step at a time (`tutorial/resources/tutorial.yaml`); its solutions are
    folded.
