@@ -354,38 +354,25 @@ def main():
     logger.info(f"Run ID: {run_id}")
     logger.info(f"Kafka bootstrap servers: {get_kafka_bootstrap_servers()}")
 
-    max_retries = 30
-    retry_delay = 2
-
-    for attempt in range(max_retries):
-        try:
-            logger.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})")
-            service = CalibrationService(
-                workload_topic=workload_topic,
-                topology_topic=topology_topic,
-                sim_topology_topic=sim_topology_topic,
-                power_topic=power_topic,
-                system_topic=system_topic,
-                calibrated_property=calibrated_property,
-                min_value=min_value,
-                max_value=max_value,
-                linspace_points=linspace_points,
-                max_parallel_workers=max_parallel_workers,
-                mape_window_minutes=mape_window_minutes,
-                run_output_dir=str(run_output_dir),
-                run_id=run_id,
-                enabled=config.global_config.calibration_enabled,
-                consumer_group=consumer_group,
-            )
-            service.run()
-            break
-        except Exception as e:
-            if attempt < max_retries - 1:
-                logger.warning(f"Connection failed: {e}. Retrying in {retry_delay}s...")
-                time.sleep(retry_delay)
-            else:
-                logger.error("Failed to connect to Kafka after maximum retries")
-                raise
+    # kafka-init has made the topics, so Kafka is up (docker-compose starts this service after it)
+    service = CalibrationService(
+        workload_topic=workload_topic,
+        topology_topic=topology_topic,
+        sim_topology_topic=sim_topology_topic,
+        power_topic=power_topic,
+        system_topic=system_topic,
+        calibrated_property=calibrated_property,
+        min_value=min_value,
+        max_value=max_value,
+        linspace_points=linspace_points,
+        max_parallel_workers=max_parallel_workers,
+        mape_window_minutes=mape_window_minutes,
+        run_output_dir=str(run_output_dir),
+        run_id=run_id,
+        enabled=config.global_config.calibration_enabled,
+        consumer_group=consumer_group,
+    )
+    service.run()
 
 
 if __name__ == "__main__":

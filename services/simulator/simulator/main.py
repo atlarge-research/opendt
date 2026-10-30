@@ -4,7 +4,6 @@ import copy
 import json
 import logging
 import os
-import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -365,33 +364,19 @@ def main():
 
     consumer_group = os.getenv("CONSUMER_GROUP", "simulators")
 
-    # Wait for Kafka to be ready
-    max_retries = 30
-    retry_delay = 2
-
-    for attempt in range(max_retries):
-        try:
-            logger.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})")
-            service = SimulationService(
-                workload_topic=workload_topic,
-                topology_topic=topology_topic,
-                sim_topology_topic=sim_topology_topic,
-                system_topic=system_topic,
-                simulation_frequency_minutes=simulation_frequency_minutes,
-                run_output_dir=str(run_output_dir),
-                run_id=run_id,
-                background_load_nodes=background_load_nodes,
-                consumer_group=consumer_group,
-            )
-            service.run()
-            break
-        except Exception as e:
-            if attempt < max_retries - 1:
-                logger.warning(f"Connection failed: {e}. Retrying in {retry_delay}s...")
-                time.sleep(retry_delay)
-            else:
-                logger.error("Failed to connect to Kafka after maximum retries")
-                raise
+    # kafka-init has made the topics, so Kafka is up (docker-compose starts this service after it)
+    service = SimulationService(
+        workload_topic=workload_topic,
+        topology_topic=topology_topic,
+        sim_topology_topic=sim_topology_topic,
+        system_topic=system_topic,
+        simulation_frequency_minutes=simulation_frequency_minutes,
+        run_output_dir=str(run_output_dir),
+        run_id=run_id,
+        background_load_nodes=background_load_nodes,
+        consumer_group=consumer_group,
+    )
+    service.run()
 
 
 if __name__ == "__main__":
