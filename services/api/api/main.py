@@ -116,7 +116,7 @@ async def update_topology(
                 }
             },
         ),
-    ] = DEFAULT_TOPOLOGY,
+    ],
 ):
     """Publish a new simulated topology; the simulator runs it from its next window of operation."""
     app.state.topology = topology.model_dump(mode="json")
@@ -151,26 +151,31 @@ def get_carbon_emission_data(
     return answer(carbon, interval_seconds, start_time)
 
 
-# once per window (`latest`) and interval, though several panels ask at each refresh
+def results() -> int | None:
+    """The version of the simulator's results, which it rewrites after each window: the key of the caches below,
+    which compute once per version and interval, though several panels ask at each refresh."""
+    path = run_dir() / "simulator" / "agg_results.parquet"
+    return path.stat().st_mtime_ns if path.exists() else None
+
+
 @lru_cache(maxsize=8)
 def power(
-    latest: Path | None, interval_seconds: int, start_time: datetime | None
+    version: int | None, interval_seconds: int, start_time: datetime | None
 ) -> PowerDataResponse:
     return PowerDataQuery(run_dir(), workload()).query(interval_seconds, start_time)
 
 
 @lru_cache(maxsize=8)
 def carbon(
-    latest: Path | None, interval_seconds: int, start_time: datetime | None
+    version: int | None, interval_seconds: int, start_time: datetime | None
 ) -> CarbonDataResponse:
     return CarbonDataQuery(run_dir()).query(interval_seconds, start_time)
 
 
 def answer(query, interval_seconds: int, start_time: datetime | None):
-    """The query of the latest window: 404 before the twin's first results, 400 for a series it cannot give."""
-    done = twin.windows(run_dir())
+    """The query of the latest results: 404 before the twin's first, 400 for a series it cannot give."""
     try:
-        return query(done[-1] if done else None, interval_seconds, start_time)
+        return query(results(), interval_seconds, start_time)
     except FileNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:
@@ -341,15 +346,18 @@ def get_accuracy(minutes: int = Query(60, ge=1, le=1440)):
     the measured power, the error of the energy so far, and the r the twin ran with."""
 
     def table(run: Path) -> pd.DataFrame:
+        version = results()
+        if version is None:  # the first window is done, its power not yet written
+            return pd.DataFrame()
         with twin.LOCK:  # the panels ask at once: one computes, the others take its result
-            return accuracy(run, twin.windows(run)[-1], minutes)
+            return accuracy(run, version, minutes)
 
     return rows(table)
 
 
 @lru_cache(maxsize=4)
-def accuracy(run: Path, latest: Path, minutes: int) -> pd.DataFrame:
-    points = power(latest, 300, None).data
+def accuracy(run: Path, version: int, minutes: int) -> pd.DataFrame:
+    points = power(version, 300, None).data
     return twin.accuracy(run, pd.DataFrame([point.model_dump() for point in points]), minutes)
 
 
