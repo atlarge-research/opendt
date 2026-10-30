@@ -63,8 +63,6 @@ Known issues:
 - Docker Desktop needs at least 8 GB: with calibration and 2 parallel runs, the calibrator peaks at about 2.7 GB (on
   a fresh twin, October 2026), and each OpenDC run within 1 GB; keep the calibrator's `max_parallel_workers` at 2 or lower in
   the config (the Self-calibrator box shows it as Parallel runs).
-- Port 9092: on the demo laptop, a local Java service listens on 127.0.0.1:9092, the host port of OpenDT's Kafka;
-  stop it before `make up`.
 - `make up` deletes the Kafka and Grafana volumes of the previous run.
 - The time left of each job is foreknowledge: in the replay, each job arrives with its whole CPU trace; a real twin
   needs runtime estimates (e.g., the walltime users request).

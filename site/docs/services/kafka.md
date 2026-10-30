@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # kafka
 
-Message broker for inter-service communication: `localhost:9092` from the host, `kafka:29092` from the containers.
+Message broker for inter-service communication, at `kafka:29092` from the containers; it has no port on the host.
 
 ## Topics
 
