@@ -2,91 +2,12 @@
 
 Optimizes topology parameters by comparing simulation output against actual power measurements.
 
-## Purpose
+- `calibrator/main.py` - the service: one sweep after the other
+- `calibrator/calibration_engine.py` - the sweep: one OpenDC run per value
+- `calibrator/mape_comparator.py` - the MAPE of a run against the measured power
+- `calibrator/result_processor.py` - each sweep's records
+- `calibrator/power_tracker.py` - the measured power, from Kafka
+- `calibrator/topology_manager.py` - the topologies it reads and publishes
 
-The calibrator performs grid search over a topology parameter (e.g., `calibrationFactor`, the exponent r of SURF's power model) to find values that minimize the error between predicted and actual power consumption. It publishes the best-performing topology to Kafka for use by the simulator.
-
-## How It Works
-
-1. **Accumulate tasks** - Collect all tasks so far from `dc.workload`
-2. **Track power** - Record actual power consumption from `dc.power`
-3. **Grid search** - Run parallel simulations with different parameter values
-4. **Compare** - Calculate MAPE against actual power for each simulation
-5. **Select** - Choose the parameter value with lowest error
-6. **Publish** - Send calibrated topology to `sim.topology`
-
-## Calibrated Properties
-
-The calibrator sets one numeric parameter, by its path from the host, on all hosts:
-
-| Property | Path | Description |
-|----------|------|-------------|
-| calibrationFactor | cpuPowerModel.calibrationFactor | Exponent r of the MSE power model; the one for SURF's hosts |
-| asymUtil | cpuPowerModel.asymUtil | Asymptotic utilization coefficient (asymptotic model only) |
-
-## Components
-
-| File | Purpose |
-|------|---------|
-| main.py | Service orchestration |
-| calibration_engine.py | The sweep: one OpenDC run per value, in parallel |
-| mape_comparator.py | The MAPE of a run against the measured power |
-| power_tracker.py | Actual power tracking |
-| topology_manager.py | Topology subscription and publishing |
-| result_processor.py | Each sweep's metadata.json and agg_results.parquet row |
-
-## Configuration
-
-The calibrator runs when the config file has a `services.calibrator` section; `calibration_enabled` sets whether it
-calibrates from the start:
-
-```yaml
-global:
-  calibration_enabled: true
-```
-
-The control panel switches calibration on and off, and changes all settings but the property, while the twin runs.
-
-Settings under `services.calibrator` in the config file:
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| calibrated_property | string | cpuPowerModel.calibrationFactor | Topology property path to calibrate (r of the MSE hosts, as SURF's) |
-| min_value | float | 3 | Minimum value in the search space |
-| max_value | float | 9 | Maximum value in the search space |
-| linspace_points | int | 7 | Number of candidate values to evaluate |
-| max_parallel_workers | int | 4 | Maximum parallel calibration simulations |
-| mape_window_minutes | int | 1440 | Time window for MAPE calculation |
-
-### calibrated_property
-
-A dot path from the host. The default, `cpuPowerModel.calibrationFactor`, is the r of the MSE hosts;
-`cpuPowerModel.asymUtil` exists only in the asymptotic model.
-
-### linspace_points
-
-Creates evenly-spaced values between `min_value` and `max_value`. Higher values improve accuracy but increase calibration time.
-
-### max_parallel_workers
-
-Controls parallelism during calibration. Set based on available CPU cores.
-
-## Output
-
-Results are written to `data/<RUN_ID>/calibrator/`:
-
-```
-calibrator/
-├── agg_results.parquet   # Calibration metadata and MAPE values
-└── opendc/
-    └── run_<N>/          # Simulation archives for each calibration run
-```
-
-## Logs
-
-```
-make logs-calibrator
-```
-
-Note: the calibrator runs with the `calibration` Docker Compose profile, when the config has a `services.calibrator`
-section.
+What it reads and writes, its settings, and its logs: [calibrator in the docs](https://atlarge-research.github.io/opendt/docs/services/calibrator) (in the repository,
+`site/docs/services/calibrator.md`). Its tests run with the others: `make test`.
