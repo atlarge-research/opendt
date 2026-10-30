@@ -68,6 +68,11 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+# kafka-python reads its protocol files with an importlib API that Python deprecates, for kafka-python to fix
+filterwarnings = [
+    "ignore:read_text is deprecated:DeprecationWarning",
+    "ignore:open_text is deprecated:DeprecationWarning",
+]
 
 [tool.pyright]
 include = ["libs", "services"]
