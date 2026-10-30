@@ -10,12 +10,13 @@ Optimizes topology parameters by comparing simulation output against actual powe
 
 The calibrator runs grid searches, one after another, and publishes the best-performing topology for the simulator:
 
-1. **Accumulate** - Collect tasks from `dc.workload` and actual power from `dc.power`
+1. **Accumulate** - Collect tasks from `dc.workload` and actual power from `dc.power`, up to the twin's time: the end
+   of the simulator's latest complete window (its `metadata.json`), as at maximum speed the replay is days ahead
 2. **Grid search** - One OpenDC run per value: `linspace_points` values from `min_value` to `max_value`, rounded to 2
    decimals, each on all tasks so far
 3. **Compare** - Calculate MAPE against actual power, over the last `mape_window_minutes`, on a 60-s grid
 4. **Select** - Choose the value with the lowest error
-5. **Publish** - Send the calibrated topology to `sim.topology`, when the best value changes
+5. **Publish** - Send the calibrated topology to `sim.topology`, when the twin runs another value
 
 The runs go in threads, each OpenDC run in its own JVM; each takes about 1.3 GB and times out after 120 s.
 

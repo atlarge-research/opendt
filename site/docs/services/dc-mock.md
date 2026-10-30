@@ -46,7 +46,8 @@ Published to `dc.topology` (compacted topic) once, before the replay, with the d
 | workload | string | - | Required: workload directory under `workload/` (e.g., "SURF") |
 | heartbeat_frequency_minutes | int | 1 | Heartbeat interval in simulation time |
 
-A shorter heartbeat interval closes windows sooner but sends more Kafka messages.
+A shorter heartbeat interval closes windows sooner but sends more Kafka messages. It must be at most the simulator's
+`simulation_frequency_minutes`: a heartbeat closes one window at most, so a longer interval makes the twin fall behind.
 
 ## Logs
 
