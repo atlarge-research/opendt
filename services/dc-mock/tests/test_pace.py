@@ -13,7 +13,7 @@ class Replay(base.BaseProducer):
     """A producer without Kafka, on a fake wall clock that `wait_interruptible` moves forward."""
 
     def __init__(self, speed, on_tick):
-        super().__init__("kafka:9092", speed, "topic")
+        super().__init__(speed, "topic")
         self.wall, self.on_tick = 0.0, on_tick
 
     def run(self):

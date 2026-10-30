@@ -21,11 +21,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def publish_topology(topology_file: Path, topic: str, kafka_bootstrap_servers: str) -> None:
+def publish_topology(topology_file: Path, topic: str) -> None:
     """The datacenter's topology, once, before the replay: the simulator and the calibrator start from it."""
     topology = Topology(**json.loads(topology_file.read_text()))
     snapshot = TopologySnapshot(timestamp=datetime.now(), topology=topology)
-    producer = get_kafka_producer(kafka_bootstrap_servers)
+    producer = get_kafka_producer()
     send_message(producer, topic, snapshot.model_dump(mode="json"), key="datacenter")
     producer.close()
     logger.info(f"Published the topology: {topology.total_host_count()} hosts")
@@ -53,7 +53,6 @@ class DCMockOrchestrator:
     def start_all(
         self,
         workload_context,
-        kafka_bootstrap_servers: str,
         speed: Speed,
         topology_topic: str,
         workload_topic: str,
@@ -63,15 +62,12 @@ class DCMockOrchestrator:
         """Start the producers, with the heartbeats every `heartbeat_frequency_minutes` of the trace."""
         logger.info("Starting DC-Mock Producers")
         if workload_context.topology_file.exists():
-            publish_topology(
-                workload_context.topology_file, topology_topic, kafka_bootstrap_servers
-            )
+            publish_topology(workload_context.topology_file, topology_topic)
         else:
             logger.warning(f"Topology file not found: {workload_context.topology_file}")
 
         self.workload_producer = WorkloadProducer(
             workload_context=workload_context,
-            kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed=speed,
             topic=workload_topic,
             heartbeat_frequency_minutes=heartbeat_frequency_minutes,
@@ -88,7 +84,6 @@ class DCMockOrchestrator:
         if workload_context.consumption_file.exists():
             self.power_producer = PowerProducer(
                 workload_context=workload_context,
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
                 speed=speed,
                 topic=power_topic,
                 earliest_task_time_ms=earliest_task_time_ms,
@@ -163,9 +158,7 @@ class DCMockOrchestrator:
             logger.info("Workload files:")
             for file_type, exists in file_status.items():
                 logger.info(f"  {file_type}: {'found' if exists else 'missing'}")
-
-            kafka_bootstrap_servers = get_kafka_bootstrap_servers()
-            logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
+            logger.info(f"Kafka bootstrap servers: {get_kafka_bootstrap_servers()}")
 
             topology_topic = config.kafka.topics["topology"].name
             workload_topic = config.kafka.topics["workload"].name
@@ -182,7 +175,6 @@ class DCMockOrchestrator:
 
             self.start_all(
                 workload_context=workload_context,
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
                 speed=speed,
                 topology_topic=topology_topic,
                 workload_topic=workload_topic,

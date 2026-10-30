@@ -15,13 +15,10 @@ def get_kafka_bootstrap_servers() -> str:
     return os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
 
 
-def get_kafka_producer(bootstrap_servers: str | None = None, **kwargs: Any) -> KafkaProducer:
+def get_kafka_producer(**kwargs: Any) -> KafkaProducer:
     """A producer of JSON messages; `kwargs` override its settings."""
-    if bootstrap_servers is None:
-        bootstrap_servers = get_kafka_bootstrap_servers()
-
     default_config = {
-        "bootstrap_servers": bootstrap_servers,
+        "bootstrap_servers": get_kafka_bootstrap_servers(),
         "value_serializer": lambda v: json.dumps(v).encode("utf-8"),
         "key_serializer": lambda k: k.encode("utf-8") if k else None,
         "acks": "all",
@@ -35,19 +32,14 @@ def get_kafka_producer(bootstrap_servers: str | None = None, **kwargs: Any) -> K
 
     config = {**default_config, **kwargs}
 
-    logger.info(f"Creating Kafka producer for {bootstrap_servers}")
+    logger.info(f"Creating Kafka producer for {default_config['bootstrap_servers']}")
     return KafkaProducer(**config)
 
 
-def get_kafka_consumer(
-    topics: list[str], group_id: str, bootstrap_servers: str | None = None, **kwargs: Any
-) -> KafkaConsumer:
+def get_kafka_consumer(topics: list[str], group_id: str | None, **kwargs: Any) -> KafkaConsumer:
     """A consumer of JSON messages, from its group's earliest offset; `kwargs` override settings."""
-    if bootstrap_servers is None:
-        bootstrap_servers = get_kafka_bootstrap_servers()
-
     default_config = {
-        "bootstrap_servers": bootstrap_servers,
+        "bootstrap_servers": get_kafka_bootstrap_servers(),
         "group_id": group_id,
         "value_deserializer": lambda m: json.loads(m.decode("utf-8")),
         "key_deserializer": lambda k: k.decode("utf-8") if k else None,

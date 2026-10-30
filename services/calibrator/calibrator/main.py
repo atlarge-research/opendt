@@ -56,7 +56,6 @@ class CalibrationService:
 
     def __init__(
         self,
-        kafka_bootstrap_servers: str,
         workload_topic: str,
         topology_topic: str,
         sim_topology_topic: str,
@@ -74,7 +73,6 @@ class CalibrationService:
         consumer_group: str = "calibrators",
     ):
         """Initialize the calibration service."""
-        self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.consumer_group = consumer_group
         self.workload_topic = workload_topic
         self.system_topic = system_topic
@@ -96,20 +94,17 @@ class CalibrationService:
         self.consumer = get_kafka_consumer(
             topics=[workload_topic, system_topic],  # sys.config: the parallel simulations
             group_id=consumer_group,
-            bootstrap_servers=kafka_bootstrap_servers,
         )
 
         self.task_accumulator = TaskAccumulator()
 
         self.power_tracker = PowerTracker(
-            kafka_bootstrap_servers=kafka_bootstrap_servers,
             power_topic=power_topic,
             consumer_group=f"{consumer_group}-power",
             debug=True,
         )
 
         self.topology_manager = TopologyManager(
-            kafka_bootstrap_servers=kafka_bootstrap_servers,
             dc_topology_topic=topology_topic,
             sim_topology_topic=sim_topology_topic,
             consumer_group=f"{consumer_group}-topology",
@@ -334,8 +329,6 @@ def main():
     if config.services.calibrator is None:
         logger.info("No calibrator settings; exiting")
         return
-
-    kafka_bootstrap_servers = get_kafka_bootstrap_servers()
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
     sim_topology_topic = config.kafka.topics["sim_topology"].name
@@ -359,7 +352,7 @@ def main():
     consumer_group = os.getenv("CONSUMER_GROUP", "calibrators")
 
     logger.info(f"Run ID: {run_id}")
-    logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
+    logger.info(f"Kafka bootstrap servers: {get_kafka_bootstrap_servers()}")
 
     max_retries = 30
     retry_delay = 2
@@ -368,7 +361,6 @@ def main():
         try:
             logger.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})")
             service = CalibrationService(
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
                 workload_topic=workload_topic,
                 topology_topic=topology_topic,
                 sim_topology_topic=sim_topology_topic,

@@ -36,7 +36,6 @@ class SimulationService:
 
     def __init__(
         self,
-        kafka_bootstrap_servers: str,
         workload_topic: str,
         topology_topic: str,
         sim_topology_topic: str,
@@ -48,7 +47,6 @@ class SimulationService:
         consumer_group: str = "simulators",
     ):
         """Initialize the simulation service."""
-        self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.consumer_group = consumer_group
         self.workload_topic = workload_topic
         self.topology_topic = topology_topic
@@ -69,7 +67,6 @@ class SimulationService:
         self.consumer = get_kafka_consumer(
             topics=[workload_topic, topology_topic],
             group_id=consumer_group,
-            bootstrap_servers=kafka_bootstrap_servers,
         )
         # the changes from the control panel (the simulated topology, the scheduler) apart, all of
         # them from the start, read before each window: behind the workload of a fast replay, which
@@ -77,7 +74,6 @@ class SimulationService:
         self.changes = get_kafka_consumer(
             topics=[],
             group_id=None,
-            bootstrap_servers=kafka_bootstrap_servers,
             enable_auto_commit=False,
         )
         self.changes.assign(
@@ -343,8 +339,6 @@ class SimulationService:
 def main():
     config = load_config_from_env()
     logger.info(f"Loaded configuration for workload: {config.workload}")
-
-    kafka_bootstrap_servers = get_kafka_bootstrap_servers()
     workload_topic = config.kafka.topics["workload"].name
     topology_topic = config.kafka.topics["topology"].name
     sim_topology_topic = config.kafka.topics["sim_topology"].name
@@ -354,7 +348,7 @@ def main():
     background_load_nodes = config.services.simulator.background_load_nodes
     run_output_dir = Path(os.getenv("DATA_DIR", "/app/data"))
 
-    logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
+    logger.info(f"Kafka bootstrap servers: {get_kafka_bootstrap_servers()}")
     logger.info(f"Workload topic: {workload_topic}")
     logger.info(f"Topology topic: {topology_topic}")
     logger.info(f"Simulated topology topic: {sim_topology_topic}")
@@ -379,7 +373,6 @@ def main():
         try:
             logger.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})")
             service = SimulationService(
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
                 workload_topic=workload_topic,
                 topology_topic=topology_topic,
                 sim_topology_topic=sim_topology_topic,

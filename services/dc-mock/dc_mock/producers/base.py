@@ -28,13 +28,11 @@ class BaseProducer(ABC):
 
     def __init__(
         self,
-        kafka_bootstrap_servers: str,
         speed: Speed,
         topic: str,
         name: str | None = None,
     ):
         """Initialize the base producer."""
-        self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.speed = speed
         self.topic = topic
         self.name = name or self.__class__.__name__
@@ -49,7 +47,7 @@ class BaseProducer(ABC):
     def _get_producer(self) -> KafkaProducer:
         """Get or create the Kafka producer."""
         if self._producer is None:
-            self._producer = get_kafka_producer(self.kafka_bootstrap_servers)
+            self._producer = get_kafka_producer()
         return self._producer
 
     def emit_message(self, message: dict[str, Any], key: str | None = None) -> None:

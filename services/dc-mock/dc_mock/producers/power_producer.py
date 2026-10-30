@@ -25,14 +25,12 @@ class PowerProducer(BaseProducer):
     def __init__(
         self,
         workload_context: WorkloadContext,
-        kafka_bootstrap_servers: str,
         speed: Speed,
         topic: str,
         earliest_task_time_ms: int,
     ):
         """Initialize the power producer."""
         super().__init__(
-            kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed=speed,
             topic=topic,
             name="PowerProducer",
