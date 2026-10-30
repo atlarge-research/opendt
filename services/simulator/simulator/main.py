@@ -85,19 +85,13 @@ class SimulationService:
 
         self.task_accumulator = TaskAccumulator()
 
-        try:
-            self.opendc_runner = OpenDCRunner()
-        except FileNotFoundError as e:
-            logger.error(f"Failed to initialize OpenDC runner: {e}")
-            logger.error("Simulation will not be available")
-            self.opendc_runner = None
+        self.opendc_runner = OpenDCRunner()
 
         # Topology state
         self.real_topology: Topology | None = None
         self.simulated_topology: Topology | None = None
         self.scheduler: str | None = None  # OpenDC's default until the control panel picks one
 
-        self.tasks_processed = 0
         self.run_number = 0
 
         self.result_cache = ResultCache()
@@ -149,119 +143,58 @@ class SimulationService:
         return reduced
 
     def _run_simulation(self) -> None:
-        """Run OpenDC simulation with accumulated tasks."""
-        if not self.opendc_runner:
-            logger.warning("OpenDC runner not available, skipping simulation")
+        """One window of operation: OpenDC on the tasks so far, up to the window's end, or the run of
+        the window before if nothing changed since; then the window's power to agg_results.parquet."""
+        tasks = self.task_accumulator.get_all_tasks()
+        if self.simulated_topology is None or not tasks:
             return
-
-        if not self.simulated_topology:
-            logger.warning("No topology available, skipping simulation")
-            return
-
-        all_tasks = self.task_accumulator.get_all_tasks()
-
-        if not all_tasks:
-            logger.info("No tasks to simulate, skipping")
-            return
-
-        first_task_time = min(task.submission_time for task in all_tasks)
-        latest_task_time = max(task.submission_time for task in all_tasks)
-        task_span_minutes = (latest_task_time - first_task_time).total_seconds() / 60
-
-        aligned_simulated_time = self.task_accumulator.get_next_simulation_time(
-            self.simulation_frequency
-        )
-        if aligned_simulated_time is None:
-            logger.error("Cannot calculate aligned simulation time")
-            return
-
-        logger.info(f"Simulation Run {self.run_number + 1}")
-        logger.info(
-            f"OpenDC Input Data:\n"
-            f"   Total tasks:      {len(all_tasks)}\n"
-            f"   First task:       {first_task_time.isoformat()}\n"
-            f"   Latest task:      {latest_task_time.isoformat()}\n"
-            f"   Time span:        {task_span_minutes:.1f} minutes\n"
-            f"   Simulation end:   {aligned_simulated_time.isoformat()}"
-        )
-
+        end = self.task_accumulator.get_next_simulation_time(self.simulation_frequency)
+        topology = self._reduce_topology_for_background_load(self.simulated_topology)
         self.run_number += 1
-
-        topology_to_use = self._reduce_topology_for_background_load(self.simulated_topology)
-
         run_dir = self.output_base_dir / "opendc" / f"run_{self.run_number}"
-        was_cached = False
-
-        if self.result_cache.can_reuse(
-            topology_to_use, self.scheduler, len(all_tasks), aligned_simulated_time
-        ):
-            logger.info(
-                f"Reusing cached results for run {self.run_number} "
-                f"(topology unchanged, {len(all_tasks)} tasks)"
-            )
-
-            # Copy the cached run, without its metadata.json, to the new run location
-            cached_run_dir = self.result_cache.get_cached_run_dir()
-            if cached_run_dir:
-                self.result_cache.copy_to_new_run(cached_run_dir, run_dir)
-
-                # The cached run's metadata with the new time, written last: a run with
-                # metadata.json counts as complete
-                metadata = json.loads((cached_run_dir / "metadata.json").read_text())
-                metadata["simulated_time"] = aligned_simulated_time.replace(
-                    microsecond=0
-                ).isoformat()
-                metadata["wall_clock_time"] = (
-                    datetime.now(UTC).replace(microsecond=0, tzinfo=None).isoformat()
-                )
-                metadata["cached"] = True
-                (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
-
-                logger.info(f"Cached results copied to run_{self.run_number}")
-                was_cached = True
+        cached = self.result_cache.can_reuse(topology, self.scheduler, len(tasks), end)
+        if cached:
+            self._reuse(self.result_cache.last_run_dir, run_dir, end)
         else:
-            logger.info(f"Running simulation {self.run_number} with {len(all_tasks)} tasks")
-
-            success, _ = self.opendc_runner.run_simulation(
-                tasks=all_tasks,
-                topology=topology_to_use,
+            ok, _ = self.opendc_runner.run_simulation(
+                tasks=tasks,
+                topology=topology,
                 run_dir=run_dir,
                 run_number=self.run_number,
-                simulated_time=aligned_simulated_time,
+                simulated_time=end,
                 timeout_seconds=120,
                 scheduler=self.scheduler,
                 # what the API reads: the cluster up to now, and the jobs' finish times
                 exports=("powerSource", "host", "service"),
                 future=True,
             )
-
-            if not success:
+            if not ok:
                 logger.error(f"Simulation {self.run_number} failed")
                 return
-
-            # Update cache with run directory (not output directory)
-            self.result_cache.update(
-                topology_to_use, self.scheduler, len(all_tasks), aligned_simulated_time, run_dir
-            )
-            logger.info(f"Simulation {self.run_number} complete, results cached")
-
-        output_dir = run_dir / "output"
+            self.result_cache.update(topology, self.scheduler, len(tasks), end, run_dir)
+        logger.info(
+            f"Window {self.run_number}, up to {end.isoformat()}: {len(tasks)} tasks"
+            + (", the run before reused" if cached else "")
+        )
         try:
             self.result_processor.process_simulation_results(
-                run_number=self.run_number,
-                output_dir=output_dir,
-                aligned_simulated_time=aligned_simulated_time,
-                cached=was_cached,
+                self.run_number, run_dir / "output", end, cached
             )
         except Exception as e:
             logger.error(f"Failed to process simulation results: {e}", exc_info=True)
+        self.task_accumulator.last_simulation_time = end
 
-        self.task_accumulator.last_simulation_time = aligned_simulated_time
-
-        logger.info(
-            f"Total Stats: {self.tasks_processed} tasks processed, "
-            f"{self.run_number} simulations completed\n"
+    def _reuse(self, cached: Path, run_dir: Path, end: datetime) -> None:
+        """The run of the window before, copied for this window; its metadata.json, with this
+        window's time, written last, as a run with metadata.json counts as complete."""
+        self.result_cache.copy_to_new_run(cached, run_dir)
+        metadata = json.loads((cached / "metadata.json").read_text())
+        metadata["simulated_time"] = end.replace(microsecond=0).isoformat()
+        metadata["wall_clock_time"] = (
+            datetime.now(UTC).replace(microsecond=0, tzinfo=None).isoformat()
         )
+        metadata["cached"] = True
+        (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
 
     def _process_workload_message(self, message_data: dict[str, Any]) -> None:
         """A task joins the accumulated ones; a heartbeat may start a window of operation."""
@@ -270,7 +203,6 @@ class SimulationService:
             task = Task(**message_data["task"])
             logger.debug(f"Received task {task.id} at {task.submission_time}")
             self.task_accumulator.add_task(task)
-            self.tasks_processed += 1
         elif message_type == "heartbeat":
             heartbeat_time = datetime.fromisoformat(message_data["timestamp"])
             if self.task_accumulator.should_simulate(heartbeat_time, self.simulation_frequency):
