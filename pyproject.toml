@@ -33,6 +33,7 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.5.0",
     "ipython>=8.0.0",
+    "nbclient>=0.10",  # runs the tutorial notebooks in their tests
 ]
 
 # Service-specific dependencies (optional, if some services have unique needs)
