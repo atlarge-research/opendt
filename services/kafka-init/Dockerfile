@@ -2,12 +2,6 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install minimal dependencies
-RUN pip install --no-cache-dir \
-    kafka-python==2.0.2 \
-    pyyaml==6.0.1 \
-    pydantic==2.5.0
-
 # Copy and install shared library
 COPY libs/common /app/libs/common
 RUN pip install --no-cache-dir -e /app/libs/common

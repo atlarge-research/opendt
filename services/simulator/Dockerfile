@@ -2,11 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies including Java for OpenDC
-RUN apt-get update && apt-get install -y \
-    gcc \
-    openjdk-21-jre-headless \
-    && rm -rf /var/lib/apt/lists/*
+# Java for OpenDC
+RUN apt-get update && apt-get install -y openjdk-21-jre-headless && rm -rf /var/lib/apt/lists/*
 
 # Copy and install dependencies from root pyproject.toml
 COPY pyproject.toml /app/pyproject.toml
@@ -21,9 +18,6 @@ COPY services/simulator/simulator /app/services/simulator/simulator
 
 # Copy OpenDC binaries from root (these will be in the image)
 COPY opendc /app/opendc
-
-# Create output directory for OpenDC results
-RUN mkdir -p /app/output && chmod 755 /app/output
 
 # Create non-root user for security
 RUN useradd -m -u 1000 opendt && \
