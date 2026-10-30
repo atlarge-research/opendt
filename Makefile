@@ -93,9 +93,10 @@ setup:
 	@echo "Creating virtual environment..."
 	@$(UV_BIN) venv --allow-existing
 	@echo "Installing dependencies..."
-	@$(UV_BIN) pip install --python $(VENV) -e libs/common
-	@$(UV_BIN) pip install --python $(VENV) -e "libs/common[test]"
-	@$(UV_BIN) pip install --python $(VENV) -e ".[dev]"
+	@# at the versions the tests pass with (constraints.txt)
+	@$(UV_BIN) pip install --python $(VENV) -c constraints.txt -e libs/common
+	@$(UV_BIN) pip install --python $(VENV) -c constraints.txt -e "libs/common[test]"
+	@$(UV_BIN) pip install --python $(VENV) -c constraints.txt -e ".[dev]"
 	@echo ""
 	@echo "Done. Activate with: source .venv/bin/activate"
 	@echo ""

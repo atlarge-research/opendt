@@ -1,10 +1,11 @@
-FROM python:3.11-slim
+FROM python:3.11.14-slim
 
 WORKDIR /app
 
 # Copy and install shared library
+COPY constraints.txt /app/constraints.txt
 COPY libs/common /app/libs/common
-RUN pip install --no-cache-dir -e /app/libs/common
+RUN pip install --no-cache-dir -c /app/constraints.txt -e /app/libs/common
 
 # Copy service code
 COPY services/kafka-init /app/services/kafka-init

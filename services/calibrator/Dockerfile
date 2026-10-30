@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11.14-slim
 
 WORKDIR /app
 
@@ -6,12 +6,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y openjdk-21-jre-headless && rm -rf /var/lib/apt/lists/*
 
 # Copy and install dependencies from root pyproject.toml
-COPY pyproject.toml /app/pyproject.toml
-RUN pip install --no-cache-dir -e /app
+COPY pyproject.toml constraints.txt /app/
+RUN pip install --no-cache-dir -c /app/constraints.txt -e /app
 
 # Copy and install shared libraries
 COPY libs/common /app/libs/common
-RUN pip install --no-cache-dir -e /app/libs/common
+RUN pip install --no-cache-dir -c /app/constraints.txt -e /app/libs/common
 
 # Copy service code
 COPY services/calibrator/calibrator /app/services/calibrator/calibrator

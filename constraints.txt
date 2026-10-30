@@ -1,0 +1,273 @@
+# The exact versions the tests pass with: make setup and the images install with -c constraints.txt.
+# To update them, run this command, then make setup and make test:
+#    uv pip compile --universal --python-version 3.11 --all-extras pyproject.toml libs/common/pyproject.toml -o constraints.txt
+annotated-doc==0.0.5
+    # via
+    #   fastapi
+    #   typer
+annotated-types==0.8.0
+    # via pydantic
+anyio==4.15.1
+    # via
+    #   starlette
+    #   watchfiles
+appnope==1.0.0 ; sys_platform == 'darwin'
+    # via ipykernel
+ast-serialize==0.13.1
+    # via mypy
+asttokens==3.0.2
+    # via stack-data
+attrs==26.1.0
+    # via
+    #   jsonschema
+    #   referencing
+cffi==2.1.1 ; implementation_name == 'pypy'
+    # via pyzmq
+click==8.5.0
+    # via uvicorn
+colorama==0.4.6 ; sys_platform == 'win32'
+    # via
+    #   ipython
+    #   pytest
+    #   typer
+comm==0.2.3
+    # via ipykernel
+contourpy==1.3.3 ; python_full_version < '3.12'
+    # via matplotlib
+contourpy==1.4.0 ; python_full_version >= '3.12'
+    # via matplotlib
+coverage==7.17.0
+    # via pytest-cov
+cycler==0.12.1
+    # via matplotlib
+debugpy==1.8.22
+    # via ipykernel
+executing==2.3.0
+    # via stack-data
+fastapi==0.162.0
+    # via opendt (pyproject.toml)
+fastjsonschema==2.22.2
+    # via nbformat
+fonttools==4.68.0
+    # via matplotlib
+h11==0.16.0
+    # via uvicorn
+httptools==0.9.0
+    # via uvicorn
+idna==3.20
+    # via anyio
+iniconfig==2.3.1
+    # via pytest
+ipykernel==7.4.0
+    # via opendt (pyproject.toml)
+ipython==9.18.0
+    # via
+    #   opendt (pyproject.toml)
+    #   ipykernel
+ipython-pygments-lexers==1.1.1
+    # via ipython
+jedi==0.20.1
+    # via ipython
+jsonschema==4.26.0
+    # via nbformat
+jsonschema-specifications==2025.9.1
+    # via jsonschema
+jupyter-client==8.10.0
+    # via
+    #   ipykernel
+    #   nbclient
+jupyter-core==5.9.1
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   nbclient
+    #   nbformat
+kafka-python==3.0.12
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+kiwisolver==1.5.1
+    # via matplotlib
+librt==0.16.0 ; platform_python_implementation != 'PyPy'
+    # via mypy
+markdown-it-py==4.2.0
+    # via rich
+matplotlib==3.11.2
+    # via opendt (pyproject.toml)
+matplotlib-inline==0.2.2
+    # via
+    #   ipykernel
+    #   ipython
+mdurl==0.1.2
+    # via markdown-it-py
+mypy==2.4.1
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+mypy-extensions==1.1.0
+    # via mypy
+nbclient==0.11.0
+    # via opendt (pyproject.toml)
+nbformat==5.11.1
+    # via nbclient
+nest-asyncio2==1.7.4
+    # via ipykernel
+numpy==2.4.6 ; python_full_version < '3.12'
+    # via
+    #   contourpy
+    #   matplotlib
+    #   pandas
+numpy==2.5.4 ; python_full_version >= '3.12'
+    # via
+    #   contourpy
+    #   matplotlib
+    #   pandas
+opentelemetry-api==1.45.2
+    # via fastapi
+packaging==26.3
+    # via
+    #   ipykernel
+    #   matplotlib
+    #   pytest
+pandas==3.1.0
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+parso==0.8.7
+    # via jedi
+pathspec==1.1.1
+    # via mypy
+pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
+    # via ipython
+pillow==13.0.0
+    # via matplotlib
+platformdirs==4.14.0
+    # via jupyter-core
+pluggy==1.7.0
+    # via
+    #   pytest
+    #   pytest-cov
+prompt-toolkit==3.0.53
+    # via ipython
+psutil==7.2.2 ; sys_platform != 'android' and sys_platform != 'cygwin' and sys_platform != 'emscripten'
+    # via ipython
+ptyprocess==0.7.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
+    # via pexpect
+pure-eval==0.2.4
+    # via stack-data
+pyarrow==26.0.0
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+pycparser==3.12 ; implementation_name == 'pypy'
+    # via cffi
+pydantic==2.14.2
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+    #   fastapi
+pydantic-core==2.50.2
+    # via pydantic
+pygments==2.21.0
+    # via
+    #   ipython
+    #   ipython-pygments-lexers
+    #   pytest
+    #   rich
+pyparsing==3.3.3
+    # via matplotlib
+pytest==9.2.0
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+    #   pytest-cov
+pytest-cov==7.1.0
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+python-dateutil==3.0.0
+    # via
+    #   jupyter-client
+    #   matplotlib
+    #   pandas
+python-dotenv==1.2.4
+    # via uvicorn
+pyyaml==6.0.3
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+    #   uvicorn
+pyzmq==27.2.0
+    # via
+    #   ipykernel
+    #   jupyter-client
+referencing==0.37.0
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+rich==15.0.0
+    # via
+    #   opendt (pyproject.toml)
+    #   typer
+rpds-py==2026.9.1
+    # via
+    #   jsonschema
+    #   referencing
+ruff==0.17.3
+    # via
+    #   odt-common (libs/common/pyproject.toml)
+    #   opendt (pyproject.toml)
+shellingham==1.5.4
+    # via typer
+six==1.17.0
+    # via python-dateutil
+stack-data==0.6.3
+    # via ipython
+starlette==1.10.0
+    # via fastapi
+tornado==6.6
+    # via
+    #   ipykernel
+    #   jupyter-client
+traitlets==5.16.1
+    # via
+    #   ipykernel
+    #   ipython
+    #   jupyter-client
+    #   jupyter-core
+    #   matplotlib-inline
+    #   nbclient
+    #   nbformat
+typer==0.27.3
+    # via opendt (pyproject.toml)
+typing-extensions==4.16.0
+    # via
+    #   anyio
+    #   fastapi
+    #   ipython
+    #   jupyter-client
+    #   mypy
+    #   opentelemetry-api
+    #   pydantic
+    #   pydantic-core
+    #   referencing
+    #   starlette
+    #   typing-inspection
+typing-inspection==0.4.4
+    # via
+    #   fastapi
+    #   pydantic
+tzdata==2026.6
+    # via
+    #   pandas
+    #   python-dateutil
+uvicorn==0.54.0
+    # via opendt (pyproject.toml)
+uvloop==0.23.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
+    # via uvicorn
+watchfiles==1.3.0
+    # via uvicorn
+wcwidth==0.9.4
+    # via prompt-toolkit
+websockets==17.4
+    # via uvicorn
