@@ -101,19 +101,16 @@ setup:
 	@echo "Done. Activate with: source .venv/bin/activate"
 	@echo ""
 
-## test: Run tests
+## test: Run the tests of the library, the services, the dashboards, and the tutorial
 test:
-	@echo ""
-	@echo "Running tests..."
-	@if [ ! -d "$(VENV)" ]; then \
-		echo "Virtual environment not found. Running setup..."; \
-		$(MAKE) setup; \
-	fi
-	@if [ ! -f "$(PYTEST)" ]; then \
-		echo "pytest not found. Running setup..."; \
-		$(MAKE) setup; \
-	fi
-	@$(PYTEST) libs/common/tests/ -v --tb=short
+	@if [ ! -f "$(PYTEST)" ]; then $(MAKE) setup; fi
+	@# each suite from its own folder, as their packages would clash in one session
+	@for dir in libs/common services/api services/dc-mock services/simulator services/calibrator services/grafana; do \
+		echo ""; echo "Testing $$dir..."; \
+		(cd $$dir && ../../$(PYTHON) -m pytest tests -q) || exit 1; \
+	done
+	@echo ""; echo "Testing tutorial..."
+	@cd tutorial && ../$(PYTHON) -m pytest resources/tests -q
 	@echo ""
 	@echo "All tests passed."
 	@echo ""
