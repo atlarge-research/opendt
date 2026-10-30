@@ -127,7 +127,7 @@ lint:
 		$(UV_BIN) run ruff check . --fix; \
 		$(UV_BIN) run ruff format .; \
 	else \
-		$(UV_BIN) run ruff check .; \
+		$(UV_BIN) run ruff check . && $(UV_BIN) run ruff format --check .; \
 	fi
 	@echo ""
 

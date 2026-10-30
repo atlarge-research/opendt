@@ -29,7 +29,6 @@ dependencies = [
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
-    "black>=23.0.0",
     "ruff>=0.1.0",
     "mypy>=1.5.0",
     "ipython>=8.0.0",
@@ -54,15 +53,11 @@ opendt = "scripts.opendt_cli:app"
 where = ["."]
 include = []
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
-extend-exclude = "scratch/"
-
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = ["scratch/"]
+# the published capsule stays as published; the notebooks are text first
+extend-exclude = ["scratch/", "reproducibility-capsule/", "*.ipynb"]
 
 [tool.ruff.lint]
 select = [
