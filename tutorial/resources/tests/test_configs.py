@@ -23,7 +23,7 @@ def test_live_twin_config_runs_fast_without_calibration():
 
 
 def test_calibration_config_searches_r_from_3_to_9():
-    calibrator = AppConfig.load(CONFIGS / "live_twin_calibration.yaml").services.calibrator
+    calibrator = AppConfig.load(CONFIGS / "live_twin.yaml").services.calibrator
     assert calibrator.calibrated_property == "cpuPowerModel.calibrationFactor"
     assert (calibrator.min_value, calibrator.max_value, calibrator.linspace_points) == (3, 9, 7)
 
