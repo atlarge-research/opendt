@@ -24,7 +24,7 @@ def api(run_dir, monkeypatch):
             "global": {"speed_factor": -1},
             "services": {
                 "dc-mock": {"workload": "SURF"},
-                "simulator": {"background_load_nodes": 0},
+                "simulator": {},
             },
             "kafka": {
                 "topics": {

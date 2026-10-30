@@ -43,7 +43,6 @@ def service(tmp_path):
     s.result_cache = ResultCache()
     s.opendc_runner = OpenDC()
     s.simulation_frequency = timedelta(minutes=5)
-    s.background_load_nodes = 0
     s.run_number = 0
     s.scheduler = None
     s.simulated_topology = Topology.model_construct(clusters=[])

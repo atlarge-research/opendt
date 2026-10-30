@@ -70,7 +70,6 @@ simulator/
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | simulation_frequency_minutes | int | 15 | Window size (5 in `config/default.yaml`, 60 in the experiments) |
-| background_load_nodes | int | - | Required: hosts of the first group reserved for background load, left out of the simulation |
 
 ## Logs
 

@@ -12,7 +12,6 @@ services:
 
   simulator:
     simulation_frequency_minutes: 5
-    background_load_nodes: 0
 
   # off at the start (calibration_enabled above): Calibration in the Twin box switches it on
   calibrator:
