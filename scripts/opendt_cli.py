@@ -27,6 +27,29 @@ def windows(folder: Path) -> list[Path]:
     return sorted(folder.glob("opendc/run_*"), key=lambda run: int(run.name.split("_")[1]))
 
 
+def load(config: str) -> AppConfig:
+    """The configuration, checked as the services check it; a missing or invalid one stops here."""
+    config_path = ROOT / config
+    if not config_path.exists():
+        console.print(f"[red]Error:[/red] Config file not found: {config_path}")
+        raise typer.Exit(code=1)
+    try:
+        return AppConfig.load(config_path)
+    except ValueError as error:
+        console.print(f"[red]Error:[/red] {config} is not a valid configuration:\n{error}")
+        raise typer.Exit(code=1) from error
+
+
+@app.command()
+def check(
+    config: str = typer.Option(
+        "./config/default.yaml", "--config", "-c", help="Path to configuration file"
+    ),
+) -> None:
+    """Check a configuration as the services do; make up runs it before stopping the twin that runs."""
+    load(config)
+
+
 @app.command()
 def init(
     config: str = typer.Option(
@@ -43,16 +66,7 @@ def init(
     console.print()
 
     config_path = ROOT / config
-    if not config_path.exists():
-        console.print(f"[red]Error:[/red] Config file not found: {config_path}")
-        raise typer.Exit(code=1)
-
-    # the services' own check, before anything changes: a config they would reject stops here
-    try:
-        settings = AppConfig.load(config_path)
-    except ValueError as error:
-        console.print(f"[red]Error:[/red] {config} is not a valid configuration:\n{error}")
-        raise typer.Exit(code=1) from error
+    settings = load(config)
 
     # the previous run goes, as each keeps gigabytes of OpenDC output; the other folders in data/ stay
     previous = RUN_ID_FILE.read_text().strip() if RUN_ID_FILE.exists() else ""

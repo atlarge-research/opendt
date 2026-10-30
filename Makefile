@@ -25,15 +25,14 @@ UV_BIN ?= $(shell command -v uv 2> /dev/null || echo "$(HOME)/.local/bin/uv")
 # =============================================================================
 
 ## up: Start OpenDT services (use build=true to rebuild images)
-up: clean-volumes
+up:
 	@echo ""
 	@echo "Starting OpenDT..."
 	@echo "Config: $(config)"
 	@echo ""
-	@if [ ! -f "$(config)" ]; then \
-		echo "Error: Config file not found: $(config)"; \
-		exit 1; \
-	fi
+	@# the config first: a config the services would reject leaves the running twin as it is
+	@$(PYTHON) scripts/opendt_cli.py check --config $(config)
+	@$(MAKE) --no-print-directory clean-volumes
 	@$(PYTHON) scripts/opendt_cli.py init --config $(config)
 	@RUN_ID=$$(cat .run_id) && \
 	if [ ! -f "data/$$RUN_ID/.env" ]; then \
