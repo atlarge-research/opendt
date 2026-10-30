@@ -46,9 +46,6 @@ api = [
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[project.scripts]
-opendt = "scripts.opendt_cli:app"
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = []
