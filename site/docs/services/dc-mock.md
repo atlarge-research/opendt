@@ -37,7 +37,7 @@ Published to `dc.power` with actual power measurements from the workload.
 
 ### Topology Messages
 
-Published to `dc.topology` (compacted topic) with the datacenter hardware configuration.
+Published to `dc.topology` (compacted topic) once, before the replay, with the datacenter hardware configuration.
 
 ## Configuration
 

@@ -4,7 +4,6 @@ Streams task/workload events to Kafka with proper timing.
 """
 
 import logging
-import threading
 import time
 from datetime import datetime, timedelta
 
@@ -30,7 +29,6 @@ class WorkloadProducer(BaseProducer):
         speed: Speed,
         topic: str,
         heartbeat_frequency_minutes: int = 1,
-        start_barrier: threading.Barrier | None = None,
     ):
         """Initialize the workload producer."""
         super().__init__(
@@ -38,7 +36,6 @@ class WorkloadProducer(BaseProducer):
             speed=speed,
             topic=topic,
             name="WorkloadProducer",
-            start_barrier=start_barrier,
         )
         self.workload_context = workload_context
         self.tasks: list[Task] = []
@@ -106,7 +103,7 @@ class WorkloadProducer(BaseProducer):
         logger.info("WorkloadProducer running")
 
         try:
-            # Load and aggregate tasks (do this AFTER barrier, not before)
+            # Load and aggregate tasks
             logger.info("WorkloadProducer loading tasks...")
             self.tasks, earliest_task_time = self.load_and_aggregate_tasks()
 
@@ -116,10 +113,10 @@ class WorkloadProducer(BaseProducer):
 
             logger.info(f"Streaming {len(self.tasks)} task events with heartbeats...")
 
-            # Track simulation time (synchronized reference point for all producers)
+            # the trace's clock starts at the first task
             sim_start_time = self.tasks[0].submission_time
             self.start_clock(sim_start_time)
-            logger.info(f"WorkloadProducer synchronized to start time: {sim_start_time}")
+            logger.info(f"WorkloadProducer starts at {sim_start_time}")
             logger.info(f"WorkloadProducer real start time: {time.time()}")
 
             # Initialize heartbeat tracking
@@ -219,9 +216,3 @@ class WorkloadProducer(BaseProducer):
         except Exception as e:
             logger.error(f"Fatal error in WorkloadProducer: {e}", exc_info=True)
             raise
-
-    def get_earliest_task_time_ms(self) -> int | None:
-        """Get the earliest task submission time in epoch milliseconds."""
-        if not self.tasks:
-            return None
-        return int(self.tasks[0].submission_time.timestamp() * 1000)

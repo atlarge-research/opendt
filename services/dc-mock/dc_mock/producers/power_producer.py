@@ -4,7 +4,6 @@ Streams historical power consumption data to Kafka with proper timing.
 """
 
 import logging
-import threading
 from datetime import UTC
 
 import pandas as pd
@@ -30,7 +29,6 @@ class PowerProducer(BaseProducer):
         speed: Speed,
         topic: str,
         earliest_task_time_ms: int,
-        start_barrier: threading.Barrier | None = None,
     ):
         """Initialize the power producer."""
         super().__init__(
@@ -38,7 +36,6 @@ class PowerProducer(BaseProducer):
             speed=speed,
             topic=topic,
             name="PowerProducer",
-            start_barrier=start_barrier,
         )
         self.workload_context = workload_context
         self.earliest_task_time_ms = earliest_task_time_ms
@@ -95,13 +92,13 @@ class PowerProducer(BaseProducer):
 
             logger.info(f"Streaming {len(self.consumption_records)} consumption events...")
 
-            # Use the earliest task time as simulation start (synchronized with WorkloadProducer)
+            # the trace's clock starts at the first task, as the workload's
             from datetime import datetime
 
             sim_start_time = datetime.fromtimestamp(self.earliest_task_time_ms / 1000.0, tz=UTC)
             self.start_clock(sim_start_time)
 
-            logger.info(f"PowerProducer synchronized to start time: {sim_start_time}")
+            logger.info(f"PowerProducer starts at {sim_start_time}")
 
             for i, consumption in enumerate(self.consumption_records):
                 if self.should_stop():
