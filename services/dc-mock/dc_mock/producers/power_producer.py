@@ -60,13 +60,7 @@ class PowerProducer(BaseProducer):
             self.earliest_task_time_ms + consumption_df["timestamp"] + offset_ms
         )
 
-        # Convert to Pydantic models
-        consumption_records = []
-        for _, row in consumption_df.iterrows():
-            try:
-                consumption_records.append(Consumption(**row.to_dict()))
-            except Exception as e:
-                logger.warning(f"Failed to parse consumption record: {e}")
+        consumption_records = [Consumption(**row) for row in consumption_df.to_dict("records")]
 
         logger.info(f"Parsed {len(consumption_records)} consumption records")
         if consumption_records:

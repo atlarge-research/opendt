@@ -5,10 +5,10 @@ Streams task/workload events to Kafka with proper timing.
 
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pandas as pd
-from odt_common import Fragment, Task, WorkloadContext
+from odt_common import Task, WorkloadContext
 
 from dc_mock.producers.base import BaseProducer
 from dc_mock.speed import Speed
@@ -43,58 +43,20 @@ class WorkloadProducer(BaseProducer):
         logger.info(f"  Fragments file: {workload_context.fragments_file}")
         logger.info(f"  Heartbeat frequency: {heartbeat_frequency_minutes} simulated minutes")
 
-    def load_and_aggregate_tasks(self) -> tuple[list[Task], datetime]:
-        """Load tasks and fragments, aggregating fragments into tasks."""
-        logger.info("Loading task and fragment data...")
-
-        # Load tasks
+    def load_and_aggregate_tasks(self) -> list[Task]:
+        """The workload's tasks, each with its fragments, in order of submission."""
         tasks_df = pd.read_parquet(self.workload_context.tasks_file)
-        logger.info(f"Loaded {len(tasks_df)} tasks")
-
-        # Get earliest task submission time
-        earliest_task_time = tasks_df["submission_time"].min().to_pydatetime()
-        logger.info(f"Earliest task submission time: {earliest_task_time}")
-
-        # Load fragments
         fragments_df = pd.read_parquet(self.workload_context.fragments_file)
-        logger.info(f"Loaded {len(fragments_df)} fragments")
-
-        # Aggregate fragments by task_id
-        logger.info("Aggregating fragments into tasks...")
-        fragments_by_task = fragments_df.groupby("id")
-
-        # Create Task objects with nested fragments
-        tasks = []
-        for _, task_row in tasks_df.iterrows():
-            task_dict = task_row.to_dict()
-            task_id = task_dict["id"]
-
-            # Get fragments for this task
-            if task_id in fragments_by_task.groups:
-                task_fragments_df = fragments_by_task.get_group(task_id)
-                fragments = [
-                    Fragment(**frag_row.to_dict()) for _, frag_row in task_fragments_df.iterrows()
-                ]
-                task_dict["fragments"] = fragments
-            else:
-                task_dict["fragments"] = []
-
-            try:
-                tasks.append(Task(**task_dict))
-            except Exception as e:
-                logger.warning(f"Failed to parse task {task_id}: {e}")
-
-        logger.info(f"Created {len(tasks)} task aggregates")
-        total_fragments = sum(len(t.fragments) for t in tasks)
-        logger.info(f"Total fragments aggregated: {total_fragments}")
-
-        # Sort tasks by submission time
+        fragments: dict[str, list[dict]] = {}
+        for fragment in fragments_df.to_dict("records"):
+            fragments.setdefault(fragment["id"], []).append(fragment)
+        tasks = [
+            Task(**row, fragments=fragments.get(row["id"], []))
+            for row in tasks_df.to_dict("records")
+        ]
         tasks.sort(key=lambda t: t.submission_time)
-
-        if tasks:
-            logger.info(f"Time range: {tasks[0].submission_time} to {tasks[-1].submission_time}")
-
-        return tasks, earliest_task_time
+        logger.info(f"Loaded {len(tasks)} tasks with {len(fragments_df)} fragments")
+        return tasks
 
     def run(self) -> None:
         """Run the workload producer (streams task events)."""
@@ -103,7 +65,7 @@ class WorkloadProducer(BaseProducer):
         try:
             # Load and aggregate tasks
             logger.info("WorkloadProducer loading tasks...")
-            self.tasks, earliest_task_time = self.load_and_aggregate_tasks()
+            self.tasks = self.load_and_aggregate_tasks()
 
             if not self.tasks:
                 logger.warning("No tasks to stream")

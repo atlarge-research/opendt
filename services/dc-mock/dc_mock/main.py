@@ -75,7 +75,7 @@ class DCMockOrchestrator:
 
         # the power's timestamps count from the first task, read here as the workload loads them later
         tasks_df = pd.read_parquet(workload_context.tasks_file, columns=["submission_time"])
-        earliest_task_time = tasks_df["submission_time"].min().to_pydatetime()
+        earliest_task_time = tasks_df["submission_time"].min().tz_localize("UTC")  # naive, in UTC
         earliest_task_time_ms = int(earliest_task_time.timestamp() * 1000)
         logger.info(f"Earliest task time: {earliest_task_time} ({earliest_task_time_ms}ms)")
 
