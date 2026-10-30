@@ -32,7 +32,7 @@ If no config is specified, `config/default.yaml` is used.
 
 ```yaml
 global:
-  speed_factor: 1
+  speed_factor: -1
   calibration_enabled: false
 
 services:

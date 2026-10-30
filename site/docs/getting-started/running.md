@@ -11,8 +11,8 @@ make up                                              # config/default.yaml
 make up config=config/experiments/experiment_1.yaml  # another configuration
 ```
 
-`config/default.yaml` replays the week in real time (`speed_factor: 1`); the experiments replay at 300x. The Twin box,
-on top of each screen, changes the speed while the twin runs.
+`config/default.yaml` replays the week at maximum speed (`speed_factor: -1`), in about 5 minutes; the experiments replay
+at 300x. The Twin box, on top of each screen, changes the speed while the twin runs.
 
 The first `make up` builds the Docker images, which takes a few minutes; `make up build=true` rebuilds them.
 

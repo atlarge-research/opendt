@@ -1,8 +1,8 @@
 # OpenDT Default Configuration
 
 global:
-  speed_factor: 1  # 1.0 = Realtime, -1 = Max Speed
-  calibration_enabled: false
+  speed_factor: -1  # -1 = maximum speed, the SURF week in about 5 minutes; 1 = real time
+  calibration_enabled: false  # switched on in the Self-calibrator box
 
 services:
   dc-mock:
@@ -12,6 +12,14 @@ services:
   simulator:
     simulation_frequency_minutes: 5
     background_load_nodes: 0
+
+  calibrator:
+    calibrated_property: "cpuPowerModel.calibrationFactor"
+    min_value: 3
+    max_value: 9
+    linspace_points: 7  # r = 3, 4, ..., 9
+    max_parallel_workers: 2  # OpenDC runs at once; more can take a laptop's memory
+    mape_window_minutes: 60
 
 kafka:
   topics:
