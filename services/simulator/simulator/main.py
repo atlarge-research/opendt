@@ -63,13 +63,11 @@ class SimulationService:
         self.result_processor = SimulationResultProcessor(self.output_base_dir)
         logger.info("Initialized result processor")
 
-        self.consumer = get_kafka_consumer(
-            topics=[workload_topic, topology_topic],
-            group_id=consumer_group,
-        )
-        # the changes from the control panel (the simulated topology, the scheduler) apart, all of
-        # them from the start, read before each window: behind the workload of a fast replay, which
-        # runs far ahead of the simulator, a change waited minutes
+        self.consumer = get_kafka_consumer(topics=[workload_topic], group_id=consumer_group)
+        # the topology and the changes from the control panel (the simulated topology, the
+        # scheduler) apart, all of them from the start, read before each window: behind the workload
+        # of a fast replay, which runs far ahead of the simulator, a change waited minutes; and a
+        # restarted simulator finds the topology again, which dc-mock sends once
         self.changes = get_kafka_consumer(
             topics=[],
             group_id=None,
@@ -78,7 +76,7 @@ class SimulationService:
         self.changes.assign(
             [
                 TopicPartition(topic, partition)
-                for topic in (sim_topology_topic, system_topic)
+                for topic in (topology_topic, sim_topology_topic, system_topic)
                 for partition in self.changes.partitions_for_topic(topic)
             ]
         )
@@ -99,7 +97,7 @@ class SimulationService:
         logger.info(f"Initialized SimulationService with run ID: {run_id}")
         logger.info(f"Consumer group: {consumer_group}")
         logger.info(
-            f"Subscribed: {workload_topic}, {topology_topic}; changes: {sim_topology_topic}"
+            f"Subscribed: {workload_topic}; from the start: {topology_topic}, {sim_topology_topic}, {system_topic}"
         )
         logger.info(
             f"Simulation frequency: {simulation_frequency_minutes} minutes (simulated time)"
