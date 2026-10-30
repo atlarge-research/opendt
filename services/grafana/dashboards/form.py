@@ -66,8 +66,8 @@ BOX = """.lever { height: 100%; display: flex; flex-direction: column; justify-c
 .lever a { font-size: 11px; color: ${theme.colors.text.secondary}; white-space: nowrap; }
 .lever:hover a { color: ${theme.colors.text.link}; }
 /* a change sent, until the twin follows it (box.js) */
-.lever i.pending { padding: 0 4px; border-radius: 2px; background: ${theme.colors.primary.main};
-  color: ${theme.colors.primary.contrastText};
+.lever i.pending { padding: 0 4px; border-radius: ${theme.shape.radius.default};
+  background: ${theme.colors.primary.main}; color: ${theme.colors.primary.contrastText};
   animation: opendt-pending 1.6s ease-in-out infinite; }
 @keyframes opendt-pending { 50% { opacity: 0.55; } }"""
 
