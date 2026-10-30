@@ -57,11 +57,11 @@ const open = () => {
     context.grafana.notifySuccess(['OpenDT', 'Applied']);
     context.grafana.refresh();
   };
-  // the levers, or, after Apply with a change, the question; drawn anew after each click
-  const draw = (confirming) => render(node, (h, ui) => {
-    if (confirming) {
-      return h(ui.ConfirmModal, { isOpen: true, title, body: question(), confirmText: 'Apply', confirmButtonVariant: 'primary', onConfirm: send, onDismiss: () => draw() });
-    }
+  // after Apply with a change, the question; Cancel goes back to the levers
+  const confirm = () => render(node, (h, ui) =>
+    h(ui.ConfirmModal, { isOpen: true, title, body: question(), confirmText: 'Apply', confirmButtonVariant: 'primary', onConfirm: send, onDismiss: draw }));
+  // the levers, drawn anew after each click
+  const draw = () => render(node, (h, ui) => {
     // a lever's choices as buttons, the draft's in blue, or its number
     const edit = ({ dataset: { key, choices, labels, min, max, step } }) => choices
       ? h(ui.ButtonGroup, null, ...choices.split(',').map((choice, i) =>
@@ -71,7 +71,7 @@ const open = () => {
       const [first, second] = [...row.querySelectorAll('[data-key]')].map(edit);
       return h(ui.Field, { label: row.dataset.name }, h(ui.Stack, { alignItems: 'center' }, first, second && 'to', second));
     });
-    const apply = () => (changed().length ? draw(true) : close());
+    const apply = () => (changed().length ? confirm() : close());
     return h(ui.Modal, { title, isOpen: true, onDismiss: close }, ...fields,
       h(ui.Modal.ButtonRow, null, h(ui.Button, { variant: 'secondary', onClick: close }, 'Cancel'), h(ui.Button, { onClick: apply }, 'Apply')));
   });
