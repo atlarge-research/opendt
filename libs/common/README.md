@@ -26,7 +26,6 @@ Pydantic v2 models for data validation and serialization.
 | Fragment | fragment.py | Task execution segment |
 | Consumption | consumption.py | Power consumption measurement |
 | Topology | topology.py | Datacenter topology (clusters, hosts, CPUs) |
-| WorkloadMessage | workload_message.py | Kafka message wrapper |
 
 ### Configuration (`odt_common.config`)
 

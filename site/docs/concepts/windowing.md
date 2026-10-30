@@ -32,7 +32,7 @@ the experiments).
 ## Heartbeats
 
 **Heartbeat messages** are synthetic timestamps published by dc-mock to signal time progression; only they close
-windows. dc-mock sends one every `services.dc-mock.heartbeat_frequency_minutes` (default: 1), as a WorkloadMessage on
+windows. dc-mock sends one every `services.dc-mock.heartbeat_frequency_minutes` (default: 1), as a message on
 `dc.workload`, up to the last job's submission.
 
 ## Cumulative Simulation
