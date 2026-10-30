@@ -33,7 +33,11 @@ const toggle = () => {
   localStorage.setItem('opendt-theme', other);
   theme(other);
 };
-render(context.element.querySelector('.view'), (h, ui) => {
+const view = context.element.querySelector('.view');
+// the interval's options, made once on the node: given a new list at a refresh, the Combobox writes the interval
+// back into its box, over what is being typed
+view.periods ??= periods.map((value) => ({ value }));
+render(view, (h, ui) => {
   // a setting's choices; Week, Day, or 6 h also moves the time shown
   const choose = (key, choices) => h(ui.Stack, { gap: 0.5 }, ...choices.map(([value, label]) => h(ui.Button,
     { ...look(shown(key) === value), onClick: () => address.partial({ ['var-' + key]: value, ...(key === 'window' ? range(value, twin) : {}) }) }, label)));
@@ -52,5 +56,5 @@ render(context.element.querySelector('.view'), (h, ui) => {
       // ${period} in full, so a new interval runs this code again at once (Business Text runs it again for the
       // variables its code names), not only at the next refresh; 88 px wide, so the row fits the view on a 1366 px
       // screen and "minute" its box
-      periods.length > 0 && h(ui.Combobox, { options: periods.map((value) => ({ value })), value: context.grafana.replaceVariables('${period}'), width: 11, onChange: ({ value }) => address.partial({ 'var-period': value }) })));
+      periods.length > 0 && h(ui.Combobox, { options: view.periods, value: context.grafana.replaceVariables('${period}'), width: 11, onChange: ({ value }) => address.partial({ 'var-period': value }) })));
 });
