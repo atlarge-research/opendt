@@ -10,7 +10,7 @@ from resources.topology import make_topology
 
 
 def test_default_topology_matches_surf():
-    """Default = OpenDT's own SURF topology, incl. its own carbon trace (as a host path)."""
+    """Default = SURF's topology, with workload/SURF/carbon.parquet as its carbon trace (as a host path)."""
     ref = json.loads((REPO / "workload/SURF/topology.json").read_text())
     ref["clusters"][0]["powerSource"]["carbonTracePath"] = str(
         REPO / "workload/SURF/carbon.parquet"

@@ -55,7 +55,8 @@ def measured_power(start=TRACE_START, end=TRACE_END) -> pd.Series:
 
 
 def carbon_trace_path(zone: str | None = None) -> Path:
-    """Carbon-intensity trace: OpenDT's own (zone=None) or an Electricity Maps zone (CARBON_ZONES, GREENEST_ZONE)."""
+    """Carbon-intensity trace: workload/SURF/carbon.parquet (zone=None) or an Electricity Maps zone (CARBON_ZONES,
+    GREENEST_ZONE)."""
     if zone is None:
         return PATHS.workload / "carbon.parquet"
     if zone not in (*CARBON_ZONES, GREENEST_ZONE):

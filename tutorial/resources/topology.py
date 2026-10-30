@@ -22,7 +22,7 @@ def make_topology(
     hosts       number of identical hosts (16 cores at 2.1 GHz each)
     r           exponent of OpenDC's power model P(u) = P_idle + (P_max - P_idle)(2u - u^r)
     idle_power  watts a host draws when idle; max_power: watts at full load
-    carbon      None = OpenDT's own carbon trace (as in the live twin), or a zone from CARBON_ZONES
+    carbon      None = workload/SURF/carbon.parquet (the live twin starts on NL), or a zone from CARBON_ZONES
     """
     # pydantic would also reject these, but with less readable messages
     if hosts < 1:

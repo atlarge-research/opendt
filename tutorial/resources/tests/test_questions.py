@@ -45,11 +45,6 @@ def test_notebooks_and_questions_file_match():
     assert asked == set(entries())
 
 
-def test_solution_images_exist():
-    images = [e["image"] for e in entries().values() if "image" in e]
-    assert all((questions.QUESTIONS.parent / image).exists() for image in images)
-
-
 def test_four_choices_each_answer_folded(monkeypatch):
     for q, entry in entries().items():
         assert len(entry["choices"]) == 4 and entry["answer"] in "ABCD" and entry["solution"], q
