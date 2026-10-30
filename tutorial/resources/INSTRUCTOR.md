@@ -42,8 +42,7 @@ the previous one.
 ## Live Demo (about 5 minutes)
 
 1. `make up config=tutorial/resources/configs/live_twin.yaml`, then open http://localhost:3000: the Dashboard screen,
-   with the screens at the top left (Dashboard, Topology, Tutorial). Set Speed to 60x in the Twin box: at max, the
-   simulator falls behind the replay and a change shows only minutes later. The Tutorial screen asks the questions of
+   with the screens at the top left (Dashboard, Topology, Tutorial). The Tutorial screen asks the questions of
    the three use cases on the live twin, one step at a time (`tutorial/resources/tutorial.yaml`); its solutions are
    folded.
 2. Change the hosts in the Datacenter box (Hosts 2,770, Apply), on the Topology screen (the SURF-SARA row's pencil,

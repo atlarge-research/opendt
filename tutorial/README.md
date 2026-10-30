@@ -31,9 +31,8 @@ OpenDC, which needs Java 21 (e.g., from [Adoptium](https://adoptium.net), with `
 
 1. Run the three notebooks in order, in pairs; each takes about 10 minutes, and each question unfolds its answer
    when a choice is clicked.
-2. Then, on the live twin in Grafana (http://localhost:3000, Tutorial screen), set Speed to 60x in the Twin box and go
-   through its 12 steps: each changes the running twin (e.g., the hosts, the CO2 zone) and asks one of the notebooks'
-   questions about what follows.
+2. Then, on the live twin in Grafana (http://localhost:3000, Tutorial screen), go through its 12 steps: each changes
+   the running twin (e.g., the hosts, the CO2 zone) and asks one of the notebooks' questions about what follows.
    In a classroom, the instructor can run the twin on the projector.
 
 ## Data and Citation
