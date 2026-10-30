@@ -51,17 +51,17 @@ Settings under `services.calibrator` in the config file:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| calibrated_property | string | cpuPowerModel.asymUtil | Topology property path to calibrate (`cpuPowerModel.calibrationFactor` for SURF's MSE hosts) |
-| min_value | float | 0.1 | Minimum value in the search space |
-| max_value | float | 0.9 | Maximum value in the search space |
-| linspace_points | int | 9 | Number of candidate values to evaluate |
+| calibrated_property | string | cpuPowerModel.calibrationFactor | Topology property path to calibrate (r of the MSE hosts, as SURF's) |
+| min_value | float | 3 | Minimum value in the search space |
+| max_value | float | 9 | Maximum value in the search space |
+| linspace_points | int | 7 | Number of candidate values to evaluate |
 | max_parallel_workers | int | 4 | Maximum parallel calibration simulations |
 | mape_window_minutes | int | 1440 | Time window for MAPE calculation |
 
 ### calibrated_property
 
-A dot path from the host (e.g., `cpuPowerModel.calibrationFactor`). The default, `cpuPowerModel.asymUtil`, exists only
-in the asymptotic model.
+A dot path from the host. The default, `cpuPowerModel.calibrationFactor`, is the r of the MSE hosts;
+`cpuPowerModel.asymUtil` exists only in the asymptotic model.
 
 ### linspace_points
 

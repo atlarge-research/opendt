@@ -28,8 +28,8 @@ The calibrator sets one numeric parameter, by its path from the host, on all hos
 | calibrationFactor | cpuPowerModel.calibrationFactor | Exponent r of the MSE power model; the one for SURF's hosts |
 | asymUtil | cpuPowerModel.asymUtil | Curve coefficient of the asymptotic power model |
 
-The default, `cpuPowerModel.asymUtil`, exists only in the asymptotic model; SURF's MSE hosts need
-`cpuPowerModel.calibrationFactor`.
+The default, `cpuPowerModel.calibrationFactor`, is the r of the MSE hosts (as SURF's); `cpuPowerModel.asymUtil` exists
+only in the asymptotic model.
 
 ## Configuration
 
@@ -53,10 +53,10 @@ services:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| calibrated_property | cpuPowerModel.asymUtil | Path of the parameter to calibrate |
-| min_value | 0.1 | Lowest value to test |
-| max_value | 0.9 | Highest value to test |
-| linspace_points | 9 | Number of values to test |
+| calibrated_property | cpuPowerModel.calibrationFactor | Path of the parameter to calibrate |
+| min_value | 3 | Lowest value to test |
+| max_value | 9 | Highest value to test |
+| linspace_points | 7 | Number of values to test |
 | max_parallel_workers | 4 | Parallel OpenDC runs |
 | mape_window_minutes | 1440 | Minutes of power the MAPE is computed over |
 
