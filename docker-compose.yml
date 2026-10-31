@@ -8,9 +8,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: ${COMPOSE_PROJECT_NAME:-opendt}-kafka
-    ports:
-      - "9092:9092"
-      - "9093:9093"
+    # no port on the host: only the containers use Kafka, and a host port clashed with other services
     environment:
       # KRaft Configuration (No Zookeeper)
       KAFKA_NODE_ID: 1

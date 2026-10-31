@@ -6,13 +6,11 @@ from odt_common.models.task import Task
 from odt_common.models.topology import (
     CPU,
     Cluster,
-    CPUPowerModel,
     Host,
     Memory,
     Topology,
     TopologySnapshot,
 )
-from odt_common.models.workload_message import WorkloadMessage
 
 # Update forward references for Task.fragments
 Task.model_rebuild()
@@ -27,6 +25,4 @@ __all__ = [
     "Host",
     "CPU",
     "Memory",
-    "CPUPowerModel",
-    "WorkloadMessage",
 ]

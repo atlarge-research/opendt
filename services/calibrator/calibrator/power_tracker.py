@@ -19,13 +19,11 @@ class PowerTracker:
 
     def __init__(
         self,
-        kafka_bootstrap_servers: str,
         power_topic: str,
         consumer_group: str = "calibrator-power",
         debug: bool = False,
     ):
         """Initialize the power tracker."""
-        self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.power_topic = power_topic
         self.consumer_group = consumer_group
         self.debug = debug
@@ -75,7 +73,6 @@ class PowerTracker:
             consumer = get_kafka_consumer(
                 topics=[self.power_topic],
                 group_id=self.consumer_group,
-                bootstrap_servers=self.kafka_bootstrap_servers,
             )
 
             logger.info(f"PowerTracker consumer started for topic {self.power_topic}")

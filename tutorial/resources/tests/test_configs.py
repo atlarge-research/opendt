@@ -1,4 +1,4 @@
-"""The live-twin configs and topology are valid OpenDT inputs."""
+"""The tutorial's config (the default) and its topology are valid OpenDT inputs."""
 
 import json
 
@@ -9,21 +9,18 @@ from odt_common.models import Topology
 CONFIGS = TUTORIAL_DIR / "resources/configs"
 
 
-def test_live_twin_config_runs_fast_without_calibration():
-    config = AppConfig.load(CONFIGS / "live_twin.yaml")
+def test_config_runs_fast_without_calibration():
+    config = AppConfig.load(REPO / "config/default.yaml")
     services = config.services
     assert config.global_config.speed_factor == -1 and not config.calibration_enabled
     assert (
         services.dc_mock.heartbeat_frequency_minutes
         <= services.simulator.simulation_frequency_minutes
     )
-    assert set(config.kafka.topics) == set(
-        AppConfig.load(REPO / "config/default.yaml").kafka.topics
-    )
 
 
 def test_calibration_config_searches_r_from_3_to_9():
-    calibrator = AppConfig.load(CONFIGS / "live_twin_calibration.yaml").services.calibrator
+    calibrator = AppConfig.load(REPO / "config/default.yaml").services.calibrator
     assert calibrator.calibrated_property == "cpuPowerModel.calibrationFactor"
     assert (calibrator.min_value, calibrator.max_value, calibrator.linspace_points) == (3, 9, 7)
 

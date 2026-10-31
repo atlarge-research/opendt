@@ -1,16 +1,18 @@
 """dc-mock: replays the workload, power, and topology of the datacenter onto Kafka, at the replay speed."""
 
+import json
 import logging
 import os
 import signal
 import sys
-import threading
+from datetime import datetime
 from pathlib import Path
 
-from odt_common import load_config_from_env
-from odt_common.utils import get_kafka_bootstrap_servers
+import pandas as pd
+from odt_common import Topology, TopologySnapshot, load_config_from_env
+from odt_common.utils import get_kafka_bootstrap_servers, get_kafka_producer, send_message
 
-from dc_mock.producers import PowerProducer, TopologyProducer, WorkloadProducer
+from dc_mock.producers import PowerProducer, WorkloadProducer
 from dc_mock.speed import Speed, follow
 
 logging.basicConfig(
@@ -19,11 +21,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def publish_topology(topology_file: Path, topic: str) -> None:
+    """The datacenter's topology, once, before the replay: the simulator and the calibrator start from it."""
+    topology = Topology(**json.loads(topology_file.read_text()))
+    snapshot = TopologySnapshot(timestamp=datetime.now(), topology=topology)
+    producer = get_kafka_producer()
+    send_message(producer, topic, snapshot.model_dump(mode="json"), key="datacenter")
+    producer.close()
+    logger.info(f"Published the topology: {topology.total_host_count()} hosts")
+
+
 class DCMockOrchestrator:
-    """The three producers, each on its own thread."""
+    """The workload and power producers, each on its own thread."""
 
     def __init__(self):
-        self.topology_producer: TopologyProducer | None = None
         self.workload_producer: WorkloadProducer | None = None
         self.power_producer: PowerProducer | None = None
         self.shutdown_requested = False
@@ -42,7 +53,6 @@ class DCMockOrchestrator:
     def start_all(
         self,
         workload_context,
-        kafka_bootstrap_servers: str,
         speed: Speed,
         topology_topic: str,
         workload_topic: str,
@@ -51,50 +61,32 @@ class DCMockOrchestrator:
     ) -> None:
         """Start the producers, with the heartbeats every `heartbeat_frequency_minutes` of the trace."""
         logger.info("Starting DC-Mock Producers")
-
-        # the workload and power producers start at the same wall-clock time
-        num_producers = 2  # WorkloadProducer and PowerProducer (TopologyProducer is periodic)
-        if workload_context.consumption_file.exists():
-            start_barrier = threading.Barrier(num_producers, timeout=30)
-            logger.info(f"Created start barrier for {num_producers} producers")
+        if workload_context.topology_file.exists():
+            publish_topology(workload_context.topology_file, topology_topic)
         else:
-            start_barrier = None
-            logger.info("No barrier needed (only workload producer active)")
+            logger.warning(f"Topology file not found: {workload_context.topology_file}")
 
-        # 1. Start WorkloadProducer first (we need earliest_task_time for PowerProducer)
-        logger.info("\n[1/3] Initializing WorkloadProducer...")
         self.workload_producer = WorkloadProducer(
             workload_context=workload_context,
-            kafka_bootstrap_servers=kafka_bootstrap_servers,
             speed=speed,
             topic=workload_topic,
             heartbeat_frequency_minutes=heartbeat_frequency_minutes,
-            start_barrier=start_barrier if start_barrier else None,
         )
 
-        # Quick-load tasks file to get earliest time (for PowerProducer initialization)
-        # The full loading will happen in the WorkloadProducer's run() method
-        logger.info("Quick-loading tasks to get earliest submission time...")
-        import pandas as pd
-
-        tasks_df = pd.read_parquet(workload_context.tasks_file)
-        earliest_task_time = tasks_df["submission_time"].min().to_pydatetime()
+        # the power's timestamps count from the first task, read here as the workload loads them later
+        tasks_df = pd.read_parquet(workload_context.tasks_file, columns=["submission_time"])
+        earliest_task_time = tasks_df["submission_time"].min().tz_localize("UTC")  # naive, in UTC
         earliest_task_time_ms = int(earliest_task_time.timestamp() * 1000)
         logger.info(f"Earliest task time: {earliest_task_time} ({earliest_task_time_ms}ms)")
-        del tasks_df  # Free memory
 
         self.workload_producer.start()
 
-        # 2. Start PowerProducer
-        logger.info("\n[2/3] Initializing PowerProducer...")
         if workload_context.consumption_file.exists():
             self.power_producer = PowerProducer(
                 workload_context=workload_context,
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
                 speed=speed,
                 topic=power_topic,
                 earliest_task_time_ms=earliest_task_time_ms,
-                start_barrier=start_barrier,
             )
             self.power_producer.start()
         else:
@@ -102,26 +94,6 @@ class DCMockOrchestrator:
                 f"Consumption file not found: {workload_context.consumption_file}, "
                 "skipping power consumption streaming"
             )
-
-        # 3. Start TopologyProducer (no barrier needed, it's periodic)
-        logger.info("\n[3/3] Initializing TopologyProducer...")
-        if workload_context.topology_file.exists():
-            self.topology_producer = TopologyProducer(
-                topology_file=workload_context.topology_file,
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
-                speed=speed,
-                topic=topology_topic,
-                publish_interval_seconds=30.0,
-                start_barrier=None,  # TopologyProducer doesn't need synchronization
-            )
-            self.topology_producer.start()
-        else:
-            logger.warning(
-                f"Topology file not found: {workload_context.topology_file}, "
-                "skipping topology publishing"
-            )
-
-        logger.info("All producers started and synchronized")
 
     def wait_for_completion(self) -> None:
         """Wait for all producers to complete or be interrupted."""
@@ -140,11 +112,6 @@ class DCMockOrchestrator:
                     logger.info("Waiting for PowerProducer to finish...")
                     self.power_producer._thread.join()
 
-            # Topology producer runs indefinitely, so we stop it explicitly
-            if self.topology_producer and self.topology_producer.is_running():
-                logger.info("Stopping TopologyProducer...")
-                self.topology_producer.stop()
-
             logger.info("All producers completed")
 
         except KeyboardInterrupt:
@@ -156,7 +123,6 @@ class DCMockOrchestrator:
         logger.info("Stopping all producers...")
 
         producers = [
-            ("TopologyProducer", self.topology_producer),
             ("WorkloadProducer", self.workload_producer),
             ("PowerProducer", self.power_producer),
         ]
@@ -192,9 +158,7 @@ class DCMockOrchestrator:
             logger.info("Workload files:")
             for file_type, exists in file_status.items():
                 logger.info(f"  {file_type}: {'found' if exists else 'missing'}")
-
-            kafka_bootstrap_servers = get_kafka_bootstrap_servers()
-            logger.info(f"Kafka bootstrap servers: {kafka_bootstrap_servers}")
+            logger.info(f"Kafka bootstrap servers: {get_kafka_bootstrap_servers()}")
 
             topology_topic = config.kafka.topics["topology"].name
             workload_topic = config.kafka.topics["workload"].name
@@ -211,7 +175,6 @@ class DCMockOrchestrator:
 
             self.start_all(
                 workload_context=workload_context,
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
                 speed=speed,
                 topology_topic=topology_topic,
                 workload_topic=workload_topic,

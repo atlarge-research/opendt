@@ -1,19 +1,22 @@
-"""Configuration management for OpenDT services.
+"""Configuration of OpenDT's services: the YAML file read at the start, and the runtime settings the
+control panel changes through Kafka (sys.config); plus the files of a workload."""
 
-This module provides:
-1. Static configuration from YAML files (startup)
-2. Dynamic configuration updates via Kafka (runtime)
-3. Path resolution based on workload names
-"""
-
+import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-class KafkaTopicConfig(BaseModel):
+class Strict(BaseModel):
+    """A part of the config file; an unknown key is an error, so a typo fails at the start."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+
+class KafkaTopicConfig(Strict):
     """Configuration for a single Kafka topic."""
 
     name: str = Field(..., description="The actual topic name")
@@ -24,15 +27,33 @@ class KafkaTopicConfig(BaseModel):
     )
 
 
-class KafkaConfig(BaseModel):
+# the topics the services talk through, by their logical name; a config's kafka.topics replaces them
+TOPICS = {
+    "workload": {"name": "dc.workload", "config": {"retention.ms": "86400000"}},  # 24 hours
+    "power": {"name": "dc.power", "config": {"retention.ms": "3600000"}},  # 1 hour
+    # compacted: the latest topology, kept at least an hour
+    "topology": {
+        "name": "dc.topology",
+        "config": {"cleanup.policy": "compact", "min.compaction.lag.ms": "3600000"},
+    },
+    "system": {"name": "sys.config", "config": {"cleanup.policy": "compact"}},
+    "sim_topology": {
+        "name": "sim.topology",
+        "config": {"cleanup.policy": "compact", "min.compaction.lag.ms": "0"},
+    },
+}
+
+
+class KafkaConfig(Strict):
     """Kafka infrastructure configuration."""
 
     topics: dict[str, KafkaTopicConfig] = Field(
-        default_factory=dict, description="Topic configurations keyed by logical name"
+        default_factory=lambda: {key: KafkaTopicConfig(**topic) for key, topic in TOPICS.items()},
+        description="Topic configurations keyed by logical name",
     )
 
 
-class GlobalConfig(BaseModel):
+class GlobalConfig(Strict):
     """Global configuration parameters."""
 
     speed_factor: float = Field(
@@ -49,7 +70,7 @@ class GlobalConfig(BaseModel):
         return v
 
 
-class DcMockConfig(BaseModel):
+class DcMockConfig(Strict):
     """DC-Mock service configuration."""
 
     workload: str = Field(..., description="Workload name (e.g., 'SURF')")
@@ -60,33 +81,24 @@ class DcMockConfig(BaseModel):
     )
 
 
-class SimulatorConfig(BaseModel):
+class SimulatorConfig(Strict):
     """Simulator service configuration."""
 
     simulation_frequency_minutes: int = Field(
         default=15, description="Simulation frequency in minutes (simulated time)", gt=0
     )
-    background_load_nodes: int = Field(
-        ...,
-        description="Number of nodes reserved for background load (not available for simulation)",
-        ge=0,
-    )
 
 
-class CalibratorConfig(BaseModel):
+class CalibratorConfig(Strict):
     """Calibrator service configuration."""
 
     calibrated_property: str = Field(
-        default="cpuPowerModel.asymUtil",
+        default="cpuPowerModel.calibrationFactor",
         description="Dot-notation path to topology property to calibrate",
     )
-    min_value: float = Field(
-        default=0.1, description="Minimum value to test for calibrated property", gt=0
-    )
-    max_value: float = Field(
-        default=0.9, description="Maximum value to test for calibrated property", gt=0
-    )
-    linspace_points: int = Field(default=9, description="Number of linspace points to test", gt=1)
+    min_value: float = Field(default=3, description="Lowest value of the property to test", gt=0)
+    max_value: float = Field(default=9, description="Highest value of the property to test", gt=0)
+    linspace_points: int = Field(default=7, description="Number of linspace points to test", gt=1)
     max_parallel_workers: int = Field(
         default=4, description="Maximum number of parallel OpenDC simulations", gt=0
     )
@@ -97,7 +109,7 @@ class CalibratorConfig(BaseModel):
     )
 
 
-class ServicesConfig(BaseModel):
+class ServicesConfig(Strict):
     """Configuration for all services."""
 
     dc_mock: DcMockConfig = Field(alias="dc-mock")
@@ -105,9 +117,6 @@ class ServicesConfig(BaseModel):
     calibrator: CalibratorConfig | None = Field(
         None, description="Calibrator config (only required if calibration_enabled=true)"
     )
-
-    class Config:
-        populate_by_name = True
 
 
 class WorkloadMetadata(BaseModel):
@@ -138,67 +147,35 @@ class WorkloadMetadata(BaseModel):
         )
 
 
-class WorkloadContext(BaseModel):
-    """Workload context with resolved file paths."""
+@dataclass
+class WorkloadContext:
+    """The files of a workload, in its folder (e.g., workload/SURF)."""
 
-    name: str = Field(default="", description="Workload name (e.g., 'SURF')")
-    base_path: Path = Field(default=Path("/app/workload"), description="Base workload directory")
-    workload_dir: Path | None = Field(
-        None, description="Direct path to workload directory (overrides base_path/name)"
-    )
-    metadata: WorkloadMetadata | None = Field(None, description="Workload metadata")
+    workload_dir: Path
 
-    def __init__(self, **data):
-        """Initialize and load metadata if not provided."""
-        super().__init__(**data)
-        if self.metadata is None and self.workload_config_file.exists():
-            self.metadata = WorkloadMetadata.load(self.workload_config_file)
-
-    @property
-    def _resolved_workload_dir(self) -> Path:
-        """Get resolved workload directory path."""
-        if self.workload_dir is not None:
-            return self.workload_dir
-        return self.base_path / self.name
+    def __post_init__(self):
+        self.consumption_offset_ms = WorkloadMetadata.load(
+            self.workload_dir / "workload.yaml"
+        ).consumption_offset_ms
 
     @property
     def tasks_file(self) -> Path:
-        """Path to tasks.parquet file."""
-        return self._resolved_workload_dir / "tasks.parquet"
+        return self.workload_dir / "tasks.parquet"
 
     @property
     def fragments_file(self) -> Path:
-        """Path to fragments.parquet file."""
-        return self._resolved_workload_dir / "fragments.parquet"
+        return self.workload_dir / "fragments.parquet"
 
     @property
     def consumption_file(self) -> Path:
-        """Path to consumption.parquet file."""
-        return self._resolved_workload_dir / "consumption.parquet"
+        return self.workload_dir / "consumption.parquet"
 
     @property
     def topology_file(self) -> Path:
-        """Path to topology.json file."""
-        return self._resolved_workload_dir / "topology.json"
-
-    @property
-    def workload_config_file(self) -> Path:
-        """Path to workload configuration file."""
-        return self._resolved_workload_dir / "workload.yaml"
-
-    @property
-    def consumption_offset_ms(self) -> int:
-        """Get consumption timestamp offset in milliseconds."""
-        if self.metadata:
-            return self.metadata.consumption_offset_ms
-        return 0
-
-    def exists(self) -> bool:
-        """Check if workload directory exists."""
-        return self._resolved_workload_dir.exists()
+        return self.workload_dir / "topology.json"
 
     def get_file_status(self) -> dict[str, bool]:
-        """Check which workload files exist."""
+        """Which of the workload's files exist."""
         return {
             "tasks": self.tasks_file.exists(),
             "fragments": self.fragments_file.exists(),
@@ -206,19 +183,13 @@ class WorkloadContext(BaseModel):
             "topology": self.topology_file.exists(),
         }
 
-    class Config:
-        arbitrary_types_allowed = True
 
-
-class AppConfig(BaseModel):
+class AppConfig(Strict):
     """Main application configuration."""
 
     global_config: GlobalConfig = Field(alias="global", default_factory=lambda: GlobalConfig())
     services: ServicesConfig
     kafka: KafkaConfig = Field(default_factory=lambda: KafkaConfig())
-
-    class Config:
-        populate_by_name = True
 
     @model_validator(mode="after")
     def validate_calibration_config(self) -> "AppConfig":
@@ -295,8 +266,6 @@ class DynamicConfigEvent(BaseModel):
 
 def load_config_from_env(env_var: str = "CONFIG_FILE") -> AppConfig:
     """Load configuration from path specified in environment variable."""
-    import os
-
     config_path = os.getenv(env_var)
     if not config_path:
         raise ValueError(f"Environment variable {env_var} not set")

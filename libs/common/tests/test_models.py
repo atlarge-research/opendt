@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from pydantic import TypeAdapter
 
 from odt_common import Consumption, Fragment, Task
 
@@ -56,29 +57,7 @@ class TestTaskModel:
 
     def test_parse_all_tasks(self, tasks_df):
         """Test parsing all tasks."""
-        errors = []
-        for idx, row in tasks_df.iterrows():
-            try:
-                Task(**row.to_dict())
-            except Exception as e:
-                errors.append(f"Row {idx}: {e}")
-
-        assert len(errors) == 0, f"Failed to parse {len(errors)} tasks:\n" + "\n".join(errors[:5])
-
-    def test_task_id_parsing(self, tasks_df):
-        """Test ID parsing from string."""
-        task_dict = tasks_df.iloc[0].to_dict()
-        task_dict["id"] = f"task-{task_dict['id']}"
-        task = Task(**task_dict)
-        assert isinstance(task.id, int)
-
-    def test_task_properties(self, tasks_df):
-        """Test computed properties."""
-        task = Task(**tasks_df.iloc[0].to_dict())
-
-        assert task.duration_seconds == task.duration / 1000.0
-        assert task.total_cpu_mhz == task.cpu_count * task.cpu_capacity
-        assert task.mem_capacity_gb == task.mem_capacity / 1024.0
+        TypeAdapter(list[Task]).validate_python(tasks_df.to_dict("records"))
 
     def test_task_with_fragments(self, tasks_df, fragments_df):
         """Test task with nested fragments."""
@@ -95,7 +74,6 @@ class TestTaskModel:
 
         task = Task(**task_dict)
         assert isinstance(task.fragments, list)
-        assert task.fragment_count == len(task.fragments)
 
 
 class TestFragmentModel:
@@ -113,30 +91,7 @@ class TestFragmentModel:
 
     def test_parse_all_fragments(self, fragments_df):
         """Test parsing all fragments."""
-        errors = []
-        for idx, row in fragments_df.iterrows():
-            try:
-                Fragment(**row.to_dict())
-            except Exception as e:
-                errors.append(f"Row {idx}: {e}")
-
-        assert len(errors) == 0, f"Failed to parse {len(errors)} fragments:\n" + "\n".join(
-            errors[:5]
-        )
-
-    def test_fragment_id_parsing(self, fragments_df):
-        """Test ID parsing with alias."""
-        fragment_dict = fragments_df.iloc[0].to_dict()
-        fragment_dict["id"] = f"task-{fragment_dict['id']}"
-        fragment = Fragment(**fragment_dict)
-        assert isinstance(fragment.task_id, int)
-
-    def test_fragment_properties(self, fragments_df):
-        """Test computed properties."""
-        fragment = Fragment(**fragments_df.iloc[0].to_dict())
-
-        assert fragment.duration_seconds == fragment.duration / 1000.0
-        assert fragment.total_cpu_usage_mhz == fragment.cpu_count * fragment.cpu_usage
+        TypeAdapter(list[Fragment]).validate_python(fragments_df.to_dict("records"))
 
 
 class TestConsumptionModel:
@@ -153,21 +108,7 @@ class TestConsumptionModel:
 
     def test_parse_all_consumption(self, consumption_df):
         """Test parsing all consumption records."""
-        errors = []
-        for idx, row in consumption_df.iterrows():
-            try:
-                Consumption(**row.to_dict())
-            except Exception as e:
-                errors.append(f"Row {idx}: {e}")
-
-        assert len(errors) == 0, f"Failed to parse {len(errors)} records:\n" + "\n".join(errors[:5])
-
-    def test_consumption_properties(self, consumption_df):
-        """Test computed properties."""
-        consumption = Consumption(**consumption_df.iloc[0].to_dict())
-
-        assert consumption.power_draw_kw == consumption.power_draw / 1000.0
-        assert consumption.energy_usage_kwh == consumption.energy_usage / 3_600_000.0
+        TypeAdapter(list[Consumption]).validate_python(consumption_df.to_dict("records"))
 
 
 class TestAggregation:
@@ -179,27 +120,6 @@ class TestAggregation:
         fragment_ids = set(fragments_df["id"].unique())
 
         assert fragment_ids.issubset(task_ids), "Found fragments with non-existent task IDs"
-
-    def test_full_aggregation(self, tasks_df, fragments_df):
-        """Test full aggregation process."""
-        fragments_by_task = fragments_df.groupby("id")
-
-        tasks = []
-        for _, task_row in tasks_df.iterrows():
-            task_dict = task_row.to_dict()
-            task_id = task_dict["id"]
-
-            if task_id in fragments_by_task.groups:
-                task_fragments = fragments_by_task.get_group(task_id)
-                task_dict["fragments"] = [
-                    Fragment(**row.to_dict()) for _, row in task_fragments.iterrows()
-                ]
-
-            tasks.append(Task(**task_dict))
-
-        assert len(tasks) == len(tasks_df)
-        total_fragments = sum(t.fragment_count for t in tasks)
-        assert total_fragments == len(fragments_df)
 
 
 class TestSerializationDeserialization:

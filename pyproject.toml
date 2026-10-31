@@ -9,19 +9,17 @@ dependencies = [
     "pyarrow>=13.0.0",
     "pyyaml>=6.0.0",
     "matplotlib>=3.7.0",
+    "jinja2>=3.1.0",  # pandas' .style, in the notebooks' tables
     # Kafka (used by most services)
     "kafka-python>=2.0.2",
     # Validation
     "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
     # Web framework (for api service)
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    "jinja2>=3.1.0",
     # CLI tool
     "typer>=0.9.0",
     "rich>=13.0.0",
-    "inquirerpy>=0.3.4",
     "ipykernel>=7.1.0",
 ]
 
@@ -29,39 +27,25 @@ dependencies = [
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
-    "black>=23.0.0",
     "ruff>=0.1.0",
     "mypy>=1.5.0",
     "ipython>=8.0.0",
-]
-
-# Service-specific dependencies (optional, if some services have unique needs)
-dc-mock = []  # Currently uses only shared dependencies
-simulator = []  # Currently uses only shared dependencies
-api = [
-    "httpx>=0.25.0",  # For API client usage
+    "nbclient>=0.10",  # runs the tutorial notebooks in their tests
 ]
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[project.scripts]
-opendt = "scripts.opendt_cli:app"
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = []
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
-extend-exclude = "scratch/"
-
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = ["scratch/"]
+# the published capsule stays as published; the notebooks are text first
+extend-exclude = ["scratch/", "reproducibility-capsule/", "*.ipynb"]
 
 [tool.ruff.lint]
 select = [
@@ -85,6 +69,11 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+# kafka-python reads its protocol files with an importlib API that Python deprecates, for kafka-python to fix
+filterwarnings = [
+    "ignore:read_text is deprecated:DeprecationWarning",
+    "ignore:open_text is deprecated:DeprecationWarning",
+]
 
 [tool.pyright]
 include = ["libs", "services"]

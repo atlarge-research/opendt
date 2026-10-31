@@ -11,7 +11,7 @@ define the data flowing between the services:
 |-------|------|-------------|-------|
 | Task | task.py | A job: submission time, duration, CPUs, memory, and its fragments | - |
 | Fragment | fragment.py | A segment of a task's execution: duration, CPUs, and CPU usage | - |
-| WorkloadMessage | workload_message.py | A task or a heartbeat | `dc.workload` |
+| (no model) | dc-mock's workload_producer.py | A task or a heartbeat: `message_type`, `timestamp`, and the task | `dc.workload` |
 | Consumption | consumption.py | A power measurement, at an absolute time | `dc.power` |
 | TopologySnapshot | topology.py | The datacenter's topology at a time | `dc.topology` |
 | Topology | topology.py | Datacenter topology | `sim.topology` |

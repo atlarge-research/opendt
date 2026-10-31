@@ -27,6 +27,9 @@ make up config=config/experiments/experiment_1.yaml
 make up config=config/experiments/experiment_2.yaml
 ```
 
+`make up` deletes the run before it; experiment 2's MAPE Over Time plot also needs experiment 1's run, so move it
+aside once it completes, before starting experiment 2: `mv data/$(cat .run_id) data/experiment_1`.
+
 ### 2. Wait for Completion
 
 With `speed_factor: 300`, the replay of the SURF week takes ~34 minutes; the simulator finishes later.

@@ -11,9 +11,9 @@ This module defines the hierarchical structure of a datacenter:
 """
 
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Literal
 
-from pydantic import BaseModel, Discriminator, Field, Tag, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CPU(BaseModel):
@@ -73,13 +73,6 @@ class MseCPUPowerModel(PowerModel):
         ge=0,
         le=50,
     )
-
-
-# Union of all CPU power model types
-CPUPowerModel = Annotated[
-    Annotated[AsymptoticCPUPowerModel, Tag("asymptotic")] | Annotated[MseCPUPowerModel, Tag("mse")],
-    Discriminator("modelType"),
-]
 
 
 class GPU(CPU):
@@ -145,6 +138,8 @@ class Topology(BaseModel):
     of a datacenter for simulation purposes.
     """
 
+    model_config = ConfigDict(extra="allow")  # fields OpenDC takes that the twin does not model
+
     clusters: list[Cluster] = Field(
         ..., description="List of clusters in the datacenter", min_length=1
     )
@@ -159,18 +154,6 @@ class Topology(BaseModel):
             host.count * host.cpu.coreCount for cluster in self.clusters for host in cluster.hosts
         )
 
-    def total_memory_bytes(self) -> int:
-        """Calculate total memory capacity in bytes across all clusters."""
-        return sum(
-            host.count * host.memory.memorySize
-            for cluster in self.clusters
-            for host in cluster.hosts
-        )
-
-    class Config:
-        # Allow extra fields for forward compatibility
-        extra = "allow"
-
 
 class TopologySnapshot(BaseModel):
     """Timestamped topology snapshot for Kafka messages.
@@ -182,10 +165,3 @@ class TopologySnapshot(BaseModel):
         ..., description="When this topology snapshot was captured (ISO 8601 format)"
     )
     topology: Topology = Field(..., description="The datacenter topology")
-
-    class Config:
-        json_encoders = {
-            datetime: lambda v: (
-                v.strftime("%Y-%m-%dT%H:%M:%S") if v.microsecond == 0 else v.isoformat()
-            )
-        }

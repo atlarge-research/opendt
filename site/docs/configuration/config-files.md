@@ -32,7 +32,7 @@ If no config is specified, `config/default.yaml` is used.
 
 ```yaml
 global:
-  speed_factor: 1
+  speed_factor: -1
   calibration_enabled: false
 
 services:
@@ -41,19 +41,9 @@ services:
     heartbeat_frequency_minutes: 1
   simulator:
     simulation_frequency_minutes: 5
-    background_load_nodes: 0
-
-kafka:
-  topics:
-    workload:
-      name: "dc.workload"
-    power:
-      name: "dc.power"
-    # ...
 ```
 
-Required: `services.dc-mock.workload` and `services.simulator.background_load_nodes`; the services also need the
-`kafka.topics` keys (see [kafka](/docs/services/kafka)). An optional `services.calibrator` section configures the
+Required: `services.dc-mock.workload`; the Kafka topics have defaults (see [kafka](/docs/services/kafka)). An optional `services.calibrator` section configures the
 [calibrator](/docs/services/calibrator).
 
 ## Creating Custom Configurations

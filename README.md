@@ -16,6 +16,8 @@ OpenDT is a distributed system that creates a real-time digital twin of datacent
 **Prerequisites:** Docker, Docker Compose, Make, Python 3.11+, [uv](https://astral.sh/uv)
 
 ```
+git clone https://github.com/atlarge-research/opendt
+cd opendt
 make setup    # Install dependencies
 make up       # Start services
 ```
@@ -26,6 +28,12 @@ make up       # Start services
 
 ![OpenDT Grafana Dashboard](site/src/components/HomepageFeatures/grafana-dashboard.png)
 *Real-time dashboard comparing actual vs. simulated power consumption*
+
+**Quick stop:**
+
+```
+make down    # Close Docker services
+```
 
 ## Repository Structure
 

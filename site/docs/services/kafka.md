@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # kafka
 
-Message broker for inter-service communication: `localhost:9092` from the host, `kafka:29092` from the containers.
+Message broker for inter-service communication, at `kafka:29092` from the containers; it has no port on the host.
 
 ## Topics
 
@@ -14,7 +14,6 @@ Message broker for inter-service communication: `localhost:9092` from the host, 
 | dc.power | Stream | Power consumption telemetry |
 | dc.topology | Compacted | Real datacenter topology |
 | sim.topology | Compacted | Simulated topology: the calibrator's r and the dashboard's changes |
-| sim.results | Stream | Created, not used (the results are files in `data/<RUN_ID>/simulator/`) |
 | sys.config | Compacted | Runtime settings changed from the control panel (e.g., speed, scheduler, calibration) |
 
 ## Topic Types
@@ -29,8 +28,9 @@ The `kafka-init` container creates and configures topics before other services s
 
 ## Configuration
 
-Topics are configured under `kafka.topics` in the config file. The services look them up by their keys (`workload`,
-`power`, `topology`, `sim_topology`, `system`), so each topic's `name` and `config` may change, not its key:
+The topics above are the defaults, in `TOPICS` of `libs/common/odt_common/config.py`; a config file's `kafka.topics`
+replaces them all. The services look them up by their keys (`workload`, `power`, `topology`, `sim_topology`,
+`system`), so each topic's `name` and `config` may change, not its key:
 
 ```yaml
 kafka:

@@ -165,7 +165,6 @@ def test_topology_calculations(sample_topology_data):
     # Test calculations
     assert topology.total_host_count() == 277
     assert topology.total_core_count() == 277 * 16  # 4432
-    assert topology.total_memory_bytes() == 277 * 128000000
 
 
 def test_topology_model_dump(sample_topology_data):

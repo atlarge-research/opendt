@@ -72,10 +72,6 @@ class ResultCache:
             and simulated_time < self.last_state.simulated_time + HORIZON
         )
 
-    def get_cached_run_dir(self) -> Path | None:
-        """Get cached run directory path."""
-        return self.last_run_dir
-
     def copy_to_new_run(self, source_run_dir: Path, destination_run_dir: Path) -> None:
         """Copy the cached run directory to the new run location, without its metadata.json.
 

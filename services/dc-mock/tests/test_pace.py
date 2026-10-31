@@ -13,7 +13,7 @@ class Replay(base.BaseProducer):
     """A producer without Kafka, on a fake wall clock that `wait_interruptible` moves forward."""
 
     def __init__(self, speed, on_tick):
-        super().__init__("kafka:9092", speed, "topic")
+        super().__init__(speed, "topic")
         self.wall, self.on_tick = 0.0, on_tick
 
     def run(self):
@@ -56,3 +56,9 @@ def test_max_speed(replay):
     producer = replay(-1)
     assert producer.wait_until(T0 + timedelta(hours=1)) is False
     assert producer.wall == 0
+
+
+def test_stop_when_due(replay):
+    producer = replay(10)
+    producer._stop_event.set()
+    assert producer.wait_until(T0) is True  # a stop shows also when there is nothing to wait for

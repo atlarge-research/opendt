@@ -18,11 +18,16 @@ class TaskAccumulator:
     def __init__(self) -> None:
         """Initialize the task accumulator."""
         self.tasks: list[Task] = []
+        self.ids: set[int] = set()
         self.last_simulation_time: datetime | None = None
         self.first_task_time: datetime | None = None
 
     def add_task(self, task: Task) -> None:
         """Add a task to the accumulator."""
+        # Kafka delivers at least once: after a rebalance, a task can come again
+        if task.id in self.ids:
+            return
+        self.ids.add(task.id)
         self.tasks.append(task)
 
         # Track the first task's submission time (rounded down to whole minutes)

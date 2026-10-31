@@ -16,11 +16,11 @@ for the live twin):
 git clone https://github.com/atlarge-research/opendt.git
 cd opendt
 make setup
-make up config=tutorial/resources/configs/live_twin.yaml
+make up
 ```
 
-The live twin needs Docker on the laptop (a codespace has none): Docker Desktop with at least 8 GB, and port 9092 (the
-host port of OpenDT's Kafka) free; the first `make up` builds the Docker images, which takes a few minutes.
+The live twin needs Docker on the laptop (a codespace has none): Docker Desktop with at least 8 GB; the first
+`make up` builds the Docker images, which takes a few minutes.
 Then run the notebooks with the `.venv` kernel, in VS Code or PyCharm (or in JupyterLab, with
 `env -u VIRTUAL_ENV uv run --with jupyterlab jupyter lab tutorial/`), and open the live twin in Grafana
 (http://localhost:3000); `make down` stops it.
@@ -31,9 +31,8 @@ OpenDC, which needs Java 21 (e.g., from [Adoptium](https://adoptium.net), with `
 
 1. Run the three notebooks in order, in pairs; each takes about 10 minutes, and each question unfolds its answer
    when a choice is clicked.
-2. Then, on the live twin in Grafana (http://localhost:3000, Tutorial screen), set Speed to 60x in the Twin box and go
-   through its 12 steps: each changes the running twin (e.g., the hosts, the CO2 zone) and asks one of the notebooks'
-   questions about what follows.
+2. Then, on the live twin in Grafana (http://localhost:3000, Tutorial screen), go through its 12 steps: each changes
+   the running twin (e.g., the hosts, the CO2 zone) and asks one of the notebooks' questions about what follows.
    In a classroom, the instructor can run the twin on the projector.
 
 ## Data and Citation
