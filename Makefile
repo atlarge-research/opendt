@@ -25,15 +25,14 @@ UV_BIN ?= $(shell command -v uv 2> /dev/null || echo "$(HOME)/.local/bin/uv")
 # =============================================================================
 
 ## up: Start OpenDT services (use build=true to rebuild images)
-up: clean-volumes
+up:
 	@echo ""
 	@echo "Starting OpenDT..."
 	@echo "Config: $(config)"
 	@echo ""
-	@if [ ! -f "$(config)" ]; then \
-		echo "Error: Config file not found: $(config)"; \
-		exit 1; \
-	fi
+	@# the config first: a config the services would reject leaves the running twin as it is
+	@$(PYTHON) scripts/opendt_cli.py check --config $(config)
+	@$(MAKE) --no-print-directory clean-volumes
 	@$(PYTHON) scripts/opendt_cli.py init --config $(config)
 	@RUN_ID=$$(cat .run_id) && \
 	if [ ! -f "data/$$RUN_ID/.env" ]; then \
@@ -94,26 +93,24 @@ setup:
 	@echo "Creating virtual environment..."
 	@$(UV_BIN) venv --allow-existing
 	@echo "Installing dependencies..."
-	@$(UV_BIN) pip install --python $(VENV) -e libs/common
-	@$(UV_BIN) pip install --python $(VENV) -e "libs/common[test]"
-	@$(UV_BIN) pip install --python $(VENV) -e ".[dev]"
+	@# at the versions the tests pass with (constraints.txt)
+	@$(UV_BIN) pip install --python $(VENV) -c constraints.txt -e libs/common
+	@$(UV_BIN) pip install --python $(VENV) -c constraints.txt -e "libs/common[test]"
+	@$(UV_BIN) pip install --python $(VENV) -c constraints.txt -e ".[dev]"
 	@echo ""
 	@echo "Done. Activate with: source .venv/bin/activate"
 	@echo ""
 
-## test: Run tests
+## test: Run the tests of the library, the services, the dashboards, and the tutorial
 test:
-	@echo ""
-	@echo "Running tests..."
-	@if [ ! -d "$(VENV)" ]; then \
-		echo "Virtual environment not found. Running setup..."; \
-		$(MAKE) setup; \
-	fi
-	@if [ ! -f "$(PYTEST)" ]; then \
-		echo "pytest not found. Running setup..."; \
-		$(MAKE) setup; \
-	fi
-	@$(PYTEST) libs/common/tests/ -v --tb=short
+	@if [ ! -f "$(PYTEST)" ]; then $(MAKE) setup; fi
+	@# each suite from its own folder, as their packages would clash in one session
+	@for dir in libs/common services/api services/dc-mock services/simulator services/calibrator services/grafana; do \
+		echo ""; echo "Testing $$dir..."; \
+		(cd $$dir && ../../$(PYTHON) -m pytest tests -q) || exit 1; \
+	done
+	@echo ""; echo "Testing tutorial..."
+	@cd tutorial && ../$(PYTHON) -m pytest resources/tests -q
 	@echo ""
 	@echo "All tests passed."
 	@echo ""
@@ -130,7 +127,7 @@ lint:
 		$(UV_BIN) run ruff check . --fix; \
 		$(UV_BIN) run ruff format .; \
 	else \
-		$(UV_BIN) run ruff check .; \
+		$(UV_BIN) run ruff check . && $(UV_BIN) run ruff format --check .; \
 	fi
 	@echo ""
 

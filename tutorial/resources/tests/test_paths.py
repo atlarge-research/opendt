@@ -30,4 +30,4 @@ def test_check_setup_accepts_newer_java(monkeypatch, capsys):
 @pytest.mark.opendc
 def test_check_setup_passes_on_a_complete_machine(capsys):
     check_setup()
-    assert "Java 2" in capsys.readouterr().out
+    assert "runs on OpenDC with Java" in capsys.readouterr().out

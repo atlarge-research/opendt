@@ -2,11 +2,10 @@
 
 __version__ = "0.1.0"
 
-from dc_mock.producers import BaseProducer, PowerProducer, TopologyProducer, WorkloadProducer
+from dc_mock.producers import BaseProducer, PowerProducer, WorkloadProducer
 
 __all__ = [
     "BaseProducer",
-    "TopologyProducer",
     "WorkloadProducer",
     "PowerProducer",
 ]

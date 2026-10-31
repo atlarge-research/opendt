@@ -28,21 +28,17 @@ class BaseProducer(ABC):
 
     def __init__(
         self,
-        kafka_bootstrap_servers: str,
         speed: Speed,
         topic: str,
         name: str | None = None,
-        start_barrier: threading.Barrier | None = None,
     ):
         """Initialize the base producer."""
-        self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.speed = speed
         self.topic = topic
         self.name = name or self.__class__.__name__
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
         self._producer: KafkaProducer | None = None
-        self._start_barrier = start_barrier
 
         logger.info(f"Initialized {self.name}")
         logger.info(f"  Topic: {self.topic}")
@@ -51,26 +47,12 @@ class BaseProducer(ABC):
     def _get_producer(self) -> KafkaProducer:
         """Get or create the Kafka producer."""
         if self._producer is None:
-            self._producer = get_kafka_producer(self.kafka_bootstrap_servers)
+            self._producer = get_kafka_producer()
         return self._producer
 
     def emit_message(self, message: dict[str, Any], key: str | None = None) -> None:
-        """Emit a message to Kafka."""
-        try:
-            send_message(
-                self._get_producer(),
-                topic=self.topic,
-                message=message,
-                key=key,
-            )
-        except Exception as e:
-            logger.error(f"Failed to emit message to {self.topic}: {e}", exc_info=True)
-            raise
-
-    def flush(self) -> None:
-        """Flush buffered messages to Kafka."""
-        if self._producer:
-            self._producer.flush()
+        """Send a message to the producer's topic, and wait until Kafka has it."""
+        send_message(self._get_producer(), topic=self.topic, message=message, key=key)
 
     def start_clock(self, trace_start: datetime) -> None:
         """Start replaying: `trace_start` of the trace is now."""
@@ -97,16 +79,9 @@ class BaseProducer(ABC):
             due = (trace_time - self._trace_start).total_seconds() / self._factor
             delay = due - (time.time() - self._wall_start)
             if delay <= 0:
-                return False
+                return self.should_stop()
             if self.wait_interruptible(min(delay, 1.0)):
                 return True
-
-    def calculate_sleep_time(self, realtime_seconds: float) -> float:
-        """Calculate actual sleep time based on speed factor."""
-        if self.speed.factor <= 0:
-            # Max speed (-1): minimal sleep
-            return 0.001
-        return realtime_seconds / self.speed.factor
 
     @abstractmethod
     def run(self) -> None:
@@ -131,12 +106,6 @@ class BaseProducer(ABC):
     def _run_wrapper(self) -> None:
         """Wrapper around run() for exception handling and cleanup."""
         try:
-            # Wait at barrier if one is configured (synchronize startup)
-            if self._start_barrier:
-                logger.info(f"{self.name} waiting at start barrier...")
-                self._start_barrier.wait()
-                logger.info(f"{self.name} released from barrier, starting...")
-
             self.run()
         except Exception as e:
             if not self._stop_event.is_set():

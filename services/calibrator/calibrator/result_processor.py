@@ -1,216 +1,47 @@
-"""Result processor for calibration outputs.
-
-This module handles:
-- Writing metadata for each calibration sweep
-- Tracking best calibration values
-- Aggregating calibration results to parquet file
-- Detecting topology changes
-"""
+"""What the calibrator writes per sweep, next to its OpenDC runs: the sweep's metadata.json, and one row of
+agg_results.parquet."""
 
 import json
-import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 
-logger = logging.getLogger(__name__)
 
-
-class CalibrationResultProcessor:
-    """Processes and aggregates calibration sweep results."""
-
-    def __init__(self, calibrator_output_dir: Path):
-        """Initialize the result processor."""
-        self.calibrator_output_dir = Path(calibrator_output_dir)
-        self.agg_results_file = self.calibrator_output_dir / "agg_results.parquet"
-        self.last_best_value: float | None = None
-        self.last_processed_time: datetime | None = None
-
-        # Initialize by reading existing aggregated results if available
-        if self.agg_results_file.exists():
-            try:
-                existing_df = pd.read_parquet(self.agg_results_file)
-                if not existing_df.empty:
-                    # Get the last best value
-                    last_row = existing_df.iloc[-1]
-                    self.last_best_value = float(last_row["best_value"])
-
-                    # Get last processed time
-                    if "timestamp" in existing_df.columns:
-                        max_timestamp = pd.to_datetime(existing_df["timestamp"].max())
-                        self.last_processed_time = max_timestamp.to_pydatetime()
-
-                    logger.info(
-                        f"Resuming calibration tracking: "
-                        f"last_best_value={self.last_best_value}, "
-                        f"last_time={self.last_processed_time}"
-                    )
-            except Exception as e:
-                logger.warning(f"Could not read existing calibration results: {e}")
-
-    def process_calibration_results(
-        self,
-        run_number: int,
-        run_dir: Path,
-        aligned_simulated_time: datetime,
-        last_task_time: datetime,
-        task_count: int,
-        wall_clock_time: datetime,
-        mape_results: dict[str, Any],
-        best_value: float,
-        best_mape: float,
-        calibrated_property: str,
-        topology_changed: bool,
-    ) -> None:
-        """Process results from a calibration sweep and update aggregated data."""
-        logger.debug(
-            f"Processing calibration results for run {run_number}: "
-            f"best_value={best_value}, best_mape={best_mape:.4f}, "
-            f"topology_changed={topology_changed}"
-        )
-
-        try:
-            # 1. Write metadata.json for this sweep
-            self._write_sweep_metadata(
-                run_dir=run_dir,
-                run_number=run_number,
-                aligned_simulated_time=aligned_simulated_time,
-                last_task_time=last_task_time,
-                task_count=task_count,
-                wall_clock_time=wall_clock_time,
-                mape_results=mape_results,
-            )
-
-            # 2. Append to aggregated results
-            self._append_to_aggregated_results(
-                run_number=run_number,
-                timestamp=aligned_simulated_time,
-                best_value=best_value,
-                best_mape=best_mape,
-                calibrated_property=calibrated_property,
-                topology_changed=topology_changed,
-                task_count=task_count,
-            )
-
-            # 3. Update tracking
-            self.last_best_value = best_value
-            self.last_processed_time = aligned_simulated_time
-
-        except Exception as e:
-            logger.error(f"Error processing calibration results: {e}", exc_info=True)
-            raise
-
-    def _write_sweep_metadata(
-        self,
-        run_dir: Path,
-        run_number: int,
-        aligned_simulated_time: datetime,
-        last_task_time: datetime,
-        task_count: int,
-        wall_clock_time: datetime,
-        mape_results: dict[str, Any],
-    ) -> None:
-        """Write metadata.json for a calibration sweep."""
-        # Extract window info from mape_results
-        # Note: window_start and window_end are already ISO format strings from MAPE comparator
-        window_start_str = mape_results.get("window_start")
-        window_end_str = mape_results.get("window_end")
-        mape_by_value = mape_results.get("mape_by_value", {})
-
-        # Round both MAPE values and keys to 2 decimal places
-        rounded_mape_values = {
-            f"{float(key):.2f}": round(float(value), 2) for key, value in mape_by_value.items()
+def record(
+    output_dir: Path,
+    run_dir: Path,
+    run_number: int,
+    end: datetime,
+    start: datetime | None,
+    task_count: int,
+    mapes: dict[float, float],
+    calibrated_property: str,
+    best: float,
+    changed: bool,
+) -> None:
+    """The sweep `run_number`: its MAPE [%] per value, over the window from `start` to `end`, and the best
+    value, `changed` if it was published."""
+    metadata = {
+        "run_number": run_number,
+        "task_count": task_count,
+        "wall_clock_time": datetime.now(UTC).replace(microsecond=0, tzinfo=None).isoformat(),
+        "window": {"start": start.isoformat() if start else None, "end": end.isoformat()},
+        "mape_values": {f"{value:.2f}": round(m, 2) for value, m in mapes.items()},
+    }
+    (run_dir / "metadata.json").write_text(json.dumps(metadata, indent=2))
+    row = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime([end], utc=True),
+            "run_number": [run_number],
+            "calibrated_property": [calibrated_property],
+            "best_value": [round(best, 2)],
+            "best_mape": [round(mapes[best], 2)],
+            "topology_changed": [changed],
+            "task_count": [task_count],
         }
-
-        # Build metadata structure
-        metadata = {
-            "run_number": run_number,
-            "task_count": task_count,
-            "wall_clock_time": wall_clock_time.replace(microsecond=0, tzinfo=None).isoformat(),
-            "window": {
-                "start": window_start_str if window_start_str else None,
-                "end": (
-                    window_end_str
-                    if window_end_str
-                    else aligned_simulated_time.replace(microsecond=0, tzinfo=None).isoformat()
-                ),
-            },
-            "mape_values": rounded_mape_values,
-        }
-
-        metadata_file = run_dir / "metadata.json"
-        try:
-            with open(metadata_file, "w") as f:
-                json.dump(metadata, f, indent=2)
-            logger.debug(f"Wrote calibration metadata to {metadata_file}")
-        except Exception as e:
-            logger.error(f"Failed to write metadata: {e}")
-            raise
-
-    def _append_to_aggregated_results(
-        self,
-        run_number: int,
-        timestamp: datetime,
-        best_value: float,
-        best_mape: float,
-        calibrated_property: str,
-        topology_changed: bool,
-        task_count: int,
-    ) -> None:
-        """Append calibration result to aggregated parquet file."""
-        new_row = pd.DataFrame(
-            {
-                "timestamp": [timestamp],
-                "run_number": [run_number],
-                "calibrated_property": [calibrated_property],
-                "best_value": [round(best_value, 2)],
-                "best_mape": [round(best_mape, 2)],
-                "topology_changed": [topology_changed],
-                "task_count": [task_count],
-            }
-        )
-
-        new_row["timestamp"] = pd.to_datetime(new_row["timestamp"], utc=True)
-
-        if self.agg_results_file.exists():
-            # Append to existing file
-            existing_df = pd.read_parquet(self.agg_results_file)
-            combined_df = pd.concat([existing_df, new_row], ignore_index=True)
-            combined_df.to_parquet(self.agg_results_file, index=False)
-            logger.info(
-                f"Appended calibration result to aggregated file "
-                f"(run {run_number}, best_value={best_value:.4f}, "
-                f"topology_changed={topology_changed}, total: {len(combined_df)} rows)"
-            )
-        else:
-            # Create new aggregated file
-            new_row.to_parquet(self.agg_results_file, index=False)
-            logger.info(
-                f"Created new calibration aggregated results file "
-                f"(run {run_number}, best_value={best_value:.4f})"
-            )
-
-    def should_broadcast_topology(self, new_best_value: float, tolerance: float = 1e-6) -> bool:
-        """Determine if topology should be broadcast based on value change."""
-        if self.last_best_value is None:
-            # First calibration run, always broadcast
-            logger.info(f"First calibration: will broadcast best_value={new_best_value:.4f}")
-            return True
-
-        value_changed = abs(new_best_value - self.last_best_value) > tolerance
-
-        if value_changed:
-            logger.info(
-                f"Calibration value changed: {self.last_best_value:.4f} → {new_best_value:.4f} "
-                f"(Δ={abs(new_best_value - self.last_best_value):.4f}), will broadcast"
-            )
-        else:
-            logger.info(
-                f"Calibration value unchanged: {new_best_value:.4f} "
-                f"(Δ={abs(new_best_value - self.last_best_value):.4f} <= {tolerance}), "
-                "skipping broadcast"
-            )
-
-        return value_changed
+    )
+    path = output_dir / "agg_results.parquet"
+    if path.exists():
+        row = pd.concat([pd.read_parquet(path), row], ignore_index=True)
+    row.to_parquet(path, index=False)

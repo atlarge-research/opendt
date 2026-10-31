@@ -93,7 +93,7 @@ def test_epoch_ms_is_utc_independent_of_local_tz(tmp_path, monkeypatch):
 
 def test_until_is_clipped(tmp_path, caplog):
     with caplog.at_level(logging.WARNING):
-        assert write_inputs(until=TRACE_END + pd.Timedelta("1d"), out_dir=tmp_path) == 7850
+        assert write_inputs(until=TRACE_END + pd.Timedelta("1D"), out_dir=tmp_path) == 7850
     assert "end of the trace" in caplog.text
 
 

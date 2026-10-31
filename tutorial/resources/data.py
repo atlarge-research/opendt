@@ -17,7 +17,9 @@ TRACE_END = TRACE_START + pd.Timedelta(days=7)
 
 # Electricity Maps zones in workload/SURF/carbon_zones/ (October 2022), shared with the live twin.
 CARBON_ZONES = ("NL", "DE", "RO", "PL")
-GREENEST_ZONE = "SE"  # the greenest grid in Europe in 2022, for the what-if at the end of notebook 3
+GREENEST_ZONE = (
+    "SE"  # the greenest grid in Europe in 2022, for the what-if at the end of notebook 3
+)
 
 
 @dataclass(frozen=True)
@@ -53,11 +55,14 @@ def measured_power(start=TRACE_START, end=TRACE_END) -> pd.Series:
 
 
 def carbon_trace_path(zone: str | None = None) -> Path:
-    """Carbon-intensity trace: OpenDT's own (zone=None) or an Electricity Maps zone (CARBON_ZONES, GREENEST_ZONE)."""
+    """Carbon-intensity trace: workload/SURF/carbon.parquet (zone=None) or an Electricity Maps zone (CARBON_ZONES,
+    GREENEST_ZONE)."""
     if zone is None:
         return PATHS.workload / "carbon.parquet"
     if zone not in (*CARBON_ZONES, GREENEST_ZONE):
-        raise ValueError(f"Unknown zone {zone!r}. Available zones: {', '.join((*CARBON_ZONES, GREENEST_ZONE))}")
+        raise ValueError(
+            f"Unknown zone {zone!r}. Available zones: {', '.join((*CARBON_ZONES, GREENEST_ZONE))}"
+        )
     return PATHS.carbon / f"{zone}.parquet"
 
 

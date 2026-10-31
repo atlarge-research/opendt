@@ -1,5 +1,7 @@
 """While the twin starts: the step it is at, then nothing once its first window is complete."""
 
+from itertools import pairwise
+
 from api import startup
 
 
@@ -29,4 +31,4 @@ def test_all_tips(tmp_path):
 
 def test_new_tip(tmp_path):
     tips = [startup.progress(tmp_path, now=15 * i)[0]["tip"] for i in range(30)]
-    assert all(a != b for a, b in zip(tips, tips[1:]))
+    assert all(a != b for a, b in pairwise(tips))

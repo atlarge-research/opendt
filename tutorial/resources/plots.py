@@ -109,9 +109,17 @@ def energy_bars(runs, total, per_job, colors):
         bars.grid(axis="y", visible=False)
 
 
-MIX = Path(__file__).with_name("electricity_mix_2022.csv")  # IEA, electricity generation by source in 2022 [GWh]
-SOURCES = {"Coal": "Coal", "Natural gas": "Natural Gas", "Nuclear": "Nuclear", "Hydropower": "Hydropower",
-           "Wind": "Wind", "Solar PV": "Solar PV"}  # the rest (oil, biofuels, waste, ...) shows as Other
+MIX = Path(__file__).with_name(
+    "electricity_mix_2022.csv"
+)  # IEA, electricity generation by source in 2022 [GWh]
+SOURCES = {
+    "Coal": "Coal",
+    "Natural gas": "Natural Gas",
+    "Nuclear": "Nuclear",
+    "Hydropower": "Hydropower",
+    "Wind": "Wind",
+    "Solar PV": "Solar PV",
+}  # the rest (oil, biofuels, waste, ...) shows as Other
 
 
 def plot_electricity_mix():
@@ -122,8 +130,12 @@ def plot_electricity_mix():
     share = (mix / mix.sum() * 100).T  # one row per country
     # none of the colours the countries have in the carbon intensity plot
     colors = ["#000000", "#CC79A7", "#9557a5", "#56B4E9", "#777777", "#F0E442", "#BBBBBB"]
-    ax = share.plot.barh(stacked=True, color=colors, width=0.6, edgecolor="white", figsize=(10, 2.5))
-    for bars, hatch in zip(ax.containers, ["", "//", "..", "xx", "\\\\", "--", ""]):  # readable in grayscale
+    ax = share.plot.barh(
+        stacked=True, color=colors, width=0.6, edgecolor="white", figsize=(10, 2.5)
+    )
+    for bars, hatch in zip(
+        ax.containers, ["", "//", "..", "xx", "\\\\", "--", ""], strict=True
+    ):  # readable in grayscale
         for bar in bars:
             bar.set_hatch(hatch)
     ax.set(xlabel="Share of Electricity Generation in 2022 [%]", xlim=(0, 100))

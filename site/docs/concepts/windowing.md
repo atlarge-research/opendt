@@ -24,15 +24,16 @@ the experiments).
 1. **Open**: Window accepts tasks as they arrive
 2. **Fill**: Tasks accumulate in the window buffer
 3. **Close**: A heartbeat reaches the window end time
-4. **Simulate**: OpenDC runs all tasks so far; with the same topology, scheduler, and task count as the previous
-   window, that run is copied instead
+4. **Simulate**: OpenDC runs all tasks so far, cut an hour past the window's end (`HORIZON` in
+   `odt_common/result_cache.py`), and, at once, a second run on the whole tasks gives the jobs' finish times; with the
+   same topology, scheduler, and task count as the previous window, and within its hour, that run is copied instead
 5. **Output**: The window's own slice of the results is appended to `agg_results.parquet`; the full runs stay in
    `simulator/opendc/run_<N>/`
 
 ## Heartbeats
 
 **Heartbeat messages** are synthetic timestamps published by dc-mock to signal time progression; only they close
-windows. dc-mock sends one every `services.dc-mock.heartbeat_frequency_minutes` (default: 1), as a WorkloadMessage on
+windows. dc-mock sends one every `services.dc-mock.heartbeat_frequency_minutes` (default: 1), as a message on
 `dc.workload`, up to the last job's submission.
 
 ## Cumulative Simulation

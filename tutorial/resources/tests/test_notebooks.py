@@ -1,13 +1,14 @@
 """Run each notebook top to bottom, then check the numbers its answers give."""
 
+import nbclient
+import nbformat
 import pytest
 from conftest import TUTORIAL_DIR
 
-nbformat = pytest.importorskip("nbformat")
-nbclient = pytest.importorskip("nbclient")
-
 # every simulation of a notebook ships precomputed in resources/results/ (resources/precompute.py)
 NO_OPENDC = """
+import dataclasses
+
 import resources.sim
 
 
@@ -16,6 +17,8 @@ def no_opendc(*_args):
 
 
 resources.sim._run_opendc = no_opendc
+# only the shipped results, not this machine's own runs in resources/output/, which students do not have
+resources.sim.PATHS = dataclasses.replace(resources.sim.PATHS, output=resources.sim.PATHS.results)
 """
 CHECKS = {
     "1.autoscaling.ipynb": """

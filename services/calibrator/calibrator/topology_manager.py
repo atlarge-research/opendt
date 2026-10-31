@@ -18,13 +18,11 @@ class TopologyManager:
 
     def __init__(
         self,
-        kafka_bootstrap_servers: str,
         dc_topology_topic: str,
         sim_topology_topic: str,
         consumer_group: str = "calibrator-topology",
     ):
         """Initialize the topology manager."""
-        self.kafka_bootstrap_servers = kafka_bootstrap_servers
         self.dc_topology_topic = dc_topology_topic
         self.sim_topology_topic = sim_topology_topic
         self.consumer_group = consumer_group
@@ -39,7 +37,7 @@ class TopologyManager:
         self._consumer_threads: list[threading.Thread] = []
 
         # Kafka producer
-        self._producer = get_kafka_producer(kafka_bootstrap_servers)
+        self._producer = get_kafka_producer()
 
         logger.info(
             f"Initialized TopologyManager for topics {dc_topology_topic}, {sim_topology_topic}"
@@ -93,7 +91,6 @@ class TopologyManager:
             consumer = get_kafka_consumer(
                 topics=[topic],
                 group_id=group,
-                bootstrap_servers=self.kafka_bootstrap_servers,
             )
 
             logger.info("TopologyManager consumer started")

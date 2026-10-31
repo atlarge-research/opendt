@@ -41,6 +41,23 @@ def test_task_accumulator_basic():
     assert accumulator.get_all_tasks()[1].id == 2
 
 
+def test_task_twice():
+    """A task Kafka delivers again, after a rebalance, is kept once."""
+    accumulator = TaskAccumulator()
+    task = Task(
+        id=1,
+        submission_time=datetime(2024, 1, 1, 22, 0, 0, tzinfo=UTC),
+        duration=5000,
+        cpu_count=4,
+        cpu_capacity=2400.0,
+        mem_capacity=8000,
+        fragments=[Fragment(id=1, duration=5000, cpu_count=4, cpu_usage=50.0)],
+    )
+    accumulator.add_task(task)
+    accumulator.add_task(task)
+    assert len(accumulator.get_all_tasks()) == 1
+
+
 def test_should_simulate_first_run():
     """The first simulation runs once a window (the frequency) has passed since the first task."""
     accumulator = TaskAccumulator()

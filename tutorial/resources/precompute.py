@@ -23,7 +23,10 @@ RUNS = [
     *((TRACE_END, {"r": r}) for r in (*range(1, 21), 30, 40)),
     # notebook 3: the week in each country, and with fewer hosts in RO (138, 161, 200) and NL (200)
     *((TRACE_END, {"carbon": zone}) for zone in (*CARBON_ZONES, GREENEST_ZONE)),
-    *((TRACE_END, {"hosts": h, "carbon": z}) for h, z in ((138, "RO"), (161, "RO"), (200, "RO"), (200, "NL"))),
+    *(
+        (TRACE_END, {"hosts": h, "carbon": z})
+        for h, z in ((138, "RO"), (161, "RO"), (200, "RO"), (200, "NL"))
+    ),
 ]
 
 if __name__ == "__main__":
